@@ -1,10 +1,12 @@
+#define WEBGPU_CPP_IMPLEMENTATION
+
 #include "AxoPlotl/Application.h"
 
 int main()
 {
     AxoPlotl::Application app;
 
-    if (!app.Initialize()) {
+    if (!app.init()) {
         return 1;
     }
 
@@ -15,12 +17,10 @@ int main()
     };
     emscripten_set_main_loop_arg(callback, &app, 0, true);
 #else // __EMSCRIPTEN__
-    while (app.IsRunning()) {
-        app.MainLoop();
+    while (app.isRunning()) {
+        app.mainLoop();
     }
 #endif // __EMSCRIPTEN__
-
-    app.Terminate();
 
     return 0;
 }

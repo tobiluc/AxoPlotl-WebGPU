@@ -9,7 +9,20 @@ add_executable(AxoPlotl-WebGPU main.cpp
     AxoPlotl/Application.h
     AxoPlotl/Application.cpp
     AxoPlotl/utils/web_gpu_utils.h
-    AxoPlotl/utils/web_gpu_utils.cpp)
+    AxoPlotl/utils/web_gpu_utils.cpp
+    AxoPlotl/IO/file_access.h
+    AxoPlotl/IO/file_access.cpp
+    AxoPlotl/TriangleRenderer.h AxoPlotl/TriangleRenderer.cpp
+    AxoPlotl/rendering/Shader.h
+    AxoPlotl/rendering/Shader.cpp
+
+
+    AxoPlotl/rendering/Pipeline.h AxoPlotl/rendering/Pipeline.cpp
+    AxoPlotl/rendering/Buffer.h
+    AxoPlotl/rendering/Buffer.cpp
+    AxoPlotl/rendering/Renderer.h
+    AxoPlotl/rendering/Renderer.cpp
+)
 
 if (NOT EMSCRIPTEN)
     add_subdirectory(glfw)
