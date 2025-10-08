@@ -25,7 +25,7 @@ public:
     bool init();
 
     // Uninitialize everything that was initialized
-    //void Terminate();
+    void terminate();
 
     // Draw a frame and handle events
     void mainLoop();

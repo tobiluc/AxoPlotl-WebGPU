@@ -1,5 +1,6 @@
 #pragma once
 #include "Buffer.h"
+#include "Pipeline.h"
 #include <webgpu/webgpu.hpp>
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -15,9 +16,13 @@ public:
 
     ~Renderer();
 
+    void release();
+
     bool init(GLFWwindow* window);
 
     void render();
+
+    void onWindowResize(float width, float height);
 
 private:
     wgpu::Device device;
@@ -25,13 +30,11 @@ private:
     wgpu::Surface surface;
     std::unique_ptr<wgpu::ErrorCallback> uncapturedErrorCallbackHandle;
 
-    wgpu::TextureFormat colorFormat = wgpu::TextureFormat::Undefined;
-    wgpu::RenderPipeline pipeline;
+    void configureSurface(float width, float height);
 
-    wgpu::Buffer vertexBuffer;
-    uint32_t vertexCount = 0;
-    wgpu::Buffer indexBuffer;
-    uint32_t indexCount = 0;
+    wgpu::TextureFormat colorFormat = wgpu::TextureFormat::Undefined;
+    Pipeline pipeline;
+
 };
 
 }

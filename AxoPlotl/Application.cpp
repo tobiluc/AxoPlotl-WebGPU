@@ -16,8 +16,6 @@ Application::Application()
 
 Application::~Application()
 {
-    glfwDestroyWindow(window);
-    glfwTerminate();
 }
 
 bool Application::init()
@@ -27,9 +25,19 @@ bool Application::init()
     //------------------
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+
+    window = glfwCreateWindow(640, 480, "AxoPlotl - WebGPU", nullptr, nullptr);
     if (!window) {return false;}
+
+    // Handle Resizing
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+        if (app) {
+            app->renderer.onWindowResize(width, height);
+        }
+    });
 
     return renderer.init(window);
 }
@@ -38,6 +46,12 @@ void Application::mainLoop() {
     glfwPollEvents();
 
     renderer.render();
+}
+
+void Application::terminate() {
+    renderer.release();
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
 
 bool Application::isRunning() {

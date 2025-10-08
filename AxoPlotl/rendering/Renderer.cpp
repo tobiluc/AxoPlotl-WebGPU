@@ -55,6 +55,13 @@ bool Renderer::init(GLFWwindow* window)
     requiredLimits.limits.maxVertexBufferArrayStride = (2+3) * sizeof(float);
     requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
     requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
+
+    requiredLimits.limits.maxBindGroups = 1;
+    requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
+    requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
+
+    requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
+
     deviceDesc.requiredLimits = &requiredLimits;
     adapter.getLimits(&supportedLimits);
     std::cout << "adapter.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
@@ -75,26 +82,11 @@ bool Renderer::init(GLFWwindow* window)
     // Surface
     //------------------
 
-    // Configure the surface
-    wgpu::SurfaceConfiguration config = {};
-
-    // Configuration of the textures created for the underlying swap chain
-    config.width = 640;
-    config.height = 480;
-    config.usage = wgpu::TextureUsage::RenderAttachment;
     wgpu::SurfaceCapabilities capabilities = {};
     surface.getCapabilities(adapter, &capabilities);
     colorFormat = capabilities.formats[0];
-    config.format = colorFormat;
 
-    // And we do not need any particular view format:
-    config.viewFormatCount = 0;
-    config.viewFormats = nullptr;
-    config.device = device;
-    config.presentMode = wgpu::PresentMode::Fifo;
-    config.alphaMode = wgpu::CompositeAlphaMode::Auto;
-
-    surface.configure(config);
+    configureSurface(640.f, 480.f);
 
     // Release the adapter only after it has been fully utilized
     adapter.release();
@@ -103,43 +95,18 @@ bool Renderer::init(GLFWwindow* window)
     // Pipeline
     //-----------
     wgpu::ShaderModule shaderModule = loadShaderModule(device, "/Users/tobiaskohler/Projects/AxoPlotl-WebGPU/shaders/Shader.wgsl");
-    pipeline = createPipeline(device, shaderModule, colorFormat);
-
-    //-----------
-    // Buffer
-    //-----------
-    std::vector<float> vertexData = {
-        // x0, y0
-        -0.5, -0.5,  1.0,0.0,0.0,
-        // x1, y1
-        +0.5, -0.5, 0.0,1.0,0.0,
-        // x2, y2
-        +0.0, +0.5,0.0,0.0,1.0,
-
-        // Add a second triangle:
-        -0.55f, -0.5,1.0,0.0,0.0,
-        -0.05f, +0.5,0.0,1.0,0.0,
-        -0.55f, +0.5, 0.0,0.0,1.0
-    };
-    vertexCount = static_cast<uint32_t>(vertexData.size() / (2+3));
-    vertexBuffer = createVertexBuffer(device, vertexData);
-    queue.writeBuffer(vertexBuffer, 0, vertexData.data(), vertexData.size() * sizeof(float));
-
-
-    std::vector<uint32_t> indexData = {
-        0, 1, 2
-    };
-    indexCount = static_cast<uint32_t>(indexData.size());
-    indexBuffer = createIndexBuffer(device, indexData);
-    queue.writeBuffer(indexBuffer, 0, indexData.data(), indexData.size() * sizeof(uint32_t));
+    pipeline.init(device, queue, shaderModule, colorFormat);
 
     return true;
 }
 
 Renderer::~Renderer()
 {
-    vertexBuffer.release();
-    indexBuffer.release();
+    //release();
+}
+
+void Renderer::release()
+{
     pipeline.release();
     surface.unconfigure();
     queue.release();
@@ -199,11 +166,7 @@ void Renderer::render()
 
     wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
 
-    renderPass.setPipeline(pipeline); // Select which render pipeline to use
-    renderPass.setVertexBuffer(0, vertexBuffer, 0, vertexBuffer.getSize());
-    renderPass.setIndexBuffer(indexBuffer, wgpu::IndexFormat::Uint32, 0, indexBuffer.getSize());
-    //renderPass.draw(vertexCount, 1, 0, 0);
-    renderPass.drawIndexed(indexCount, 1, 0, 0, 0);
+    pipeline.render(renderPass, queue);
 
     renderPass.end();
     renderPass.release();
@@ -214,10 +177,10 @@ void Renderer::render()
     wgpu::CommandBuffer command = encoder.finish(cmdBufferDescriptor);
     encoder.release();
 
-    std::cout << "Submitting command..." << std::endl;
+    //std::cout << "Submitting command..." << std::endl;
     queue.submit(1, &command);
     command.release();
-    std::cout << "Command submitted." << std::endl;
+    //std::cout << "Command submitted." << std::endl;
 
     // At the enc of the frame
     targetView.release();
@@ -230,6 +193,37 @@ void Renderer::render()
 #elif defined(WEBGPU_BACKEND_WGPU)
     device.poll(false);
 #endif
+}
+
+void Renderer::onWindowResize(float width, float height)
+{
+    if (width == 0 || height == 0) {return;} // window minimized
+
+    surface.unconfigure();
+    configureSurface(width, height);
+
+    pipeline.updateProjection(width/height);
+}
+
+void Renderer::configureSurface(float width, float height)
+{
+    // Configure the surface
+    wgpu::SurfaceConfiguration config = {};
+
+    // Configuration of the textures created for the underlying swap chain
+    config.width = static_cast<uint32_t>(width);
+    config.height = static_cast<uint32_t>(height);
+    config.usage = wgpu::TextureUsage::RenderAttachment;
+    config.format = colorFormat;
+
+    // And we do not need any particular view format:
+    config.viewFormatCount = 0;
+    config.viewFormats = nullptr;
+    config.device = device;
+    config.presentMode = wgpu::PresentMode::Fifo;
+    config.alphaMode = wgpu::CompositeAlphaMode::Auto;
+
+    surface.configure(config);
 }
 
 }

@@ -51,7 +51,6 @@ endif()
 
 if (EMSCRIPTEN)
     set_target_properties(AxoPlotl-WebGPU PROPERTIES SUFFIX ".html")
-
     # Enable the use of emscripten_sleep()
     target_link_options(App PRIVATE -sASYNCIFY)
 endif()
@@ -62,5 +61,26 @@ install(TARGETS AxoPlotl-WebGPU
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-target_link_libraries(AxoPlotl-WebGPU PRIVATE webgpu glfw glfw3webgpu)
+#=========================
+# Init Fetch Content
+#=========================
+include(FetchContent)
+set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
+set(SUBMODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules")
+set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
+
+#=========================
+# GLM
+#=========================
+if (NOT TARGET glm)
+    message(STATUS "Fetching glm")
+    FetchContent_Declare(glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        1.0.1
+        SOURCE_DIR "${EXTERNAL_DIR}/glm"
+    )
+    FetchContent_MakeAvailable(glm)
+endif()
+
+target_link_libraries(AxoPlotl-WebGPU PRIVATE webgpu glfw glfw3webgpu glm)
 target_copy_webgpu_binaries(AxoPlotl-WebGPU)
