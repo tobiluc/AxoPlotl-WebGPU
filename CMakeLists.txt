@@ -24,16 +24,28 @@ add_executable(AxoPlotl-WebGPU main.cpp
     AxoPlotl/rendering/Renderer.cpp
 )
 
+#=========================
+# Init Fetch Content
+#=========================
+include(FetchContent)
+set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
+set(SUBMODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules")
+set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
+
+#=========================
+# WebGPU related
+#=========================
+
 if (NOT EMSCRIPTEN)
-    add_subdirectory(glfw)
+    add_subdirectory("${EXTERNAL_DIR}/glfw")
 else()
     add_library(glfw INTERFACE)
     target_link_options(glfw INTERFACE -sUSE_GLFW=3)
 endif()
 
-add_subdirectory(webgpu-dawn)
+add_subdirectory("${EXTERNAL_DIR}/webgpu-dawn")
 
-add_subdirectory(glfw3webgpu)
+add_subdirectory("${EXTERNAL_DIR}/glfw3webgpu")
 
 set_target_properties(AxoPlotl-WebGPU PROPERTIES
     CXX_STANDARD 17
@@ -60,14 +72,6 @@ install(TARGETS AxoPlotl-WebGPU
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-#=========================
-# Init Fetch Content
-#=========================
-include(FetchContent)
-set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
-set(SUBMODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/submodules")
-set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 
 #=========================
 # GLM
