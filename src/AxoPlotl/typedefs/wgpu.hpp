@@ -1,8 +1,8 @@
 #pragma once
 
+#include "webgpu/webgpu.hpp"
+
 namespace AxoPlotl
 {
-
-char* read_file(const char* path);
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "Buffer.h"
-#include "Pipeline.h"
+#include "TrianglePipeline.h"
 #include <webgpu/webgpu.hpp>
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -33,7 +33,6 @@ private:
     void configureSurface(float width, float height);
 
     wgpu::TextureFormat colorFormat = wgpu::TextureFormat::Undefined;
-    Pipeline pipeline;
 
 };
 

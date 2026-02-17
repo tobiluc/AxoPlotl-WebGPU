@@ -4,24 +4,42 @@ project(AxoPlotl-WebGPU LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
-add_executable(AxoPlotl-WebGPU main.cpp
-    AxoPlotl/Application.h
-    AxoPlotl/Application.cpp
-    AxoPlotl/utils/web_gpu_utils.h
-    AxoPlotl/utils/web_gpu_utils.cpp
-    AxoPlotl/IO/file_access.h
-    AxoPlotl/IO/file_access.cpp
-    AxoPlotl/TriangleRenderer.h AxoPlotl/TriangleRenderer.cpp
-    AxoPlotl/rendering/Shader.h
-    AxoPlotl/rendering/Shader.cpp
+add_executable("${PROJECT_NAME}"
+    main.cpp
+    src/AxoPlotl/Application.hpp
+    src/AxoPlotl/Application.cpp
+    src/AxoPlotl/utils/web_gpu_utils.h
+    src/AxoPlotl/utils/web_gpu_utils.cpp
+    src/AxoPlotl/IO/file_access.h
+    src/AxoPlotl/IO/file_access.cpp
+    src/AxoPlotl/TriangleRenderer.h
+    src/AxoPlotl/TriangleRenderer.cpp
 
 
-    AxoPlotl/rendering/Pipeline.h AxoPlotl/rendering/Pipeline.cpp
-    AxoPlotl/rendering/Buffer.h
-    AxoPlotl/rendering/Buffer.cpp
-    AxoPlotl/rendering/Renderer.h
-    AxoPlotl/rendering/Renderer.cpp
+    src/AxoPlotl/rendering/TrianglePipeline.h
+    src/AxoPlotl/rendering/TrianglePipeline.cpp
+    src/AxoPlotl/rendering/Buffer.h
+    src/AxoPlotl/rendering/Buffer.cpp
+    src/AxoPlotl/rendering/Renderer.h
+    src/AxoPlotl/rendering/Renderer.cpp
+    src/AxoPlotl/geometry/mesh_adapter.h
+    src/AxoPlotl/geometry/mesh_adapter.cpp
+    src/AxoPlotl/rendering/VolumeMeshRenderer.hpp
+    src/AxoPlotl/typedefs/glm.hpp
+    src/AxoPlotl/rendering/VolumeMeshRenderer.cpp
+    src/AxoPlotl/rendering/shaders/vertex_shader_wgsl.hpp
+    src/AxoPlotl/rendering/shaders/edge_shader_wgsl.hpp
+
+    src/AxoPlotl/rendering/shaders/Shader.cpp
+    src/AxoPlotl/objects/BaseObject.hpp
+    src/AxoPlotl/Scene.hpp
+    src/AxoPlotl/Scene.cpp
+    src/AxoPlotl/objects/VolumeMeshObject.hpp
+    src/AxoPlotl/objects/VolumeMeshObject.cpp
+    src/AxoPlotl/rendering/shaders/Shader.hpp
+    src/AxoPlotl/typedefs/wgpu.hpp
 )
 
 #=========================
@@ -47,7 +65,7 @@ add_subdirectory("${EXTERNAL_DIR}/webgpu-dawn")
 
 add_subdirectory("${EXTERNAL_DIR}/glfw3webgpu")
 
-set_target_properties(AxoPlotl-WebGPU PROPERTIES
+set_target_properties("${PROJECT_NAME}" PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
@@ -55,20 +73,20 @@ set_target_properties(AxoPlotl-WebGPU PROPERTIES
 )
 
 if (XCODE)
-    set_target_properties(AxoPlotl-WebGPU PROPERTIES
+    set_target_properties("${PROJECT_NAME}" PROPERTIES
         XCODE_GENERATE_SCHEME ON
         XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE "Metal"
     )
 endif()
 
 if (EMSCRIPTEN)
-    set_target_properties(AxoPlotl-WebGPU PROPERTIES SUFFIX ".html")
+    set_target_properties("${PROJECT_NAME}" PROPERTIES SUFFIX ".html")
     # Enable the use of emscripten_sleep()
     target_link_options(App PRIVATE -sASYNCIFY)
 endif()
 
 include(GNUInstallDirs)
-install(TARGETS AxoPlotl-WebGPU
+install(TARGETS "${PROJECT_NAME}"
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
@@ -86,5 +104,47 @@ if (NOT TARGET glm)
     FetchContent_MakeAvailable(glm)
 endif()
 
-target_link_libraries(AxoPlotl-WebGPU PRIVATE webgpu glfw glfw3webgpu glm)
+#=========================
+# OVM
+#=========================
+if (NOT TARGET OpenVolumeMesh::OpenVolumeMesh)
+    message(STATUS "Fetching OpenVolumeMesh")
+    FetchContent_Declare(ovm
+        GIT_REPOSITORY https://www.graphics.rwth-aachen.de:9000/OpenVolumeMesh/OpenVolumeMesh
+        GIT_TAG master
+        SOURCE_DIR "${EXTERNAL_DIR}/OpenVolumeMesh"
+        )
+    FetchContent_MakeAvailable(ovm)
+endif()
+
+#=========================
+# NLohmann Json
+#=========================
+if (NOT TARGET nlohmann_json::nlohmann_json)
+    FetchContent_Declare(
+        json
+        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+    )
+    FetchContent_MakeAvailable(json)
+endif()
+
+#=========================
+# Define what to include
+#=========================
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+)
+
+#=========================
+# Link Libraries
+#=========================
+target_link_libraries("${PROJECT_NAME}" PRIVATE
+    webgpu
+    glfw
+    glfw3webgpu
+    glm
+    OpenVolumeMesh::OpenVolumeMesh
+    nlohmann_json::nlohmann_json
+)
 target_copy_webgpu_binaries(AxoPlotl-WebGPU)
