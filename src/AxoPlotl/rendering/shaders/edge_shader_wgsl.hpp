@@ -18,7 +18,7 @@ var<uniform> ubo : Uniforms;
 @group(0) @binding(1)
 var<storage, read> positions : array<vec3<f32>>;
 
-@group(0) @binding(2)
+@group(0) @binding(3)
 var<storage, read> edge_props : array<EdgeProperty>;
 
 struct V2F {

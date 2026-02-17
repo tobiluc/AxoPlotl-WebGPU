@@ -38,6 +38,7 @@ void VolumeMeshRenderer::init(const StaticData& _data)
     n_edge_line_indices_ = _data.edge_draw_indices_.size();
     n_vertices_ = n_vertex_point_indices_;
     n_edges_ = n_edge_line_indices_/2;
+    n_positions_ = _data.positions_.size();
 
     create_buffers(_data);
     create_bind_group_layout();
@@ -59,7 +60,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
             wgpu::BufferUsage::Storage |
             wgpu::BufferUsage::CopyDst |
             wgpu::BufferUsage::Vertex;
-        desc.size = sizeof(Position) * _data.positions_.size();
+        desc.size = sizeof(Position) * n_positions_;
         desc.mappedAtCreation = false;
         desc.label = "Position";
 
@@ -197,21 +198,21 @@ void VolumeMeshRenderer::create_bind_group()
     groupEntries[1].binding = 1;
     groupEntries[1].buffer = positionBuffer_;
     groupEntries[1].offset = 0;
-    groupEntries[1].size = sizeof(Position) * n_vertex_point_indices_;
+    groupEntries[1].size = sizeof(Position) * n_positions_;
     std::cout << "1: Positions #" << groupEntries[1].size << std::endl;
 
     // 2 - Vertex Properties
     groupEntries[2].binding = 2;
     groupEntries[2].buffer = vertexPropertyBuffer_;
     groupEntries[2].offset = 0;
-    groupEntries[2].size = sizeof(VertexPropertyData);
+    groupEntries[2].size = sizeof(VertexPropertyData) * n_vertices_;
     std::cout << "2: Vertex Properties #" << groupEntries[2].size << std::endl;
 
     // 3 - Edge Properties
     groupEntries[3].binding = 3;
     groupEntries[3].buffer = edgePropertyBuffer_;
     groupEntries[3].offset = 0;
-    groupEntries[3].size = sizeof(EdgePropertyData);
+    groupEntries[3].size = sizeof(EdgePropertyData) * n_edges_;
     std::cout << "3: Edge Properties #" << groupEntries[3].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
@@ -287,7 +288,7 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
 
     // 1 -- Edge Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = sizeof(uint32_t);
+    attrs[1].offset = sizeof(uint32_t);//(void*)offsetof(EdgeHandle, edge_index);;
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
@@ -347,18 +348,31 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
 
 void VolumeMeshRenderer::update_vertex_property_data(const std::vector<VertexPropertyData>& _data)
 {
-
+    context_.device_.getQueue().writeBuffer(
+        vertexPropertyBuffer_,
+        0,
+        _data.data(),
+        sizeof(VertexPropertyData) * _data.size()
+        );
+    std::cout << "Update Vertex Property Data" << std::endl;
 }
 
 void VolumeMeshRenderer::update_edge_property_data(const std::vector<EdgePropertyData>& _data)
 {
-
+    context_.device_.getQueue().writeBuffer(
+        edgePropertyBuffer_,
+        0,
+        _data.data(),
+        sizeof(EdgePropertyData) * _data.size()
+        );
+    std::cout << "Update Edge Property Data" << std::endl;
 }
 
 void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
-    // Update uniform
-    context_.device_.getQueue().writeBuffer(uniformBuffer_, 0, &_mvp, sizeof(Uniforms));
+    // Update uniforms
+    unforms_.mvp_ = _mvp;
+    context_.device_.getQueue().writeBuffer(uniformBuffer_, 0, &unforms_, sizeof(Uniforms));
 
     // Draw points
     _render_pass.setPipeline(vertex_points_pipeline_);

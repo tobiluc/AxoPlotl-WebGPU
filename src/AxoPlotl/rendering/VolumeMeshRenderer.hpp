@@ -56,6 +56,7 @@ public:
 
     void render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
 private:
+    size_t n_positions_;
     size_t n_vertices_;
     size_t n_edges_;
 
