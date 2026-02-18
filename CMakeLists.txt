@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(AxoPlotl-WebGPU LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
@@ -65,12 +65,12 @@ add_subdirectory("${EXTERNAL_DIR}/webgpu-dawn")
 
 add_subdirectory("${EXTERNAL_DIR}/glfw3webgpu")
 
-set_target_properties("${PROJECT_NAME}" PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-    COMPILE_WARNING_AS_ERROR OFF
-)
+# set_target_properties("${PROJECT_NAME}" PROPERTIES
+#     CXX_STANDARD 20
+#     CXX_STANDARD_REQUIRED ON
+#     CXX_EXTENSIONS OFF
+#     COMPILE_WARNING_AS_ERROR OFF
+# )
 
 if (XCODE)
     set_target_properties("${PROJECT_NAME}" PROPERTIES
@@ -129,6 +129,20 @@ if (NOT TARGET nlohmann_json::nlohmann_json)
 endif()
 
 #=========================
+# ToLoG
+#=========================
+if (NOT TARGET ToLoG)
+    message(STATUS "Fetching ToLoG")
+    FetchContent_Declare(ToLoG
+        GIT_REPOSITORY https://github.com/tobiluc/ToLoG.git
+        GIT_TAG main
+        SOURCE_DIR "${EXTERNAL_DIR}/ToLoG"
+    )
+    set(TOLOG_BUILD_UNIT_TESTS FALSE)
+    FetchContent_MakeAvailable(ToLoG)
+endif()
+
+#=========================
 # Define what to include
 #=========================
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -146,5 +160,7 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
     glm
     OpenVolumeMesh::OpenVolumeMesh
     nlohmann_json::nlohmann_json
+    ToLoG
 )
 target_copy_webgpu_binaries(AxoPlotl-WebGPU)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)

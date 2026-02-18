@@ -28,12 +28,10 @@ static wgpu::ShaderModule create_shader_module(
 namespace AxoPlotl
 {
 
-VolumeMeshRenderer::VolumeMeshRenderer(Context _context) :
-    context_(_context)
-{}
-
-void VolumeMeshRenderer::init(const StaticData& _data)
+void VolumeMeshRenderer::init(Context _context, const StaticData& _data)
 {
+    context_ = _context;
+
     n_vertex_point_indices_ = _data.vertex_draw_indices_.size();
     n_edge_line_indices_ = _data.edge_draw_indices_.size();
     n_vertices_ = n_vertex_point_indices_;

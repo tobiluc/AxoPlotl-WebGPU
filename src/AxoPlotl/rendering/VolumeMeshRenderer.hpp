@@ -45,10 +45,10 @@ public:
         std::vector<EdgeHandle> edge_draw_indices_;
     };
 
-    VolumeMeshRenderer(Context _context);
+    VolumeMeshRenderer() {}
 
     // Setup Pipeline and layouts for given static data
-    void init(const StaticData& _data);
+    void init(Context _context, const StaticData& _data);
 
     void update_vertex_property_data(const std::vector<VertexPropertyData>& _data);
 
