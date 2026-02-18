@@ -1,7 +1,9 @@
 #include "VolumeMeshRenderer.hpp"
 #include "AxoPlotl/rendering/shaders/edge_shader_wgsl.hpp"
+#include "AxoPlotl/rendering/shaders/face_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/vertex_shader_wgsl.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <cstddef>
 
 static wgpu::ShaderModule create_shader_module(
     wgpu::Device _device, const char* _src, const char* _name = "Unlabeled Shader Module")
@@ -28,15 +30,29 @@ static wgpu::ShaderModule create_shader_module(
 namespace AxoPlotl
 {
 
+// Static Members
+wgpu::RenderPipeline VolumeMeshRenderer::vertex_points_pipeline_;
+wgpu::RenderPipeline VolumeMeshRenderer::edge_lines_pipeline_;
+wgpu::RenderPipeline VolumeMeshRenderer::face_triangles_pipeline_;
+wgpu::RenderPipeline VolumeMeshRenderer::cell_triangles_pipeline_;
+
 void VolumeMeshRenderer::init(Context _context, const StaticData& _data)
 {
     context_ = _context;
 
+    n_positions_ = _data.positions_.size();
     n_vertex_point_indices_ = _data.vertex_draw_indices_.size();
     n_edge_line_indices_ = _data.edge_draw_indices_.size();
-    n_vertices_ = n_vertex_point_indices_;
-    n_edges_ = n_edge_line_indices_/2;
-    n_positions_ = _data.positions_.size();
+    n_face_triangle_indices_ = _data.face_draw_triangle_indices_.size();
+    n_cell_triangle_indices_ = _data.cell_draw_triangle_indices_.size();
+
+    // For simplicity, to avoid webgpu errors related
+    // to the property buffers having size zero, we always have
+    // at least 1 entity. TODO: Find better solution
+    n_vertices_ = std::max(n_vertex_point_indices_, 1LU);
+    n_edges_ = std::max(n_edge_line_indices_/2, 1LU);
+    n_faces_ = std::max(_data.n_faces_, 1LU);
+    n_cells_ = std::max(_data.n_cells_, 1LU);
 
     create_buffers(_data);
     create_bind_group_layout();
@@ -44,6 +60,8 @@ void VolumeMeshRenderer::init(Context _context, const StaticData& _data)
 
     create_vertex_point_pipeline();
     create_edge_line_pipeline();
+    create_face_triangle_pipeline();
+    create_cell_triangle_pipeline();
 }
 
 void VolumeMeshRenderer::create_buffers(const StaticData &_data)
@@ -106,11 +124,47 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
         std::cout << "Edge Index Buffer Size: " << desc.size << std::endl;
     }
 
+    // Face Triangle Index Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(FaceHandle) * _data.face_draw_triangle_indices_.size();
+        desc.mappedAtCreation = false;
+        desc.label = "Face Triangle Index";
+
+        faceTriangleIndexBuffer_ = device.createBuffer(desc);
+        queue.writeBuffer(
+            faceTriangleIndexBuffer_,
+            0,
+            _data.face_draw_triangle_indices_.data(),
+            desc.size
+            );
+        std::cout << "Face Triangle Index Buffer Size: " << desc.size << std::endl;
+    }
+
+    // Cell Triangle Index Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(CellHandle) * _data.cell_draw_triangle_indices_.size();
+        desc.mappedAtCreation = false;
+        desc.label = "Cell Triangle Index";
+
+        cellTriangleIndexBuffer_ = device.createBuffer(desc);
+        queue.writeBuffer(
+            cellTriangleIndexBuffer_,
+            0,
+            _data.cell_draw_triangle_indices_.data(),
+            desc.size
+        );
+        std::cout << "Cell Triangle Index Buffer Size: " << desc.size << std::endl;
+    }
+
     // Vertex Property Buffer
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(VertexPropertyData) * n_vertices_;
+        desc.size = sizeof(PropertyData) * n_vertices_;
         desc.mappedAtCreation = false;
         desc.label = "Vertex Property";
 
@@ -123,13 +177,39 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(EdgePropertyData) * n_edges_;
+        desc.size = sizeof(PropertyData) * n_edges_;
         desc.mappedAtCreation = false;
         desc.label = "Edge Property";
 
         edgePropertyBuffer_ = device.createBuffer(desc);
 
         std::cout << "Edge Property Buffer Size: " << desc.size << std::endl;
+    }
+
+    // Face Property Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(PropertyData) * n_faces_;
+        desc.mappedAtCreation = false;
+        desc.label = "Face Property";
+
+        facePropertyBuffer_ = device.createBuffer(desc);
+
+        std::cout << "Face Property Buffer Size: " << desc.size << std::endl;
+    }
+
+    // Cell Property Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(PropertyData) * n_cells_;
+        desc.mappedAtCreation = false;
+        desc.label = "Cell Property";
+
+        cellPropertyBuffer_ = device.createBuffer(desc);
+
+        std::cout << "Cell Property Buffer Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -148,7 +228,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
 
 void VolumeMeshRenderer::create_bind_group_layout()
 {
-    wgpu::BindGroupLayoutEntry entries[4]{};
+    wgpu::BindGroupLayoutEntry entries[6]{};
 
     // 0 - Uniform (MVP)
     entries[0].binding = 0;
@@ -166,16 +246,28 @@ void VolumeMeshRenderer::create_bind_group_layout()
     entries[2].binding = 2;
     entries[2].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[2].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
-    entries[2].buffer.minBindingSize = sizeof(VertexPropertyData);
+    entries[2].buffer.minBindingSize = sizeof(PropertyData);
 
     // 3 - Edge Properties
     entries[3].binding = 3;
     entries[3].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[3].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
-    entries[3].buffer.minBindingSize = sizeof(EdgePropertyData);
+    entries[3].buffer.minBindingSize = sizeof(PropertyData);
+
+    // 4 - Face Properties
+    entries[4].binding = 4;
+    entries[4].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
+    entries[4].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[4].buffer.minBindingSize = sizeof(PropertyData);
+
+    // 5 - Cell Properties
+    entries[5].binding = 5;
+    entries[5].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
+    entries[5].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[5].buffer.minBindingSize = sizeof(PropertyData);
 
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
-    layoutDesc.entryCount = 4;
+    layoutDesc.entryCount = 6;
     layoutDesc.entries = entries;
 
     bind_group_layput_ = context_.device_.createBindGroupLayout(layoutDesc);
@@ -183,7 +275,7 @@ void VolumeMeshRenderer::create_bind_group_layout()
 
 void VolumeMeshRenderer::create_bind_group()
 {
-    wgpu::BindGroupEntry groupEntries[4]{};
+    wgpu::BindGroupEntry groupEntries[6]{};
 
     // 0 - Uniform
     groupEntries[0].binding = 0;
@@ -203,19 +295,33 @@ void VolumeMeshRenderer::create_bind_group()
     groupEntries[2].binding = 2;
     groupEntries[2].buffer = vertexPropertyBuffer_;
     groupEntries[2].offset = 0;
-    groupEntries[2].size = sizeof(VertexPropertyData) * n_vertices_;
+    groupEntries[2].size = sizeof(PropertyData) * n_vertices_;
     std::cout << "2: Vertex Properties #" << groupEntries[2].size << std::endl;
 
     // 3 - Edge Properties
     groupEntries[3].binding = 3;
     groupEntries[3].buffer = edgePropertyBuffer_;
     groupEntries[3].offset = 0;
-    groupEntries[3].size = sizeof(EdgePropertyData) * n_edges_;
+    groupEntries[3].size = sizeof(PropertyData) * n_edges_;
     std::cout << "3: Edge Properties #" << groupEntries[3].size << std::endl;
+
+    // 4 - Face Properties
+    groupEntries[4].binding = 4;
+    groupEntries[4].buffer = facePropertyBuffer_;
+    groupEntries[4].offset = 0;
+    groupEntries[4].size = sizeof(PropertyData) * n_faces_;
+    std::cout << "4: Face Properties #" << groupEntries[4].size << std::endl;
+
+    // 5 - Cell Properties
+    groupEntries[5].binding = 5;
+    groupEntries[5].buffer = cellPropertyBuffer_;
+    groupEntries[5].offset = 0;
+    groupEntries[5].size = sizeof(PropertyData) * n_cells_;
+    std::cout << "5: Cell Properties #" << groupEntries[5].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = bind_group_layput_;
-    bgDesc.entryCount = 4;
+    bgDesc.entryCount = 6;
     bgDesc.entries = groupEntries;
 
     bind_group_ = context_.device_.createBindGroup(bgDesc);
@@ -223,6 +329,8 @@ void VolumeMeshRenderer::create_bind_group()
 
 void VolumeMeshRenderer::create_vertex_point_pipeline()
 {
+    if (vertex_points_pipeline_) {return;}
+
     wgpu::ShaderModule shaderModule = create_shader_module(context_.device_, vertex_shader_wgsl, "Vertex Point");
 
     // Vertex state (no vertex buffer)
@@ -276,17 +384,19 @@ void VolumeMeshRenderer::create_vertex_point_pipeline()
 
 void VolumeMeshRenderer::create_edge_line_pipeline()
 {
+    if (edge_lines_pipeline_) {return;}
+
     wgpu::ShaderModule shaderModule = create_shader_module(context_.device_, edge_shader_wgsl, "Edge Line");
 
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = 0;
+    attrs[0].offset = offsetof(EdgeHandle, vertex_index_);
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Edge Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = sizeof(uint32_t);//(void*)offsetof(EdgeHandle, edge_index);;
+    attrs[1].offset = offsetof(EdgeHandle, edge_index_);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
@@ -344,26 +454,131 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
     edge_lines_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
 }
 
-void VolumeMeshRenderer::update_vertex_property_data(const std::vector<VertexPropertyData>& _data)
+void VolumeMeshRenderer::create_face_triangle_pipeline()
+{
+    if (face_triangles_pipeline_) {return;}
+
+    wgpu::ShaderModule shaderModule = create_shader_module(context_.device_, face_shader_wgsl, "Face Triangle");
+
+    // 0 -- Vertex Index
+    wgpu::VertexAttribute attrs[2]{};
+    attrs[0].shaderLocation = 0;
+    attrs[0].offset = offsetof(FaceHandle, vertex_index_);;
+    attrs[0].format = wgpu::VertexFormat::Uint32;
+
+    // 1 -- Face Index
+    attrs[1].shaderLocation = 1;
+    attrs[1].offset = offsetof(FaceHandle, face_index_);
+    attrs[1].format = wgpu::VertexFormat::Uint32;
+
+    wgpu::VertexBufferLayout vertexBufferLayout{};
+    vertexBufferLayout.arrayStride = sizeof(FaceHandle);
+    vertexBufferLayout.attributeCount = 2;
+    vertexBufferLayout.attributes = attrs;
+    vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
+
+    // Vertex state
+    wgpu::VertexState vertexState{};
+    vertexState.module = shaderModule;
+    vertexState.entryPoint = "vs_main";
+    vertexState.bufferCount = 1;
+    vertexState.buffers = &vertexBufferLayout;
+
+    // Fragment state
+    wgpu::ColorTargetState colorTarget{};
+    wgpu::SurfaceCapabilities surf_caps;
+    context_.surface_.getCapabilities(context_.adapter_, &surf_caps);
+    colorTarget.format = surf_caps.formats[0];
+    colorTarget.writeMask = wgpu::ColorWriteMask::All;
+
+    wgpu::FragmentState fragmentState{};
+    fragmentState.module = shaderModule;
+    fragmentState.entryPoint = "fs_main";
+    fragmentState.targetCount = 1;
+    fragmentState.targets = &colorTarget;
+
+    // Primitive state
+    wgpu::PrimitiveState primitive{};
+    primitive.topology = wgpu::PrimitiveTopology::TriangleList;
+    primitive.frontFace = wgpu::FrontFace::CCW;
+    primitive.cullMode = wgpu::CullMode::None;
+
+    // Multisample
+    wgpu::MultisampleState multisample{};
+    multisample.count = 1;
+    multisample.mask = ~0u;
+    multisample.alphaToCoverageEnabled = false;
+
+    // Pipeline layout
+    wgpu::PipelineLayoutDescriptor layoutDesc{};
+    layoutDesc.bindGroupLayoutCount = 1;
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layput_);
+    wgpu::PipelineLayout pipelineLayout = context_.device_.createPipelineLayout(layoutDesc);
+
+    // Render pipeline
+    wgpu::RenderPipelineDescriptor pipelineDesc{};
+    pipelineDesc.layout = pipelineLayout;
+    pipelineDesc.vertex = vertexState;
+    pipelineDesc.fragment = &fragmentState;
+    pipelineDesc.primitive = primitive;
+    pipelineDesc.multisample = multisample;
+    // wgpu::DepthStencilState depthStencilState = wgpu::Default;
+    // depthStencilState.depthCompare = wgpu::CompareFunction::Less;
+    // depthStencilState.depthWriteEnabled = true;
+    // wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
+    // depthStencilState.format = depthTextureFormat;
+    // pipelineDesc.depthStencil = &depthStencilState;
+
+    face_triangles_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
+}
+
+void VolumeMeshRenderer::create_cell_triangle_pipeline()
+{
+
+}
+
+void VolumeMeshRenderer::update_vertex_property_data(const std::vector<PropertyData>& _data)
 {
     context_.device_.getQueue().writeBuffer(
         vertexPropertyBuffer_,
         0,
         _data.data(),
-        sizeof(VertexPropertyData) * _data.size()
+        sizeof(PropertyData) * _data.size()
         );
     std::cout << "Update Vertex Property Data" << std::endl;
 }
 
-void VolumeMeshRenderer::update_edge_property_data(const std::vector<EdgePropertyData>& _data)
+void VolumeMeshRenderer::update_edge_property_data(const std::vector<PropertyData>& _data)
 {
     context_.device_.getQueue().writeBuffer(
         edgePropertyBuffer_,
         0,
         _data.data(),
-        sizeof(EdgePropertyData) * _data.size()
+        sizeof(PropertyData) * _data.size()
         );
     std::cout << "Update Edge Property Data" << std::endl;
+}
+
+void VolumeMeshRenderer::update_face_property_data(const std::vector<PropertyData>& _data)
+{
+    context_.device_.getQueue().writeBuffer(
+        facePropertyBuffer_,
+        0,
+        _data.data(),
+        sizeof(PropertyData) * _data.size()
+        );
+    std::cout << "Update Face Property Data" << std::endl;
+}
+
+void VolumeMeshRenderer::update_cell_property_data(const std::vector<PropertyData>& _data)
+{
+    context_.device_.getQueue().writeBuffer(
+        cellPropertyBuffer_,
+        0,
+        _data.data(),
+        sizeof(PropertyData) * _data.size()
+        );
+    std::cout << "Update Cell Property Data" << std::endl;
 }
 
 void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
@@ -372,16 +587,40 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     unforms_.mvp_ = _mvp;
     context_.device_.getQueue().writeBuffer(uniformBuffer_, 0, &unforms_, sizeof(Uniforms));
 
+    // Draw faces
+    if (render_faces_ && face_triangles_pipeline_)
+    {
+        _render_pass.setPipeline(face_triangles_pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.setVertexBuffer(0, faceTriangleIndexBuffer_, 0, n_face_triangle_indices_*sizeof(FaceHandle));
+        _render_pass.draw(n_face_triangle_indices_, 1, 0, 0);
+    }
+
     // Draw points
-    _render_pass.setPipeline(vertex_points_pipeline_);
-    _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-    _render_pass.draw(n_vertex_point_indices_, 1, 0, 0);
+    if (render_vertices_ && vertex_points_pipeline_)
+    {
+        _render_pass.setPipeline(vertex_points_pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.draw(n_vertex_point_indices_, 1, 0, 0);
+    }
 
     // Draw edges
-    _render_pass.setPipeline(edge_lines_pipeline_);
-    _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-    _render_pass.setVertexBuffer(0, edgeIndexBuffer_, 0, n_edge_line_indices_*sizeof(EdgeHandle));
-    _render_pass.draw(n_edge_line_indices_, 1, 0, 0);
+    if (render_edges_ && edge_lines_pipeline_)
+    {
+        _render_pass.setPipeline(edge_lines_pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.setVertexBuffer(0, edgeIndexBuffer_, 0, n_edge_line_indices_*sizeof(EdgeHandle));
+        _render_pass.draw(n_edge_line_indices_, 1, 0, 0);
+    }
+
+    // Draw cells
+    if (render_cells_ && cell_triangles_pipeline_)
+    {
+        _render_pass.setPipeline(cell_triangles_pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.setVertexBuffer(0, cellTriangleIndexBuffer_, 0, n_cell_triangle_indices_*sizeof(CellHandle));
+        _render_pass.draw(n_cell_triangle_indices_, 1, 0, 0);
+    }
 }
 
 }

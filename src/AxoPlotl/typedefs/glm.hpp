@@ -1,6 +1,7 @@
 #pragma once
 #include "glm/fwd.hpp"
-#include "glm/glm.hpp"
+#include <ToLoG/utils/glm_Traits.hpp>
+
 
 namespace AxoPlotl {
     using Vec3f = glm::vec<3,float>;

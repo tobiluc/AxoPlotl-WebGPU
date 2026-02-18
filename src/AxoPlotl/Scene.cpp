@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "AxoPlotl/input/Mouse.hpp"
 #include "AxoPlotl/objects/VolumeMeshObject.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -9,8 +10,6 @@ namespace AxoPlotl
 void Scene::init(VolumeMeshRenderer::Context _render_context)
 {
     render_context_ = _render_context;
-
-    add_object<VolumeMeshObject>();
 
     // Initialize the Coordinate Axes Cross
     VolumeMeshRenderer::StaticData data;
@@ -26,16 +25,21 @@ void Scene::init(VolumeMeshRenderer::Context _render_context)
     data.edge_draw_indices_.push_back({.vertex_index_=3,.edge_index_=2});
     gizmo_renderer.init(_render_context, data);
 
-    std::vector<VolumeMeshRenderer::EdgePropertyData> e_props;
+    std::vector<VolumeMeshRenderer::PropertyData> e_props;
     e_props.push_back({.color_ = {1,0,0,1}});
     e_props.push_back({.color_ = {0,1,0,1}});
     e_props.push_back({.color_ = {0,0,1,1}});
     gizmo_renderer.update_edge_property_data(e_props);
 }
 
-void Scene::render(wgpu::RenderPassEncoder _render_pass)
+void Scene::render(GLFWwindow *_window, wgpu::RenderPassEncoder _render_pass)
 {
-    const Mat4x4f view_projection = perspective_.projection() * perspective_.view();
+    // Get Width and Height
+    int w, h;
+    glfwGetWindowSize(_window, &w, &h);
+
+    perspective_.update(_window);
+    const Mat4x4f view_projection = perspective_.getProjectionMatrix((float)w/(float)h) * perspective_.getViewMatrix();
 
     gizmo_renderer.render(_render_pass, view_projection);
 
