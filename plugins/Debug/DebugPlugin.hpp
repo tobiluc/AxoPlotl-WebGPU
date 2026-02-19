@@ -1,18 +1,18 @@
 #pragma once
-#include "AxoPlotl/PluginBase.hpp"
+#include <AxoPlotl/PluginBase.hpp>
 
 namespace AxoPlotl
 {
 
-class TestPlugin : public PluginBase
+class DebugPlugin : public PluginBase
 {
 public:
-    TestPlugin() {}
+    DebugPlugin() {}
 
     void render_ui(Application& app) override;
 
     const char* name() const override {
-        return "Evil Plugin";
+        return "Debug Plugin";
     }
 };
 

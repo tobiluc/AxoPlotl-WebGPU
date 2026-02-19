@@ -3,7 +3,7 @@
 # message(STATUS "Found Plugins: ${PLUGIN_SOURCES}")
 
 add_executable("${PROJECT_NAME}"
-    main.cpp
+    main.mm
     # ${PLUGIN_SOURCES}
     AxoPlotl/Application.hpp
     AxoPlotl/Application.cpp
@@ -42,6 +42,10 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/rendering/detail/create_static_render_data.cpp
     AxoPlotl/typedefs/ovm.hpp
     AxoPlotl/PluginBase.hpp
+    AxoPlotl/rendering/detail/WGPUSafeHandle.hpp
+    AxoPlotl/utils/fps.hpp
+    AxoPlotl/utils/fps.cpp
+    AxoPlotl/rendering/detail/redraw.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE

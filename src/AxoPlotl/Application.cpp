@@ -1,11 +1,15 @@
 #include "Application.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
+#include "AxoPlotl/rendering/detail/redraw.hpp"
+#include "AxoPlotl/utils/fps.hpp"
 #include "ImGuiFileDialog.h"
 #include <cassert>
 #include <imgui.h>
 #include <backends/imgui_impl_wgpu.h>
 #include <backends/imgui_impl_glfw.h>
 #include <AxoPlotl/PluginRegistry.hpp>
+#include <mach/task_info.h>
+#include <mach/mach.h>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -22,6 +26,7 @@ Application::Application()
 
 Application::~Application()
 {
+    terminate();
 }
 
 bool Application::init()
@@ -49,8 +54,8 @@ bool Application::init()
 
     glfwSetCursorPosCallback(window_, AxoPlotl::Input::mouse_callback);
     glfwSetScrollCallback(window_, AxoPlotl::Input::scroll_callback);
-    // glfwSetMouseButtonCallback(window, [](GLFWwindow*,int,int,int) {Rendering::triggerRedraw();});
-    // glfwSetKeyCallback(window, [](GLFWwindow*,int,int,int,int) {Rendering::triggerRedraw();});
+    glfwSetMouseButtonCallback(window_, [](GLFWwindow*,int,int,int) {trigger_redraw();});
+    glfwSetKeyCallback(window_, [](GLFWwindow*,int,int,int,int) {trigger_redraw();});
 
     // Drop Callback -> Drag in Files to load them
     glfwSetDropCallback(window_, [](GLFWwindow* window, int count, const char** paths) {
@@ -154,7 +159,7 @@ bool Application::init()
 
     reconfigure_surface(w, h);
 
-    scene_.init(VolumeMeshRenderer::Context{
+    scene_.init(this, VolumeMeshRenderer::Context{
         .device_=device_,
         .surface_=surface_,
         .adapter_=adapter_
@@ -162,15 +167,26 @@ bool Application::init()
 
     if (!init_gui()) {return false;}
 
+    // Plugins
+    PluginRegistry::instantiate_all();
+
     return true;
 }
 
 void Application::run()
 {
+    // Input and Time Update
+    Time::update();
     Input::Mouse::update(window_);
     glfwPollEvents();
 
-    wgpu::CommandEncoder cmdEncoder = device_.createCommandEncoder();
+    // Only render a certain number of frames
+    // before redrawing
+    if (!on_draw()) [[likely]] {
+        return;
+    }
+
+    wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
 
     // Acquire next frame texture
     wgpu::SurfaceTexture surfaceTexture;
@@ -178,7 +194,7 @@ void Application::run()
     // wgpu::TextureView backBufferView =
     //     wgpu::Texture(surfaceTexture.texture).createView();
     // Create a view for this surface texture
-    WGPUTextureViewDescriptor viewDescriptor;
+    wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
     viewDescriptor.label = "Surface texture view";
     viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
@@ -199,7 +215,7 @@ void Application::run()
     colorAttachment.view = targetView;
     colorAttachment.loadOp = wgpu::LoadOp::Clear;
     colorAttachment.storeOp = wgpu::StoreOp::Store;
-    colorAttachment.clearValue = {0.6f, 0.6f, 0.6f, 1.0f};
+    colorAttachment.clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
     colorAttachment.resolveTarget = nullptr;
     colorAttachment.nextInChain = nullptr;
 #ifndef WEBGPU_BACKEND_WGPU
@@ -211,10 +227,10 @@ void Application::run()
     renderPassDesc.colorAttachments = &colorAttachment;
 
     wgpu::RenderPassEncoder renderPass =
-        cmdEncoder.beginRenderPass(renderPassDesc);
+        cmd_encoder.beginRenderPass(renderPassDesc);
 
     // Call renderer
-    scene_.render(window_, renderPass);
+    scene_.render(renderPass);
 
     update_gui(renderPass);
 
@@ -222,12 +238,20 @@ void Application::run()
     renderPass.end();
 
     // Submit
-    wgpu::CommandBuffer cmdBuffer = cmdEncoder.finish();
+    wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
     queue_.submit(1, &cmdBuffer);
 
     // Present
     surface_.present();
-    wgpuTextureRelease(surfaceTexture.texture);
+
+    // Cleanup
+    targetView.release();
+    renderPass.release();
+    cmdBuffer.release();
+    cmd_encoder.release();
+    //wgpuTextureRelease(surfaceTexture.texture);
+
+    device_.tick();
 }
 
 void Application::on_window_resize(float width, float height)
@@ -260,7 +284,8 @@ bool Application::init_gui()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-     ImGui::GetIO();
+    auto& io = ImGui::GetIO();
+
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOther(window_, true);
@@ -304,10 +329,11 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
             ImGui::EndMenu();
         }
 
-        // Help menu
-        if (ImGui::BeginMenu("Help"))
+        if (ImGui::BeginMenu("Settings"))
         {
-            ImGui::EndMenu();
+            ImGui::ColorEdit3("Clear color", clear_color_);
+            ImGui::Checkbox("Zoom to new object", &zoom_to_new_object_);
+            ImGui::EndMenu(); // !Settings
         }
 
         ImGui::EndMainMenuBar();
@@ -322,10 +348,9 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         ImGuiFileDialog::Instance()->Close();
     }
 
-    auto& plugins = PluginRegistry::get_plugins();
-    for (const auto& plugin : plugins) {
-        if (ImGui::CollapsingHeader(plugin->name())) {
-            plugin->render_ui(*this);
+    for (const auto& plugin : PluginRegistry::get_plugins()) {
+        if (ImGui::CollapsingHeader(plugin.second->name())) {
+            plugin.second->render_ui(*this);
         }
     }
 

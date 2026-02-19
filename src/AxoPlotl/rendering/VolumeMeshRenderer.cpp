@@ -623,4 +623,22 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     }
 }
 
+void VolumeMeshRenderer::release()
+{
+    positionBuffer_.release();
+    vertexIndexBuffer_.release();
+    edgeIndexBuffer_.release();
+    faceTriangleIndexBuffer_.release();
+    cellTriangleIndexBuffer_.release();
+
+    vertexPropertyBuffer_.release();
+    edgePropertyBuffer_.release();
+    facePropertyBuffer_.release();
+    cellPropertyBuffer_.release();
+    uniformBuffer_.release();
+
+    bind_group_layput_.release();
+    bind_group_.release();
+}
+
 }

@@ -1,14 +1,13 @@
 #include "Scene.hpp"
-#include "AxoPlotl/input/Mouse.hpp"
-#include "AxoPlotl/objects/VolumeMeshObject.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include <AxoPlotl/Application.hpp>
 
 namespace AxoPlotl
 {
 
-void Scene::init(VolumeMeshRenderer::Context _render_context)
+void Scene::init(Application *_app, VolumeMeshRenderer::Context _render_context)
 {
+    app_ = _app;
+
     render_context_ = _render_context;
 
     // Initialize the Coordinate Axes Cross
@@ -32,13 +31,13 @@ void Scene::init(VolumeMeshRenderer::Context _render_context)
     gizmo_renderer.update_edge_property_data(e_props);
 }
 
-void Scene::render(GLFWwindow *_window, wgpu::RenderPassEncoder _render_pass)
+void Scene::render(wgpu::RenderPassEncoder _render_pass)
 {
     // Get Width and Height
     int w, h;
-    glfwGetWindowSize(_window, &w, &h);
+    glfwGetWindowSize(app_->window(), &w, &h);
 
-    perspective_.update(_window);
+    perspective_.update(app_->window());
     const Mat4x4f view_projection = perspective_.getProjectionMatrix((float)w/(float)h) * perspective_.getViewMatrix();
 
     gizmo_renderer.render(_render_pass, view_projection);
@@ -46,6 +45,13 @@ void Scene::render(GLFWwindow *_window, wgpu::RenderPassEncoder _render_pass)
     for (const auto& obj : objects_) {
         obj->render(_render_pass, view_projection);
     }
+
+    // Remove deleted objects
+    objects_.erase(
+        std::remove_if(objects_.begin(), objects_.end(), [&](const std::unique_ptr<ObjectBase>& _obj) {
+            return _obj->is_deleted();
+        }), objects_.end());
+    objects_.shrink_to_fit();
 }
 
 }

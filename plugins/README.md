@@ -31,7 +31,7 @@ public:
 };
 }
 ```
-2. Create a Plugin source (.cpp <-- IMPORTANT!) and add this line within the AxoPlotl namespace:
+2. Create a Plugin source and add this line within the AxoPlotl namespace:
 ```
 REGISTER_AXOPLOTL_PLUGIN(MyNewPlugin)
 ```
@@ -52,7 +52,7 @@ REGISTER_AXOPLOTL_PLUGIN(TestPlugin)
 
 }
 ```
-3. Add the MyNewPlugin.cpp to the Plugin.cmake. You can also link
+3. Add the MyNewPlugin.cpp to the Plugin.cmake within the plugins folder. You can also link
 external libraries to it:
 ```
 add_plugin(${PLUGINS_DIR}/MyNewPlugin.cpp

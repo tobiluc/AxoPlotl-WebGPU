@@ -1,4 +1,5 @@
 #include "Mouse.hpp"
+#include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "imgui.h"
 
 namespace AxoPlotl::Input
@@ -29,7 +30,7 @@ void Mouse::update(GLFWwindow* window)
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
-    // Rendering::triggerRedraw();
+    trigger_redraw();
     if (ImGui::GetIO().WantCaptureMouse) {return;}
 
     Mouse::POSITION_DELTA[0] = (float)(mouse_x - Mouse::POSITION[0]);
@@ -42,7 +43,7 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 
 void scroll_callback(GLFWwindow* window, double dx, double dy)
 {
-    // Rendering::triggerRedraw();
+    trigger_redraw();
     if (ImGui::GetIO().WantCaptureMouse) {return;}
 
     Mouse::SCROLL_DELTA[0] = dx;

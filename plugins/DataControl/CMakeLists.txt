@@ -1,0 +1,1 @@
+add_axoplotl_plugin(ObjectListPlugin.cpp)

@@ -18,11 +18,11 @@ int main()
     emscripten_set_main_loop_arg(callback, &app, 0, true);
 #else // __EMSCRIPTEN__
     while (!glfwWindowShouldClose(app.window())) {
-        app.run();
+        @autoreleasepool {
+            app.run();
+        }
     }
 #endif // __EMSCRIPTEN__
-
-    app.terminate();
 
     return 0;
 }

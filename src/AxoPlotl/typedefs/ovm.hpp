@@ -7,7 +7,8 @@ namespace AxoPlotl
 
 namespace OVM = OpenVolumeMesh;
 
-using VolumeMesh = OpenVolumeMesh::GeometryKernel<OpenVolumeMesh::Vec3f, OpenVolumeMesh::TopologyKernel>;;
+using VolumeMesh = OpenVolumeMesh::GeometryKernel<
+    OVM::Vec3f, OpenVolumeMesh::TopologyKernel>;;
 
 template<typename Entity>
 struct EntityType {};

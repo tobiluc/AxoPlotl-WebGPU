@@ -3,6 +3,6 @@
 namespace AxoPlotl
 {
 
-int BaseObject::id_counter_ = 0;
+int ObjectBase::id_counter_ = 0;
 
 }

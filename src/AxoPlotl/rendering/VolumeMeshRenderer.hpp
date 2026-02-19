@@ -63,6 +63,10 @@ public:
 
     VolumeMeshRenderer() {}
 
+    ~VolumeMeshRenderer() {
+        release();
+    }
+
     // Setup Pipeline and layouts for given static data
     void init(Context _context, const StaticData& _data);
 
@@ -75,6 +79,8 @@ public:
     void update_cell_property_data(const std::vector<PropertyData>& _data);
 
     void render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
+
+    void release();
 private:
     size_t n_positions_;
     size_t n_vertices_;

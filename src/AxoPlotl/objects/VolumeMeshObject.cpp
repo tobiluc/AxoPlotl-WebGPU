@@ -35,7 +35,10 @@ void VolumeMeshObject::init_renderer(VolumeMeshRenderer::Context _render_context
 
 void VolumeMeshObject::recompute_bounding_box()
 {
-
+    bbox_.make_empty();
+    for (const auto& p : mesh_.vertex_positions()) {
+        bbox_.expand(Vec3f(p[0],p[1],p[2]));
+    }
 }
 
 }

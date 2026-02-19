@@ -37,6 +37,9 @@ public:
 
     inline GLFWwindow* window() {return window_;}
 
+    bool zoom_to_new_object_ = true;
+    float clear_color_[3] = {1,1,1};
+
 private:
     GLFWwindow* window_;
 

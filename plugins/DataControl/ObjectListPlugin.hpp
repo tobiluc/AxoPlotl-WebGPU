@@ -4,15 +4,15 @@
 namespace AxoPlotl
 {
 
-class TestPlugin2 : public PluginBase
+class ObjectListPlugin : public PluginBase
 {
 public:
-    TestPlugin2() {}
+    ObjectListPlugin() {}
 
     void render_ui(Application& app) override;
 
     const char* name() const override {
-        return "Bestest Plugin";
+        return "Object List";
     }
 };
 

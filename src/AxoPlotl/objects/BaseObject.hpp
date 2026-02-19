@@ -5,17 +5,17 @@
 namespace AxoPlotl
 {
 
-class BaseObject
+class ObjectBase
 {
 public:
-    BaseObject(std::string _name) :
+    ObjectBase(std::string _name) :
         id_(++id_counter_),
         name_(_name),
         renderer_(),
         transform_(1)
     {}
 
-    virtual ~BaseObject() = default;
+    virtual ~ObjectBase() = default;
 
     virtual void init_renderer(VolumeMeshRenderer::Context _context) = 0;
 
@@ -27,9 +27,20 @@ public:
 
     virtual void render_ui() = 0;
 
-    inline const ToLoG::AABB<ToLoG::Point<float,3>>& bounding_box() const
-    {
+    inline const ToLoG::AABB<Vec3f>& bounding_box() const {
         return bbox_;
+    }
+
+    inline void set_deleted() {
+        deleted_ = true;
+    }
+
+    inline bool is_deleted() const {
+        return deleted_;
+    }
+
+    inline const std::string& name() const {
+        return name_;
     }
 
 protected:
@@ -38,7 +49,8 @@ protected:
     VolumeMeshRenderer renderer_;
     Mat4x4f transform_;
     static int id_counter_;
-    ToLoG::AABB<ToLoG::Point<float,3>> bbox_;
+    ToLoG::AABB<Vec3f> bbox_;
+    bool deleted_ = false;
 };
 
 };
