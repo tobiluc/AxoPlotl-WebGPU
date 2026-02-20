@@ -4,12 +4,19 @@ namespace AxoPlotl
 {
 
 inline const char* face_shader_wgsl = R"(
+
+alias Mode = u32;
+const MODE_COLOR:Mode = 0;
+const MODE_SCALAR:Mode = 1;
+const MODE_VEC3:Mode = 2;
+
 struct FaceProperty {
-    color : vec4<f32>
+    value : vec4<f32>
 };
 
 struct Uniforms {
-    mvp : mat4x4<f32>
+    mvp: mat4x4<f32>,
+    mode: Mode
 };
 
 @group(0) @binding(0)
@@ -35,10 +42,16 @@ fn vs_main(
     var out : V2F;
 
     let pos = positions[vertex_index];
-    let color = face_props[face_index].color;
+    let value = face_props[face_index].value;
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
-    out.color = color;
+    if (ubo.mode == MODE_COLOR) {
+        out.color = value;
+    } else if (ubo.mode == MODE_SCALAR) {
+        out.color = vec4<f32>(1,0,0,1);
+    } else if (ubo.mode == MODE_VEC3) {
+        out.color = vec4<f32>(normalize(value.xyz),1.0);
+    }
 
     return out;
 }

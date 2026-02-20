@@ -41,7 +41,7 @@ public:
     void add_object(Args... _args)
     {
         objects_.push_back(std::make_unique<Object>(_args...));
-        objects_.back()->init_renderer(render_context_);
+        objects_.back()->init(render_context_);
         objects_.back()->recompute_bounding_box();
         zoom_to_box(objects_.back()->bounding_box());
     }

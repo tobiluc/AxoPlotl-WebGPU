@@ -7,14 +7,31 @@
 namespace AxoPlotl
 {
 
-void DataControlPlugin::render_ui(Application& app)
+void DataControlPlugin::render_ui(Application& _app)
 {
-    for (const auto& obj : app.scene().get_objects()) {
-        ImGui::Checkbox("##V", obj->visible());
+    for (const auto& obj : _app.scene().get_objects()) {
+        ImGui::PushID(obj->id());
+
+        // Visible Checkbox
+        ImGui::Checkbox("##V", &obj->visible());
         ImGui::SameLine();
+
+        // Toggle Selected
         if (ImGui::Selectable(obj->name().c_str())) {
-            app.scene().zoom_to_box(obj->bounding_box());
+            obj->selected() = !obj->selected();
         }
+
+        // Expand Menu
+        if (obj->selected()) {
+            // if (ImGui::Button("Focus")) {
+            //     _app.scene().zoom_to_box(obj->bounding_box());
+            // }
+            obj->render_ui();
+            if (ImGui::Button("Delete Object")) {
+                obj->deleted() = true;
+            }
+        }
+        ImGui::PopID();
     }
 }
 

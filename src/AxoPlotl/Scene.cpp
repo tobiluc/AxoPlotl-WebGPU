@@ -24,10 +24,10 @@ void Scene::init(Application *_app, VolumeMeshRenderer::Context _render_context)
     data.edge_draw_indices_.push_back({.vertex_index_=3,.edge_index_=2});
     gizmo_renderer.init(_render_context, data);
 
-    std::vector<VolumeMeshRenderer::PropertyData> e_props;
-    e_props.push_back({.color_ = {1,0,0,1}});
-    e_props.push_back({.color_ = {0,1,0,1}});
-    e_props.push_back({.color_ = {0,0,1,1}});
+    std::vector<VolumeMeshRenderer::Property::Data> e_props;
+    e_props.push_back({.value_ = {1,0,0,1}});
+    e_props.push_back({.value_ = {0,1,0,1}});
+    e_props.push_back({.value_ = {0,0,1,1}});
     gizmo_renderer.update_edge_property_data(e_props);
 }
 
@@ -49,7 +49,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     // Remove deleted objects
     objects_.erase(
         std::remove_if(objects_.begin(), objects_.end(), [&](const std::unique_ptr<ObjectBase>& _obj) {
-            return _obj->is_deleted();
+            return _obj->deleted();
         }), objects_.end());
     objects_.shrink_to_fit();
 }

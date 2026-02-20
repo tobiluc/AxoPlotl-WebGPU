@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxoPlotl/properties/property_filters.hpp"
 #include "AxoPlotl/typedefs/ToLoG.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
@@ -13,6 +14,10 @@ class VolumeMeshObject : public ObjectBase
 private:
     VolumeMesh mesh_;
     std::optional<std::filesystem::path> filepath_;
+    std::optional<OVM::PropertyStorageBase*> prop_;
+    std::vector<std::shared_ptr<PropertyFilterBase>> prop_filters_;
+
+    void upload_default_property_data();
 
 public:
     VolumeMeshObject(VolumeMesh& _mesh,
@@ -28,7 +33,7 @@ public:
 
     void render_ui() override;
 
-    void init_renderer(VolumeMeshRenderer::Context _render_context) override;
+    void init(VolumeMeshRenderer::Context _render_context) override;
 
     void recompute_bounding_box() override;
 

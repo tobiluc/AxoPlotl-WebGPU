@@ -17,7 +17,7 @@ public:
 
     virtual ~ObjectBase() = default;
 
-    virtual void init_renderer(VolumeMeshRenderer::Context _context) = 0;
+    virtual void init(VolumeMeshRenderer::Context _context) = 0;
 
     virtual void recompute_bounding_box() = 0;
 
@@ -31,20 +31,24 @@ public:
         return bbox_;
     }
 
-    inline bool* visible() {
-        return &renderer_.render_anything_;
+    inline bool& visible() {
+        return renderer_.render_anything_;
     }
 
-    inline void set_deleted() {
-        deleted_ = true;
+    inline bool& selected() {
+        return selected_;
     }
 
-    inline bool is_deleted() const {
+    inline bool& deleted() {
         return deleted_;
     }
 
     inline const std::string& name() const {
         return name_;
+    }
+
+    inline const int id() const {
+        return id_;
     }
 
 protected:
@@ -55,6 +59,7 @@ protected:
     static int id_counter_;
     ToLoG::AABB<Vec3f> bbox_;
     bool deleted_ = false;
+    bool selected_ = false;
 };
 
 };

@@ -1,10 +1,7 @@
 # todo: allow plugins with external dependencies
-# file(GLOB PLUGIN_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/AxoPlotl/plugins/*.cpp")
-# message(STATUS "Found Plugins: ${PLUGIN_SOURCES}")
 
 add_executable("${PROJECT_NAME}"
     main.mm
-    # ${PLUGIN_SOURCES}
     AxoPlotl/Application.hpp
     AxoPlotl/Application.cpp
     AxoPlotl/utils/web_gpu_utils.h
@@ -46,7 +43,13 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/utils/fps.hpp
     AxoPlotl/utils/fps.cpp
     AxoPlotl/rendering/detail/redraw.cpp
-    AxoPlotl/rendering/detail/depth.hpp
+    AxoPlotl/rendering/detail/wgpu_commons.hpp
+    AxoPlotl/rendering/ColorMap.hpp
+    AxoPlotl/rendering/ColorMap.cpp
+    AxoPlotl/properties/property_calculations.cpp
+    AxoPlotl/properties/property_data.hpp
+    AxoPlotl/properties/property_filters.hpp
+    AxoPlotl/utils/commons.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE

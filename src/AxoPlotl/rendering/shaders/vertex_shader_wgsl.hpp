@@ -4,8 +4,15 @@ namespace AxoPlotl
 {
 
 inline const char* vertex_shader_wgsl = R"(
+
+alias Mode = u32;
+const MODE_COLOR:Mode = 0;
+const MODE_SCALAR:Mode = 1;
+const MODE_VEC3:Mode = 2;
+
 struct Uniforms {
-    mvp : mat4x4<f32>
+    mvp : mat4x4<f32>,
+    mode:Mode
 };
 
 @group(0) @binding(0)
@@ -29,7 +36,6 @@ struct VSOut {
 @vertex
 fn vs_main(@builtin(vertex_index) vid : u32) -> VSOut {
     var out : VSOut;
-
     let pos = positions[vid];
     let color = vertexProps[vid].color;
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "AxoPlotl/rendering/ColorMap.hpp"
 #include "AxoPlotl/typedefs/glm.hpp"
 #include <webgpu/webgpu.hpp>
 #include <vector>
@@ -9,12 +10,28 @@ namespace AxoPlotl
 class VolumeMeshRenderer
 {
 public:
+    struct Property
+    {
+        enum class Mode : uint32_t {
+            TRANSPARENT = UINT32_MAX,
+            COLOR = 0,
+            SCALAR = 1,
+            VEC3 = 2,
+        } mode_ = Mode::COLOR;
+        struct Data {
+            Vec4f value_ = {0,0,0,1};
+        };
+        union Filter {
+            Vec2f scalar_range_ = {-1,1};
+        } filter_;
+        ColorMap color_map_;
+    };
 
     bool render_anything_ = true;
-    bool render_vertices_ = true;
-    bool render_edges_ = true;
-    bool render_faces_ = true;
-    bool render_cells_ = true;
+    Property vertex_property_;
+    Property edge_property_;
+    Property face_property_;
+    Property cell_property_;
 
     struct Context {
         wgpu::Device device_;
@@ -25,12 +42,11 @@ public:
     float line_width_ = 5.0f;
     float point_size_ = 12.0f;
 
+    // Mirrors Shader Unfiforms
     struct Uniforms {
-        Mat4x4f mvp_;
-    } unforms_;
-
-    struct PropertyData {
-        Vec4f color_;
+        Mat4x4f mvp_; // 64b
+        Property::Mode mode_ = Property::Mode::COLOR; // 4b
+        std::byte padding_[12]; // total must be multiple of 16 bytes
     };
 
     using Position = Vec4f;
@@ -70,13 +86,13 @@ public:
     // Setup Pipeline and layouts for given static data
     void init(const Context& _context, const StaticData& _data);
 
-    void update_vertex_property_data(const std::vector<PropertyData>& _data);
+    void update_vertex_property_data(const std::vector<Property::Data>& _data);
 
-    void update_edge_property_data(const std::vector<PropertyData>& _data);
+    void update_edge_property_data(const std::vector<Property::Data>& _data);
 
-    void update_face_property_data(const std::vector<PropertyData>& _data);
+    void update_face_property_data(const std::vector<Property::Data>& _data);
 
-    void update_cell_property_data(const std::vector<PropertyData>& _data);
+    void update_cell_property_data(const std::vector<Property::Data>& _data);
 
     void render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
 
@@ -115,11 +131,11 @@ private:
     wgpu::Buffer faceTriangleIndexBuffer_;
     wgpu::Buffer cellTriangleIndexBuffer_;
 
-    wgpu::Buffer vertexPropertyBuffer_;
-    wgpu::Buffer edgePropertyBuffer_;
-    wgpu::Buffer facePropertyBuffer_;
-    wgpu::Buffer cellPropertyBuffer_;
-    wgpu::Buffer uniformBuffer_;
+    wgpu::Buffer vertex_property_buffer_;
+    wgpu::Buffer edge_property_buffer_;
+    wgpu::Buffer face_property_buffer_;
+    wgpu::Buffer cell_property_buffer_;
+    wgpu::Buffer uniform_buffer_;
 
     static wgpu::RenderPipeline vertex_points_pipeline_;
     static wgpu::RenderPipeline edge_lines_pipeline_;
@@ -127,7 +143,7 @@ private:
     static wgpu::RenderPipeline cell_triangles_pipeline_;
     static wgpu::DepthStencilState depth_stencil_state_;
 
-    wgpu::BindGroupLayout bind_group_layput_;
+    static wgpu::BindGroupLayout bind_group_layout_;
     wgpu::BindGroup bind_group_;
 
 };

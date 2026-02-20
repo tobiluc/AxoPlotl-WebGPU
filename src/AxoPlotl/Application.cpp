@@ -10,7 +10,7 @@
 #include <AxoPlotl/PluginRegistry.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
-#include <AxoPlotl/rendering/detail/depth.hpp>
+#include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -279,9 +279,6 @@ void Application::run()
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
     queue_.submit(1, &cmdBuffer);
 
-    // Present
-    surface_.present();
-
     // Cleanup
     targetView.release();
     renderPass.release();
@@ -289,7 +286,15 @@ void Application::run()
     cmd_encoder.release();
     //wgpuTextureRelease(surfaceTexture.texture);
 
+#ifndef __EMSCRIPTEN__
+    surface_.present();
+#endif
+
+#if defined(WEBGPU_BACKEND_DAWN)
     device_.tick();
+#elif defined(WEBGPU_BACKEND_WGPU)
+    device.poll(false);
+#endif
 }
 
 void Application::on_window_resize(float width, float height)
@@ -312,16 +317,18 @@ void Application::terminate()
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
 
-    adapter_.release();
-    surface_.unconfigure();
-    queue_.release();
-    surface_.release();
-    device_.release();
-    adapter_.release();
-
-    depthTextureView.release();
-    depthTexture.destroy();
-    depthTexture.release();
+    if (queue_) {queue_.release();}
+    if (surface_) {
+        surface_.unconfigure();
+        surface_.release();
+    }
+    if (device_) {device_.release();}
+    if (adapter_) {adapter_.release();}
+    if (depthTextureView) {depthTextureView.release();}
+    if (depthTexture) {
+        depthTexture.destroy();
+        depthTexture.release();
+    }
 
     glfwDestroyWindow(window_);
     glfwTerminate();
