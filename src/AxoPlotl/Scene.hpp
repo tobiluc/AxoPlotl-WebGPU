@@ -43,11 +43,16 @@ public:
         objects_.push_back(std::make_unique<Object>(_args...));
         objects_.back()->init_renderer(render_context_);
         objects_.back()->recompute_bounding_box();
-        trigger_redraw();
+        zoom_to_box(objects_.back()->bounding_box());
     }
 
     const std::vector<std::unique_ptr<ObjectBase>>& get_objects() const {
         return objects_;
+    }
+
+    inline void zoom_to_box(const ToLoG::AABB<Vec3f>& _bbox) {
+        perspective_.zoom_to_box(_bbox.min(),_bbox.max());
+        trigger_redraw();
     }
 
 protected:

@@ -12,3 +12,8 @@ bool AxoPlotl::on_draw()
     n_frames_ -= (n_frames_>0);
     return (n_frames_>0);
 }
+
+uint32_t AxoPlotl::n_draw_frames()
+{
+    return n_frames_;
+}

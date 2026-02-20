@@ -68,7 +68,7 @@ public:
     }
 
     // Setup Pipeline and layouts for given static data
-    void init(Context _context, const StaticData& _data);
+    void init(const Context& _context, const StaticData& _data);
 
     void update_vertex_property_data(const std::vector<PropertyData>& _data);
 
@@ -125,6 +125,7 @@ private:
     static wgpu::RenderPipeline edge_lines_pipeline_;
     static wgpu::RenderPipeline face_triangles_pipeline_;
     static wgpu::RenderPipeline cell_triangles_pipeline_;
+    static wgpu::DepthStencilState depth_stencil_state_;
 
     wgpu::BindGroupLayout bind_group_layput_;
     wgpu::BindGroup bind_group_;

@@ -46,6 +46,7 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/utils/fps.hpp
     AxoPlotl/utils/fps.cpp
     AxoPlotl/rendering/detail/redraw.cpp
+    AxoPlotl/rendering/detail/depth.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE

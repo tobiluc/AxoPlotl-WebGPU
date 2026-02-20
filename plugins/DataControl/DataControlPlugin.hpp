@@ -4,15 +4,15 @@
 namespace AxoPlotl
 {
 
-class ObjectListPlugin : public PluginBase
+class DataControlPlugin : public PluginBase
 {
 public:
-    ObjectListPlugin() {}
+    DataControlPlugin() {}
 
     void render_ui(Application& app) override;
 
     const char* name() const override {
-        return "Object List";
+        return "Data Control";
     }
 };
 

@@ -1,8 +1,8 @@
 #pragma once
+#include "AxoPlotl/PluginBase.hpp"
 #include <functional>
-#include <iostream>
 #include <typeindex>
-#include <vector>
+#include <string>
 
 namespace AxoPlotl
 {
@@ -73,12 +73,19 @@ public:
 
 }
 
+#if defined(_MSC_VER)
+#define AXOPLOTL_USED __declspec(selectany)
+#else
+#define AXOPLOTL_USED __attribute__((used))
+#endif
+
 // Must be called within a Plugin.cpp
 // within the AxoPlotl namespace
 #define REGISTER_AXOPLOTL_PLUGIN(PluginType)\
 namespace {\
-    inline const bool registered_##PluginType = []{\
+    AXOPLOTL_USED inline const bool registered_##PluginType = []{\
         PluginRegistry::register_plugin<PluginType>();\
         return true;\
     }();\
 }
+

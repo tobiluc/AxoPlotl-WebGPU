@@ -31,6 +31,10 @@ public:
         return bbox_;
     }
 
+    inline bool* visible() {
+        return &renderer_.render_anything_;
+    }
+
     inline void set_deleted() {
         deleted_ = true;
     }

@@ -37,7 +37,6 @@ public:
 
     inline GLFWwindow* window() {return window_;}
 
-    bool zoom_to_new_object_ = true;
     float clear_color_[3] = {1,1,1};
 
 private:
@@ -48,6 +47,9 @@ private:
     wgpu::Adapter adapter_;
     wgpu::Surface surface_;
     wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
+    wgpu::Texture depthTexture;
+    wgpu::TextureView depthTextureView;
+    wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Undefined;
 
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
@@ -57,9 +59,9 @@ private:
 
     void update_gui(wgpu::RenderPassEncoder _render_pass);
 
-    void terminate_gui();
+    void configure_surface();
 
-    void reconfigure_surface(float width, float height);
+    void create_depth_texture();
 };
 
 }

@@ -10,6 +10,7 @@
 #include <AxoPlotl/PluginRegistry.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
+#include <AxoPlotl/rendering/detail/depth.hpp>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -22,7 +23,8 @@ namespace AxoPlotl
 {
 
 Application::Application()
-{}
+{
+}
 
 Application::~Application()
 {
@@ -42,6 +44,9 @@ bool Application::init()
     }
     assert(window_);
 
+    //-----------
+    // Callbacks
+    //-----------
     // Handle Resizing
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwSetWindowUserPointer(window_, this);
@@ -145,29 +150,39 @@ bool Application::init()
 
     queue_ = device_.getQueue();
 
-    //------------------
-    // Surface
-    //------------------
 
+    //----------
+    // Surface
+    //----------
     wgpu::SurfaceCapabilities capabilities = {};
     surface_.getCapabilities(adapter_, &capabilities);
     color_format_ = capabilities.formats[0];
+    configure_surface();
 
-    // Get Width and Height
-    int w, h;
-    glfwGetWindowSize(window_, &w, &h);
+    //----------
+    // Depth
+    //----------
+    create_depth_texture();
 
-    reconfigure_surface(w, h);
-
+    //----------
+    // Scene
+    //----------
     scene_.init(this, VolumeMeshRenderer::Context{
         .device_=device_,
         .surface_=surface_,
         .adapter_=adapter_
     });
 
-    if (!init_gui()) {return false;}
+    //----------
+    // Gui
+    //----------
+    if (!init_gui()) {
+        return false;
+    }
 
+    //----------
     // Plugins
+    //----------
     PluginRegistry::instantiate_all();
 
     return true;
@@ -210,7 +225,7 @@ void Application::run()
         wgpuTextureRelease(surfaceTexture.texture);
 #endif // WEBGPU_BACKEND_WGPU
 
-    // Begin render pass
+    // Color Attachment
     wgpu::RenderPassColorAttachment colorAttachment{};
     colorAttachment.view = targetView;
     colorAttachment.loadOp = wgpu::LoadOp::Clear;
@@ -225,13 +240,36 @@ void Application::run()
     wgpu::RenderPassDescriptor renderPassDesc{};
     renderPassDesc.colorAttachmentCount = 1;
     renderPassDesc.colorAttachments = &colorAttachment;
+    renderPassDesc.label = "Main Render Pass";
 
+    // Depth Attachment
+    wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
+    depthStencilAttachment.view = depthTextureView;
+    depthStencilAttachment.depthClearValue = 1.0f; // "far"
+    depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
+    depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
+    depthStencilAttachment.depthReadOnly = false; // could turn off writing to depth buffer
+    depthStencilAttachment.stencilClearValue = 0;
+#ifdef WEBGPU_BACKEND_WGPU
+    depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Clear;
+    depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Store;
+#endif
+#ifdef WEBGPU_BACKEND_DAWN
+    depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Undefined;
+    depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Undefined;
+    //depthStencilAttachment.depthClearValue = std::numeric_limits<float>::quiet_NaN();
+#endif
+    depthStencilAttachment.stencilReadOnly = true;
+    renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
+
+    // Begin render pass
     wgpu::RenderPassEncoder renderPass =
         cmd_encoder.beginRenderPass(renderPassDesc);
 
-    // Call renderer
+    // Render Scene
     scene_.render(renderPass);
 
+    // Render  Gui
     update_gui(renderPass);
 
     // End pass
@@ -258,15 +296,21 @@ void Application::on_window_resize(float width, float height)
 {
     if (width == 0|| height == 0) {return;} // window minimized
 
-    surface_.unconfigure();
-    reconfigure_surface(width, height);
+    // Framebuffer size
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+
+    //surface_.unconfigure();
+    configure_surface();
+    create_depth_texture();
 
     //pipeline.updateProjection(width/height);
 }
 
 void Application::terminate()
 {
-    terminate_gui();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui_ImplWGPU_Shutdown();
 
     adapter_.release();
     surface_.unconfigure();
@@ -274,6 +318,10 @@ void Application::terminate()
     surface_.release();
     device_.release();
     adapter_.release();
+
+    depthTextureView.release();
+    depthTexture.destroy();
+    depthTexture.release();
 
     glfwDestroyWindow(window_);
     glfwTerminate();
@@ -291,8 +339,7 @@ bool Application::init_gui()
     ImGui_ImplGlfw_InitForOther(window_, true);
     wgpu::SurfaceCapabilities surf_caps{};
     surface_.getCapabilities(adapter_, &surf_caps);
-    // TODO: pass depth format
-    ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0]);
+    ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
 
     return true;
 }
@@ -332,7 +379,6 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         if (ImGui::BeginMenu("Settings"))
         {
             ImGui::ColorEdit3("Clear color", clear_color_);
-            ImGui::Checkbox("Zoom to new object", &zoom_to_new_object_);
             ImGui::EndMenu(); // !Settings
         }
 
@@ -369,14 +415,10 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
 }
 
-void Application::terminate_gui()
+void Application::configure_surface()
 {
-    ImGui_ImplGlfw_Shutdown();
-    ImGui_ImplWGPU_Shutdown();
-}
+    if (surface_) {surface_.unconfigure();}
 
-void Application::reconfigure_surface(float width, float height)
-{
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
 
@@ -397,6 +439,50 @@ void Application::reconfigure_surface(float width, float height)
     config.alphaMode = wgpu::CompositeAlphaMode::Auto;
 
     surface_.configure(config);
+}
+
+void Application::create_depth_texture()
+{
+    if (depthTextureView) {depthTextureView.release();}
+    if (depthTexture) {
+        depthTexture.destroy();
+        depthTexture.release();
+    }
+
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+
+    wgpu::DepthStencilState depthStencilState = create_default_depth_state();
+    depthTextureFormat = depthStencilState.format;
+
+    // Create the depth texture
+    wgpu::TextureDescriptor depthTextureDesc;
+    depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
+    depthTextureDesc.format = depthTextureFormat;
+    depthTextureDesc.mipLevelCount = 1;
+    depthTextureDesc.sampleCount = 1;
+    depthTextureDesc.size = {
+        static_cast<uint32_t>(fbWidth),
+        static_cast<uint32_t>(fbHeight),
+        1};
+    depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
+    depthTextureDesc.viewFormatCount = 1;
+    depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depthTextureFormat;
+    depthTexture = device_.createTexture(depthTextureDesc);
+
+    // Create the view of the depth texture manipulated by the rasterizer
+    wgpu::TextureViewDescriptor depthTextureViewDesc;
+    depthTextureViewDesc.aspect = wgpu::TextureAspect::DepthOnly;
+    depthTextureViewDesc.baseArrayLayer = 0;
+    depthTextureViewDesc.arrayLayerCount = 1;
+    depthTextureViewDesc.baseMipLevel = 0;
+    depthTextureViewDesc.mipLevelCount = 1;
+    depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
+    depthTextureViewDesc.format = depthTextureFormat;
+    depthTextureView = depthTexture.createView(depthTextureViewDesc);
+
+    depthStencilState.stencilReadMask = 0;
+    depthStencilState.stencilWriteMask = 0;
 }
 
 }

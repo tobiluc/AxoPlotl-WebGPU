@@ -24,6 +24,7 @@ void DebugPlugin::render_ui(Application& app)
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", memory_usage_mb());
     ImGui::Text("%f FPS", Time::FRAMES_PER_SECOND);
+    ImGui::Text("Draw Frames %d", n_draw_frames());
     ImGui::SeparatorText("Scene");
     ImGui::Text("#Objects: %zu", app.scene().get_objects().size());
 }

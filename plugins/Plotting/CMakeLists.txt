@@ -8,4 +8,4 @@ if (NOT TARGET ibex)
     FetchContent_MakeAvailable(ibex)
 endif()
 
-add_axoplotl_plugin(PlottingPlugin.cpp LINK_LIBS ibex)
+#add_axoplotl_plugin(PlottingPlugin.cpp LINK_LIBS ibex)

@@ -3,7 +3,7 @@ function(add_axoplotl_plugin plugin_src)
     # Extract Plugin Name and create library for it
     get_filename_component(plugin_name ${plugin_src} NAME_WE)
     set(PLUGIN_LIB lib${plugin_name})
-    add_library(${PLUGIN_LIB} OBJECT ${plugin_src})
+    add_library(${PLUGIN_LIB} STATIC ${plugin_src})
 
     # Optional arguments: include dirs, link libs
     set(options)

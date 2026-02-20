@@ -1,1 +1,1 @@
-add_axoplotl_plugin(ObjectListPlugin.cpp)
+add_axoplotl_plugin(DataControlPlugin.cpp)

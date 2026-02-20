@@ -1,4 +1,5 @@
 #include "VolumeMeshRenderer.hpp"
+#include "AxoPlotl/rendering/detail/depth.hpp"
 #include "AxoPlotl/rendering/shaders/edge_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/face_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/vertex_shader_wgsl.hpp"
@@ -35,8 +36,9 @@ wgpu::RenderPipeline VolumeMeshRenderer::vertex_points_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::edge_lines_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::face_triangles_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::cell_triangles_pipeline_;
+wgpu::DepthStencilState VolumeMeshRenderer::depth_stencil_state_;
 
-void VolumeMeshRenderer::init(Context _context, const StaticData& _data)
+void VolumeMeshRenderer::init(const Context &_context, const StaticData& _data)
 {
     context_ = _context;
 
@@ -58,6 +60,7 @@ void VolumeMeshRenderer::init(Context _context, const StaticData& _data)
     create_bind_group_layout();
     create_bind_group();
 
+    depth_stencil_state_ = create_default_depth_state();
     create_vertex_point_pipeline();
     create_edge_line_pipeline();
     create_face_triangle_pipeline();
@@ -372,6 +375,7 @@ void VolumeMeshRenderer::create_vertex_point_pipeline()
 
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
+    pipelineDesc.depthStencil = &depth_stencil_state_;
     pipelineDesc.layout = context_.device_.createPipelineLayout(layoutDesc);
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
@@ -445,11 +449,13 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
+    pipelineDesc.depthStencil = &depth_stencil_state_;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
+    pipelineDesc.label = "Edge Line Pipeline";
 
     edge_lines_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
 }
@@ -517,11 +523,13 @@ void VolumeMeshRenderer::create_face_triangle_pipeline()
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
+    pipelineDesc.depthStencil = &depth_stencil_state_;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
+    pipelineDesc.label = "Face Triangle Pipeline";
     // wgpu::DepthStencilState depthStencilState = wgpu::Default;
     // depthStencilState.depthCompare = wgpu::CompareFunction::Less;
     // depthStencilState.depthWriteEnabled = true;
@@ -583,6 +591,8 @@ void VolumeMeshRenderer::update_cell_property_data(const std::vector<PropertyDat
 
 void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
+    if (!render_anything_) {return;}
+
     // Update uniforms
     unforms_.mvp_ = _mvp;
     context_.device_.getQueue().writeBuffer(uniformBuffer_, 0, &unforms_, sizeof(Uniforms));
@@ -614,13 +624,13 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     }
 
     // Draw cells
-    if (render_cells_ && cell_triangles_pipeline_)
-    {
-        _render_pass.setPipeline(cell_triangles_pipeline_);
-        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-        _render_pass.setVertexBuffer(0, cellTriangleIndexBuffer_, 0, n_cell_triangle_indices_*sizeof(CellHandle));
-        _render_pass.draw(n_cell_triangle_indices_, 1, 0, 0);
-    }
+    // if (render_cells_ && cell_triangles_pipeline_)
+    // {
+    //     _render_pass.setPipeline(cell_triangles_pipeline_);
+    //     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+    //     _render_pass.setVertexBuffer(0, cellTriangleIndexBuffer_, 0, n_cell_triangle_indices_*sizeof(CellHandle));
+    //     _render_pass.draw(n_cell_triangle_indices_, 1, 0, 0);
+    // }
 }
 
 void VolumeMeshRenderer::release()
