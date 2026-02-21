@@ -9,10 +9,10 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include <filesystem>
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
+
 namespace AxoPlotl
 {
-
-class Application;
 
 class Scene
 {
@@ -20,7 +20,7 @@ public:
 
     Scene() {};
 
-    void init(Application* _app, VolumeMeshRenderer::Context _render_context);
+    void init(Application* _app);
 
     void render(wgpu::RenderPassEncoder _render_pass);
 
@@ -40,8 +40,8 @@ public:
     template<typename Object, typename ...Args>
     void add_object(Args... _args)
     {
-        objects_.push_back(std::make_unique<Object>(_args...));
-        objects_.back()->init(render_context_);
+        objects_.push_back(std::make_unique<Object>(this, _args...));
+        objects_.back()->init();
         objects_.back()->recompute_bounding_box();
         zoom_to_box(objects_.back()->bounding_box());
     }
@@ -55,9 +55,13 @@ public:
         trigger_redraw();
     }
 
+    Application* app() {
+        return app_;
+    }
+
 protected:
     Application* app_ = nullptr;
-    VolumeMeshRenderer::Context render_context_;
+    //VolumeMeshRenderer::Context render_context_;
     std::vector<std::unique_ptr<ObjectBase>> objects_;
     VolumeMeshRenderer gizmo_renderer;
 

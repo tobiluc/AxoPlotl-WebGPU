@@ -5,11 +5,14 @@
 namespace AxoPlotl
 {
 
+class Scene;
+
 class ObjectBase
 {
 public:
-    ObjectBase(std::string _name) :
+    ObjectBase(Scene* _scene, std::string _name) :
         id_(++id_counter_),
+        scene_(_scene),
         name_(_name),
         renderer_(),
         transform_(1)
@@ -17,13 +20,13 @@ public:
 
     virtual ~ObjectBase() = default;
 
-    virtual void init(VolumeMeshRenderer::Context _context) = 0;
+    virtual void init() = 0;
 
     virtual void recompute_bounding_box() = 0;
 
-    inline void render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _view_projection) {
-        renderer_.render(_render_pass, _view_projection * transform_);
-    }
+    void render(
+        wgpu::RenderPassEncoder _render_pass,
+        const Mat4x4f& _view_projection);
 
     virtual void render_ui() = 0;
 
@@ -52,6 +55,7 @@ public:
     }
 
 protected:
+    Scene* scene_;
     int id_;
     std::string name_;
     VolumeMeshRenderer renderer_;

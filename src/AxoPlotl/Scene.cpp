@@ -4,25 +4,20 @@
 namespace AxoPlotl
 {
 
-void Scene::init(Application *_app, VolumeMeshRenderer::Context _render_context)
+void Scene::init(Application *_app)
 {
     app_ = _app;
-
-    render_context_ = _render_context;
 
     // Initialize the Coordinate Axes Cross
     VolumeMeshRenderer::StaticData data;
     data.positions_ = {
-        Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,2,0,1),Vec4f(0,0,3,1)
+        Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,1,0,1),Vec4f(0,0,1,1)
     };
-    data.vertex_draw_indices_ = {0,1,2,3};
-    data.edge_draw_indices_.push_back({.vertex_index_=0,.edge_index_=0});
-    data.edge_draw_indices_.push_back({.vertex_index_=1,.edge_index_=0});
-    data.edge_draw_indices_.push_back({.vertex_index_=0,.edge_index_=1});
-    data.edge_draw_indices_.push_back({.vertex_index_=2,.edge_index_=1});
-    data.edge_draw_indices_.push_back({.vertex_index_=0,.edge_index_=2});
-    data.edge_draw_indices_.push_back({.vertex_index_=3,.edge_index_=2});
-    gizmo_renderer.init(_render_context, data);
+    data.vertex_instances_ = {0,1,2,3};
+    data.edge_instances_.push_back({.vh0_=0,.vh1_=1,.eh_=0});
+    data.edge_instances_.push_back({.vh0_=0,.vh1_=2,.eh_=1});
+    data.edge_instances_.push_back({.vh0_=0,.vh1_=3,.eh_=2});
+    gizmo_renderer.init(_app, data);
 
     std::vector<VolumeMeshRenderer::Property::Data> e_props;
     e_props.push_back({.value_ = {1,0,0,1}});

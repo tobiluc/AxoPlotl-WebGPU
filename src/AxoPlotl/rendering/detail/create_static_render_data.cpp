@@ -13,11 +13,14 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
             _mesh.point(i)[2],
             1
             );
-        data.vertex_draw_indices_.push_back(i);
+        data.vertex_instances_.push_back(i);
     }
     for (uint32_t i = 0; i < _mesh.n_edges(); ++i) {
-        data.edge_draw_indices_.push_back({static_cast<uint32_t>(_mesh.edge(i).vertex(0)), i});
-        data.edge_draw_indices_.push_back({static_cast<uint32_t>(_mesh.edge(i).vertex(1)), i});
+        data.edge_instances_.push_back({
+            .vh0_=static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
+            .vh1_=static_cast<uint32_t>(_mesh.edge(i).vertex(1)),
+            .eh_=i
+        });
     }
     for (uint32_t i = 0; i < _mesh.n_faces(); ++i) {
         const auto& f = _mesh.face(i);
@@ -47,12 +50,15 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);
         data.positions_.emplace_back(p[0],p[1],p[2],1);
-        data.vertex_draw_indices_.push_back(v_it->uidx());
+        data.vertex_instances_.push_back(v_it->uidx());
     }
     for (auto e_it = _mesh.e_iter(); e_it.is_valid(); ++e_it) {
         const auto& e = _mesh.edge(*e_it);
-        data.edge_draw_indices_.push_back({e.from_vertex().uidx(), e_it->uidx()});
-        data.edge_draw_indices_.push_back({e.to_vertex().uidx(), e_it->uidx()});
+        data.edge_instances_.push_back({
+            .vh0_ = e.from_vertex().uidx(),
+            .vh1_ = e.to_vertex().uidx(),
+            .eh_ = e_it->uidx()
+        });
     }
     for (auto f_it = _mesh.f_iter(); f_it.is_valid(); ++f_it) {
         const auto& vhs = _mesh.get_halfface_vertices(f_it->halfface_handle(0));

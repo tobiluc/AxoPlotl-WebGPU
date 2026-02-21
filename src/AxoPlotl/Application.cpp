@@ -167,11 +167,7 @@ bool Application::init()
     //----------
     // Scene
     //----------
-    scene_.init(this, VolumeMeshRenderer::Context{
-        .device_=device_,
-        .surface_=surface_,
-        .adapter_=adapter_
-    });
+    scene_.init(this);
 
     //----------
     // Gui
@@ -458,6 +454,7 @@ void Application::create_depth_texture()
 
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
 
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
     depthTextureFormat = depthStencilState.format;

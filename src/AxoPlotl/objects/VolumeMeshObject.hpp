@@ -20,9 +20,9 @@ private:
     void upload_default_property_data();
 
 public:
-    VolumeMeshObject(VolumeMesh& _mesh,
+    VolumeMeshObject(Scene* _scene, VolumeMesh& _mesh,
         const std::optional<std::filesystem::path>& _filepath = std::nullopt) :
-        ObjectBase(""),
+        ObjectBase(_scene, ""),
         mesh_(std::move(_mesh)),
         filepath_(_filepath)
     {
@@ -33,7 +33,7 @@ public:
 
     void render_ui() override;
 
-    void init(VolumeMeshRenderer::Context _render_context) override;
+    void init() override;
 
     void recompute_bounding_box() override;
 

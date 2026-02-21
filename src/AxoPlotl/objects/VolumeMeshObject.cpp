@@ -3,6 +3,7 @@
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "imgui.h"
 #include <AxoPlotl/utils/commons.hpp>
+#include <AxoPlotl/Application.hpp>
 
 namespace AxoPlotl
 {
@@ -118,11 +119,30 @@ void VolumeMeshObject::render_ui()
 
         ImGui::EndMenu(); //!Properties
     }
+
+    if (ImGui::BeginMenu("Settings"))
+    {
+        ImGui::Checkbox("V", &renderer_.render_vertices_);
+        ImGui::SameLine();
+        ImGui::Checkbox("E", &renderer_.render_edges_);
+        ImGui::SameLine();
+        ImGui::Checkbox("F", &renderer_.render_faces_);
+        ImGui::SameLine();
+        ImGui::Checkbox("C", &renderer_.render_cells_);
+
+
+        ImGui::SliderFloat("Point Size", &renderer_.point_size_, 0.0f, 32.0f);
+        ImGui::SliderFloat("Line Width", &renderer_.line_width_, 0.0f, 32.0f);
+        ImGui::EndMenu(); //!Settings
+    }
 }
 
-void VolumeMeshObject::init(VolumeMeshRenderer::Context _render_context)
+void VolumeMeshObject::init()
 {
-    renderer_.init(_render_context, create_static_render_data(mesh_));
+    renderer_.init(
+        scene_->app(),
+        create_static_render_data(mesh_)
+    );
     upload_default_property_data();
 }
 

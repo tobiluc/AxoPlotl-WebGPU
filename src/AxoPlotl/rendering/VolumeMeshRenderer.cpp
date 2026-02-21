@@ -6,33 +6,32 @@
 #include "AxoPlotl/rendering/shaders/vertex_shader_wgsl.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <cstddef>
+#include <AxoPlotl/Application.hpp>
 
 namespace AxoPlotl
 {
 
 // Static Members
-wgpu::RenderPipeline VolumeMeshRenderer::vertex_points_pipeline_;
-wgpu::RenderPipeline VolumeMeshRenderer::edge_lines_pipeline_;
+wgpu::RenderPipeline VolumeMeshRenderer::vertices_pipeline_;
+wgpu::RenderPipeline VolumeMeshRenderer::edges_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::face_triangles_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::cell_triangles_pipeline_;
-wgpu::DepthStencilState VolumeMeshRenderer::depth_stencil_state_;
+//wgpu::DepthStencilState VolumeMeshRenderer::depth_stencil_state_;
 wgpu::BindGroupLayout VolumeMeshRenderer::bind_group_layout_;
 
-void VolumeMeshRenderer::init(const Context &_context, const StaticData& _data)
+void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
 {
-    context_ = _context;
+    app_ = _app;
 
     n_positions_ = _data.positions_.size();
-    n_vertex_point_indices_ = _data.vertex_draw_indices_.size();
-    n_edge_line_indices_ = _data.edge_draw_indices_.size();
     n_face_triangle_indices_ = _data.face_draw_triangle_indices_.size();
     n_cell_triangle_indices_ = _data.cell_draw_triangle_indices_.size();
 
     // For simplicity, to avoid webgpu errors related
     // to the property buffers having size zero, we always have
     // at least 1 entity. TODO: Find better solution
-    n_vertices_ = std::max(n_vertex_point_indices_, 1LU);
-    n_edges_ = std::max(n_edge_line_indices_/2, 1LU);
+    n_vertices_ = std::max(_data.vertex_instances_.size(), 1LU);
+    n_edges_ = std::max(_data.edge_instances_.size(), 1LU);
     n_faces_ = std::max(_data.n_faces_, 1LU);
     n_cells_ = std::max(_data.n_cells_, 1LU);
 
@@ -40,16 +39,16 @@ void VolumeMeshRenderer::init(const Context &_context, const StaticData& _data)
     create_bind_group_layout();
     create_bind_group();
 
-    depth_stencil_state_ = create_default_depth_state();
-    create_vertex_point_pipeline();
-    create_edge_line_pipeline();
+    //depth_stencil_state_ = create_default_depth_state();
+    create_vertices_pipeline();
+    create_edges_pipeline();
     create_face_triangle_pipeline();
     create_cell_triangle_pipeline();
 }
 
 void VolumeMeshRenderer::create_buffers(const StaticData &_data)
 {
-    wgpu::Device device = context_.device_;
+    wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
 
     // Position Buffer
@@ -73,7 +72,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(uint32_t) * _data.vertex_draw_indices_.size();
+        desc.size = sizeof(uint32_t) * _data.vertex_instances_.size();
         desc.mappedAtCreation = false;
         desc.label = "Vertex Index";
 
@@ -81,7 +80,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
         queue.writeBuffer(
             vertexIndexBuffer_,
             0,
-            _data.vertex_draw_indices_.data(),
+            _data.vertex_instances_.data(),
             desc.size
             );
 
@@ -92,7 +91,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(EdgeHandle) * _data.edge_draw_indices_.size();
+        desc.size = sizeof(EdgeInstance) * _data.edge_instances_.size();
         desc.mappedAtCreation = false;
         desc.label = "Edge Index";
 
@@ -100,7 +99,7 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
         queue.writeBuffer(
             edgeIndexBuffer_,
             0,
-            _data.edge_draw_indices_.data(),
+            _data.edge_instances_.data(),
             desc.size
             );
 
@@ -255,7 +254,7 @@ void VolumeMeshRenderer::create_bind_group_layout()
     layoutDesc.entryCount = 6;
     layoutDesc.entries = entries;
 
-    bind_group_layout_ = context_.device_.createBindGroupLayout(layoutDesc);
+    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
 void VolumeMeshRenderer::create_bind_group()
@@ -309,14 +308,14 @@ void VolumeMeshRenderer::create_bind_group()
     bgDesc.entryCount = 6;
     bgDesc.entries = groupEntries;
 
-    bind_group_ = context_.device_.createBindGroup(bgDesc);
+    bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void VolumeMeshRenderer::create_vertex_point_pipeline()
+void VolumeMeshRenderer::create_vertices_pipeline()
 {
-    if (vertex_points_pipeline_) {return;}
+    if (vertices_pipeline_) {return;}
 
-    wgpu::ShaderModule shaderModule = create_mesh_shader_module(context_.device_, vertex_shader_wgsl, "Vertex Point");
+    wgpu::ShaderModule shaderModule = create_mesh_shader_module(app_->device_, vertex_shader_wgsl, "Vertex Point");
 
     // Vertex state (no vertex buffer)
     wgpu::VertexState vertexState{};
@@ -328,7 +327,7 @@ void VolumeMeshRenderer::create_vertex_point_pipeline()
     // Fragment state
     wgpu::ColorTargetState colorTarget{};
     wgpu::SurfaceCapabilities surf_caps;
-    context_.surface_.getCapabilities(context_.adapter_, &surf_caps);
+    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
     colorTarget.format = surf_caps.formats[0];
     colorTarget.writeMask = wgpu::ColorWriteMask::All;
 
@@ -340,7 +339,7 @@ void VolumeMeshRenderer::create_vertex_point_pipeline()
 
     // Primitive state
     wgpu::PrimitiveState primitive{};
-    primitive.topology = wgpu::PrimitiveTopology::PointList;
+    primitive.topology = wgpu::PrimitiveTopology::TriangleStrip;
     primitive.frontFace = wgpu::FrontFace::CCW;
     primitive.cullMode = wgpu::CullMode::None;
 
@@ -357,39 +356,45 @@ void VolumeMeshRenderer::create_vertex_point_pipeline()
 
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
-    pipelineDesc.depthStencil = &depth_stencil_state_;
-    pipelineDesc.layout = context_.device_.createPipelineLayout(layoutDesc);
+    wgpu::DepthStencilState depth = create_default_depth_state();
+    pipelineDesc.depthStencil = &depth;
+    pipelineDesc.layout = app_->device_.createPipelineLayout(layoutDesc);
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Vertex Point Pipeline";
 
-    vertex_points_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
+    vertices_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void VolumeMeshRenderer::create_edge_line_pipeline()
+void VolumeMeshRenderer::create_edges_pipeline()
 {
-    if (edge_lines_pipeline_) {return;}
+    if (edges_pipeline_) {return;}
 
-    wgpu::ShaderModule shaderModule = create_mesh_shader_module(context_.device_, edge_shader_wgsl, "Edge Line");
+    wgpu::ShaderModule shaderModule = create_mesh_shader_module(app_->device_, edge_shader_wgsl, "Edge Line");
 
-    // 0 -- Vertex Index
-    wgpu::VertexAttribute attrs[2]{};
+    // 0 -- Vertex Index 0
+    wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(EdgeHandle, vertex_index_);
+    attrs[0].offset = offsetof(EdgeInstance, vh0_);
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
-    // 1 -- Edge Index
+    // 1 -- Vertex Index 1
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(EdgeHandle, edge_index_);
+    attrs[1].offset = offsetof(EdgeInstance, vh1_);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
+    // 2 -- Edge Index
+    attrs[2].shaderLocation = 2;
+    attrs[2].offset = offsetof(EdgeInstance, eh_);
+    attrs[2].format = wgpu::VertexFormat::Uint32;
+
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(EdgeHandle);
-    vertexBufferLayout.attributeCount = 2;
+    vertexBufferLayout.arrayStride = sizeof(EdgeInstance);
+    vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
-    vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
+    vertexBufferLayout.stepMode = wgpu::VertexStepMode::Instance;
 
     // Vertex state
     wgpu::VertexState vertexState{};
@@ -401,7 +406,7 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
     // Fragment state
     wgpu::ColorTargetState colorTarget{};
     wgpu::SurfaceCapabilities surf_caps;
-    context_.surface_.getCapabilities(context_.adapter_, &surf_caps);
+    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
     colorTarget.format = surf_caps.formats[0];
     colorTarget.writeMask = wgpu::ColorWriteMask::All;
 
@@ -413,7 +418,7 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
 
     // Primitive state
     wgpu::PrimitiveState primitive{};
-    primitive.topology = wgpu::PrimitiveTopology::LineList;
+    primitive.topology = wgpu::PrimitiveTopology::TriangleStrip;
     primitive.frontFace = wgpu::FrontFace::CCW;
     primitive.cullMode = wgpu::CullMode::None;
 
@@ -427,11 +432,15 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = context_.device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
-    pipelineDesc.depthStencil = &depth_stencil_state_;
+    wgpu::DepthStencilState depth = create_default_depth_state();
+    depth.depthBias = -4; // These help with z-fighting between edges & faces
+    depth.depthBiasSlopeScale = -1.5f;
+    depth.depthBiasClamp = 0.0f;
+    pipelineDesc.depthStencil = &depth;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
@@ -439,14 +448,14 @@ void VolumeMeshRenderer::create_edge_line_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Edge Line Pipeline";
 
-    edge_lines_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
+    edges_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void VolumeMeshRenderer::create_face_triangle_pipeline()
 {
     if (face_triangles_pipeline_) {return;}
 
-    wgpu::ShaderModule shaderModule = create_mesh_shader_module(context_.device_, face_shader_wgsl, "Face Triangle");
+    wgpu::ShaderModule shaderModule = create_mesh_shader_module(app_->device_, face_shader_wgsl, "Face Triangle");
 
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
@@ -475,7 +484,7 @@ void VolumeMeshRenderer::create_face_triangle_pipeline()
     // Fragment state
     wgpu::ColorTargetState colorTarget{};
     wgpu::SurfaceCapabilities surf_caps;
-    context_.surface_.getCapabilities(context_.adapter_, &surf_caps);
+    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
     colorTarget.format = surf_caps.formats[0];
     colorTarget.writeMask = wgpu::ColorWriteMask::All;
 
@@ -501,11 +510,12 @@ void VolumeMeshRenderer::create_face_triangle_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = context_.device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
-    pipelineDesc.depthStencil = &depth_stencil_state_;
+    wgpu::DepthStencilState depth = create_default_depth_state();
+    pipelineDesc.depthStencil = &depth;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
@@ -513,14 +523,14 @@ void VolumeMeshRenderer::create_face_triangle_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Face Triangle Pipeline";
 
-    face_triangles_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
+    face_triangles_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void VolumeMeshRenderer::create_cell_triangle_pipeline()
 {
     if (cell_triangles_pipeline_) {return;}
 
-    wgpu::ShaderModule shaderModule = create_mesh_shader_module(context_.device_, cell_shader_wgsl, "Cell Triangle");
+    wgpu::ShaderModule shaderModule = create_mesh_shader_module(app_->device_, cell_shader_wgsl, "Cell Triangle");
 
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
@@ -549,7 +559,7 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     // Fragment state
     wgpu::ColorTargetState colorTarget{};
     wgpu::SurfaceCapabilities surf_caps;
-    context_.surface_.getCapabilities(context_.adapter_, &surf_caps);
+    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
     colorTarget.format = surf_caps.formats[0];
     colorTarget.writeMask = wgpu::ColorWriteMask::All;
 
@@ -575,11 +585,12 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = context_.device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
-    pipelineDesc.depthStencil = &depth_stencil_state_;
+    wgpu::DepthStencilState depth = create_default_depth_state();
+    pipelineDesc.depthStencil = &depth;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
@@ -587,12 +598,12 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Cell Triangle Pipeline";
 
-    cell_triangles_pipeline_ = context_.device_.createRenderPipeline(pipelineDesc);
+    cell_triangles_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void VolumeMeshRenderer::update_vertex_property_data(const std::vector<Property::Data>& _data)
 {
-    context_.device_.getQueue().writeBuffer(
+    app_->device_.getQueue().writeBuffer(
         vertex_property_buffer_,
         0,
         _data.data(),
@@ -603,7 +614,7 @@ void VolumeMeshRenderer::update_vertex_property_data(const std::vector<Property:
 
 void VolumeMeshRenderer::update_edge_property_data(const std::vector<Property::Data>& _data)
 {
-    context_.device_.getQueue().writeBuffer(
+    app_->device_.getQueue().writeBuffer(
         edge_property_buffer_,
         0,
         _data.data(),
@@ -614,7 +625,7 @@ void VolumeMeshRenderer::update_edge_property_data(const std::vector<Property::D
 
 void VolumeMeshRenderer::update_face_property_data(const std::vector<Property::Data>& _data)
 {
-    context_.device_.getQueue().writeBuffer(
+    app_->device_.getQueue().writeBuffer(
         face_property_buffer_,
         0,
         _data.data(),
@@ -625,7 +636,7 @@ void VolumeMeshRenderer::update_face_property_data(const std::vector<Property::D
 
 void VolumeMeshRenderer::update_cell_property_data(const std::vector<Property::Data>& _data)
 {
-    context_.device_.getQueue().writeBuffer(
+    app_->device_.getQueue().writeBuffer(
         cell_property_buffer_,
         0,
         _data.data(),
@@ -637,13 +648,19 @@ void VolumeMeshRenderer::update_cell_property_data(const std::vector<Property::D
 void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
     if (!render_anything_) {return;}
-    wgpu::Queue queue = context_.device_.getQueue();
+    wgpu::Queue queue = app_->device_.getQueue();
 
     // Update common uniforms
     queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mvp_), &_mvp, sizeof(Mat4x4f));
+    int fbw, fbh;
+    glfwGetFramebufferSize(app_->window(), &fbw, &fbh);
+    Vec2f viewport_size = {fbw, fbh};
+    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, viewport_size_), &viewport_size, sizeof(Vec2f));
+    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, point_size_), &point_size_, sizeof(float));
+    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, line_width_), &line_width_, sizeof(float));
 
     // Draw cells
-    if (cell_property_.mode_ != Property::Mode::TRANSPARENT
+    if (render_cells_
         && cell_triangles_pipeline_)
     {
         // Set cell specific uniforms
@@ -656,7 +673,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     }
 
     // Draw faces
-    if (face_property_.mode_ != Property::Mode::TRANSPARENT
+    if (render_faces_
         && face_triangles_pipeline_)
     {
         // Set face specific uniforms
@@ -669,28 +686,34 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     }
 
     // Draw edges
-    if (edge_property_.mode_ != Property::Mode::TRANSPARENT
-        && edge_lines_pipeline_)
+    if (render_edges_
+        && edges_pipeline_)
     {
         // Set edge specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &edge_property_.mode_, sizeof(Property::Mode));
 
-        _render_pass.setPipeline(edge_lines_pipeline_);
+        _render_pass.setPipeline(edges_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-        _render_pass.setVertexBuffer(0, edgeIndexBuffer_, 0, n_edge_line_indices_*sizeof(EdgeHandle));
-        _render_pass.draw(n_edge_line_indices_, 1, 0, 0);
+        _render_pass.setVertexBuffer(0, edgeIndexBuffer_, 0, n_edges_*sizeof(EdgeInstance));
+
+        // An Edge Instance is rendered as a quad
+        _render_pass.draw(4, n_edges_, 0, 0);
     }
 
     // Draw points
-    if (vertex_property_.mode_ != Property::Mode::TRANSPARENT
-        && vertex_points_pipeline_)
+    if (render_vertices_
+        && vertices_pipeline_)
     {
         // Set vertex specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &vertex_property_.mode_, sizeof(Property::Mode));
 
-        _render_pass.setPipeline(vertex_points_pipeline_);
+        _render_pass.setPipeline(vertices_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-        _render_pass.draw(n_vertex_point_indices_, 1, 0, 0);
+        //_render_pass.draw(n_vertex_point_indices_, 1, 0, 0);
+
+        // Instancing. For each instance, we draw 4 vertices
+        // that form a quad
+        _render_pass.draw(4, n_vertices_, 0, 0);
     }
 }
 

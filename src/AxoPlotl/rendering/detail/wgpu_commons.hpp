@@ -13,6 +13,7 @@ inline wgpu::DepthStencilState create_default_depth_state()
     depthStencilState.depthWriteEnabled = true;
     wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
     depthStencilState.format = depthTextureFormat;
+
     return depthStencilState;
 }
 

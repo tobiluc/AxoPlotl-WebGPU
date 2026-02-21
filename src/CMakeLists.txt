@@ -50,6 +50,7 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/properties/property_data.hpp
     AxoPlotl/properties/property_filters.hpp
     AxoPlotl/utils/commons.hpp
+    AxoPlotl/AxoPlotl_fwd.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE

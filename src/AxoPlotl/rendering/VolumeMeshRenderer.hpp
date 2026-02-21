@@ -1,11 +1,15 @@
 #pragma once
 #include "AxoPlotl/rendering/ColorMap.hpp"
 #include "AxoPlotl/typedefs/glm.hpp"
-#include <webgpu/webgpu.hpp>
+#include "GLFW/glfw3.h"
+#include "webgpu/webgpu.hpp"
 #include <vector>
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
 
 namespace AxoPlotl
 {
+
+class Application;
 
 class VolumeMeshRenderer
 {
@@ -13,7 +17,6 @@ public:
     struct Property
     {
         enum class Mode : uint32_t {
-            TRANSPARENT = UINT32_MAX,
             COLOR = 0,
             SCALAR = 1,
             VEC3 = 2,
@@ -28,32 +31,34 @@ public:
     };
 
     bool render_anything_ = true;
+    bool render_vertices_ = true;
+    bool render_edges_ = true;
+    bool render_faces_ = true;
+    bool render_cells_ = true;
+
     Property vertex_property_;
     Property edge_property_;
     Property face_property_;
     Property cell_property_;
 
-    struct Context {
-        wgpu::Device device_;
-        wgpu::Surface surface_;
-        wgpu::Adapter adapter_;
-    };
-
     float line_width_ = 5.0f;
     float point_size_ = 12.0f;
 
-    // Mirrors Shader Unfiforms
+    // Mirrors Shader Unfiforms. the 16bit alignment is important!
     struct Uniforms {
-        Mat4x4f mvp_; // 64b
-        Property::Mode mode_ = Property::Mode::COLOR; // 4b
-        std::byte padding_[12]; // total must be multiple of 16 bytes
+        alignas(16) Mat4x4f mvp_;
+        alignas(16) Property::Mode mode_ = Property::Mode::COLOR;
+        alignas(16) Vec2f viewport_size_;
+        alignas(16) float point_size_;
+        alignas(16) float line_width_;
     };
 
     using Position = Vec4f;
 
-    struct EdgeHandle {
-        uint32_t vertex_index_; // used to lookup position
-        uint32_t edge_index_; // points to EdgePropertyData
+    struct EdgeInstance {
+        uint32_t vh0_; // used to lookup position
+        uint32_t vh1_; // used to lookup position
+        uint32_t eh_; // points to EdgePropertyData
     };
 
     struct FaceHandle {
@@ -71,8 +76,8 @@ public:
         size_t n_faces_ = 0;
         size_t n_cells_ = 0;
         std::vector<Position> positions_;
-        std::vector<uint32_t> vertex_draw_indices_;
-        std::vector<EdgeHandle> edge_draw_indices_;
+        std::vector<uint32_t> vertex_instances_;
+        std::vector<EdgeInstance> edge_instances_;
         std::vector<FaceHandle> face_draw_triangle_indices_;
         std::vector<CellHandle> cell_draw_triangle_indices_;
     };
@@ -84,7 +89,7 @@ public:
     }
 
     // Setup Pipeline and layouts for given static data
-    void init(const Context& _context, const StaticData& _data);
+    void init(Application* _app, const StaticData& _data);
 
     void update_vertex_property_data(const std::vector<Property::Data>& _data);
 
@@ -110,20 +115,20 @@ private:
 
     void create_bind_group();
 
-    void create_vertex_point_pipeline();
+    void create_vertices_pipeline();
 
-    void create_edge_line_pipeline();
+    void create_edges_pipeline();
 
     void create_face_triangle_pipeline();
 
     void create_cell_triangle_pipeline();
 
-    size_t n_vertex_point_indices_ = 0;
-    size_t n_edge_line_indices_ = 0;
+    //size_t n_vertex_point_indices_ = 0;
+    //size_t n_edge_line_indices_ = 0;
     size_t n_face_triangle_indices_ = 0;
     size_t n_cell_triangle_indices_ = 0;
 
-    Context context_;
+    Application* app_;
 
     wgpu::Buffer positionBuffer_;
     wgpu::Buffer vertexIndexBuffer_;
@@ -137,11 +142,11 @@ private:
     wgpu::Buffer cell_property_buffer_;
     wgpu::Buffer uniform_buffer_;
 
-    static wgpu::RenderPipeline vertex_points_pipeline_;
-    static wgpu::RenderPipeline edge_lines_pipeline_;
+    static wgpu::RenderPipeline vertices_pipeline_;
+    static wgpu::RenderPipeline edges_pipeline_;
     static wgpu::RenderPipeline face_triangles_pipeline_;
     static wgpu::RenderPipeline cell_triangles_pipeline_;
-    static wgpu::DepthStencilState depth_stencil_state_;
+    //static wgpu::DepthStencilState depth_stencil_state_;
 
     static wgpu::BindGroupLayout bind_group_layout_;
     wgpu::BindGroup bind_group_;

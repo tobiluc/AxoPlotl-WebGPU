@@ -33,19 +33,19 @@ public:
 
     void terminate();
 
+    float clear_color_[3] = {1,1,1};
+
     inline Scene& scene() {return scene_;}
 
     inline GLFWwindow* window() {return window_;}
 
-    float clear_color_[3] = {1,1,1};
+    wgpu::Device device_;
+    wgpu::Adapter adapter_;
+    wgpu::Surface surface_;
 
 private:
     GLFWwindow* window_;
-
-    wgpu::Device device_;
     wgpu::Queue queue_;
-    wgpu::Adapter adapter_;
-    wgpu::Surface surface_;
     wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
     wgpu::Texture depthTexture;
     wgpu::TextureView depthTextureView;
