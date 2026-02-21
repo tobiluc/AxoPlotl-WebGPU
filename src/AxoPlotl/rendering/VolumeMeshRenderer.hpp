@@ -91,6 +91,7 @@ public:
         std::vector<EdgeInstance> edge_instances_;
         std::vector<FaceHandle> face_draw_triangle_indices_;
         std::vector<CellHandle> cell_draw_triangle_indices_;
+        std::vector<CellHandle> cell_outline_indices_;
         std::vector<Position> cell_incenters_;
     };
 
@@ -135,10 +136,13 @@ private:
 
     void create_cell_triangle_pipeline();
 
+    void create_cell_outline_pipeline();
+
     //size_t n_vertex_point_indices_ = 0;
     //size_t n_edge_line_indices_ = 0;
     size_t n_face_triangle_indices_ = 0;
     size_t n_cell_triangle_indices_ = 0;
+    size_t n_cell_outline_indices_ = 0;
 
     Application* app_;
 
@@ -147,6 +151,7 @@ private:
     wgpu::Buffer edgeIndexBuffer_;
     wgpu::Buffer faceTriangleIndexBuffer_;
     wgpu::Buffer cellTriangleIndexBuffer_;
+    wgpu::Buffer cellOutlineIndexBuffer;
 
     wgpu::Buffer vertex_property_buffer_;
     wgpu::Buffer edge_property_buffer_;
@@ -159,6 +164,7 @@ private:
     static wgpu::RenderPipeline edges_pipeline_;
     static wgpu::RenderPipeline face_triangles_pipeline_;
     static wgpu::RenderPipeline cell_triangles_pipeline_;
+    static wgpu::RenderPipeline cell_outline_pipeline_;
     //static wgpu::DepthStencilState depth_stencil_state_;
 
     static wgpu::BindGroupLayout bind_group_layout_;

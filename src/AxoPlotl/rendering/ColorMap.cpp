@@ -5,9 +5,8 @@ namespace AxoPlotl
 
 static wgpu::Extent3D extent()
 {
-    return {256, 1, 1};
+    return {128, 1, 1};
 }
-
 static inline int N = extent().width;
 
 void ColorMap::set_gradient(const std::vector<Vec3f>& _colors)

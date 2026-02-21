@@ -26,11 +26,6 @@ Application::Application()
 {
 }
 
-Application::~Application()
-{
-    terminate();
-}
-
 bool Application::init()
 {
     // Create Window
@@ -111,31 +106,6 @@ bool Application::init()
         std::cerr << std::endl;
     };
 
-    // wgpu::SupportedLimits supportedLimits;
-    // adapter.getLimits(&supportedLimits);
-    // wgpu::RequiredLimits requiredLimits = wgpu::Default;
-    // requiredLimits.limits.maxVertexAttributes = 1;
-    // requiredLimits.limits.maxVertexBuffers = 1;
-    // requiredLimits.limits.maxBufferSize = 100000 * (3+3) * sizeof(float);
-    // requiredLimits.limits.maxVertexBufferArrayStride = (3+3) * sizeof(float);
-    // requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
-    // requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
-
-    // requiredLimits.limits.maxBindGroups = 1;
-    // requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
-    // requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
-
-    // requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
-
-    // // For the depth buffer, we enable textures (up to the size of the window):
-    // requiredLimits.limits.maxTextureDimension1D = 480;
-    // requiredLimits.limits.maxTextureDimension2D = 640;
-    // requiredLimits.limits.maxTextureArrayLayers = 1;
-
-    // deviceDesc.requiredLimits = &requiredLimits;
-    // adapter.getLimits(&supportedLimits);
-    // std::cout << "adapter.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
-
     device_ = adapter_.requestDevice(deviceDesc);
     std::cout << "Got device: " << device_ << std::endl;
     //device.getLimits(&supportedLimits);
@@ -202,9 +172,6 @@ void Application::run()
     // Acquire next frame texture
     wgpu::SurfaceTexture surfaceTexture;
     surface_.getCurrentTexture(&surfaceTexture);
-    // wgpu::TextureView backBufferView =
-    //     wgpu::Texture(surfaceTexture.texture).createView();
-    // Create a view for this surface texture
     wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
     viewDescriptor.label = "Surface texture view";
@@ -291,6 +258,10 @@ void Application::run()
 #elif defined(WEBGPU_BACKEND_WGPU)
     device.poll(false);
 #endif
+
+    for (auto& fn : deferred_calls_) {fn();}
+    deferred_calls_.clear();
+
 }
 
 void Application::on_window_resize(float width, float height)
@@ -318,13 +289,13 @@ void Application::terminate()
         surface_.unconfigure();
         surface_.release();
     }
-    if (device_) {device_.release();}
     if (adapter_) {adapter_.release();}
     if (depthTextureView) {depthTextureView.release();}
     if (depthTexture) {
         depthTexture.destroy();
         depthTexture.release();
     }
+    if (device_) {device_.release();}
 
     glfwDestroyWindow(window_);
     glfwTerminate();

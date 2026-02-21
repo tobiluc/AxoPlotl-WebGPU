@@ -6,8 +6,6 @@
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/objects/VolumeMeshObject.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
 #include <filesystem>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 
@@ -61,7 +59,6 @@ public:
 
 protected:
     Application* app_ = nullptr;
-    //VolumeMeshRenderer::Context render_context_;
     std::vector<std::unique_ptr<ObjectBase>> objects_;
     VolumeMeshRenderer gizmo_renderer;
 

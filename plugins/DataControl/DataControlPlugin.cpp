@@ -23,10 +23,10 @@ void DataControlPlugin::render_ui(Application& _app)
 
         // Expand Menu
         if (obj->selected()) {
-            // if (ImGui::Button("Focus")) {
-            //     _app.scene().zoom_to_box(obj->bounding_box());
-            // }
             obj->render_ui();
+            if (ImGui::Button("Zoom to Object")) {
+                _app.scene().zoom_to_box(obj->bounding_box());
+            }
             if (ImGui::Button("Delete Object")) {
                 obj->deleted() = true;
             }

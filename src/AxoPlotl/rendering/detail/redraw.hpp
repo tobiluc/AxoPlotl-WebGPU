@@ -5,7 +5,7 @@
 namespace AxoPlotl
 {
 
-void trigger_redraw(uint32_t _n_frames = UINT32_MAX); // = 2
+void trigger_redraw(uint32_t _n_frames = 8);
 
 bool on_draw();
 

@@ -6,8 +6,6 @@ namespace AxoPlotl
 
 float Time::DELTA_TIME = 0;
 float Time::FRAMES_PER_SECOND = 0;
-// float Time::SECONDS_SINCE_LAST_FRAME = 0;
-// float Time::TIME_OF_LAST_FRAME = 0;
 static float SECONDS_SINCE_LAST_FRAME = 0;
 static float TIME_OF_LAST_FRAME = 0;
 

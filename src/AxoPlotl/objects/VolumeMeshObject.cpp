@@ -1,4 +1,5 @@
 #include "VolumeMeshObject.hpp"
+#include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "imgui.h"
@@ -108,6 +109,20 @@ void VolumeMeshObject::render_ui()
             ImGui::EndMenu(); // Cell Props
         }
 
+        if (ImGui::BeginMenu("Calculate"))
+        {
+            if (ImGui::BeginMenu("Cells")) {
+                if (ImGui::MenuItem("Minimum Dihedral Angle")) {
+                    calc_cell_min_dihedral_angle(mesh_);
+                }
+                if (ImGui::MenuItem("Boundary Distance")) {
+                    calc_cell_boundary_distance(mesh_);
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenu(); //!Calculate
+        }
+
         ImGui::EndMenu(); //!Properties
     }
 
@@ -141,7 +156,7 @@ void VolumeMeshObject::render_ui()
         }
     }
 
-    if (ImGui::BeginMenu("Settings"))
+    if (ImGui::BeginMenu("Render Settings"))
     {
         ImGui::Checkbox("V", &renderer_.render_vertices_);
         ImGui::SameLine();

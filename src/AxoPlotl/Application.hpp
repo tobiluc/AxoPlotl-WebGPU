@@ -2,7 +2,6 @@
 
 #include "AxoPlotl/PluginBase.hpp"
 #include "AxoPlotl/Scene.hpp"
-#include "rendering/Renderer.h"
 #include <webgpu/webgpu.hpp>
 
 #include <GLFW/glfw3.h>
@@ -21,7 +20,7 @@ public:
 
     Application();
 
-    ~Application();
+    ~Application() = default;
 
     // init everything and return true if it went all right
     bool init();
@@ -42,6 +41,9 @@ public:
     wgpu::Device device_;
     wgpu::Adapter adapter_;
     wgpu::Surface surface_;
+
+    // Processed at the end of a frame
+    std::vector<std::function<void()>> deferred_calls_;
 
 private:
     GLFWwindow* window_;

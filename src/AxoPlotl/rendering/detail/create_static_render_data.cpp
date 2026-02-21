@@ -82,6 +82,17 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
         const auto& bary = _mesh.barycenter(ch);
         data.cell_incenters_.push_back(Vec4f(bary[0],bary[1],bary[2],1));
 
+        // edges for outline
+        for (auto ce_it = _mesh.ce_iter(ch); ce_it.is_valid(); ++ce_it) {
+            const auto& e = _mesh.edge(*ce_it);
+            data.cell_outline_indices_.push_back({
+                .vertex_index_=e.from_vertex().uidx(),
+                .cell_index_=ch.uidx()});
+            data.cell_outline_indices_.push_back({
+                .vertex_index_=e.to_vertex().uidx(),
+                .cell_index_=ch.uidx()});
+        }
+
         // triangulate each face
         for (auto hfh : _mesh.cell(ch).halffaces()) {
             const auto& vhs = _mesh.get_halfface_vertices(hfh);

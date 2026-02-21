@@ -1,5 +1,6 @@
 #include "VolumeMeshRenderer.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
+#include "AxoPlotl/rendering/shaders/cell_outline_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/cell_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/edge_shader_wgsl.hpp"
 #include "AxoPlotl/rendering/shaders/face_shader_wgsl.hpp"
@@ -16,7 +17,7 @@ wgpu::RenderPipeline VolumeMeshRenderer::vertices_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::edges_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::face_triangles_pipeline_;
 wgpu::RenderPipeline VolumeMeshRenderer::cell_triangles_pipeline_;
-//wgpu::DepthStencilState VolumeMeshRenderer::depth_stencil_state_;
+wgpu::RenderPipeline VolumeMeshRenderer::cell_outline_pipeline_;
 wgpu::BindGroupLayout VolumeMeshRenderer::bind_group_layout_;
 
 void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
@@ -32,6 +33,7 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
     n_positions_ = _data.positions_.size();
     n_face_triangle_indices_ = _data.face_draw_triangle_indices_.size();
     n_cell_triangle_indices_ = _data.cell_draw_triangle_indices_.size();
+    n_cell_outline_indices_ = _data.cell_outline_indices_.size();
 
     n_vertices_ = std::max(_data.vertex_instances_.size(), 1lu);
     n_edges_ = std::max(_data.edge_instances_.size(), 1lu);
@@ -46,6 +48,7 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
     create_edges_pipeline();
     create_face_triangle_pipeline();
     create_cell_triangle_pipeline();
+    create_cell_outline_pipeline();
 }
 
 void VolumeMeshRenderer::create_buffers(const StaticData &_data)
@@ -165,6 +168,24 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
             desc.size
         );
         std::cout << "Cell Triangle Index Buffer Size: " << desc.size << std::endl;
+    }
+
+    // Cell Outline Index Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(CellHandle) * _data.cell_outline_indices_.size();
+        desc.mappedAtCreation = false;
+        desc.label = "Cell Outline Index";
+
+        cellOutlineIndexBuffer = device.createBuffer(desc);
+        queue.writeBuffer(
+            cellOutlineIndexBuffer,
+            0,
+            _data.cell_outline_indices_.data(),
+            desc.size
+            );
+        std::cout << "Cell Outline Index Buffer Size: " << desc.size << std::endl;
     }
 
     // Vertex Property Buffer
@@ -600,7 +621,7 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(FaceHandle, vertex_index_);;
+    attrs[0].offset = offsetof(CellHandle, vertex_index_);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Cell Index
@@ -609,7 +630,7 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(FaceHandle);
+    vertexBufferLayout.arrayStride = sizeof(CellHandle);
     vertexBufferLayout.attributeCount = 2;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
@@ -664,6 +685,81 @@ void VolumeMeshRenderer::create_cell_triangle_pipeline()
     pipelineDesc.label = "Cell Triangle Pipeline";
 
     cell_triangles_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+}
+
+void VolumeMeshRenderer::create_cell_outline_pipeline()
+{
+    if (cell_outline_pipeline_ || n_cells_==0) {return;}
+
+    wgpu::ShaderModule shaderModule = create_mesh_shader_module(app_->device_, cell_outline_shader_wgsl, "Cell Outline");
+
+    // 0 -- Vertex Index
+    wgpu::VertexAttribute attrs[2]{};
+    attrs[0].shaderLocation = 0;
+    attrs[0].offset = offsetof(CellHandle, vertex_index_);;
+    attrs[0].format = wgpu::VertexFormat::Uint32;
+
+    // 1 -- Cell Index
+    attrs[1].shaderLocation = 1;
+    attrs[1].offset = offsetof(CellHandle, cell_index_);
+    attrs[1].format = wgpu::VertexFormat::Uint32;
+
+    wgpu::VertexBufferLayout vertexBufferLayout{};
+    vertexBufferLayout.arrayStride = sizeof(CellHandle);
+    vertexBufferLayout.attributeCount = 2;
+    vertexBufferLayout.attributes = attrs;
+    vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
+
+    // // Vertex state
+    wgpu::VertexState vertexState{};
+    vertexState.module = shaderModule;
+    vertexState.entryPoint = "vs_main";
+    vertexState.bufferCount = 1;
+    vertexState.buffers = &vertexBufferLayout;
+
+    // Fragment state
+    wgpu::ColorTargetState colorTarget{};
+    wgpu::SurfaceCapabilities surf_caps;
+    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
+    colorTarget.format = surf_caps.formats[0];
+    colorTarget.writeMask = wgpu::ColorWriteMask::All;
+
+    wgpu::FragmentState fragmentState{};
+    fragmentState.module = shaderModule;
+    fragmentState.entryPoint = "fs_main";
+    fragmentState.targetCount = 1;
+    fragmentState.targets = &colorTarget;
+
+    // Primitive state
+    wgpu::PrimitiveState primitive{};
+    primitive.topology = wgpu::PrimitiveTopology::LineList;
+    primitive.frontFace = wgpu::FrontFace::CCW;
+    primitive.cullMode = wgpu::CullMode::None;
+
+    // Multisample
+    wgpu::MultisampleState multisample{};
+    multisample.count = 1;
+    multisample.mask = ~0u;
+    multisample.alphaToCoverageEnabled = false;
+
+    // Pipeline layout
+    wgpu::PipelineLayoutDescriptor layoutDesc{};
+    layoutDesc.bindGroupLayoutCount = 1;
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
+
+    // Render pipeline
+    wgpu::RenderPipelineDescriptor pipelineDesc{};
+    wgpu::DepthStencilState depth = create_default_depth_state();
+    pipelineDesc.depthStencil = &depth;
+    pipelineDesc.layout = pipelineLayout;
+    pipelineDesc.vertex = vertexState;
+    pipelineDesc.fragment = &fragmentState;
+    pipelineDesc.primitive = primitive;
+    pipelineDesc.multisample = multisample;
+    pipelineDesc.label = "Cell Outline Pipeline";
+
+    cell_outline_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void VolumeMeshRenderer::update_vertex_property_data(const std::vector<Property::Data>& _data)
@@ -732,11 +828,17 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
         // Set cell specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &cell_property_.mode_, sizeof(Property::Mode));
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, cell_scale_), &cell_scale_, sizeof(float));
+        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &cell_property_.filter_, sizeof(Property::Filter));
 
         _render_pass.setPipeline(cell_triangles_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
         _render_pass.setVertexBuffer(0, cellTriangleIndexBuffer_, 0, n_cell_triangle_indices_*sizeof(CellHandle));
         _render_pass.draw(n_cell_triangle_indices_, 1, 0, 0);
+
+        _render_pass.setPipeline(cell_outline_pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.setVertexBuffer(0, cellOutlineIndexBuffer, 0, n_cell_outline_indices_*sizeof(CellHandle));
+        _render_pass.draw(n_cell_outline_indices_, 1, 0, 0);
     }
 
     // Draw faces
@@ -745,6 +847,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     {
         // Set face specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &face_property_.mode_, sizeof(Property::Mode));
+        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &face_property_.filter_, sizeof(Property::Filter));
 
         _render_pass.setPipeline(face_triangles_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
@@ -758,6 +861,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     {
         // Set edge specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &edge_property_.mode_, sizeof(Property::Mode));
+        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &edge_property_.filter_, sizeof(Property::Filter));
 
         _render_pass.setPipeline(edges_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
@@ -792,6 +896,7 @@ void VolumeMeshRenderer::release()
     edgeIndexBuffer_.release();
     faceTriangleIndexBuffer_.release();
     cellTriangleIndexBuffer_.release();
+    cellOutlineIndexBuffer.release();
     cell_incenter_buffer_.release();
 
     vertex_property_buffer_.release();

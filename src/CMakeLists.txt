@@ -4,14 +4,14 @@ add_executable("${PROJECT_NAME}"
     main.mm
     AxoPlotl/Application.hpp
     AxoPlotl/Application.cpp
-    AxoPlotl/utils/web_gpu_utils.h
-    AxoPlotl/utils/web_gpu_utils.cpp
+
+
     AxoPlotl/IO/file_access.h
     AxoPlotl/IO/file_access.cpp
-    AxoPlotl/rendering/TrianglePipeline.h
-    AxoPlotl/rendering/TrianglePipeline.cpp
-    AxoPlotl/rendering/Renderer.h
-    AxoPlotl/rendering/Renderer.cpp
+
+
+
+
     AxoPlotl/geometry/mesh_adapter.h
     AxoPlotl/geometry/mesh_adapter.cpp
     AxoPlotl/rendering/VolumeMeshRenderer.hpp
@@ -54,6 +54,7 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/rendering/shaders/includes/shader_includes.hpp
     AxoPlotl/rendering/detail/wgpu_commons.hpp
     AxoPlotl/rendering/shaders/includes/shader_includes.cpp
+    AxoPlotl/rendering/shaders/cell_outline_shader_wgsl.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE
