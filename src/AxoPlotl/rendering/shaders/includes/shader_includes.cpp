@@ -39,6 +39,7 @@ inline static std::unordered_map<std::string,const char*> shader_includes =
     @group(0) @binding(5) var<storage, read> edgeProps : array<Property>;
     @group(0) @binding(6) var<storage, read> faceProps : array<Property>;
     @group(0) @binding(7) var<storage, read> cellProps : array<Property>;
+    @group(0) @binding(8) var<storage, read> cellIncenters : array<vec3<f32>>;
 
     fn isOutsideClipBox(pos:vec3<f32>, clipBox:ClipBox) -> bool {
         return (ubo.clipBox.enabled>0 && ((pos.x < ubo.clipBox.min.x)

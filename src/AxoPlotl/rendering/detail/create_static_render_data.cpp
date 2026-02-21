@@ -77,26 +77,29 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
             });
         }
     }
-    //data.n_cells_ = _mesh.n_cells();
-    // for (auto ch : _mesh.cells()) {
-    //     // triangulate each face
-    //     for (auto hfh : _mesh.cell(ch).halffaces()) {
-    //         const auto& vhs = _mesh.get_halfface_vertices(hfh);
-    //         for (int i = 1; i < vhs.size()-1; ++i) {
-    //             data.cell_draw_triangle_indices_.push_back({
-    //                 .vertex_index_ = vhs[0].uidx(),
-    //                 .cell_index_ = ch.uidx()
-    //             });
-    //             data.cell_draw_triangle_indices_.push_back({
-    //                 .vertex_index_ = vhs[i].uidx(),
-    //                 .cell_index_ = ch.uidx()
-    //             });
-    //             data.cell_draw_triangle_indices_.push_back({
-    //                 .vertex_index_ = vhs[i+1].uidx(),
-    //                 .cell_index_ = ch.uidx()
-    //             });
-    //         }
-    //     }
-    // }
+    data.n_cells_ = _mesh.n_cells();
+    for (auto ch : _mesh.cells()) {
+        const auto& bary = _mesh.barycenter(ch);
+        data.cell_incenters_.push_back(Vec4f(bary[0],bary[1],bary[2],1));
+
+        // triangulate each face
+        for (auto hfh : _mesh.cell(ch).halffaces()) {
+            const auto& vhs = _mesh.get_halfface_vertices(hfh);
+            for (int i = 1; i < vhs.size()-1; ++i) {
+                data.cell_draw_triangle_indices_.push_back({
+                    .vertex_index_ = vhs[0].uidx(),
+                    .cell_index_ = ch.uidx()
+                });
+                data.cell_draw_triangle_indices_.push_back({
+                    .vertex_index_ = vhs[i].uidx(),
+                    .cell_index_ = ch.uidx()
+                });
+                data.cell_draw_triangle_indices_.push_back({
+                    .vertex_index_ = vhs[i+1].uidx(),
+                    .cell_index_ = ch.uidx()
+                });
+            }
+        }
+    }
     return data;
 }

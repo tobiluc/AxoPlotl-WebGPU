@@ -20,15 +20,17 @@ fn vs_main(
 
     var out : V2F;
 
-    let pos = positions[vertex_index];
+    // Scale around incenter
+    let pos = cellIncenters[cell_index]
++ ubo.cellScale * (positions[vertex_index]-cellIncenters[cell_index]);
+    out.position = ubo.mvp * vec4<f32>(pos, 1.0);
+
     let value = cellProps[cell_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
 || (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
         out.position = clippedPosition();
     }
     out.value = value;
-
-    out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
     return out;
 }

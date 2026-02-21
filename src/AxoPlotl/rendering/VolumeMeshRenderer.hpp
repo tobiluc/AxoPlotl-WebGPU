@@ -80,7 +80,6 @@ public:
     struct CellHandle {
         uint32_t vertex_index_;
         uint32_t cell_index_;
-        Vec3f incenter_;
     };
 
     struct StaticData
@@ -92,6 +91,7 @@ public:
         std::vector<EdgeInstance> edge_instances_;
         std::vector<FaceHandle> face_draw_triangle_indices_;
         std::vector<CellHandle> cell_draw_triangle_indices_;
+        std::vector<Position> cell_incenters_;
     };
 
     VolumeMeshRenderer() {}
@@ -152,6 +152,7 @@ private:
     wgpu::Buffer edge_property_buffer_;
     wgpu::Buffer face_property_buffer_;
     wgpu::Buffer cell_property_buffer_;
+    wgpu::Buffer cell_incenter_buffer_;
     wgpu::Buffer uniform_buffer_;
 
     static wgpu::RenderPipeline vertices_pipeline_;

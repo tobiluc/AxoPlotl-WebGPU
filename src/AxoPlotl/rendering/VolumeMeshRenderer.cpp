@@ -70,6 +70,27 @@ void VolumeMeshRenderer::create_buffers(const StaticData &_data)
         std::cout << "Position Buffer Size: " << desc.size << std::endl;
     }
 
+    // Cell Incenter Buffer
+    if (n_cells_ > 0)
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage =
+            wgpu::BufferUsage::Storage |
+            wgpu::BufferUsage::CopyDst |
+            wgpu::BufferUsage::Vertex;
+        desc.size = sizeof(Position) * n_cells_;
+        desc.mappedAtCreation = false;
+        desc.label = "Cell Incenter";
+
+        cell_incenter_buffer_ = device.createBuffer(desc);
+        queue.writeBuffer(
+            cell_incenter_buffer_, 0,
+            _data.cell_incenters_.data(),
+            sizeof(Position)*_data.cell_incenters_.size());
+
+        std::cout << "Cell Incenter Buffer Size: " << desc.size << std::endl;
+    }
+
     // Vertex Index Buffer
     if (n_vertices_ > 0)
     {
@@ -218,7 +239,7 @@ void VolumeMeshRenderer::create_bind_group_layout()
 {
     if (bind_group_layout_) {return;}
 
-    wgpu::BindGroupLayoutEntry entries[8]{};
+    wgpu::BindGroupLayoutEntry entries[9]{};
 
     // 0 - Uniform (MVP)
     entries[0].binding = 0;
@@ -267,8 +288,14 @@ void VolumeMeshRenderer::create_bind_group_layout()
     entries[7].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
     entries[7].buffer.minBindingSize = sizeof(Property::Data);
 
+    // 8 - Cell Incenter
+    entries[8].binding = 8;
+    entries[8].visibility = wgpu::ShaderStage::Vertex;
+    entries[8].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[8].buffer.minBindingSize = sizeof(Position);
+
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
-    layoutDesc.entryCount = 8;
+    layoutDesc.entryCount = 9;
     layoutDesc.entries = entries;
 
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
@@ -276,7 +303,7 @@ void VolumeMeshRenderer::create_bind_group_layout()
 
 void VolumeMeshRenderer::create_bind_group()
 {
-    wgpu::BindGroupEntry groupEntries[8]{};
+    wgpu::BindGroupEntry groupEntries[9]{};
 
     // 0 - Uniform
     groupEntries[0].binding = 0;
@@ -330,13 +357,20 @@ void VolumeMeshRenderer::create_bind_group()
     groupEntries[7].size = sizeof(Property::Data) * n_cells_;
     std::cout << "7: Cell Properties #" << groupEntries[7].size << std::endl;
 
-    // 8 Halfedge Props
+    // 8 - Cell Incenter
+    groupEntries[8].binding = 8;
+    groupEntries[8].buffer = cell_incenter_buffer_;
+    groupEntries[8].offset = 0;
+    groupEntries[8].size = sizeof(Position) * n_cells_;
+    std::cout << "8: Cell Incenters #" << groupEntries[8].size << std::endl;
 
-    // 9 Halfface Props
+    // 9 Halfedge Props
+
+    // 10 Halfface Props
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = bind_group_layout_;
-    bgDesc.entryCount = 8;
+    bgDesc.entryCount = 9;
     bgDesc.entries = groupEntries;
 
     bind_group_ = app_->device_.createBindGroup(bgDesc);
@@ -758,6 +792,7 @@ void VolumeMeshRenderer::release()
     edgeIndexBuffer_.release();
     faceTriangleIndexBuffer_.release();
     cellTriangleIndexBuffer_.release();
+    cell_incenter_buffer_.release();
 
     vertex_property_buffer_.release();
     edge_property_buffer_.release();

@@ -154,6 +154,7 @@ void VolumeMeshObject::render_ui()
 
         ImGui::SliderFloat("Point Size", &renderer_.point_size_, 0.0f, 32.0f);
         ImGui::SliderFloat("Line Width", &renderer_.line_width_, 0.0f, 32.0f);
+        ImGui::SliderFloat("Cell Scale", &renderer_.cell_scale_, 0.0f, 1.0f);
 
         // Clip Box
         bool clip_box_enabled = renderer_.clip_box_.enabled_;
@@ -233,6 +234,7 @@ void VolumeMeshObject::recompute_bounding_box()
     for (const auto& p : mesh_.vertex_positions()) {
         bbox_.expand(Vec3f(p[0],p[1],p[2]));
     }
+    bbox_ = bbox_.scaled(1.01f);
 }
 
 }
