@@ -689,6 +689,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, viewport_size_), &viewport_size, sizeof(Vec2f));
     queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, point_size_), &point_size_, sizeof(float));
     queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, line_width_), &line_width_, sizeof(float));
+    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, clip_box_), &clip_box_, sizeof(ClipBox));
 
     // Draw cells
     if (render_cells_ && n_cells_ > 0
@@ -696,6 +697,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     {
         // Set cell specific uniforms
         queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &cell_property_.mode_, sizeof(Property::Mode));
+        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, cell_scale_), &cell_scale_, sizeof(float));
 
         _render_pass.setPipeline(cell_triangles_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);

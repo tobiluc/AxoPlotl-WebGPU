@@ -154,6 +154,25 @@ void VolumeMeshObject::render_ui()
 
         ImGui::SliderFloat("Point Size", &renderer_.point_size_, 0.0f, 32.0f);
         ImGui::SliderFloat("Line Width", &renderer_.line_width_, 0.0f, 32.0f);
+
+        // Clip Box
+        bool clip_box_enabled = renderer_.clip_box_.enabled_;
+        if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
+            renderer_.clip_box_.min_ = bounding_box().min();
+            renderer_.clip_box_.max_ = bounding_box().max();
+        }
+        renderer_.clip_box_.enabled_ = clip_box_enabled;
+        if (clip_box_enabled) {
+            Vec2f x = {renderer_.clip_box_.min_[0],renderer_.clip_box_.max_[0]};
+            Vec2f y = {renderer_.clip_box_.min_[1],renderer_.clip_box_.max_[1]};
+            Vec2f z = {renderer_.clip_box_.min_[2],renderer_.clip_box_.max_[2]};
+            ImGui::SliderFloat2("x", &x[0], bounding_box().min()[0], bounding_box().max()[0]);
+            ImGui::SliderFloat2("y", &y[0], bounding_box().min()[1], bounding_box().max()[1]);
+            ImGui::SliderFloat2("z", &z[0], bounding_box().min()[2], bounding_box().max()[2]);
+            renderer_.clip_box_.min_ = {x[0],y[0],z[0]};
+            renderer_.clip_box_.max_ = {x[1],y[1],z[1]};
+        }
+
         ImGui::EndMenu(); //!Settings
     }
 }

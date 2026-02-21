@@ -5,11 +5,11 @@ namespace AxoPlotl
 {
 
 inline const std::string edge_shader_wgsl = R"(
-#include "commons.wgsl"
+#include "ShaderInput.wgsl"
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
-    @location(0) color : vec4<f32>,
+    @location(0) value : vec4<f32>,
 };
 
 @vertex
@@ -61,19 +61,20 @@ fn vs_main(
     let clip = mix(clip0, clip1, t);
     out.position = vec4<f32>(ndcPos * clip.w, clip.z, clip.w);
 
-    //-------------------------------
-    // Property Visualization
-    //-------------------------------
-
     let value = edgeProps[eh].value;
-    out.color = value;
+    let pos = mix(positions[vh0], positions[vh1], t);
+    if (isOutsideClipBox(pos, ubo.clipBox)
+|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+        out.position = clippedPosition();
+    }
+    out.value = value;
 
     return out;
 }
 
 @fragment
 fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    return in.color;
+    #include "FragmentReturnPropertyColor.wgsl"
 }
 
 )";

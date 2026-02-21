@@ -5,33 +5,11 @@ namespace AxoPlotl
 {
 
 inline const std::string cell_shader_wgsl = R"(
-
-alias Mode = u32;
-const MODE_COLOR:Mode = 0;
-const MODE_SCALAR:Mode = 1;
-const MODE_VEC3:Mode = 2;
-
-struct CellProperty {
-    color : vec4<f32>
-};
-
-struct Uniforms {
-    mvp : mat4x4<f32>,
-    mode: Mode
-};
-
-@group(0) @binding(0)
-var<uniform> ubo : Uniforms;
-
-@group(0) @binding(1)
-var<storage, read> positions : array<vec3<f32>>;
-
-@group(0) @binding(7)
-var<storage, read> cell_props : array<CellProperty>;
+#include "ShaderInput.wgsl"
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
-    @location(0) color : vec4<f32>,
+    @location(0) value : vec4<f32>,
 };
 
 @vertex
@@ -43,17 +21,21 @@ fn vs_main(
     var out : V2F;
 
     let pos = positions[vertex_index];
-    let color = cell_props[cell_index].color;
+    let value = cellProps[cell_index].value;
+    if (isOutsideClipBox(pos, ubo.clipBox)
+|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+        out.position = clippedPosition();
+    }
+    out.value = value;
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
-    out.color = color;
 
     return out;
 }
 
 @fragment
 fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    return in.color;
+    #include "FragmentReturnPropertyColor.wgsl"
 }
 
 )";

@@ -44,6 +44,13 @@ public:
 
     float line_width_ = 5.0f;
     float point_size_ = 12.0f;
+    float cell_scale_ = 0.9f;;
+
+    struct ClipBox {
+        alignas(16) Vec3f min_;
+        alignas(16) Vec3f max_;
+        alignas(16) int32_t enabled_ = false;
+    } clip_box_;
 
     // Mirrors Shader Unfiforms. the 16bit alignment is important!
     struct Uniforms {
@@ -52,7 +59,9 @@ public:
         alignas(16) Vec2f viewport_size_;
         alignas(16) float point_size_;
         alignas(16) float line_width_;
+        alignas(16) float cell_scale_;
         alignas(16) Property::Filter filter_;
+        alignas(16) ClipBox clip_box_;
     };
 
     using Position = Vec4f;
@@ -71,6 +80,7 @@ public:
     struct CellHandle {
         uint32_t vertex_index_;
         uint32_t cell_index_;
+        Vec3f incenter_;
     };
 
     struct StaticData

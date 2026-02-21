@@ -19,13 +19,13 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/rendering/VolumeMeshRenderer.cpp
     AxoPlotl/rendering/shaders/vertex_shader_wgsl.hpp
     AxoPlotl/rendering/shaders/edge_shader_wgsl.hpp
-    AxoPlotl/rendering/shaders/Shader.cpp
+
     AxoPlotl/objects/BaseObject.hpp
     AxoPlotl/Scene.hpp
     AxoPlotl/Scene.cpp
     AxoPlotl/objects/VolumeMeshObject.hpp
     AxoPlotl/objects/VolumeMeshObject.cpp
-    AxoPlotl/rendering/shaders/Shader.hpp
+
     AxoPlotl/typedefs/wgpu.hpp
     AxoPlotl/input/Mouse.hpp
     AxoPlotl/input/Mouse.cpp
@@ -53,6 +53,7 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/AxoPlotl_fwd.hpp
     AxoPlotl/rendering/shaders/includes/shader_includes.hpp
     AxoPlotl/rendering/detail/wgpu_commons.hpp
+    AxoPlotl/rendering/shaders/includes/shader_includes.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE
