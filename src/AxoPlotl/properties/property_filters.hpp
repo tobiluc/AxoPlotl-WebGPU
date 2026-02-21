@@ -37,37 +37,37 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         VolumeMeshRenderer::Property& rp = get_property<Entity>(_r);
 
         std::string colormap_menu_title = "Colormap ("
-            + rp.color_map_.name_ + ")";
+            + _r.property_color_map_.name_ + ")";
         if (ImGui::BeginMenu(colormap_menu_title.c_str())) {
             if (ImGui::MenuItem("Viridis")) {
-                rp.color_map_.set_viridis(256);
+                _r.property_color_map_.set_viridis();
             }
             if (ImGui::MenuItem("Magma")) {
-                rp.color_map_.set_magma(256);
+                _r.property_color_map_.set_magma();
             }
             if (ImGui::MenuItem("Inferno")) {
-                rp.color_map_.set_inferno(256);
+                _r.property_color_map_.set_inferno();
             }
             if (ImGui::MenuItem("Plasma")) {
-                rp.color_map_.set_plasma(256);
+                _r.property_color_map_.set_plasma();
             }
             if (ImGui::MenuItem("Diverging Red Blue")) {
-                rp.color_map_.set_rd_bu(256);
+                _r.property_color_map_.set_rd_bu();
             }
             if (ImGui::MenuItem("Coolwarm")) {
-                rp.color_map_.set_coolwarm(256);
+                _r.property_color_map_.set_coolwarm();
             }
             ImGui::EndMenu();
         }
 
         auto draw_colormap = [&]() {
-            // ImGui::Image(
-            //     (ImTextureID)(intptr_t)rp.color_map_.texture_id_,
-            //     ImVec2(ImGui::GetContentRegionAvail().x, 20),
-            //     ImVec2(0,0),
-            //     ImVec2(1,1)
-            // );
-            //ImGui::Spacing();
+            ImGui::Image(
+                (ImTextureID)_r.property_color_map_.view_,
+                ImVec2(ImGui::GetContentRegionAvail().x, 20),
+                ImVec2(0,0),
+                ImVec2(1,1)
+            );
+            ImGui::Spacing();
         };
         draw_colormap();
 

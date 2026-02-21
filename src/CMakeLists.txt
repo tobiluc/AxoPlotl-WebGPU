@@ -51,6 +51,8 @@ add_executable("${PROJECT_NAME}"
     AxoPlotl/properties/property_filters.hpp
     AxoPlotl/utils/commons.hpp
     AxoPlotl/AxoPlotl_fwd.hpp
+    AxoPlotl/rendering/shaders/includes/shader_includes.hpp
+    AxoPlotl/rendering/detail/wgpu_commons.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE

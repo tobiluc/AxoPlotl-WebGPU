@@ -25,10 +25,11 @@ public:
             Vec4f value_ = {0,0,0,1};
         };
         union Filter {
-            Vec2f scalar_range_ = {-1,1};
+            Vec2f scalar_range_ = {0,5};
         } filter_;
-        ColorMap color_map_;
     };
+
+    ColorMap property_color_map_;
 
     bool render_anything_ = true;
     bool render_vertices_ = true;
@@ -51,6 +52,7 @@ public:
         alignas(16) Vec2f viewport_size_;
         alignas(16) float point_size_;
         alignas(16) float line_width_;
+        alignas(16) Property::Filter filter_;
     };
 
     using Position = Vec4f;

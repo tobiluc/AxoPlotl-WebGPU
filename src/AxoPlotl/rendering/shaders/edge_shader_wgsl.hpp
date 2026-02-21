@@ -1,35 +1,11 @@
 #pragma once
 
+#include <string>
 namespace AxoPlotl
 {
 
-inline const char* edge_shader_wgsl = R"(
-
-alias Mode = u32;
-const MODE_COLOR:Mode = 0;
-const MODE_SCALAR:Mode = 1;
-const MODE_VEC3:Mode = 2;
-
-struct EdgeProperty {
-    value : vec4<f32>
-};
-
-struct Uniforms {
-    @align(16) mvp : mat4x4<f32>,
-    @align(16) mode: Mode,
-    @align(16) viewportSize: vec2<f32>,
-    @align(16) pointSize: f32,
-    @align(16) lineWidth: f32
-};
-
-@group(0) @binding(0)
-var<uniform> ubo : Uniforms;
-
-@group(0) @binding(1)
-var<storage, read> positions : array<vec3<f32>>;
-
-@group(0) @binding(3)
-var<storage, read> edge_props : array<EdgeProperty>;
+inline const std::string edge_shader_wgsl = R"(
+#include "commons.wgsl"
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -89,7 +65,7 @@ fn vs_main(
     // Property Visualization
     //-------------------------------
 
-    let value = edge_props[eh].value;
+    let value = edgeProps[eh].value;
     out.color = value;
 
     return out;

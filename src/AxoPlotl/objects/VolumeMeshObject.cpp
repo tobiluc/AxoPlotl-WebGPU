@@ -10,7 +10,7 @@ namespace AxoPlotl
 
 void VolumeMeshObject::render_ui()
 {
-    if (ImGui::BeginMenu("Properties"))
+    if (ImGui::BeginMenu("Select Property"))
     {
         if (mesh_.n_vertex_props()>0 && ImGui::BeginMenu("Vertices"))
         {
@@ -108,16 +108,37 @@ void VolumeMeshObject::render_ui()
             ImGui::EndMenu(); // Cell Props
         }
 
-        if (ImGui::MenuItem("Clear")) {
-            upload_default_property_data();
-            renderer_.vertex_property_.mode_ =
-            renderer_.edge_property_.mode_ =
-            renderer_.face_property_.mode_ =
-            renderer_.cell_property_.mode_ =
-            VolumeMeshRenderer::Property::Mode::COLOR;
+        ImGui::EndMenu(); //!Properties
+    }
+
+    if (prop_)
+    {
+        ImGui::SeparatorText((*prop_)->name().c_str());
+
+        if (!prop_filters_.empty()) {
+
+            if (ImGui::BeginMenu("Change Filter")) {
+                for (int i = 0; i < prop_filters_.size(); ++i) {
+                    if (ImGui::MenuItem(prop_filters_[i]->name().c_str())) {
+                        filter_index_ = i;
+                    }
+                }
+                ImGui::EndMenu();
+            }
+
+            prop_filters_[filter_index_]->renderUI(renderer_);
         }
 
-        ImGui::EndMenu(); //!Properties
+        if (ImGui::Button("Clear Property")) {
+            upload_default_property_data();
+            renderer_.vertex_property_.mode_ =
+                renderer_.edge_property_.mode_ =
+                renderer_.face_property_.mode_ =
+                renderer_.cell_property_.mode_ =
+                VolumeMeshRenderer::Property::Mode::COLOR;
+            prop_ = std::nullopt;
+            prop_filters_.clear();
+        }
     }
 
     if (ImGui::BeginMenu("Settings"))
@@ -149,6 +170,12 @@ void VolumeMeshObject::init()
 void VolumeMeshObject::upload_default_property_data()
 {
     std::vector<VolumeMeshRenderer::Property::Data> props;
+    for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
+        props.push_back({.value_ = Vec4f(0,0,0,1)});
+    }
+    renderer_.update_vertex_property_data(props);
+
+    props.clear();
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
         props.push_back({.value_ = Vec4f(0,0,0,1)});
     }
@@ -166,6 +193,19 @@ void VolumeMeshObject::upload_default_property_data()
         props.push_back({.value_ = sphere_color});
     }
     renderer_.update_face_property_data(props);
+
+    props.clear();
+    for (OVM::CH ch : mesh_.cells()) {
+        auto p = ToLoG::normalized(mesh_.barycenter(ch));
+        Vec4f sphere_color = Vec4f(
+            0.5 * (p[0] + 1),
+            0.5 * (p[1] + 1),
+            0.5 * (p[2] + 1),
+            1
+            );
+        props.push_back({.value_ = sphere_color});
+    }
+    renderer_.update_cell_property_data(props);
 }
 
 void VolumeMeshObject::recompute_bounding_box()

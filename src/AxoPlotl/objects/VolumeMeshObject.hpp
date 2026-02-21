@@ -16,6 +16,7 @@ private:
     std::optional<std::filesystem::path> filepath_;
     std::optional<OVM::PropertyStorageBase*> prop_;
     std::vector<std::shared_ptr<PropertyFilterBase>> prop_filters_;
+    int filter_index_ = 0;
 
     void upload_default_property_data();
 

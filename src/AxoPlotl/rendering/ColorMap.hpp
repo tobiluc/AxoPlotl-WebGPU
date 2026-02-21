@@ -1,35 +1,59 @@
 #pragma once
 
+#include "webgpu/webgpu.hpp"
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <string>
 #include <vector>
+#include <arm_neon.h>
 
 namespace AxoPlotl
 {
 
 class ColorMap {
 public:
+    using f16 = float16_t;
+
     ColorMap() {}
 
-    void set_gradient(const std::vector<Vec3f>& _colors, int _N = 256);
+    ~ColorMap() {
+        destroy();
+    }
 
-    void set_gradient(const Vec3f& _a, const Vec3f& _b, int _N);
+    void create(wgpu::Device _device);
 
-    void set_viridis(int N);
+    inline void destroy() {
+        if (texture_) {
+            texture_.destroy();
+            texture_.release();
+            view_.release();
+            sampler_.release();
+        }
+    }
 
-    void set_magma(int N);
+    void set_gradient(const std::vector<Vec3f>& _colors);
 
-    void set_inferno(int N);
+    void set_gradient(const Vec3f& _a, const Vec3f& _b);
 
-    void set_plasma(int N);
+    void set_viridis();
 
-    void set_rd_bu(int N);
+    void set_magma();
 
-    void set_coolwarm(int N);
+    void set_inferno();
 
-    void update(const std::vector<float>& _data);
+    void set_plasma();
+
+    void set_rd_bu();
+
+    void set_coolwarm();
+
+    void update(const std::vector<f16>& _data);
 
     std::string name_ = "";
+
+    wgpu::Texture texture_;
+    wgpu::TextureView view_;
+    wgpu::Sampler sampler_;
+    wgpu::Device device_;
 };
 
 }

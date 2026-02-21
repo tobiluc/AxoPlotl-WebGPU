@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
+
 namespace AxoPlotl
 {
 
-inline const char* face_shader_wgsl = R"(
+inline const std::string face_shader_wgsl = R"(
 
 alias Mode = u32;
 const MODE_COLOR:Mode = 0;
@@ -25,7 +27,7 @@ var<uniform> ubo : Uniforms;
 @group(0) @binding(1)
 var<storage, read> positions : array<vec3<f32>>;
 
-@group(0) @binding(4)
+@group(0) @binding(6)
 var<storage, read> face_props : array<FaceProperty>;
 
 struct V2F {

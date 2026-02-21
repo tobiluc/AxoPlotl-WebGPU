@@ -3,26 +3,33 @@
 namespace AxoPlotl
 {
 
-void ColorMap::set_gradient(const std::vector<Vec3f>& _colors, int N)
+static wgpu::Extent3D extent()
 {
-    std::vector<float> data;
+    return {256, 1, 1};
+}
+
+static inline int N = extent().width;
+
+void ColorMap::set_gradient(const std::vector<Vec3f>& _colors)
+{
+    std::vector<f16> data;
     data.reserve(N * 4);
 
     for (int i = 0; i < N; ++i)
     {
-        float t = float(i) / float(N - 1);
+        f16 t = f16(i) / f16(N - 1);
 
-        float scaled = t * (_colors.size() - 1);
+        f16 scaled = t * (_colors.size() - 1);
         int idx0 = std::min(int(std::floor(scaled)), int(_colors.size() - 2));
         int idx1 = idx0 + 1;
-        float local_t = scaled - idx0;
+        f16 local_t = scaled - idx0;
 
         const Vec3f &c0 = _colors[idx0];
         const Vec3f &c1 = _colors[idx1];
 
-        float r = c0.r + local_t * (c1.r - c0.r);
-        float g = c0.g + local_t * (c1.g - c0.g);
-        float b = c0.b + local_t * (c1.b - c0.b);
+        f16 r = c0.r + local_t * (c1.r - c0.r);
+        f16 g = c0.g + local_t * (c1.g - c0.g);
+        f16 b = c0.b + local_t * (c1.b - c0.b);
 
         data.push_back(r);
         data.push_back(g);
@@ -33,12 +40,12 @@ void ColorMap::set_gradient(const std::vector<Vec3f>& _colors, int N)
     update(data);
 }
 
-void ColorMap::set_gradient(const Vec3f& _a, const Vec3f& _b, int _N)
+void ColorMap::set_gradient(const Vec3f& _a, const Vec3f& _b)
 {
-    set_gradient({_a, _b}, _N);
+    set_gradient({_a, _b});
 }
 
-void ColorMap::set_viridis(int N)
+void ColorMap::set_viridis()
 {
     static const std::vector<Vec3f> viridis = {
         {0.267004f, 0.004874f, 0.329415f},
@@ -53,11 +60,11 @@ void ColorMap::set_viridis(int N)
         {0.741388f, 0.873449f, 0.149561f},
         {0.993248f, 0.906157f, 0.143936f}
     };
-    set_gradient(viridis, N);
+    set_gradient(viridis);
     name_ = "Viridis";
 }
 
-void ColorMap::set_plasma(int N)
+void ColorMap::set_plasma()
 {
     static const std::vector<Vec3f> plasma = {
         {0.050383f, 0.029803f, 0.527975f},
@@ -67,11 +74,11 @@ void ColorMap::set_plasma(int N)
         {0.975324f, 0.639465f, 0.519905f},
         {0.993248f, 0.906157f, 0.143936f}
     };
-    set_gradient(plasma, N);
+    set_gradient(plasma);
     name_ = "Plasma";
 }
 
-void ColorMap::set_inferno(int N)
+void ColorMap::set_inferno()
 {
     static const std::vector<Vec3f> inferno = {
         {0.001462f, 0.000466f, 0.013866f},
@@ -81,11 +88,11 @@ void ColorMap::set_inferno(int N)
         {0.940015f, 0.631844f, 0.152819f},
         {0.987053f, 0.991438f, 0.749504f}
     };
-    set_gradient(inferno, N);
+    set_gradient(inferno);
     name_ = "Inferno";
 }
 
-void ColorMap::set_magma(int N)
+void ColorMap::set_magma()
 {
     static const std::vector<Vec3f> magma = {
         {0.001462f, 0.000466f, 0.013866f},
@@ -95,11 +102,11 @@ void ColorMap::set_magma(int N)
         {0.965960f, 0.618919f, 0.319167f},
         {0.987053f, 0.991438f, 0.749504f}
     };
-    set_gradient(magma, N);
+    set_gradient(magma);
     name_ = "Magma";
 }
 
-void ColorMap::set_rd_bu(int N)
+void ColorMap::set_rd_bu()
 {
     static const std::vector<Vec3f> rd_bu = {
         {0.403921f, 0.000000f, 0.121569f},
@@ -110,11 +117,11 @@ void ColorMap::set_rd_bu(int N)
         {0.098039f, 0.396078f, 0.686275f},
         {0.0f, 0.003922f, 0.258824f}
     };
-    set_gradient(rd_bu, N);
+    set_gradient(rd_bu);
     name_ = "RdBu";
 }
 
-void ColorMap::set_coolwarm(int N)
+void ColorMap::set_coolwarm()
 {
     static const std::vector<Vec3f> coolwarm = {
         {0.229805f, 0.298717f, 0.753683f}, // blue
@@ -123,15 +130,68 @@ void ColorMap::set_coolwarm(int N)
         {0.991248f, 0.697083f, 0.417556f},
         {0.956871f, 0.211055f, 0.131898f}  // red
     };
-    set_gradient(coolwarm, N);
+    set_gradient(coolwarm);
     name_ = "Coolwarm";
 }
 
-void ColorMap::update(const std::vector<float>& _data)
+void ColorMap::create(wgpu::Device _device)
 {
-    int width = _data.size() / 4; // rgba
-    static constexpr int height = 1;
-    //...
+    device_ = _device;
+    wgpu::TextureDescriptor desc{};
+    desc.label = "Color Map";
+    desc.size = extent();
+    desc.dimension = wgpu::TextureDimension::_2D;
+    desc.format = wgpu::TextureFormat::RGBA16Float;
+    desc.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
+    desc.mipLevelCount = 1;
+    desc.sampleCount = 1;
+    desc.viewFormatCount = 0;
+    desc.viewFormats = nullptr;
+    texture_ = device_.createTexture(desc);
+
+    wgpu::TextureViewDescriptor textureViewDesc;
+    textureViewDesc.aspect = wgpu::TextureAspect::All;
+    textureViewDesc.baseArrayLayer = 0;
+    textureViewDesc.arrayLayerCount = 1;
+    textureViewDesc.baseMipLevel = 0;
+    textureViewDesc.mipLevelCount = 1;
+    textureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
+    textureViewDesc.format = desc.format;
+    view_ = texture_.createView(textureViewDesc);
+
+    wgpu::SamplerDescriptor samplerDesc{};
+    samplerDesc.addressModeU = wgpu::AddressMode::ClampToEdge;
+    samplerDesc.addressModeV = wgpu::AddressMode::ClampToEdge;
+    samplerDesc.addressModeW = wgpu::AddressMode::ClampToEdge;
+    samplerDesc.minFilter = wgpu::FilterMode::Linear;
+    samplerDesc.magFilter = wgpu::FilterMode::Linear;
+    samplerDesc.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+    samplerDesc.maxAnisotropy = 1;
+    sampler_ = device_.createSampler(samplerDesc);
+}
+
+void ColorMap::update(const std::vector<f16>& _data)
+{
+    static wgpu::ImageCopyTexture destination;
+    destination.texture = texture_;
+    destination.mipLevel = 0;
+    destination.origin = { 0, 0, 0 };
+    destination.aspect = wgpu::TextureAspect::All;
+
+    static wgpu::TextureDataLayout layout_;
+    layout_.rowsPerImage = 1lu;
+    layout_.bytesPerRow = 4 * sizeof(f16) * extent().width;
+    layout_.offset = 0;
+
+    device_.getQueue().writeTexture(
+        destination,
+        _data.data(),
+        sizeof(f16)*_data.size(),
+        layout_,
+        extent()
+    );
+
+    std::cout << "Update Color Map" << std::endl;
 }
 
 

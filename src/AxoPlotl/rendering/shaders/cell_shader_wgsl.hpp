@@ -1,9 +1,10 @@
 #pragma once
 
+#include <string>
 namespace AxoPlotl
 {
 
-inline const char* cell_shader_wgsl = R"(
+inline const std::string cell_shader_wgsl = R"(
 
 alias Mode = u32;
 const MODE_COLOR:Mode = 0;
@@ -25,7 +26,7 @@ var<uniform> ubo : Uniforms;
 @group(0) @binding(1)
 var<storage, read> positions : array<vec3<f32>>;
 
-@group(0) @binding(5)
+@group(0) @binding(7)
 var<storage, read> cell_props : array<CellProperty>;
 
 struct V2F {
