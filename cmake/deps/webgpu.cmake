@@ -8,6 +8,14 @@ endif()
 
 add_subdirectory("${EXTERNAL_DIR}/webgpu-dawn")
 
+# message(STATUS "Fetching WebGPU Dawn")
+# FetchContent_Declare(webgpu-dawn
+#     GIT_REPOSITORY https://dawn.googlesource.com/dawn
+#     GIT_TAG main
+#     SOURCE_DIR "${EXTERNAL_DIR}/webgpu-dawn"
+# )
+# FetchContent_MakeAvailable(webgpu-dawn)
+
 add_subdirectory("${EXTERNAL_DIR}/glfw3webgpu")
 
 # set_target_properties("${PROJECT_NAME}" PROPERTIES

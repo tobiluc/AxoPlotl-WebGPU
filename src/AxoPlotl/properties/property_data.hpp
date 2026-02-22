@@ -175,24 +175,28 @@ void upload_property_data(
     // Upload Properties
     if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
         upload_vertex_property_data<T>(_mesh, prop, _vol_rend);
+        _vol_rend.render_vertices_ = true;
         _vol_rend.render_edges_ =
         _vol_rend.render_faces_ =
         _vol_rend.render_cells_ = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
         upload_edge_property_data<T>(_mesh, prop, _vol_rend);
+        _vol_rend.render_edges_ = true;
         _vol_rend.render_vertices_ =
         _vol_rend.render_faces_ =
         _vol_rend.render_cells_ = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
         upload_face_property_data<T>(_mesh, prop, _vol_rend);
+        _vol_rend.render_faces_ = true;
         _vol_rend.render_edges_ =
         _vol_rend.render_vertices_ =
         _vol_rend.render_cells_ = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
         upload_cell_property_data<T>(_mesh, prop, _vol_rend);
+        _vol_rend.render_cells_ = true;
         _vol_rend.render_edges_ =
         _vol_rend.render_faces_ =
         _vol_rend.render_vertices_ = false;

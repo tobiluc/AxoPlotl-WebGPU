@@ -15,18 +15,20 @@ void DataControlPlugin::render_ui(Application& _app)
         // Visible Checkbox
         ImGui::Checkbox("##V", &obj->visible());
         ImGui::SameLine();
-
+        if (ImGui::Button("Zoom")) {
+            _app.scene().zoom_to_box(obj->bounding_box());
+        }
+        ImGui::SameLine();
         // Toggle Selected
         if (ImGui::Selectable(obj->name().c_str())) {
             obj->selected() = !obj->selected();
         }
 
+
+
         // Expand Menu
         if (obj->selected()) {
             obj->render_ui();
-            if (ImGui::Button("Zoom to Object")) {
-                _app.scene().zoom_to_box(obj->bounding_box());
-            }
             if (ImGui::Button("Delete Object")) {
                 obj->deleted() = true;
             }

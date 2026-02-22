@@ -1,10 +1,6 @@
 # todo: allow plugins with external dependencies
 
 add_library(AxoPlotlCore
-    #todo: actual plugin system
-    ../plugins/DataControl/DataControlPlugin.cpp
-    ../plugins/Debug/DebugPlugin.cpp
-
     AxoPlotl/Application.cpp
     AxoPlotl/IO/file_access.cpp
     AxoPlotl/rendering/VolumeMeshRenderer.cpp

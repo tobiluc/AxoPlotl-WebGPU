@@ -45,7 +45,15 @@ public:
     // Processed at the end of a frame
     std::vector<std::function<void()>> deferred_calls_;
 
+    glm::vec<4,float> total_viewport();
+
+    glm::vec<4,float> scene_viewport();
+
 private:
+    //float sidebar_width_ = 300.0f;
+    float sidebar_rel_width_ = 0.3f;
+    bool sidebar_right_aligned_ = false;
+
     GLFWwindow* window_;
     wgpu::Queue queue_;
     wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;

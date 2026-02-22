@@ -29,11 +29,10 @@ void Scene::init(Application *_app)
 void Scene::render(wgpu::RenderPassEncoder _render_pass)
 {
     // Get Width and Height
-    int w, h;
-    glfwGetWindowSize(app_->window(), &w, &h);
-
+    auto viewport = app_->scene_viewport();
     perspective_.update(app_->window());
-    const Mat4x4f view_projection = perspective_.getProjectionMatrix((float)w/(float)h) * perspective_.getViewMatrix();
+    const Mat4x4f view_projection =
+        perspective_.getProjectionMatrix(viewport[2]/viewport[3]) * perspective_.getViewMatrix();
 
     gizmo_renderer.render(_render_pass, view_projection);
 

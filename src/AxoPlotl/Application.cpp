@@ -12,9 +12,6 @@
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
 
-#include <../plugins/DataControl/DataControlPlugin.hpp>
-#include <../plugins/Debug/DebugPlugin.hpp>
-
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
 #endif // __EMSCRIPTEN__
@@ -152,8 +149,6 @@ bool Application::init()
     //----------
     // Plugins
     //----------
-    PluginRegistry::register_plugin<DataControlPlugin>();
-    PluginRegistry::register_plugin<DebugPlugin>();
     PluginRegistry::instantiate_all();
 
     return true;
@@ -234,8 +229,19 @@ void Application::run()
     wgpu::RenderPassEncoder renderPass =
         cmd_encoder.beginRenderPass(renderPassDesc);
 
-    // Render Scene
+    // Set the Scene Viewport
+    auto viewport = scene_viewport();
+    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+    // Render the Scene with its objects
     scene_.render(renderPass);
+
+    // Reset Viewport to full screen before drawing ImGui
+    // Otherwise, ImGui will be squashed and unclickable!
+    viewport = total_viewport();
+    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     // Render  Gui
     update_gui(renderPass);
@@ -264,6 +270,8 @@ void Application::run()
     device.poll(false);
 #endif
 
+    // Functions to execute after the command buffer submit
+    // For example deletion of scene objects.
     for (auto& fn : deferred_calls_) {fn();}
     deferred_calls_.clear();
 
@@ -318,21 +326,64 @@ bool Application::init_gui()
     ImGui_ImplGlfw_InitForOther(window_, true);
     wgpu::SurfaceCapabilities surf_caps{};
     surface_.getCapabilities(adapter_, &surf_caps);
-    ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
+
+    // new imgui init
+    ImGui_ImplWGPU_InitInfo imgui_init_info;
+    imgui_init_info.Device = device_;
+    imgui_init_info.NumFramesInFlight = 3;
+    imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
+    imgui_init_info.DepthStencilFormat = depthTextureFormat;
+    imgui_init_info.PipelineMultisampleState.count = 1;
+    ImGui_ImplWGPU_Init(&imgui_init_info);
+
+    // This is with the older imgui version from Learn WebGPU
+    //ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
 
     return true;
 }
 
+glm::vec<4,float> Application::scene_viewport()
+{
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    float sidebar_width = sidebar_rel_width_ * fbWidth;
+    if (sidebar_right_aligned_) {
+        return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
+    } else {
+        return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
+    }
+}
+
+glm::vec<4,float> Application::total_viewport()
+{
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    return {0.0f, 0.0f, fbWidth, fbHeight};
+}
+
 void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
 {
-    // Start the Dear ImGui frame
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Top Menu
-    // Start the main menu bar
-    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0,0,0,0.5f));
+    // Set Viewport
+    ImGuiViewport* vp = ImGui::GetMainViewport();
+    float sidebar_width = sidebar_rel_width_ * vp->WorkSize.x;
+    vp->WorkPos.x = sidebar_right_aligned_?
+        vp->WorkSize.x - sidebar_width : 0.0f;
+    ImGui::SetNextWindowPos(vp->WorkPos);
+    ImGui::SetNextWindowSize(ImVec2(sidebar_width, vp->WorkSize.y));
+
+    // Lock the window so it can't be moved or closed
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
+                             ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoCollapse;
+
+    ImGui::Begin("Inspector", nullptr, flags);
+
+    //ImGui::Text("Render Settings");
+    //ImGui::ColorEdit3("Background", clear_color_);
     if (ImGui::BeginMainMenuBar())
     {
         // File menu
@@ -357,6 +408,9 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
 
         if (ImGui::BeginMenu("Settings"))
         {
+            ImGui::Checkbox("Right Sidebar", &sidebar_right_aligned_);
+            ImGui::SliderFloat("Sidebar Width [%]", &sidebar_rel_width_, 0.1f, 0.9f);
+
             ImGui::ColorEdit3("Clear color", clear_color_);
             ImGui::EndMenu(); // !Settings
         }
@@ -379,18 +433,9 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         }
     }
 
-    ImGui::PopStyleColor();
+    ImGui::End();
 
-    // Draw the UI
-    ImGui::EndFrame();
-    // Convert the UI defined above into low-level drawing commands
     ImGui::Render();
-
-    // std::cerr << "Scale: "
-    //           << ImGui::GetDrawData()->FramebufferScale.x << " x "
-    //           << ImGui::GetDrawData()->FramebufferScale.x << std::endl;
-
-    // Execute the low-level drawing commands on the WebGPU backend
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
 }
 
@@ -398,15 +443,16 @@ void Application::configure_surface()
 {
     if (surface_) {surface_.unconfigure();}
 
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    //int fbWidth, fbHeight;
+    //glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    auto viewport = total_viewport();
 
     // Configure the surface
     wgpu::SurfaceConfiguration config = {};
 
     // Configuration of the textures created for the underlying swap chain
-    config.width = static_cast<uint32_t>(fbWidth);
-    config.height = static_cast<uint32_t>(fbHeight);
+    config.width = static_cast<uint32_t>(viewport[2]);
+    config.height = static_cast<uint32_t>(viewport[3]);
     config.usage = wgpu::TextureUsage::RenderAttachment;
     config.format = color_format_;
 
@@ -428,9 +474,10 @@ void Application::create_depth_texture()
         depthTexture.release();
     }
 
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
+    // int fbWidth, fbHeight;
+    // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    // std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
+    auto viewport = total_viewport();
 
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
     depthTextureFormat = depthStencilState.format;
@@ -442,8 +489,8 @@ void Application::create_depth_texture()
     depthTextureDesc.mipLevelCount = 1;
     depthTextureDesc.sampleCount = 1;
     depthTextureDesc.size = {
-        static_cast<uint32_t>(fbWidth),
-        static_cast<uint32_t>(fbHeight),
+        static_cast<uint32_t>(viewport[2]),
+        static_cast<uint32_t>(viewport[3]),
         1};
     depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
     depthTextureDesc.viewFormatCount = 1;

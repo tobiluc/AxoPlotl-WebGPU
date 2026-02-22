@@ -25,5 +25,6 @@ more transparent, the larger/smaller a property value is.
 it is visualized as expected, but when
 then also enabling vertices/edges rendering
 it seems that the face/cell render mode
-is MODE_COLOR (Somehow wrong mode in buffer?).
+is MODE_COLOR (Somehow wrong mode in buffer?). In some cases, only
+the vertices are rendered instead of both entitites.
 - Z-Fighting between Edges/Faces. Edges should be "prioritised" when depth is equal.
