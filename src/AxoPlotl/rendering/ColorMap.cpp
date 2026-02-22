@@ -9,7 +9,7 @@ static wgpu::Extent3D extent()
 }
 static inline int N = extent().width;
 
-void ColorMap::set_gradient(const std::vector<Vec3f>& _colors)
+void ColorMap::set_gradient(const std::vector<f16x3> &_colors)
 {
     std::vector<f16> data;
     data.reserve(N * 4);
@@ -39,14 +39,19 @@ void ColorMap::set_gradient(const std::vector<Vec3f>& _colors)
     update(data);
 }
 
-void ColorMap::set_gradient(const Vec3f& _a, const Vec3f& _b)
+void ColorMap::set_gradient(const f16x3& _a, const f16x3& _b)
 {
     set_gradient({_a, _b});
 }
 
+void ColorMap::set_single_color(const f16x3& _color)
+{
+    set_gradient({_color});
+}
+
 void ColorMap::set_viridis()
 {
-    static const std::vector<Vec3f> viridis = {
+    static const std::vector<f16x3> viridis = {
         {0.267004f, 0.004874f, 0.329415f},
         {0.282327f, 0.140926f, 0.457517f},
         {0.253935f, 0.265254f, 0.529983f},
@@ -65,7 +70,7 @@ void ColorMap::set_viridis()
 
 void ColorMap::set_plasma()
 {
-    static const std::vector<Vec3f> plasma = {
+    static const std::vector<f16x3> plasma = {
         {0.050383f, 0.029803f, 0.527975f},
         {0.336627f, 0.063956f, 0.769953f},
         {0.648925f, 0.133936f, 0.781554f},
@@ -77,23 +82,9 @@ void ColorMap::set_plasma()
     name_ = "Plasma";
 }
 
-void ColorMap::set_inferno()
-{
-    static const std::vector<Vec3f> inferno = {
-        {0.001462f, 0.000466f, 0.013866f},
-        {0.200403f, 0.018246f, 0.337641f},
-        {0.468160f, 0.140614f, 0.493067f},
-        {0.772053f, 0.313162f, 0.392499f},
-        {0.940015f, 0.631844f, 0.152819f},
-        {0.987053f, 0.991438f, 0.749504f}
-    };
-    set_gradient(inferno);
-    name_ = "Inferno";
-}
-
 void ColorMap::set_magma()
 {
-    static const std::vector<Vec3f> magma = {
+    static const std::vector<f16x3> magma = {
         {0.001462f, 0.000466f, 0.013866f},
         {0.267004f, 0.004874f, 0.329415f},
         {0.477504f, 0.064254f, 0.557964f},
@@ -107,7 +98,7 @@ void ColorMap::set_magma()
 
 void ColorMap::set_rd_bu()
 {
-    static const std::vector<Vec3f> rd_bu = {
+    static const std::vector<f16x3> rd_bu = {
         {0.403921f, 0.000000f, 0.121569f},
         {0.698039f, 0.094118f, 0.168627f},
         {0.870588f, 0.619608f, 0.592157f},
@@ -122,7 +113,7 @@ void ColorMap::set_rd_bu()
 
 void ColorMap::set_coolwarm()
 {
-    static const std::vector<Vec3f> coolwarm = {
+    static const std::vector<f16x3> coolwarm = {
         {0.229805f, 0.298717f, 0.753683f}, // blue
         {0.541643f, 0.636480f, 0.864786f},
         {0.865003f, 0.865003f, 0.865003f}, // white / center
@@ -131,6 +122,26 @@ void ColorMap::set_coolwarm()
     };
     set_gradient(coolwarm);
     name_ = "Coolwarm";
+}
+
+void ColorMap::set_rainbow()
+{
+    static const std::vector<f16x3> rainbow = {
+        {1.0f, 0.0f, 0.0f}, // red
+        {1.0f, 0.5f, 0.0f}, // orange
+        {1.0f, 1.0f, 0.0f}, // yellow
+        {0.5f, 1.0f, 0.0f}, // lime green
+        {0.0f, 1.0f, 0.0f}, // green
+        {0.0f, 1.0f, 0.5f}, // spring green
+        {0.0f, 1.0f, 1.0f}, // cyan
+        {0.0f, 0.5f, 1.0f}, // azure blue
+        {0.0f, 0.0f, 1.0f}, // blue
+        {0.5f, 0.0f, 1.0f}, // violet
+        {1.0f, 0.0f, 1.0f}, // magenta
+        {1.0f, 0.0f, 0.5f} // rose
+    };
+    set_gradient(rainbow);
+    name_ = "Rainbow";
 }
 
 void ColorMap::create(wgpu::Device _device)

@@ -1,4 +1,5 @@
 if (NOT EMSCRIPTEN)
+    set(GLFW_BUILD_SHARED_LIBS ON)
     add_subdirectory("${EXTERNAL_DIR}/glfw")
 else()
     add_library(glfw INTERFACE)

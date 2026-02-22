@@ -45,9 +45,6 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             if (ImGui::MenuItem("Magma")) {
                 _r.property_color_map_.set_magma();
             }
-            if (ImGui::MenuItem("Inferno")) {
-                _r.property_color_map_.set_inferno();
-            }
             if (ImGui::MenuItem("Plasma")) {
                 _r.property_color_map_.set_plasma();
             }
@@ -56,6 +53,9 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             }
             if (ImGui::MenuItem("Coolwarm")) {
                 _r.property_color_map_.set_coolwarm();
+            }
+            if (ImGui::MenuItem("Rainbow")) {
+                _r.property_color_map_.set_rainbow();
             }
             ImGui::EndMenu();
         }
@@ -140,7 +140,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
         visible_range[1] = visible_range[0];
 
         if (ImGui::ColorEdit3("Color", &color[0])) {
-            //rp.color_map_.update({color[0],color[1],color[2],1.0f});
+            _r.property_color_map_.set_single_color({color[0],color[1],color[2]});
         }
     }
 

@@ -39,8 +39,8 @@ function(add_axoplotl_plugin plugin_src)
         ImGuiFileDialog
     )
 
-    target_sources(${PROJECT_NAME} PRIVATE $<TARGET_OBJECTS:${PLUGIN_LIB}>)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${PLUGIN_LIB})
+    #target_sources(AxoPlotlCore PRIVATE $<TARGET_OBJECTS:${PLUGIN_LIB}>)
+    target_link_libraries(AxoPlotlCore PRIVATE ${PLUGIN_LIB})
 endfunction()
 
 #set(PLUGINS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/plugins")

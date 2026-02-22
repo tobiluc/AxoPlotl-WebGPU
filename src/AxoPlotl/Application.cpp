@@ -12,6 +12,9 @@
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
 
+#include <../plugins/DataControl/DataControlPlugin.hpp>
+#include <../plugins/Debug/DebugPlugin.hpp>
+
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
 #endif // __EMSCRIPTEN__
@@ -149,6 +152,8 @@ bool Application::init()
     //----------
     // Plugins
     //----------
+    PluginRegistry::register_plugin<DataControlPlugin>();
+    PluginRegistry::register_plugin<DebugPlugin>();
     PluginRegistry::instantiate_all();
 
     return true;

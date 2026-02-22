@@ -31,6 +31,6 @@ void PlottingPlugin::render_ui(Application& app)
 }
 
 
-REGISTER_AXOPLOTL_PLUGIN(PlottingPlugin)
+//REGISTER_AXOPLOTL_PLUGIN(PlottingPlugin)
 
 }

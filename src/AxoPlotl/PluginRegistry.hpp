@@ -66,6 +66,7 @@ public:
         for (auto& [id, factory] : get_factories()) {
             if (get_plugins().count(id) == 0) {
                 get_plugins()[id] = factory();
+                get_plugins()[id]->init();
             }
         }
     }

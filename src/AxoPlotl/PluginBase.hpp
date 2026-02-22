@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <imgui.h>
 
 namespace AxoPlotl
@@ -11,6 +12,8 @@ class PluginBase
 {
 public:
     virtual ~PluginBase() = default;
+
+    inline virtual void init() {};
 
     virtual void render_ui(Application& app) = 0;
 

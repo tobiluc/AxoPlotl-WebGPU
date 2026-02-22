@@ -12,6 +12,7 @@ namespace AxoPlotl
 class ColorMap {
 public:
     using f16 = float16_t;
+    using f16x3 = glm::vec<3,f16>;
 
     ColorMap() {}
 
@@ -30,21 +31,23 @@ public:
         }
     }
 
-    void set_gradient(const std::vector<Vec3f>& _colors);
+    void set_gradient(const std::vector<f16x3>& _colors);
 
-    void set_gradient(const Vec3f& _a, const Vec3f& _b);
+    void set_gradient(const f16x3& _a, const f16x3& _b);
+
+    void set_single_color(const f16x3& _color);
 
     void set_viridis();
 
     void set_magma();
-
-    void set_inferno();
 
     void set_plasma();
 
     void set_rd_bu();
 
     void set_coolwarm();
+
+    void set_rainbow();
 
     void update(const std::vector<f16>& _data);
 

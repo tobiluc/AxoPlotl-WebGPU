@@ -9,6 +9,8 @@ class Scene;
 
 class ObjectBase
 {
+friend class DebugPlugin;
+
 public:
     ObjectBase(Scene* _scene, std::string _name) :
         id_(++id_counter_),
