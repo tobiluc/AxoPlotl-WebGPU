@@ -5,36 +5,6 @@
 inline static std::unordered_map<std::string,const char*> shader_includes =
 {
 
-{"VolumeMeshInputs.wgsl", R"(
-    struct Uniforms {
-        @align(16) mvp : mat4x4<f32>,
-        @align(16) viewportSize: vec2<f32>,
-        @align(16) pointSize: f32,
-        @align(16) lineWidth: f32,
-        @align(16) cellScale: f32,
-        @align(16) clipBox: ClipBox,
-
-        @align(16) vertexMode:Mode,
-        @align(16) edgeMode:Mode,
-        @align(16) faceMode:Mode,
-        @align(16) cellMode:Mode,
-        @align(16) vertexValueFilter: vec2<f32>,
-        @align(16) edgeValueFilter: vec2<f32>,
-        @align(16) faceValueFilter: vec2<f32>,
-        @align(16) cellValueFilter: vec2<f32>,
-    };
-
-    @group(0) @binding(0) var<uniform> ubo : Uniforms;
-    @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
-    @group(0) @binding(2) var colorMap : texture_2d<f32>;
-    @group(0) @binding(3) var colorSampler : sampler;
-    @group(0) @binding(4) var<storage, read> vertexProps : array<Property>;
-    @group(0) @binding(5) var<storage, read> edgeProps : array<Property>;
-    @group(0) @binding(6) var<storage, read> faceProps : array<Property>;
-    @group(0) @binding(7) var<storage, read> cellProps : array<Property>;
-    @group(0) @binding(8) var<storage, read> cellIncenters : array<vec3<f32>>;
-)"},
-
 {"VolumeMeshCommons.wgsl", R"(
 
     struct Property {
