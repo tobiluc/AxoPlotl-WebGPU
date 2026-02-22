@@ -4,31 +4,24 @@
 
 inline static std::unordered_map<std::string,const char*> shader_includes =
 {
-{"ShaderInput.wgsl", R"(
-    alias Mode = u32;
-    const MODE_COLOR:Mode = 0;
-    const MODE_SCALAR:Mode = 1;
-    const MODE_VEC3:Mode = 2;
 
-    struct ClipBox {
-        @align(16) min: vec3<f32>,
-        @align(16) max: vec3<f32>,
-        @align(16) enabled: i32
-    };
-
+{"VolumeMeshInputs.wgsl", R"(
     struct Uniforms {
         @align(16) mvp : mat4x4<f32>,
-        @align(16) mode:Mode,
         @align(16) viewportSize: vec2<f32>,
         @align(16) pointSize: f32,
         @align(16) lineWidth: f32,
         @align(16) cellScale: f32,
-        @align(16) valueFilter: vec2<f32>,
-        @align(16) clipBox: ClipBox
-    };
+        @align(16) clipBox: ClipBox,
 
-    struct Property {
-        value : vec4<f32>
+        @align(16) vertexMode:Mode,
+        @align(16) edgeMode:Mode,
+        @align(16) faceMode:Mode,
+        @align(16) cellMode:Mode,
+        @align(16) vertexValueFilter: vec2<f32>,
+        @align(16) edgeValueFilter: vec2<f32>,
+        @align(16) faceValueFilter: vec2<f32>,
+        @align(16) cellValueFilter: vec2<f32>,
     };
 
     @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -40,12 +33,30 @@ inline static std::unordered_map<std::string,const char*> shader_includes =
     @group(0) @binding(6) var<storage, read> faceProps : array<Property>;
     @group(0) @binding(7) var<storage, read> cellProps : array<Property>;
     @group(0) @binding(8) var<storage, read> cellIncenters : array<vec3<f32>>;
+)"},
+
+{"VolumeMeshCommons.wgsl", R"(
+
+    struct Property {
+        value : vec4<f32>
+    };
+
+    alias Mode = u32;
+    const MODE_COLOR:Mode = 0;
+    const MODE_SCALAR:Mode = 1;
+    const MODE_VEC3:Mode = 2;
+
+    struct ClipBox {
+        @align(16) min: vec3<f32>,
+        @align(16) max: vec3<f32>,
+        @align(16) enabled: i32
+    };
 
     fn isOutsideClipBox(pos:vec3<f32>, clipBox:ClipBox) -> bool {
-        return (ubo.clipBox.enabled>0 && ((pos.x < ubo.clipBox.min.x)
-    || (pos.x > ubo.clipBox.max.x) || (pos.y < ubo.clipBox.min.y)
-    || (pos.y > ubo.clipBox.max.y) || (pos.z < ubo.clipBox.min.z)
-    || (pos.z > ubo.clipBox.max.z)));
+        return (clipBox.enabled>0 && ((pos.x < clipBox.min.x)
+    || (pos.x > clipBox.max.x) || (pos.y < clipBox.min.y)
+    || (pos.y > clipBox.max.y) || (pos.z < clipBox.min.z)
+    || (pos.z > clipBox.max.z)));
     };
 
     fn clippedPosition() -> vec4<f32> {
@@ -56,22 +67,27 @@ inline static std::unordered_map<std::string,const char*> shader_includes =
         return val < range.x || val > range.y;
     };
 
+    fn getFragmentColorFromPropertyValue(
+        value:vec4<f32>,
+        mode:Mode,
+        valueFilter:vec2<f32>,
+        colorMap : texture_2d<f32>,
+        colorMapSampler: sampler
+    ) -> vec4<f32> {
+        // Interpret Value based on Property Mode
+        if (mode == MODE_COLOR) {
+            return value;
+        } else if (mode == MODE_SCALAR) {
+            let t = clamp((value.x-valueFilter.x)/(valueFilter.y-valueFilter.x), 0.0, 1.0);
+            return textureSample(colorMap, colorMapSampler, vec2<f32>(t,0.5));
+        } else if (mode == MODE_VEC3) {
+            return vec4<f32>(normalize(value.xyz), 1.0);
+        }
+        return vec4<f32>(1,0.9,0.9,0);
+    }
+
 )"},
 
-
-{"FragmentReturnPropertyColor.wgsl", R"(
-    // Interpret Value based on Property Mode
-    if (ubo.mode == MODE_COLOR) {
-        return in.value;
-    } else if (ubo.mode == MODE_SCALAR) {
-        let t = clamp((in.value.x-ubo.valueFilter.x)/(ubo.valueFilter.y-ubo.valueFilter.x), 0.0, 1.0);
-        return textureSample(colorMap, colorSampler, vec2<f32>(t,0.5));
-    } else if (ubo.mode == MODE_VEC3) {
-        return vec4<f32>(normalize(in.value.xyz), 1.0);
-    }
-    return vec4<f32>(1,0.9,0.9,0);
-
-)"}
 };
 
 std::string AxoPlotl::parse_shader_with_includes(const std::string& _source)

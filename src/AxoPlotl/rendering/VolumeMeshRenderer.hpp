@@ -1,8 +1,13 @@
 #pragma once
 #include "AxoPlotl/rendering/ColorMap.hpp"
+#include "AxoPlotl/rendering/MeshCellRenderer.hpp"
+#include "AxoPlotl/rendering/MeshEdgeRenderer.hpp"
+#include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
+#include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "GLFW/glfw3.h"
 #include "webgpu/webgpu.hpp"
+#include <cstddef>
 #include <vector>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 
@@ -17,16 +22,13 @@ public:
     struct Property
     {
         enum class Mode : uint32_t {
-            COLOR = 0,
-            SCALAR = 1,
-            VEC3 = 2,
-        } mode_ = Mode::COLOR;
+            COLOR = 0u,
+            SCALAR = 1u,
+            VEC3 = 2u,
+        };
         struct Data {
             Vec4f value_ = {0,0,0,1};
         };
-        union Filter {
-            Vec2f scalar_range_ = {0,5};
-        } filter_;
     };
 
     ColorMap property_color_map_;
@@ -37,32 +39,103 @@ public:
     bool render_faces_ = true;
     bool render_cells_ = true;
 
-    Property vertex_property_;
-    Property edge_property_;
-    Property face_property_;
-    Property cell_property_;
+    inline Property::Mode& vertex_property_mode() {
+        return uniforms_.vertex_mode_;
+    }
 
-    float line_width_ = 5.0f;
-    float point_size_ = 12.0f;
-    float cell_scale_ = 0.9f;;
+    inline Property::Mode& edge_property_mode() {
+        return uniforms_.edge_mode_;
+    }
 
-    struct ClipBox {
+    inline Property::Mode& face_property_mode() {
+        return uniforms_.face_mode_;
+    }
+
+    inline Property::Mode& cell_property_mode() {
+        return uniforms_.cell_mode_;
+    }
+
+    inline Vec2f& vertex_value_filter() {
+        return uniforms_.vertex_value_filter_;
+    }
+
+    inline Vec2f& edge_value_filter() {
+        return uniforms_.edge_value_filter_;
+    }
+
+    inline Vec2f& face_value_filter() {
+        return uniforms_.face_value_filter_;
+    }
+
+    inline Vec2f& cell_value_filter() {
+        return uniforms_.cell_value_filter_;
+    }
+
+    inline float& point_size() {
+        return uniforms_.point_size_;
+    };
+
+    inline float& line_width() {
+        return uniforms_.line_width_;
+    };
+
+    inline float& cell_scale() {
+        return uniforms_.cell_scale_;
+    };
+
+    // struct ClipBox {
+    //     alignas(16) Vec3f min_;
+    //     alignas(16) Vec3f max_;
+    //     alignas(16) int32_t enabled_ = false;
+    // } clip_box_;
+
+    // // Mirrors Shader Unfiforms. the 16bit alignment is important!
+    // struct Uniforms {
+    //     alignas(16) Mat4x4f mvp_;
+    //     alignas(16) Property::Mode mode_ = Property::Mode::COLOR;
+    //     alignas(16) Vec2f viewport_size_;
+    //     alignas(16) float point_size_;
+    //     alignas(16) float line_width_;
+    //     alignas(16) float cell_scale_;
+    //     alignas(16) Property::Filter filter_;
+    //     alignas(16) ClipBox clip_box_;
+    // };
+    using Pad4 = uint32_t[1];
+    using Pad8 = uint32_t[2];
+    using Pad12 = uint32_t[3];
+
+    struct alignas(16) ClipBox {
         alignas(16) Vec3f min_;
         alignas(16) Vec3f max_;
         alignas(16) int32_t enabled_ = false;
     } clip_box_;
+    static_assert(sizeof(ClipBox)%16==0);
 
     // Mirrors Shader Unfiforms. the 16bit alignment is important!
-    struct Uniforms {
+    struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
-        alignas(16) Property::Mode mode_ = Property::Mode::COLOR;
         alignas(16) Vec2f viewport_size_;
-        alignas(16) float point_size_;
-        alignas(16) float line_width_;
-        alignas(16) float cell_scale_;
-        alignas(16) Property::Filter filter_;
+        alignas(16) float point_size_ = 5.0f;
+        alignas(16) float line_width_ = 12.0f;
+        alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
-    };
+        alignas(16) Property::Mode vertex_mode_ = Property::Mode::COLOR;;
+        alignas(16) Property::Mode edge_mode_ = Property::Mode::COLOR;
+        alignas(16) Property::Mode face_mode_ = Property::Mode::COLOR;
+        alignas(16) Property::Mode cell_mode_ = Property::Mode::COLOR;
+        alignas(16) Vec2f vertex_value_filter_;
+        alignas(16) Vec2f edge_value_filter_;
+        alignas(16) Vec2f face_value_filter_;
+        alignas(16) Vec2f cell_value_filter_;
+    } uniforms_;
+    static_assert(offsetof(Uniforms,mvp_)%16==0);
+    static_assert(offsetof(Uniforms,vertex_mode_)%16==0);
+    static_assert(offsetof(Uniforms,viewport_size_)%16==0);
+    static_assert(offsetof(Uniforms,point_size_)%16==0);
+    static_assert(offsetof(Uniforms,line_width_)%16==0);
+    static_assert(offsetof(Uniforms,cell_scale_)%16==0);
+    static_assert(offsetof(Uniforms,clip_box_)%16==0);
+    static_assert(sizeof(Uniforms)%16==0);
 
     using Position = Vec4f;
 
@@ -112,7 +185,7 @@ public:
 
     void update_cell_property_data(const std::vector<Property::Data>& _data);
 
-    void render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
+    void render(const Vec4f& _viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
 
     void release();
 private:
@@ -170,6 +243,10 @@ private:
     static wgpu::BindGroupLayout bind_group_layout_;
     wgpu::BindGroup bind_group_;
 
+    MeshVertexRenderer vertex_renderer_;
+    MeshEdgeRenderer edge_renderer_;
+    MeshFaceRenderer face_renderer_;
+    MeshCellRenderer cell_renderer_;
 };
 
 }

@@ -5,7 +5,8 @@ namespace AxoPlotl
 {
 
 inline const std::string edge_shader_wgsl = R"(
-#include "ShaderInput.wgsl"
+#include "VolumeMeshCommons.wgsl"
+#include "VolumeMeshInputs.wgsl"
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -64,7 +65,7 @@ fn vs_main(
     let value = edgeProps[eh].value;
     let pos = mix(positions[vh0], positions[vh1], t);
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.edgeMode==1u && isOutsideRange(value.x, ubo.edgeValueFilter))) {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -74,7 +75,8 @@ fn vs_main(
 
 @fragment
 fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    #include "FragmentReturnPropertyColor.wgsl"
+    return getFragmentColorFromPropertyValue(
+in.value, ubo.edgeMode, ubo.edgeValueFilter, colorMap, colorSampler);
 }
 
 )";

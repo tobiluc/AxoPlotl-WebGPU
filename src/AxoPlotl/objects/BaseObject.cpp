@@ -1,4 +1,6 @@
 #include "BaseObject.hpp"
+#include "AxoPlotl/Application.hpp"
+#include "AxoPlotl/Scene.hpp"
 
 namespace AxoPlotl
 {
@@ -9,7 +11,9 @@ void ObjectBase::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _view_projection)
 {
-    renderer_.render(_render_pass, _view_projection * transform_);
+    renderer_.render(scene_->app()->scene_viewport(),
+                    _render_pass,
+                    _view_projection * transform_);
 }
 
 }

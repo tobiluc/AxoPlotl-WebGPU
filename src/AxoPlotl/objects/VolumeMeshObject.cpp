@@ -22,9 +22,9 @@ void VolumeMeshObject::render_ui()
         ImGui::Checkbox("C", &renderer_.render_cells_);
 
 
-        ImGui::SliderFloat("Point Size", &renderer_.point_size_, 0.0f, 32.0f);
-        ImGui::SliderFloat("Line Width", &renderer_.line_width_, 0.0f, 32.0f);
-        ImGui::SliderFloat("Cell Scale", &renderer_.cell_scale_, 0.0f, 1.0f);
+        ImGui::SliderFloat("Point Size", &renderer_.point_size(), 0.0f, 32.0f);
+        ImGui::SliderFloat("Line Width", &renderer_.line_width(), 0.0f, 32.0f);
+        ImGui::SliderFloat("Cell Scale", &renderer_.cell_scale(), 0.0f, 1.0f);
 
         // Clip Box
         bool clip_box_enabled = renderer_.clip_box_.enabled_;
@@ -181,10 +181,10 @@ void VolumeMeshObject::render_ui()
 
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data();
-            renderer_.vertex_property_.mode_ =
-                renderer_.edge_property_.mode_ =
-                renderer_.face_property_.mode_ =
-                renderer_.cell_property_.mode_ =
+            renderer_.vertex_property_mode() =
+                renderer_.edge_property_mode() =
+                renderer_.face_property_mode() =
+                renderer_.cell_property_mode() =
                 VolumeMeshRenderer::Property::Mode::COLOR;
             prop_ = std::nullopt;
             prop_filters_.clear();

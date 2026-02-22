@@ -93,7 +93,7 @@ void upload_vertex_property_data(
         v_data.push_back({.value_ = a});
     }
     _vol_rend.update_vertex_property_data(v_data);
-    _vol_rend.vertex_property_.mode_ = vertex_buffer_property_mode<T>();
+    _vol_rend.vertex_property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -109,7 +109,7 @@ void upload_edge_property_data(
         e_data.push_back({.value_ = a});
     }
     _vol_rend.update_edge_property_data(e_data);
-    _vol_rend.edge_property_.mode_ = vertex_buffer_property_mode<T>();
+    _vol_rend.edge_property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -125,7 +125,7 @@ void upload_face_property_data(
         f_data.push_back({.value_ = a});
     }
     _vol_rend.update_face_property_data(f_data);
-    _vol_rend.face_property_.mode_ = vertex_buffer_property_mode<T>();
+    _vol_rend.face_property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -141,7 +141,7 @@ void upload_cell_property_data(
         c_data.push_back({.value_ = a});
     }
     _vol_rend.update_cell_property_data(c_data);
-    _vol_rend.cell_property_.mode_ = vertex_buffer_property_mode<T>();
+    _vol_rend.cell_property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T, typename Entity>
@@ -163,7 +163,7 @@ void upload_property_data(
     {
         // Compute the Scalar Range and assign it to the visible range
         auto r = get_scalar_property_range<T,Entity>(_mesh, prop);
-        get_property<Entity>(_vol_rend).filter_.scalar_range_ = {
+        get_property_value_filter<Entity>(_vol_rend) = {
             static_cast<float>(r.first), static_cast<float>(r.second)
         };
 

@@ -5,7 +5,8 @@ namespace AxoPlotl
 {
 
 inline const std::string vertex_shader_wgsl = R"(
-#include "ShaderInput.wgsl"
+#include "VolumeMeshCommons.wgsl"
+#include "VolumeMeshInputs.wgsl"
 
 struct VSOut {
     @builtin(position) position : vec4<f32>,
@@ -41,7 +42,7 @@ fn vs_main(
     let value = vertexProps[iid].value;
 
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.vertexMode==1u && isOutsideRange(value.x, ubo.vertexValueFilter))) {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -54,7 +55,8 @@ fn vs_main(
 fn fs_main(in : VSOut) -> @location(0) vec4<f32>
 {
     if (length(in.corner) > 1.0) {discard;} //round
-    #include "FragmentReturnPropertyColor.wgsl"
+    return getFragmentColorFromPropertyValue(
+in.value, ubo.vertexMode, ubo.vertexValueFilter, colorMap, colorSampler);
 }
 
 )";

@@ -20,22 +20,22 @@ void DebugPlugin::render_ui(Application& app)
     ImGui::SeparatorText("Loaded Plugins");
     for (auto& obj : app.scene().get_objects()) {
         ImGui::SeparatorText(obj->name().c_str());
-        ImGui::Text("Vertex: Mode = %d, Range = (%f,%f)",
-                    obj->renderer_.vertex_property_.mode_,
-                    obj->renderer_.vertex_property_.filter_.scalar_range_.x,
-                    obj->renderer_.vertex_property_.filter_.scalar_range_.y);
-        ImGui::Text("Edge: Mode = %d, Range = (%f,%f)",
-                    obj->renderer_.edge_property_.mode_,
-                    obj->renderer_.edge_property_.filter_.scalar_range_.x,
-                    obj->renderer_.edge_property_.filter_.scalar_range_.y);
-        ImGui::Text("Face: Mode = %d, Range = (%f,%f)",
-                    obj->renderer_.face_property_.mode_,
-                    obj->renderer_.face_property_.filter_.scalar_range_.x,
-                    obj->renderer_.face_property_.filter_.scalar_range_.y);
-        ImGui::Text("Cell: Mode = %d, Range = (%f,%f)",
-                    obj->renderer_.cell_property_.mode_,
-                    obj->renderer_.cell_property_.filter_.scalar_range_.x,
-                    obj->renderer_.cell_property_.filter_.scalar_range_.y);
+        // ImGui::Text("Vertex: Mode = %d, Range = (%f,%f)",
+        //             obj->renderer_.vertex_property_.mode_,
+        //             obj->renderer_.vertex_property_.filter_.scalar_range_.x,
+        //             obj->renderer_.vertex_property_.filter_.scalar_range_.y);
+        // ImGui::Text("Edge: Mode = %d, Range = (%f,%f)",
+        //             obj->renderer_.edge_property_.mode_,
+        //             obj->renderer_.edge_property_.filter_.scalar_range_.x,
+        //             obj->renderer_.edge_property_.filter_.scalar_range_.y);
+        // ImGui::Text("Face: Mode = %d, Range = (%f,%f)",
+        //             obj->renderer_.face_property_.mode_,
+        //             obj->renderer_.face_property_.filter_.scalar_range_.x,
+        //             obj->renderer_.face_property_.filter_.scalar_range_.y);
+        // ImGui::Text("Cell: Mode = %d, Range = (%f,%f)",
+        //             obj->renderer_.cell_property_.mode_,
+        //             obj->renderer_.cell_property_.filter_.scalar_range_.x,
+        //             obj->renderer_.cell_property_.filter_.scalar_range_.y);
     }
     // for (const auto& plugin : PluginRegistry::get_plugins()) {
     //     ImGui::Text("%s", plugin.second->name());

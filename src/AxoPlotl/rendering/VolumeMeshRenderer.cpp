@@ -49,6 +49,34 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
     create_face_triangle_pipeline();
     create_cell_triangle_pipeline();
     create_cell_outline_pipeline();
+
+    vertex_renderer_.init(_app, positionBuffer_, _data.vertex_instances_);
+    std::vector<MeshEdgeRenderer::EdgeInstance> ehs;
+    for (const auto& eh : _data.edge_instances_) {
+        ehs.push_back({.vh0_=eh.vh0_, .vh1_=eh.vh1_, .eh_=eh.eh_});
+    }
+    edge_renderer_.init(_app, positionBuffer_, ehs);
+    std::vector<MeshFaceRenderer::FaceInstance> fhs;
+    for (int i = 0; i < _data.face_draw_triangle_indices_.size(); i+=3) {
+        fhs.push_back({.vhs_={
+            _data.face_draw_triangle_indices_[i].vertex_index_,
+            _data.face_draw_triangle_indices_[i+1].vertex_index_,
+            _data.face_draw_triangle_indices_[i+2].vertex_index_,
+        },.fh_=_data.face_draw_triangle_indices_[i].face_index_});
+    }
+    face_renderer_.init(_app, positionBuffer_, fhs);
+    std::vector<MeshCellRenderer::CellInstance> chs;
+    for (int i = 0; i < _data.cell_draw_triangle_indices_.size(); i+=12) {
+        auto& inds = _data.cell_draw_triangle_indices_;
+        std::vector<std::vector<uint32_t>> vs;
+        vs.push_back({inds[i+0].vertex_index_,inds[i+1].vertex_index_,inds[i+2].vertex_index_});
+        vs.push_back({inds[i+3].vertex_index_,inds[i+4].vertex_index_,inds[i+5].vertex_index_});
+        vs.push_back({inds[i+6].vertex_index_,inds[i+7].vertex_index_,inds[i+8].vertex_index_});
+        vs.push_back({inds[i+9].vertex_index_,inds[i+10].vertex_index_,inds[i+11].vertex_index_});
+        chs.push_back({.vhs_=vs,
+        .ch_=inds[i].cell_index_});
+    }
+    cell_renderer_.init(app_,positionBuffer_,chs,_data.cell_incenters_);
 }
 
 void VolumeMeshRenderer::create_buffers(const StaticData &_data)
@@ -806,30 +834,26 @@ void VolumeMeshRenderer::update_cell_property_data(const std::vector<Property::D
     std::cout << "Update Cell Property Data" << std::endl;
 }
 
-void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
+void VolumeMeshRenderer::render(const Vec4f &_viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
     if (!render_anything_) {return;}
     wgpu::Queue queue = app_->device_.getQueue();
 
-    // Update common uniforms
-    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mvp_), &_mvp, sizeof(Mat4x4f));
-    int fbw, fbh;
-    glfwGetFramebufferSize(app_->window(), &fbw, &fbh);
-    Vec2f viewport_size = {fbw, fbh};
-    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, viewport_size_), &viewport_size, sizeof(Vec2f));
-    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, point_size_), &point_size_, sizeof(float));
-    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, line_width_), &line_width_, sizeof(float));
-    queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, clip_box_), &clip_box_, sizeof(ClipBox));
+    cell_renderer_.render(_viewport, _render_pass, _mvp);
+    face_renderer_.render(_viewport, _render_pass, _mvp);
+    edge_renderer_.render(_viewport, _render_pass, _mvp);
+    vertex_renderer_.render(_viewport, _render_pass, _mvp);
+
+    // Update uniforms
+    uniforms_.mvp_ = _mvp;
+    uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.clip_box_ = clip_box_;
+    queue.writeBuffer(uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
     // Draw cells
     if (render_cells_ && n_cells_ > 0
         && cell_triangles_pipeline_)
     {
-        // Set cell specific uniforms
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &cell_property_.mode_, sizeof(Property::Mode));
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, cell_scale_), &cell_scale_, sizeof(float));
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &cell_property_.filter_, sizeof(Property::Filter));
-
         _render_pass.setPipeline(cell_triangles_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
         _render_pass.setVertexBuffer(0, cellTriangleIndexBuffer_, 0, n_cell_triangle_indices_*sizeof(CellHandle));
@@ -845,10 +869,6 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     if (render_faces_ && n_faces_ > 0
         && face_triangles_pipeline_)
     {
-        // Set face specific uniforms
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &face_property_.mode_, sizeof(Property::Mode));
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &face_property_.filter_, sizeof(Property::Filter));
-
         _render_pass.setPipeline(face_triangles_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
         _render_pass.setVertexBuffer(0, faceTriangleIndexBuffer_, 0, n_face_triangle_indices_*sizeof(FaceHandle));
@@ -859,10 +879,7 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     if (render_edges_ && n_edges_ > 0
         && edges_pipeline_)
     {
-        // Set edge specific uniforms
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &edge_property_.mode_, sizeof(Property::Mode));
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &edge_property_.filter_, sizeof(Property::Filter));
-
+        // edge_renderer_.render(_viewport, _render_pass, _mvp);
         _render_pass.setPipeline(edges_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
         _render_pass.setVertexBuffer(0, edgeIndexBuffer_, 0, n_edges_*sizeof(EdgeInstance));
@@ -875,9 +892,6 @@ void VolumeMeshRenderer::render(wgpu::RenderPassEncoder _render_pass, const Mat4
     if (render_vertices_ && n_vertices_ > 0
         && vertices_pipeline_)
     {
-        // Set vertex specific uniforms
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, mode_), &vertex_property_.mode_, sizeof(Property::Mode));
-        queue.writeBuffer(uniform_buffer_, offsetof(Uniforms, filter_), &vertex_property_.filter_, sizeof(Property::Filter));
 
         _render_pass.setPipeline(vertices_pipeline_);
         _render_pass.setBindGroup(0, bind_group_, 0, nullptr);

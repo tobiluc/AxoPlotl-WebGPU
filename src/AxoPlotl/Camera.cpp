@@ -9,44 +9,45 @@ namespace AxoPlotl
 
 void PerspectiveCamera::update(GLFWwindow* window)
 {
-    if (ImGui::GetIO().WantCaptureMouse) {return;}
-
     // Compute Pitch/Yaw based on Input
 
-    // Zoom
-    float dy = Input::Mouse::SCROLL_DELTA[1];
-    if (dy) {
-        dy *= sensitivity_;
-        orbit_distance_ = glm::clamp(orbit_distance_ * (1.0f-dy), near, far);
-    }
-
-    // Pan
-    if (Input::Mouse::LEFT_PRESSED)
+    if (!ImGui::GetIO().WantCaptureMouse)
     {
-        float dx = Input::Mouse::POSITION_DELTA[0];
-        float dy = Input::Mouse::POSITION_DELTA[1];
-
-        dx *= sensitivity_;
-        dy *= sensitivity_;
-
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-            // Shift Move orbit target
-
-            glm::vec3 forward = glm::normalize(orbit_target_ - position_);
-            glm::vec3 right   = glm::normalize(glm::cross(forward, world_up));
-            up_ = glm::normalize(glm::cross(right, forward));
-
-            float pan_speed = pan_speed_ * orbit_distance_ * tan(fov_ * 0.5f);
-
-            orbit_target_ -= right * dx * pan_speed;
-            orbit_target_ += up_ * dy * pan_speed;
+        // Zoom
+        float dy = Input::Mouse::SCROLL_DELTA[1];
+        if (dy) {
+            dy *= sensitivity_;
+            orbit_distance_ = glm::clamp(orbit_distance_ * (1.0f-dy), near, far);
         }
-        else
+
+        // Pan
+        if (Input::Mouse::LEFT_PRESSED)
         {
-            // Rotate
-            yaw_ -= dx;
-            pitch_ = glm::clamp(pitch_ - dy, -1.5f, 1.5f); // between -89 and 89 degrees
+            float dx = Input::Mouse::POSITION_DELTA[0];
+            float dy = Input::Mouse::POSITION_DELTA[1];
+
+            dx *= sensitivity_;
+            dy *= sensitivity_;
+
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+                // Shift Move orbit target
+
+                glm::vec3 forward = glm::normalize(orbit_target_ - position_);
+                glm::vec3 right   = glm::normalize(glm::cross(forward, world_up));
+                up_ = glm::normalize(glm::cross(right, forward));
+
+                float pan_speed = pan_speed_ * orbit_distance_ * tan(fov_ * 0.5f);
+
+                orbit_target_ -= right * dx * pan_speed;
+                orbit_target_ += up_ * dy * pan_speed;
+            }
+            else
+            {
+                // Rotate
+                yaw_ -= dx;
+                pitch_ = glm::clamp(pitch_ - dy, -1.5f, 1.5f); // between -89 and 89 degrees
+            }
         }
     }
 

@@ -5,6 +5,7 @@
 #include "AxoPlotl/IO/file_access.h"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/objects/VolumeMeshObject.hpp"
+#include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include <filesystem>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>

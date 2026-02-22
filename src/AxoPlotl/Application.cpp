@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "AxoPlotl/utils/fps.hpp"
@@ -408,12 +409,29 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
 
         if (ImGui::BeginMenu("Settings"))
         {
-            ImGui::Checkbox("Right Sidebar", &sidebar_right_aligned_);
-            ImGui::SliderFloat("Sidebar Width [%]", &sidebar_rel_width_, 0.1f, 0.9f);
+            ImGui::SeparatorText("UI");
+            ImGui::Checkbox("Right", &sidebar_right_aligned_);
+            ImGui::SliderFloat("Width", &sidebar_rel_width_, 0.1f, 0.9f);
+            if (ImGui::BeginMenu("Theme")) {
+                if (ImGui::MenuItem("Dark")) {GUI::apply_theme(GUI::Theme::Dark);}
+                if (ImGui::MenuItem("Light")) {GUI::apply_theme(GUI::Theme::Light);}
+                if (ImGui::MenuItem("Classic")) {GUI::apply_theme(GUI::Theme::Classic);}
+                if (ImGui::MenuItem("Modern Dark")) {GUI::apply_theme(GUI::Theme::ModernDark);}
+                if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
+                ImGui::EndMenu(); //!Theme
+            }
 
-            ImGui::ColorEdit3("Clear color", clear_color_);
+            ImGui::SeparatorText("Scene");
+            ImGui::ColorEdit3("Background", clear_color_);
             ImGui::EndMenu(); // !Settings
         }
+
+#if 0
+        if (ImGui::BeginMenu("ImGui Style Editor"))
+        {
+            ImGui::ShowStyleEditor();
+        }
+#endif
 
         ImGui::EndMainMenuBar();
     }
@@ -443,8 +461,6 @@ void Application::configure_surface()
 {
     if (surface_) {surface_.unconfigure();}
 
-    //int fbWidth, fbHeight;
-    //glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
     auto viewport = total_viewport();
 
     // Configure the surface

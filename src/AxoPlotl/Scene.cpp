@@ -34,7 +34,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     const Mat4x4f view_projection =
         perspective_.getProjectionMatrix(viewport[2]/viewport[3]) * perspective_.getViewMatrix();
 
-    gizmo_renderer.render(_render_pass, view_projection);
+    gizmo_renderer.render(app_->scene_viewport(), _render_pass, view_projection);
 
     for (const auto& obj : objects_) {
         obj->render(_render_pass, view_projection);

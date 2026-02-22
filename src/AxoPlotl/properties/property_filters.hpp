@@ -16,12 +16,12 @@ struct PropertyFilterBase
 };
 
 template<typename Entity>
-static VolumeMeshRenderer::Property& get_property(VolumeMeshRenderer& _r)
+static Vec2f& get_property_value_filter(VolumeMeshRenderer& _r)
 {
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertex_property_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edge_property_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.face_property_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cell_property_;}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertex_value_filter();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edge_value_filter();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.face_value_filter();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cell_value_filter();}
 }
 
 template<typename ST, typename Entity>
@@ -34,7 +34,7 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
     void renderUI(VolumeMeshRenderer& _r) override
     {
-        VolumeMeshRenderer::Property& rp = get_property<Entity>(_r);
+        Vec2f& vis_range = get_property_value_filter<Entity>(_r);
 
         std::string colormap_menu_title = "Colormap ("
             + _r.property_color_map_.name_ + ")";
@@ -72,7 +72,6 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         draw_colormap();
 
         // Slider
-        Vec2f& vis_range = rp.filter_.scalar_range_;
         if constexpr(std::is_same_v<ST,int>) {
             Vec2i i = {vis_range[0],vis_range[1]};
             ImGui::SliderInt2("Show Range", &i.x, total_min_, total_max_);
@@ -115,8 +114,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
 
     void renderUI(VolumeMeshRenderer& _r) override
     {
-        VolumeMeshRenderer::Property& rprop = get_property<Entity>(_r);
-        Vec2f& visible_range = rprop.filter_.scalar_range_;
+        Vec2f& visible_range = get_property_value_filter<Entity>(_r);
 
         //_r.v_prop_range
         if constexpr(std::is_same_v<ST,int>) {

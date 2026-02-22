@@ -22,6 +22,7 @@ if (NOT TARGET imgui)
         ${IMGUI_DIR}/imgui_draw.cpp
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp
     )
     target_include_directories(imgui PUBLIC
         ${IMGUI_DIR}

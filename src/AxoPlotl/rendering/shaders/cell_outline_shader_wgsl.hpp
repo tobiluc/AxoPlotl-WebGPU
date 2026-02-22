@@ -5,7 +5,8 @@ namespace AxoPlotl
 {
 
 inline const std::string cell_outline_shader_wgsl = R"(
-#include "ShaderInput.wgsl"
+#include "VolumeMeshCommons.wgsl"
+#include "VolumeMeshInputs.wgsl"
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -27,7 +28,7 @@ fn vs_main(
 
     let value = cellProps[cell_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.cellMode==1u && isOutsideRange(value.x, ubo.cellValueFilter))) {
         out.position = clippedPosition();
     }
     out.color = vec4<f32>(0,0,0,1);

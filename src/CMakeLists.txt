@@ -16,6 +16,11 @@ add_library(AxoPlotlCore
     AxoPlotl/properties/property_calculations.cpp
     AxoPlotl/rendering/shaders/includes/shader_includes.cpp
     AxoPlotl/PluginBase.cpp
+    AxoPlotl/gui/themes.cpp
+    AxoPlotl/rendering/MeshVertexRenderer.cpp
+    AxoPlotl/rendering/MeshEdgeRenderer.cpp
+    AxoPlotl/rendering/MeshFaceRenderer.cpp
+    AxoPlotl/rendering/MeshCellRenderer.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
