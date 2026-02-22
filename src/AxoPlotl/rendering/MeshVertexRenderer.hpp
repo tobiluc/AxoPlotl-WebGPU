@@ -28,11 +28,15 @@ public:
         return uniforms_.point_size_;
     };
 
-    inline Property::Mode& property_mode() override {
+    inline ColorMap& color_map() {
+        return property_color_map_;
+    }
+
+    inline Property::Mode& property_mode() {
         return uniforms_.mode_;
     }
 
-    inline Property::Filter& property_filter() override {
+    inline Property::Filter& property_filter() {
         return uniforms_.value_filter_;
     }
 
@@ -56,7 +60,7 @@ public:
               wgpu::Buffer _position_buffer,
               const std::vector<uint32_t>& _indices);
 
-    void update_property_data(const std::vector<Property::Data>& _data) override;
+    void update_property_data(const std::vector<Property::Data>& _data);
 
     void render(
         const Vec4f& _viewport,

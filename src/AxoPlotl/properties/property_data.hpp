@@ -65,19 +65,19 @@ Vec4f vertex_buffer_property_data(const T& _val)
 }
 
 template<typename T>
-constexpr VolumeMeshRenderer::Property::Mode vertex_buffer_property_mode()
+constexpr RendererBase::Property::Mode vertex_buffer_property_mode()
 {
     if constexpr(std::is_same_v<T,bool>
                   || std::is_same_v<T,int>
                   || std::is_same_v<T,float>
                   || std::is_same_v<T,double>)
-    {return VolumeMeshRenderer::Property::Mode::SCALAR;}
+    {return RendererBase::Property::Mode::SCALAR;}
     if constexpr(ToLoG::vector_type<T>) {
         if constexpr(ToLoG::Traits<T>::dim == 3) {
-            return VolumeMeshRenderer::Property::Mode::VEC3;
+            return RendererBase::Property::Mode::VEC3;
         }
     }
-    return VolumeMeshRenderer::Property::Mode::COLOR;
+    return RendererBase::Property::Mode::COLOR;
 }
 
 template<typename T>
@@ -87,13 +87,13 @@ void upload_vertex_property_data(
     VolumeMeshRenderer& _vol_rend)
 {
     if (_mesh.n_vertices()==0) {return;}
-    std::vector<VolumeMeshRenderer::Property::Data> v_data;
+    std::vector<RendererBase::Property::Data> v_data;
     for (auto vh : _mesh.vertices()) {
         Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[vh])); // cast to avoid the vector<bool> issue
         v_data.push_back({.value_ = a});
     }
-    _vol_rend.update_vertex_property_data(v_data);
-    _vol_rend.vertex_property_mode() = vertex_buffer_property_mode<T>();
+    _vol_rend.vertices().update_property_data(v_data);
+    _vol_rend.vertices().property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -103,13 +103,13 @@ void upload_edge_property_data(
     VolumeMeshRenderer& _vol_rend)
 {
     if (_mesh.n_edges()==0) {return;}
-    std::vector<VolumeMeshRenderer::Property::Data> e_data;
+    std::vector<RendererBase::Property::Data> e_data;
     for (auto eh : _mesh.edges()) {
         Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[eh]));
         e_data.push_back({.value_ = a});
     }
-    _vol_rend.update_edge_property_data(e_data);
-    _vol_rend.edge_property_mode() = vertex_buffer_property_mode<T>();
+    _vol_rend.edges().update_property_data(e_data);
+    _vol_rend.edges().property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -119,13 +119,13 @@ void upload_face_property_data(
     VolumeMeshRenderer& _vol_rend)
 {
     if (_mesh.n_faces()==0) {return;}
-    std::vector<VolumeMeshRenderer::Property::Data> f_data;
+    std::vector<RendererBase::Property::Data> f_data;
     for (auto fh : _mesh.faces()) {
         Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[fh]));
         f_data.push_back({.value_ = a});
     }
-    _vol_rend.update_face_property_data(f_data);
-    _vol_rend.face_property_mode() = vertex_buffer_property_mode<T>();
+    _vol_rend.faces().update_property_data(f_data);
+    _vol_rend.faces().property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T>
@@ -135,13 +135,13 @@ void upload_cell_property_data(
     VolumeMeshRenderer& _vol_rend)
 {
     if (_mesh.n_cells()==0) {return;}
-    std::vector<VolumeMeshRenderer::Property::Data> c_data;
+    std::vector<RendererBase::Property::Data> c_data;
     for (auto ch : _mesh.cells()) {
         Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[ch]));
         c_data.push_back({.value_ = a});
     }
-    _vol_rend.update_cell_property_data(c_data);
-    _vol_rend.cell_property_mode() = vertex_buffer_property_mode<T>();
+    _vol_rend.cells().update_property_data(c_data);
+    _vol_rend.cells().property_mode() = vertex_buffer_property_mode<T>();
 };
 
 template<typename T, typename Entity>
@@ -175,31 +175,31 @@ void upload_property_data(
     // Upload Properties
     if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
         upload_vertex_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.render_vertices_ = true;
-        _vol_rend.render_edges_ =
-        _vol_rend.render_faces_ =
-        _vol_rend.render_cells_ = false;
+        _vol_rend.vertices().enabled() = true;
+        _vol_rend.edges().enabled() =
+        _vol_rend.faces().enabled() =
+        _vol_rend.cells().enabled() = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
         upload_edge_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.render_edges_ = true;
-        _vol_rend.render_vertices_ =
-        _vol_rend.render_faces_ =
-        _vol_rend.render_cells_ = false;
+        _vol_rend.edges().enabled() = true;
+        _vol_rend.vertices().enabled() =
+        _vol_rend.faces().enabled() =
+        _vol_rend.cells().enabled() = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
         upload_face_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.render_faces_ = true;
-        _vol_rend.render_edges_ =
-        _vol_rend.render_vertices_ =
-        _vol_rend.render_cells_ = false;
+        _vol_rend.faces().enabled() = true;
+        _vol_rend.edges().enabled() =
+        _vol_rend.vertices().enabled() =
+        _vol_rend.cells().enabled() = false;
     }
     if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
         upload_cell_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.render_cells_ = true;
-        _vol_rend.render_edges_ =
-        _vol_rend.render_faces_ =
-        _vol_rend.render_vertices_ = false;
+        _vol_rend.cells().enabled() = true;
+        _vol_rend.edges().enabled() =
+        _vol_rend.faces().enabled() =
+        _vol_rend.vertices().enabled() = false;
     }
 }
 

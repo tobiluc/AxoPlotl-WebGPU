@@ -101,21 +101,21 @@ wgpu::BindGroupLayout MeshEdgeRenderer::bind_group_layout_;
 
 void MeshEdgeRenderer::init(Application* _app,
     wgpu::Buffer _position_buffer,
-    const std::vector<EdgeInstance>& _indices)
+    const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
-    n_edges_ = _indices.size();
+    n_edges_ = _edges.size();
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     position_buffer_ = _position_buffer;
-    create_buffers(_indices);
+    create_buffers(_edges);
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
 }
 
-void MeshEdgeRenderer::create_buffers(const std::vector<EdgeInstance> &_indices)
+void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -123,6 +123,16 @@ void MeshEdgeRenderer::create_buffers(const std::vector<EdgeInstance> &_indices)
     // Edge Index Buffer
     if (n_edges_ > 0)
     {
+        std::vector<EdgeInstance> instances;
+        instances.reserve(n_edges_);
+        for (uint32_t eh = 0; eh < n_edges_; ++eh) {
+            instances.push_back({
+                .vh0_=_edges[eh].first,
+                .vh1_=_edges[eh].second,
+                .eh_=eh
+            });
+        }
+
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(EdgeInstance) * n_edges_;
@@ -133,8 +143,8 @@ void MeshEdgeRenderer::create_buffers(const std::vector<EdgeInstance> &_indices)
         queue.writeBuffer(
             edge_index_buffer_,
             0,
-            _indices.data(),
-            sizeof(EdgeInstance) * _indices.size()
+            instances.data(),
+            sizeof(EdgeInstance) * instances.size()
             );
 
         std::cout << "Edge Index Buffer Size: " << desc.size << std::endl;

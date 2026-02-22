@@ -95,7 +95,7 @@ fn vs_main(
 + ubo.cellScale * (positions[vertex_index]-cellCenters[cell_index]);
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
-    let value = cellProps[cell_index].value;
+    let value = props[cell_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
 || (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
         out.position = clippedPosition();
@@ -123,16 +123,16 @@ struct CellIndex {
 
 void MeshCellRenderer::init(Application* _app,
     wgpu::Buffer _position_buffer,
-    const std::vector<CellInstance> &_indices,
-    const std::vector<Position>& _cell_centers)
+    const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+    const std::vector<Position> &_centers)
 {
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
-    n_cells_ = _indices.size();
+    n_cells_ = _cells.size();
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     position_buffer_ = _position_buffer;
-    create_buffers(_indices, _cell_centers);
+    create_buffers(_cells, _centers);
     create_bind_group_layout();
     create_bind_group();
     create_triangle_pipeline();
@@ -140,20 +140,20 @@ void MeshCellRenderer::init(Application* _app,
 }
 
 void MeshCellRenderer::create_buffers(
-    const std::vector<CellInstance> &_indices,
-    const std::vector<Position>& _cell_centers)
+    const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+    const std::vector<Position> &_centers)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
 
     // Triangulate the Faces to get the vertices
     std::vector<CellIndex> triangle_indices;
-    for (const auto& c : _indices) {
-        for (const auto& f : c.vhs_) {
+    for (uint32_t ch = 0; ch < n_cells_; ++ch) {
+        for (const auto& f : _cells[ch]) {
             for (int i = 1; i < f.size()-1; ++i) {
-                triangle_indices.push_back({.vh_ = f[0], .ch_ = c.ch_});
-                triangle_indices.push_back({.vh_ = f[i], .ch_ = c.ch_});
-                triangle_indices.push_back({.vh_ = f[i+1], .ch_ = c.ch_});
+                triangle_indices.push_back({.vh_ = f[0], .ch_ = ch});
+                triangle_indices.push_back({.vh_ = f[i], .ch_ = ch});
+                triangle_indices.push_back({.vh_ = f[i+1], .ch_ = ch});
             }
         }
     }
@@ -162,33 +162,32 @@ void MeshCellRenderer::create_buffers(
     // For the Edges, make sure we don't have duplicates
     // For now, just ignore that
     std::vector<CellIndex> line_indices;
-    for (const auto& c : _indices) {
-        for (const auto& f : c.vhs_) {
+    for (uint32_t ch = 0; ch < n_cells_; ++ch) {
+        for (const auto& f : _cells[ch]) {
             for (int i = 0; i < f.size()-1; ++i) {
-                line_indices.push_back({.vh_ = f[i], .ch_ = c.ch_});
-                line_indices.push_back({.vh_ = f[i+1], .ch_ = c.ch_});
+                line_indices.push_back({.vh_ = f[i], .ch_ = ch});
+                line_indices.push_back({.vh_ = f[i+1], .ch_ = ch});
             }
         }
     }
     n_line_indices_ = line_indices.size();
 
     // Cell Incenter Buffer
-    if (n_cells_ > 0)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage =
             wgpu::BufferUsage::Storage |
             wgpu::BufferUsage::CopyDst |
             wgpu::BufferUsage::Vertex;
-        desc.size = sizeof(Position) * n_cells_;
+        desc.size = sizeof(Position) * std::max(n_cells_,1lu);
         desc.mappedAtCreation = false;
         desc.label = "Cell Incenter";
 
         center_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
             center_buffer_, 0,
-            _cell_centers.data(),
-            sizeof(Position)*_cell_centers.size());
+            _centers.data(),
+            sizeof(Position)*_centers.size());
 
         std::cout << "Cell Incenter Buffer Size: " << desc.size << std::endl;
     }
@@ -341,7 +340,7 @@ void MeshCellRenderer::create_bind_group()
 
     // 5 - Cell Centers
     groupEntries[5].binding = 5;
-    groupEntries[5].buffer = property_buffer_;
+    groupEntries[5].buffer = center_buffer_;
     groupEntries[5].offset = 0;
     groupEntries[5].size = sizeof(Property::Data) * std::max(n_cells_,1lu);
     std::cout << "5: Cell Incenters #" << groupEntries[5].size << std::endl;

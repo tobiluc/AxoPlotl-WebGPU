@@ -4,7 +4,6 @@
 AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const SurfaceMesh& _mesh)
 {
     AxoPlotl::VolumeMeshRenderer::StaticData data;
-    data.n_faces_ = _mesh.n_faces();
 
     for (uint32_t i = 0; i < _mesh.n_vertices(); ++i) {
         data.positions_.emplace_back(
@@ -13,30 +12,18 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
             _mesh.point(i)[2],
             1
             );
-        data.vertex_instances_.push_back(i);
+        data.vertices_.push_back(i);
     }
     for (uint32_t i = 0; i < _mesh.n_edges(); ++i) {
-        data.edge_instances_.push_back({
-            .vh0_=static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
-            .vh1_=static_cast<uint32_t>(_mesh.edge(i).vertex(1)),
-            .eh_=i
+        data.edges_.push_back({
+            static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
+            static_cast<uint32_t>(_mesh.edge(i).vertex(1))
         });
     }
     for (uint32_t i = 0; i < _mesh.n_faces(); ++i) {
-        const auto& f = _mesh.face(i);
-        for (int j = 1; j < f.valence()-1; ++j) {
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = static_cast<uint32_t>(f.vertices().at(0)),
-                .face_index_ = i
-            });
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = static_cast<uint32_t>(f.vertices().at(j)),
-                .face_index_ = i
-            });
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = static_cast<uint32_t>(f.vertices().at(j+1)),
-                .face_index_ = i
-            });
+        data.faces_.emplace_back();
+        for (const auto& vh : _mesh.face(i).vertices()) {
+            data.faces_.back().push_back(vh);
         }
     }
     return data;
@@ -45,70 +32,33 @@ AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(con
 AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const VolumeMesh& _mesh)
 {
     AxoPlotl::VolumeMeshRenderer::StaticData data;
-    data.n_faces_ = _mesh.n_faces();
 
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);
         data.positions_.emplace_back(p[0],p[1],p[2],1);
-        data.vertex_instances_.push_back(v_it->uidx());
+        data.vertices_.push_back(v_it->uidx());
     }
     for (auto e_it = _mesh.e_iter(); e_it.is_valid(); ++e_it) {
         const auto& e = _mesh.edge(*e_it);
-        data.edge_instances_.push_back({
-            .vh0_ = e.from_vertex().uidx(),
-            .vh1_ = e.to_vertex().uidx(),
-            .eh_ = e_it->uidx()
+        data.edges_.push_back({
+            e.from_vertex().uidx(),
+            e.to_vertex().uidx()
         });
     }
     for (auto f_it = _mesh.f_iter(); f_it.is_valid(); ++f_it) {
         const auto& vhs = _mesh.get_halfface_vertices(f_it->halfface_handle(0));
-        for (auto j = 1u; j < vhs.size()-1; ++j) {
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = vhs[0].uidx(),
-                .face_index_ = f_it->uidx()
-            });
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = vhs[j].uidx(),
-                .face_index_ = f_it->uidx()
-            });
-            data.face_draw_triangle_indices_.push_back({
-                .vertex_index_ = vhs[j+1].uidx(),
-                .face_index_ = f_it->uidx()
-            });
+        data.faces_.emplace_back();
+        for (const auto& vh : vhs) {
+            data.faces_.back().push_back(vh.uidx());
         }
     }
-    data.n_cells_ = _mesh.n_cells();
     for (auto ch : _mesh.cells()) {
-        const auto& bary = _mesh.barycenter(ch);
-        data.cell_incenters_.push_back(Vec4f(bary[0],bary[1],bary[2],1));
-
-        // edges for outline
-        for (auto ce_it = _mesh.ce_iter(ch); ce_it.is_valid(); ++ce_it) {
-            const auto& e = _mesh.edge(*ce_it);
-            data.cell_outline_indices_.push_back({
-                .vertex_index_=e.from_vertex().uidx(),
-                .cell_index_=ch.uidx()});
-            data.cell_outline_indices_.push_back({
-                .vertex_index_=e.to_vertex().uidx(),
-                .cell_index_=ch.uidx()});
-        }
-
-        // triangulate each face
+        data.cells_.emplace_back();
         for (auto hfh : _mesh.cell(ch).halffaces()) {
+            data.cells_.back().emplace_back();
             const auto& vhs = _mesh.get_halfface_vertices(hfh);
-            for (int i = 1; i < vhs.size()-1; ++i) {
-                data.cell_draw_triangle_indices_.push_back({
-                    .vertex_index_ = vhs[0].uidx(),
-                    .cell_index_ = ch.uidx()
-                });
-                data.cell_draw_triangle_indices_.push_back({
-                    .vertex_index_ = vhs[i].uidx(),
-                    .cell_index_ = ch.uidx()
-                });
-                data.cell_draw_triangle_indices_.push_back({
-                    .vertex_index_ = vhs[i+1].uidx(),
-                    .cell_index_ = ch.uidx()
-                });
+            for (const auto& vh : vhs) {
+                data.cells_.back().back().push_back(vh.uidx());
             }
         }
     }

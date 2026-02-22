@@ -9,21 +9,25 @@ class Application;
 
 class RendererBase
 {
-protected:
-    using Pad4 = uint32_t[1];
-    using Pad8 = uint32_t[2];
-    using Pad12 = uint32_t[3];
+public:
     using Position = Vec4f;
-
-    bool enabled_ = true;
-    ColorMap property_color_map_;
-    Application* app_;
 
     struct alignas(16) ClipBox {
         alignas(16) Vec3f min_;
         alignas(16) Vec3f max_;
         alignas(16) int32_t enabled_ = false;
     };
+
+protected:
+    using Pad4 = uint32_t[1];
+    using Pad8 = uint32_t[2];
+    using Pad12 = uint32_t[3];
+
+
+    bool enabled_ = true;
+    ColorMap property_color_map_;
+    Application* app_;
+
     static_assert(sizeof(ClipBox)%16==0);
 
 public:
@@ -42,13 +46,7 @@ public:
         };
     };
 
-    virtual Property::Mode& property_mode() = 0;
-
-    virtual Property::Filter& property_filter() = 0;
-
     virtual ClipBox& clip_box() = 0;
-
-    virtual void update_property_data(const std::vector<Property::Data>& _data) = 0;
 
     virtual void render(
         const Vec4f& _viewport,
@@ -57,10 +55,6 @@ public:
 
     inline bool& enabled() {
         return enabled_;
-    }
-
-    inline ColorMap& property_color_map() {
-        return property_color_map_;
     }
 };
 }

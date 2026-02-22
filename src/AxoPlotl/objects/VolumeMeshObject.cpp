@@ -13,36 +13,37 @@ void VolumeMeshObject::render_ui()
 {
     if (ImGui::BeginMenu("Render Settings"))
     {
-        ImGui::Checkbox("V", &renderer_.render_vertices_);
+        ImGui::Checkbox("V", &renderer_.vertices().enabled());
         ImGui::SameLine();
-        ImGui::Checkbox("E", &renderer_.render_edges_);
+        ImGui::Checkbox("E", &renderer_.edges().enabled());
         ImGui::SameLine();
-        ImGui::Checkbox("F", &renderer_.render_faces_);
+        ImGui::Checkbox("F", &renderer_.faces().enabled());
         ImGui::SameLine();
-        ImGui::Checkbox("C", &renderer_.render_cells_);
+        ImGui::Checkbox("C", &renderer_.cells().enabled());
 
 
-        ImGui::SliderFloat("Point Size", &renderer_.point_size(), 0.0f, 32.0f);
-        ImGui::SliderFloat("Line Width", &renderer_.line_width(), 0.0f, 32.0f);
-        ImGui::SliderFloat("Cell Scale", &renderer_.cell_scale(), 0.0f, 1.0f);
+        ImGui::SliderFloat("Point Size", &renderer_.vertices().point_size(), 0.0f, 32.0f);
+        ImGui::SliderFloat("Line Width", &renderer_.edges().line_width(), 0.0f, 32.0f);
+        ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
 
         // Clip Box
-        bool clip_box_enabled = renderer_.clip_box_.enabled_;
-        if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
-            renderer_.clip_box_.min_ = bounding_box().min();
-            renderer_.clip_box_.max_ = bounding_box().max();
-        }
-        renderer_.clip_box_.enabled_ = clip_box_enabled;
-        if (clip_box_enabled) {
-            Vec2f x = {renderer_.clip_box_.min_[0],renderer_.clip_box_.max_[0]};
-            Vec2f y = {renderer_.clip_box_.min_[1],renderer_.clip_box_.max_[1]};
-            Vec2f z = {renderer_.clip_box_.min_[2],renderer_.clip_box_.max_[2]};
-            ImGui::SliderFloat2("x", &x[0], bounding_box().min()[0], bounding_box().max()[0]);
-            ImGui::SliderFloat2("y", &y[0], bounding_box().min()[1], bounding_box().max()[1]);
-            ImGui::SliderFloat2("z", &z[0], bounding_box().min()[2], bounding_box().max()[2]);
-            renderer_.clip_box_.min_ = {x[0],y[0],z[0]};
-            renderer_.clip_box_.max_ = {x[1],y[1],z[1]};
-        }
+        RendererBase::ClipBox cb;
+        bool clip_box_enabled = renderer_.vertices().clip_box().enabled_;
+        // if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
+        //     renderer_.clip_box_.min_ = bounding_box().min();
+        //     renderer_.clip_box_.max_ = bounding_box().max();
+        // }
+        // renderer_.clip_box_.enabled_ = clip_box_enabled;
+        // if (clip_box_enabled) {
+        //     Vec2f x = {renderer_.clip_box_.min_[0],renderer_.clip_box_.max_[0]};
+        //     Vec2f y = {renderer_.clip_box_.min_[1],renderer_.clip_box_.max_[1]};
+        //     Vec2f z = {renderer_.clip_box_.min_[2],renderer_.clip_box_.max_[2]};
+        //     ImGui::SliderFloat2("x", &x[0], bounding_box().min()[0], bounding_box().max()[0]);
+        //     ImGui::SliderFloat2("y", &y[0], bounding_box().min()[1], bounding_box().max()[1]);
+        //     ImGui::SliderFloat2("z", &z[0], bounding_box().min()[2], bounding_box().max()[2]);
+        //     renderer_.clip_box_.min_ = {x[0],y[0],z[0]};
+        //     renderer_.clip_box_.max_ = {x[1],y[1],z[1]};
+        // }
 
         ImGui::EndMenu(); //!Settings
     }
@@ -181,11 +182,11 @@ void VolumeMeshObject::render_ui()
 
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data();
-            renderer_.vertex_property_mode() =
-                renderer_.edge_property_mode() =
-                renderer_.face_property_mode() =
-                renderer_.cell_property_mode() =
-                VolumeMeshRenderer::Property::Mode::COLOR;
+            renderer_.vertices().property_mode() =
+                renderer_.edges().property_mode() =
+                renderer_.faces().property_mode() =
+                renderer_.cells().property_mode() =
+                RendererBase::Property::Mode::COLOR;
             prop_ = std::nullopt;
             prop_filters_.clear();
         }
@@ -203,17 +204,17 @@ void VolumeMeshObject::init()
 
 void VolumeMeshObject::upload_default_property_data()
 {
-    std::vector<VolumeMeshRenderer::Property::Data> props;
+    std::vector<RendererBase::Property::Data> props;
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
         props.push_back({.value_ = Vec4f(0,0,0,1)});
     }
-    renderer_.update_vertex_property_data(props);
+    renderer_.vertices().update_property_data(props);
 
     props.clear();
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
         props.push_back({.value_ = Vec4f(0,0,0,1)});
     }
-    renderer_.update_edge_property_data(props);
+    renderer_.edges().update_property_data(props);
 
     props.clear();
     for (OVM::FH fh : mesh_.faces()) {
@@ -226,7 +227,7 @@ void VolumeMeshObject::upload_default_property_data()
             );
         props.push_back({.value_ = sphere_color});
     }
-    renderer_.update_face_property_data(props);
+    renderer_.faces().update_property_data(props);
 
     props.clear();
     for (OVM::CH ch : mesh_.cells()) {
@@ -239,7 +240,7 @@ void VolumeMeshObject::upload_default_property_data()
             );
         props.push_back({.value_ = sphere_color});
     }
-    renderer_.update_cell_property_data(props);
+    renderer_.cells().update_property_data(props);
 }
 
 void VolumeMeshObject::recompute_bounding_box()

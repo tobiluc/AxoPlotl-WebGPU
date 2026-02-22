@@ -19,6 +19,11 @@ public:
 
     Scene() {};
 
+    ~Scene() {
+        axis_position_buffer_.destroy();
+        axis_position_buffer_.release();
+    }
+
     void init(Application* _app);
 
     void render(wgpu::RenderPassEncoder _render_pass);
@@ -61,7 +66,8 @@ public:
 protected:
     Application* app_ = nullptr;
     std::vector<std::unique_ptr<ObjectBase>> objects_;
-    VolumeMeshRenderer gizmo_renderer;
+    wgpu::Buffer axis_position_buffer_;
+    MeshEdgeRenderer axis_renderer_;
 
     PerspectiveCamera perspective_;
 };

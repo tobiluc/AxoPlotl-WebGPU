@@ -18,10 +18,19 @@ struct PropertyFilterBase
 template<typename Entity>
 static Vec2f& get_property_value_filter(VolumeMeshRenderer& _r)
 {
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertex_value_filter();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edge_value_filter();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.face_value_filter();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cell_value_filter();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().property_filter().range_;}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().property_filter().range_;}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.faces().property_filter().range_;}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cells().property_filter().range_;}
+}
+
+template<typename Entity>
+static ColorMap& get_property_color_map(VolumeMeshRenderer& _r)
+{
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().color_map();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().color_map();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.faces().color_map();}
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cells().color_map();}
 }
 
 template<typename ST, typename Entity>
@@ -35,34 +44,35 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
     void renderUI(VolumeMeshRenderer& _r) override
     {
         Vec2f& vis_range = get_property_value_filter<Entity>(_r);
+        ColorMap& cm = get_property_color_map<Entity>(_r);
 
         std::string colormap_menu_title = "Colormap ("
-            + _r.property_color_map_.name_ + ")";
+            + cm.name_ + ")";
         if (ImGui::BeginMenu(colormap_menu_title.c_str())) {
             if (ImGui::MenuItem("Viridis")) {
-                _r.property_color_map_.set_viridis();
+                cm.set_viridis();
             }
             if (ImGui::MenuItem("Magma")) {
-                _r.property_color_map_.set_magma();
+                cm.set_magma();
             }
             if (ImGui::MenuItem("Plasma")) {
-                _r.property_color_map_.set_plasma();
+                cm.set_plasma();
             }
             if (ImGui::MenuItem("Diverging Red Blue")) {
-                _r.property_color_map_.set_rd_bu();
+                cm.set_rd_bu();
             }
             if (ImGui::MenuItem("Coolwarm")) {
-                _r.property_color_map_.set_coolwarm();
+                cm.set_coolwarm();
             }
             if (ImGui::MenuItem("Rainbow")) {
-                _r.property_color_map_.set_rainbow();
+                cm.set_rainbow();
             }
             ImGui::EndMenu();
         }
 
         auto draw_colormap = [&]() {
             ImGui::Image(
-                (ImTextureID)_r.property_color_map_.view_,
+                (ImTextureID)cm.view_,
                 ImVec2(ImGui::GetContentRegionAvail().x, 20),
                 ImVec2(0,0),
                 ImVec2(1,1)
@@ -138,7 +148,8 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
         visible_range[1] = visible_range[0];
 
         if (ImGui::ColorEdit3("Color", &color[0])) {
-            _r.property_color_map_.set_single_color({color[0],color[1],color[2]});
+            auto& cm = get_property_color_map<Entity>(_r);
+            cm.set_single_color({color[0],color[1],color[2]});
         }
     }
 

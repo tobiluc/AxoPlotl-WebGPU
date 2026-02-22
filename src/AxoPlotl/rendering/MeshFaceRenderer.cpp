@@ -67,32 +67,33 @@ struct FaceIndex {
 
 void MeshFaceRenderer::init(Application* _app,
     wgpu::Buffer _position_buffer,
-    const std::vector<FaceInstance> &_indices)
+    const std::vector<std::vector<uint32_t>>& _faces)
 {
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
-    n_faces_ = _indices.size();
+    n_faces_ = _faces.size();
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     position_buffer_ = _position_buffer;
-    create_buffers(_indices);
+    create_buffers(_faces);
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
 }
 
-void MeshFaceRenderer::create_buffers(const std::vector<FaceInstance> &_indices)
+void MeshFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
 
     // Triangulate the Faces
     std::vector<FaceIndex> inds;
-    for (const auto& f : _indices) {
-        for (int i = 1; i < f.vhs_.size()-1; ++i) {
-            inds.push_back({.vh_ = f.vhs_[0], .fh_ = f.fh_});
-            inds.push_back({.vh_ = f.vhs_[i], .fh_ = f.fh_});
-            inds.push_back({.vh_ = f.vhs_[i+1], .fh_ = f.fh_});
+    for (uint32_t fh = 0; fh < n_faces_; ++fh) {
+        const auto& f = _faces[fh];
+        for (int i = 1; i < f.size()-1; ++i) {
+            inds.push_back({.vh_ = f[0], .fh_ = fh});
+            inds.push_back({.vh_ = f[i], .fh_ = fh});
+            inds.push_back({.vh_ = f[i+1], .fh_ = fh});
         }
     }
     n_indices_ = inds.size();
@@ -109,11 +110,11 @@ void MeshFaceRenderer::create_buffers(const std::vector<FaceInstance> &_indices)
         queue.writeBuffer(
             face_index_buffer_,
             0,
-            _indices.data(),
+            inds.data(),
             sizeof(FaceIndex) * inds.size()
             );
 
-        std::cout << "Face Index Buffer Size: " << desc.size << std::endl;
+        std::cout << "Mesh Face Index Buffer Size: " << desc.size << std::endl;
     }
 
     // Property Buffer
@@ -126,7 +127,7 @@ void MeshFaceRenderer::create_buffers(const std::vector<FaceInstance> &_indices)
 
         property_buffer_ = device.createBuffer(desc);
 
-        std::cout << "Face Property Buffer Size: " << desc.size << std::endl;
+        std::cout << "Mesh Face Property Buffer Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer

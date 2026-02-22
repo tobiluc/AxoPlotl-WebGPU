@@ -11,7 +11,7 @@ protected:
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
-        alignas(16) float cell_scale_;
+        alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Property::Mode mode_ = Property::Mode::COLOR;
         alignas(16) Property::Filter value_filter_;
@@ -28,16 +28,20 @@ public:
         return uniforms_.cell_scale_;
     }
 
-    inline Property::Mode& property_mode() override {
+    inline Property::Mode& property_mode() {
         return uniforms_.mode_;
     }
 
-    inline Property::Filter& property_filter() override {
+    inline Property::Filter& property_filter() {
         return uniforms_.value_filter_;
     }
 
     inline ClipBox& clip_box() override {
         return uniforms_.clip_box_;
+    }
+
+    inline ColorMap& color_map() {
+        return property_color_map_;
     }
 
     MeshCellRenderer() {}
@@ -52,19 +56,16 @@ public:
         line_index_buffer_.release();
         uniform_buffer_.destroy();
         uniform_buffer_.release();
+        center_buffer_.destroy();
+        center_buffer_.release();
     }
-
-    struct CellInstance {
-        std::vector<std::vector<uint32_t>> vhs_; // the cell's faces
-        uint32_t ch_;
-    };
 
     void init(Application* _app,
       wgpu::Buffer _position_buffer,
-      const std::vector<CellInstance>& _indices,
-    const std::vector<Position>& _cell_centers);
+      const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+              const std::vector<Position>& _centers);
 
-    void update_property_data(const std::vector<Property::Data>& _data) override;
+    void update_property_data(const std::vector<Property::Data>& _data);
 
     void render(
         const Vec4f& _viewport,
@@ -76,8 +77,9 @@ private:
     size_t n_triangle_indices_;
     size_t n_line_indices_;
 
-    void create_buffers(const std::vector<CellInstance>& _indices,
-        const std::vector<Position>& _cell_centers);
+    void create_buffers(
+        const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+        const std::vector<Position>& _centers);
 
     void create_bind_group_layout();
 

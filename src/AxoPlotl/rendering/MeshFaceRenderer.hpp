@@ -23,16 +23,20 @@ protected:
 
 public:
 
-    inline Property::Mode& property_mode() override {
+    inline Property::Mode& property_mode() {
         return uniforms_.mode_;
     }
 
-    inline Property::Filter& property_filter() override {
+    inline Property::Filter& property_filter() {
         return uniforms_.value_filter_;
     }
 
     inline ClipBox& clip_box() override {
         return uniforms_.clip_box_;
+    }
+
+    inline ColorMap& color_map() {
+        return property_color_map_;
     }
 
     MeshFaceRenderer() {}
@@ -47,16 +51,11 @@ public:
         uniform_buffer_.release();
     }
 
-    struct FaceInstance {
-        std::vector<uint32_t> vhs_;
-        uint32_t fh_;
-    };
-
     void init(Application* _app,
         wgpu::Buffer _position_buffer,
-        const std::vector<FaceInstance>& _indices);
+        const std::vector<std::vector<uint32_t>>& _faces);
 
-    void update_property_data(const std::vector<Property::Data>& _data) override;
+    void update_property_data(const std::vector<Property::Data>& _data);
 
     void render(
         const Vec4f& _viewport,
@@ -67,7 +66,7 @@ private:
     size_t n_faces_;
     size_t n_indices_;
 
-    void create_buffers(const std::vector<FaceInstance>& _indices);
+    void create_buffers(const std::vector<std::vector<uint32_t>>& _faces);
 
     void create_bind_group_layout();
 

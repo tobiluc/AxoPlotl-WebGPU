@@ -28,16 +28,20 @@ public:
         return uniforms_.line_width_;
     };
 
-    inline Property::Mode& property_mode() override {
+    inline Property::Mode& property_mode() {
         return uniforms_.mode_;
     }
 
-    inline Property::Filter& property_filter() override {
+    inline Property::Filter& property_filter() {
         return uniforms_.value_filter_;
     }
 
     inline ClipBox& clip_box() override {
         return uniforms_.clip_box_;
+    }
+
+    inline ColorMap& color_map() {
+        return property_color_map_;
     }
 
     MeshEdgeRenderer() {}
@@ -60,9 +64,9 @@ public:
 
     void init(Application* _app,
               wgpu::Buffer _position_buffer,
-              const std::vector<EdgeInstance>& _indices);
+              const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 
-    void update_property_data(const std::vector<Property::Data>& _data) override;
+    void update_property_data(const std::vector<Property::Data>& _data);
 
     void render(
         const Vec4f& _viewport,
@@ -72,7 +76,7 @@ private:
     size_t n_positions_;
     size_t n_edges_;
 
-    void create_buffers(const std::vector<EdgeInstance>& _indices);
+    void create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 
     void create_bind_group_layout();
 
