@@ -88,6 +88,7 @@ void MeshFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &
 
     // Triangulate the Faces
     std::vector<FaceIndex> inds;
+    inds.reserve(3*n_faces_);
     for (uint32_t fh = 0; fh < n_faces_; ++fh) {
         const auto& f = _faces[fh];
         for (int i = 1; i < f.size()-1; ++i) {
@@ -104,7 +105,7 @@ void MeshFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(FaceIndex) * inds.size();
         desc.mappedAtCreation = false;
-        desc.label = "Edge Index";
+        desc.label = "Face Index";
 
         face_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(

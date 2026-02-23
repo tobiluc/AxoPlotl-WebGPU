@@ -11,6 +11,7 @@ namespace AxoPlotl
 
 struct PropertyFilterBase
 {
+    virtual void init(VolumeMeshRenderer& _r) = 0;
     virtual void renderUI(VolumeMeshRenderer& _r) = 0;
     virtual std::string name() = 0;
 };
@@ -40,6 +41,11 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
     ScalarPropertyRangeFilter(ST _min=0, ST _max=1)
         : total_min_(_min), total_max_(_max) {}
+
+    void init(VolumeMeshRenderer& _r) override
+    {
+        get_property_color_map<Entity>(_r).set_coolwarm();
+    }
 
     void renderUI(VolumeMeshRenderer& _r) override
     {
@@ -120,6 +126,14 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
     ScalarPropertyExactFilter(ST _min=0, ST _max=1)
         : total_min_(_min), total_max_(_max)
     {
+    }
+
+    void init(VolumeMeshRenderer& _r) override
+    {
+        get_property_color_map<Entity>(_r).set_single_color(
+            {1.0f, 0.0f, 0.0f}
+        );
+        color = {1.0f, 0.0f, 0.0f};
     }
 
     void renderUI(VolumeMeshRenderer& _r) override

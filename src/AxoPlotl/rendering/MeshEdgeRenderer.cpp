@@ -121,7 +121,6 @@ void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint3
     wgpu::Queue queue = device.getQueue();
 
     // Edge Index Buffer
-    if (n_edges_ > 0)
     {
         std::vector<EdgeInstance> instances;
         instances.reserve(n_edges_);
@@ -135,7 +134,7 @@ void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint3
 
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(EdgeInstance) * n_edges_;
+        desc.size = sizeof(EdgeInstance) * std::max(n_edges_,1lu);
         desc.mappedAtCreation = false;
         desc.label = "Edge Index";
 
@@ -151,13 +150,12 @@ void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint3
     }
 
     // Property Buffer
-    if (n_edges_ > 0)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Property::Data) * n_edges_;
+        desc.size = sizeof(Property::Data) * std::max(n_edges_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Edge Property";
+        desc.label = "Mesh Edge Property Buffer";
 
         property_buffer_ = device.createBuffer(desc);
 
@@ -252,8 +250,8 @@ void MeshEdgeRenderer::create_bind_group()
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(Property::Data) * n_edges_;
-    std::cout << "4: Vertex Properties #" << groupEntries[4].size << std::endl;
+    groupEntries[4].size = sizeof(Property::Data) * std::max(n_edges_,1lu);
+    std::cout << "4: Mesh Edge Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = bind_group_layout_;

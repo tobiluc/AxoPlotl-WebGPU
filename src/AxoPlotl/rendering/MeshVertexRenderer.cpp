@@ -100,13 +100,12 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
     wgpu::Queue queue = device.getQueue();
 
     // Vertex Index Buffer
-    if (n_vertices_ > 0)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(uint32_t) * n_vertices_;
+        desc.size = sizeof(uint32_t) * std::max(n_vertices_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Vertex Index";
+        desc.label = "Mesh Vertex Index Buffer";
 
         vertex_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
@@ -120,13 +119,12 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
     }
 
     // Property Buffer
-    if (n_vertices_ > 0)
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Property::Data) * n_vertices_;
+        desc.size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Vertex Property";
+        desc.label = "Mesh Vertex Property Buffer";
 
         property_buffer_ = device.createBuffer(desc);
 
@@ -139,7 +137,7 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Uniform";
+        desc.label = "Mesh Vertex Uniform Buffer";
 
         uniform_buffer_ = device.createBuffer(desc);
 
@@ -221,7 +219,7 @@ void MeshVertexRenderer::create_bind_group()
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(Property::Data) * n_vertices_;
+    groupEntries[4].size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
     std::cout << "4: Vertex Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};

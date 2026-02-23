@@ -148,6 +148,7 @@ void MeshCellRenderer::create_buffers(
 
     // Triangulate the Faces to get the vertices
     std::vector<CellIndex> triangle_indices;
+    triangle_indices.reserve(n_cells_*4*3);
     for (uint32_t ch = 0; ch < n_cells_; ++ch) {
         for (const auto& f : _cells[ch]) {
             for (int i = 1; i < f.size()-1; ++i) {
@@ -160,13 +161,15 @@ void MeshCellRenderer::create_buffers(
     n_triangle_indices_ = triangle_indices.size();
 
     // For the Edges, make sure we don't have duplicates
-    // For now, just ignore that
     std::vector<CellIndex> line_indices;
+    line_indices.reserve(n_cells_*6*2);
     for (uint32_t ch = 0; ch < n_cells_; ++ch) {
         for (const auto& f : _cells[ch]) {
             for (int i = 0; i < f.size()-1; ++i) {
-                line_indices.push_back({.vh_ = f[i], .ch_ = ch});
-                line_indices.push_back({.vh_ = f[i+1], .ch_ = ch});
+                if (f[i] < f[i+1]) {
+                    line_indices.push_back({.vh_ = f[i], .ch_ = ch});
+                    line_indices.push_back({.vh_ = f[i+1], .ch_ = ch});
+                }
             }
         }
     }

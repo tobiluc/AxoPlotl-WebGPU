@@ -172,6 +172,7 @@ void VolumeMeshObject::render_ui()
                 for (int i = 0; i < prop_filters_.size(); ++i) {
                     if (ImGui::MenuItem(prop_filters_[i]->name().c_str())) {
                         filter_index_ = i;
+                        prop_filters_[i]->init(renderer_);
                     }
                 }
                 ImGui::EndMenu();
