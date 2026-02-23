@@ -21,6 +21,8 @@ protected:
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
+    ColorMap property_color_map_;
+
 public:
 
     inline Property::Mode& property_mode() {
@@ -31,7 +33,7 @@ public:
         return uniforms_.value_filter_;
     }
 
-    inline ClipBox& clip_box() override {
+    inline ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
 

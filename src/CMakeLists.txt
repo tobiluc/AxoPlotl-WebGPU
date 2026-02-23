@@ -21,6 +21,7 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
     AxoPlotl/rendering/MeshFaceRenderer.cpp
     AxoPlotl/rendering/MeshCellRenderer.cpp
+    AxoPlotl/rendering/VectorRenderer.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

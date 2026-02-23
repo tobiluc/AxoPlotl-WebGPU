@@ -1,11 +1,9 @@
 #pragma once
-#include "AxoPlotl/rendering/ColorMap.hpp"
 #include "AxoPlotl/rendering/MeshCellRenderer.hpp"
 #include "AxoPlotl/rendering/MeshEdgeRenderer.hpp"
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/typedefs/glm.hpp"
-#include "GLFW/glfw3.h"
 #include "webgpu/webgpu.hpp"
 #include <cstddef>
 #include <vector>
@@ -16,12 +14,9 @@ namespace AxoPlotl
 
 class Application;
 
-class VolumeMeshRenderer
+class VolumeMeshRenderer : public RendererBase
 {
 public:
-
-    bool render_anything_ = true;
-
     inline MeshVertexRenderer& vertices() {
         return vertex_renderer_;
     }
@@ -56,12 +51,13 @@ public:
     // Setup Pipeline and layouts for given static data
     void init(Application* _app, const StaticData& _data);
 
-    void render(const Vec4f& _viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp);
+    void render(const Vec4f& _viewport,
+                wgpu::RenderPassEncoder _render_pass,
+                const Mat4x4f& _mvp) override;
 
     void release();
 private:
     size_t n_positions_;
-    Application* app_;
     wgpu::Buffer position_buffer_;
     MeshVertexRenderer vertex_renderer_;
     MeshEdgeRenderer edge_renderer_;

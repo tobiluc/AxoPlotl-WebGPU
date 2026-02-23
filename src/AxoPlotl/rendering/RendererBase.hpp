@@ -10,22 +10,27 @@ class Application;
 class RendererBase
 {
 public:
-    using Position = Vec4f;
+    using Position = Vec4f; // ensure 16 byte alignment with 4f vector
 
     struct alignas(16) ClipBox {
         alignas(16) Vec3f min_;
         alignas(16) Vec3f max_;
         alignas(16) int32_t enabled_ = false;
+
+        inline void set(const Vec3f& _min, const Vec3f& _max) {
+            enabled_ = true;
+            min_ = _min;
+            max_ = _max;
+        }
     };
+    static_assert(sizeof(ClipBox)==3*16);
 
 protected:
     using Pad4 = uint32_t[1];
     using Pad8 = uint32_t[2];
     using Pad12 = uint32_t[3];
 
-
     bool enabled_ = true;
-    ColorMap property_color_map_;
     Application* app_;
 
     static_assert(sizeof(ClipBox)%16==0);
@@ -38,15 +43,11 @@ public:
             SCALAR = 1u,
             VEC3 = 2u,
         };
-        struct Data {
-            Vec4f value_ = {0,0,0,1};
-        };
+        using Data = Vec4f;
         struct Filter {
             Vec2f range_ = {0,0};
         };
     };
-
-    virtual ClipBox& clip_box() = 0;
 
     virtual void render(
         const Vec4f& _viewport,

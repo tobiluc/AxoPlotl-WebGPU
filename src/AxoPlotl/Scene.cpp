@@ -10,6 +10,7 @@ void Scene::init(Application *_app)
     app_ = _app;
 
     // Initialize the Coordinate Axes Cross
+    using D = MeshEdgeRenderer::Property::Data;
     axis_position_buffer_ = create_position_buffer(
     app_->device_, {
         Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,1,0,1),Vec4f(0,0,1,1)
@@ -17,11 +18,19 @@ void Scene::init(Application *_app)
     axis_renderer_.init(app_, axis_position_buffer_,
         {{0,1},{0,2},{0,3}});
     axis_renderer_.update_property_data(
-        std::vector<MeshEdgeRenderer::Property::Data>{
-            {.value_=Vec4f(1,0,0,1)},
-            {.value_=Vec4f(0,1,0,1)},
-            {.value_=Vec4f(0,0,1,1)}
+        std::vector<D>{
+            D(1,0,0,1),
+            D(0,1,0,1),
+            D(0,0,1,1)
     });
+
+    vector_renderer_.init(app_, std::vector<Vec4f>{
+        {0.5f,0.5f,0.5f,1}
+    });
+    vector_renderer_.update_vector_data(std::vector<Vec4f>{
+        {1,0,0,1}
+    });
+    vector_renderer_.vector_scale() = 10;
 }
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass)
@@ -33,6 +42,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
         perspective_.getProjectionMatrix(viewport[2]/viewport[3]) * perspective_.getViewMatrix();
 
     axis_renderer_.render(app_->scene_viewport(), _render_pass, view_projection);
+    vector_renderer_.render(app_->scene_viewport(), _render_pass, view_projection);
 
     for (const auto& obj : objects_) {
         obj->render(_render_pass, view_projection);

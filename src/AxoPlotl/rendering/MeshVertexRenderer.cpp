@@ -115,7 +115,7 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
             sizeof(uint32_t) * _indices.size()
             );
 
-        std::cout << "Vertex Index Buffer Size: " << desc.size << std::endl;
+        std::cout << desc.label << " Size: " << desc.size << std::endl;
     }
 
     // Property Buffer
@@ -128,7 +128,7 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
 
         property_buffer_ = device.createBuffer(desc);
 
-        std::cout << "Vertex Property Buffer Size: " << desc.size << std::endl;
+        std::cout << desc.label << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -141,7 +141,7 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
 
         uniform_buffer_ = device.createBuffer(desc);
 
-        std::cout << "Uniform Buffer Size: " << desc.size << std::endl;
+        std::cout << desc.label << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -196,31 +196,31 @@ void MeshVertexRenderer::create_bind_group()
     groupEntries[0].buffer = uniform_buffer_;
     groupEntries[0].offset = 0;
     groupEntries[0].size = sizeof(Uniforms);
-    std::cout << "0: Uniforms #" << groupEntries[0].size << std::endl;
+    std::cout << "0: Mesh Vertex Uniforms #" << groupEntries[0].size << std::endl;
 
     // 1 - Positions
     groupEntries[1].binding = 1;
     groupEntries[1].buffer = position_buffer_;
     groupEntries[1].offset = 0;
     groupEntries[1].size = sizeof(Position) * n_positions_;
-    std::cout << "1: Positions #" << groupEntries[1].size << std::endl;
+    std::cout << "1: Mesh Vertex Positions #" << groupEntries[1].size << std::endl;
 
     // 2 - Property Color Map
     groupEntries[2].binding = 2;
     groupEntries[2].textureView = property_color_map_.view_;
-    std::cout << "2: Color Map #" << groupEntries[2].size << std::endl;
+    std::cout << "2: Mesh Vertex Color Map #" << groupEntries[2].size << std::endl;
 
     // 3 - Color Map Sampler
     groupEntries[3].binding = 3;
     groupEntries[3].sampler = property_color_map_.sampler_;
-    std::cout << "3: Color Sampler #" << groupEntries[3].size << std::endl;
+    std::cout << "3: Mesh Vertex Color Sampler #" << groupEntries[3].size << std::endl;
 
     // 4 - Properties
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
     groupEntries[4].size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
-    std::cout << "4: Vertex Properties #" << groupEntries[4].size << std::endl;
+    std::cout << "4: Mesh Vertex Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = bind_group_layout_;

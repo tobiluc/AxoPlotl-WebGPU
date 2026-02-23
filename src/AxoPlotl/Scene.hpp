@@ -6,6 +6,7 @@
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/objects/VolumeMeshObject.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
+#include "AxoPlotl/rendering/VectorRenderer.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include <filesystem>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
@@ -68,6 +69,7 @@ protected:
     std::vector<std::unique_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
     MeshEdgeRenderer axis_renderer_;
+    VectorRenderer vector_renderer_;
 
     PerspectiveCamera perspective_;
 };

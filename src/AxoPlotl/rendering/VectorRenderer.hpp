@@ -4,65 +4,53 @@
 namespace AxoPlotl
 {
 
-class MeshVertexRenderer : public RendererBase
+class VectorRenderer : public RendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
-        alignas(16) float point_size_ = 16.0f;
+        alignas(16) float line_width_ = 8.0f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) Property::Mode mode_ = Property::Mode::COLOR;;
-        alignas(16) Property::Filter value_filter_;
+        alignas(16) float vec_scale_ = 0.05f;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
-    static_assert(offsetof(Uniforms,mode_)%16==0);
+    static_assert(offsetof(Uniforms,vec_scale_)%16==0);
     static_assert(offsetof(Uniforms,viewport_size_)%16==0);
-    static_assert(offsetof(Uniforms,point_size_)%16==0);
+    static_assert(offsetof(Uniforms,line_width_)%16==0);
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
-    ColorMap property_color_map_;
-
 public:
-    inline float& point_size() {
-        return uniforms_.point_size_;
+    inline float& line_width() {
+        return uniforms_.line_width_;
     };
 
-    inline ColorMap& color_map() {
-        return property_color_map_;
-    }
-
-    inline Property::Mode& property_mode() {
-        return uniforms_.mode_;
-    }
-
-    inline Property::Filter& property_filter() {
-        return uniforms_.value_filter_;
-    }
+    inline float& vector_scale() {
+        return uniforms_.vec_scale_;
+    };
 
     inline ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
 
-    MeshVertexRenderer() {}
+    VectorRenderer() {}
 
-    ~MeshVertexRenderer()
+    ~VectorRenderer()
     {
-        property_buffer_.destroy();
-        property_buffer_.release();
-        vertex_index_buffer_.destroy();
-        vertex_index_buffer_.release();
+        vector_buffer_.destroy();
+        vector_buffer_.release();
+        position_buffer_.destroy();
+        position_buffer_.release();
         uniform_buffer_.destroy();
         uniform_buffer_.release();
     }
 
     void init(Application* _app,
-              wgpu::Buffer _position_buffer,
-              const std::vector<uint32_t>& _indices);
+        const std::vector<Position>& _positions);
 
-    void update_property_data(const std::vector<Property::Data>& _data);
+    void update_vector_data(const std::vector<Vec4f>& _data);
 
     void render(
         const Vec4f& _viewport,
@@ -70,9 +58,8 @@ public:
         const Mat4x4f& _mvp) override;
 private:
     size_t n_positions_;
-    size_t n_vertices_;
 
-    void create_buffers(const std::vector<uint32_t>& _indices);
+    void create_buffers(const std::vector<Position>& _positions);
 
     void create_bind_group_layout();
 
@@ -80,8 +67,7 @@ private:
 
     void create_pipeline();
 
-    wgpu::Buffer vertex_index_buffer_;
-    wgpu::Buffer property_buffer_;
+    wgpu::Buffer vector_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
 

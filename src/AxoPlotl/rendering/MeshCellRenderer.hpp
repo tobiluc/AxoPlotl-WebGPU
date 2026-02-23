@@ -23,6 +23,8 @@ protected:
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
+    ColorMap property_color_map_;
+
 public:
     inline float& cell_scale() {
         return uniforms_.cell_scale_;
@@ -36,7 +38,7 @@ public:
         return uniforms_.value_filter_;
     }
 
-    inline ClipBox& clip_box() override {
+    inline ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
 

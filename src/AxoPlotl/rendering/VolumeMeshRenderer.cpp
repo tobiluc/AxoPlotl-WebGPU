@@ -16,6 +16,7 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
     vertex_renderer_.init(app_, position_buffer_, _data.vertices_);
     edge_renderer_.init(app_, position_buffer_, _data.edges_);
     face_renderer_.init(app_, position_buffer_, _data.faces_);
+
     std::vector<Vec4f> cell_centers;
     cell_centers.reserve(_data.cells_.size());
     for (uint32_t ch = 0; ch < _data.cells_.size(); ++ch) {
@@ -34,7 +35,7 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
 
 void VolumeMeshRenderer::render(const Vec4f &_viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
-    if (!render_anything_) {return;}
+    if (!enabled_) {return;}
 
     cell_renderer_.render(_viewport, _render_pass, _mvp);
     face_renderer_.render(_viewport, _render_pass, _mvp);

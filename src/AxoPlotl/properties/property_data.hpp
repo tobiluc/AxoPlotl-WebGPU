@@ -43,15 +43,16 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-Vec4f vertex_buffer_property_data(const T& _val)
+RendererBase::Property::Data vertex_buffer_property_data(const T& _val)
 {
-    if constexpr(std::is_same_v<T,bool>) {return {_val,0,0,1};}
-    if constexpr(std::is_same_v<T,int>) {return {_val,0,0,1};}
-    if constexpr(std::is_same_v<T,double>) {return {_val,0,0,1};}
+    using D = RendererBase::Property::Data;
+    if constexpr(std::is_same_v<T,bool>) {return D{_val,0,0,1};}
+    if constexpr(std::is_same_v<T,int>) {return D{_val,0,0,1};}
+    if constexpr(std::is_same_v<T,double>) {return D{_val,0,0,1};}
     if constexpr(std::is_same_v<T,float>) {return {_val,0,0,1};}
     if constexpr (ToLoG::vector_type<T>) {
         if (ToLoG::Traits<T>::dim <= 4) {
-            Vec4f v;
+            D v;
             for (int i = 0; i < ToLoG::Traits<T>::dim; ++i) {
                 v[i] = _val[i];
             }
@@ -61,7 +62,7 @@ Vec4f vertex_buffer_property_data(const T& _val)
         }
     }
     throw std::runtime_error("UNKNOWN PROPERTY DATA TYPE: "+std::string(typeid(T).name()));
-    return Vec4f(0,0,0,0);
+    return D(0,0,0,0);
 }
 
 template<typename T>
@@ -89,8 +90,7 @@ void upload_vertex_property_data(
     if (_mesh.n_vertices()==0) {return;}
     std::vector<RendererBase::Property::Data> v_data;
     for (auto vh : _mesh.vertices()) {
-        Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[vh])); // cast to avoid the vector<bool> issue
-        v_data.push_back({.value_ = a});
+        v_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[vh]))); // cast to avoid the vector<bool> issue
     }
     _vol_rend.vertices().update_property_data(v_data);
     _vol_rend.vertices().property_mode() = vertex_buffer_property_mode<T>();
@@ -105,8 +105,7 @@ void upload_edge_property_data(
     if (_mesh.n_edges()==0) {return;}
     std::vector<RendererBase::Property::Data> e_data;
     for (auto eh : _mesh.edges()) {
-        Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[eh]));
-        e_data.push_back({.value_ = a});
+        e_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[eh])));
     }
     _vol_rend.edges().update_property_data(e_data);
     _vol_rend.edges().property_mode() = vertex_buffer_property_mode<T>();
@@ -121,8 +120,7 @@ void upload_face_property_data(
     if (_mesh.n_faces()==0) {return;}
     std::vector<RendererBase::Property::Data> f_data;
     for (auto fh : _mesh.faces()) {
-        Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[fh]));
-        f_data.push_back({.value_ = a});
+        f_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[fh])));
     }
     _vol_rend.faces().update_property_data(f_data);
     _vol_rend.faces().property_mode() = vertex_buffer_property_mode<T>();
@@ -137,8 +135,7 @@ void upload_cell_property_data(
     if (_mesh.n_cells()==0) {return;}
     std::vector<RendererBase::Property::Data> c_data;
     for (auto ch : _mesh.cells()) {
-        Vec4f a = vertex_buffer_property_data(static_cast<T>(_prop[ch]));
-        c_data.push_back({.value_ = a});
+        c_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[ch])));
     }
     _vol_rend.cells().update_property_data(c_data);
     _vol_rend.cells().property_mode() = vertex_buffer_property_mode<T>();
@@ -201,6 +198,53 @@ void upload_property_data(
         _vol_rend.faces().enabled() =
         _vol_rend.vertices().enabled() = false;
     }
+}
+
+template<typename T, typename Entity>
+std::vector<RendererBase::Property::Data> vertex_buffer_property_data(
+    const VolumeMesh& _mesh,
+    OpenVolumeMesh::PropertyStorageBase* _prop
+    )
+{
+    auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
+    std::vector<RendererBase::Property::Data> data;
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
+        data.reserve(_mesh.n_vertices());
+        for (auto vh : _mesh.vertices()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[vh])));
+        }
+    }
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
+        data.reserve(_mesh.n_edges());
+        for (auto eh : _mesh.edges()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[eh])));
+        }
+    }
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
+        data.reserve(_mesh.n_faces());
+        for (auto fh : _mesh.faces()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[fh])));
+        }
+    }
+    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
+        data.reserve(_mesh.n_cells());
+        for (auto ch : _mesh.cells()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[ch])));
+        }
+    }
+    if constexpr(std::is_same_v<Entity,OVM::Entity::HalfEdge>) {
+        data.reserve(_mesh.n_halfedges());
+        for (auto heh : _mesh.halfedges()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[heh])));
+        }
+    }
+    if constexpr(std::is_same_v<Entity,OVM::Entity::HalfFace>) {
+        data.reserve(_mesh.n_halffaces());
+        for (auto hfh : _mesh.halffaces()) {
+            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[hfh])));
+        }
+    }
+    return data;
 }
 
 }

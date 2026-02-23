@@ -16,7 +16,6 @@ public:
         id_(++id_counter_),
         scene_(_scene),
         name_(_name),
-        renderer_(),
         transform_(1)
     {}
 
@@ -26,18 +25,16 @@ public:
 
     virtual void recompute_bounding_box() = 0;
 
-    void render(
+    virtual void render(
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _view_projection);
+        const Mat4x4f& _view_projection) = 0;
 
     virtual void render_ui() = 0;
 
+    virtual bool& visible() = 0;
+
     inline const ToLoG::AABB<Vec3f>& bounding_box() const {
         return bbox_;
-    }
-
-    inline bool& visible() {
-        return renderer_.render_anything_;
     }
 
     inline bool& selected() {
@@ -60,7 +57,7 @@ protected:
     Scene* scene_;
     int id_;
     std::string name_;
-    VolumeMeshRenderer renderer_;
+    //std::unique_ptr<RendererBase> renderer_;
     Mat4x4f transform_;
     static int id_counter_;
     ToLoG::AABB<Vec3f> bbox_;

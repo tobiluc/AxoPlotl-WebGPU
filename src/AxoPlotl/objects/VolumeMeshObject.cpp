@@ -27,23 +27,30 @@ void VolumeMeshObject::render_ui()
         ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
 
         // Clip Box
-        RendererBase::ClipBox cb;
-        bool clip_box_enabled = renderer_.vertices().clip_box().enabled_;
-        // if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
-        //     renderer_.clip_box_.min_ = bounding_box().min();
-        //     renderer_.clip_box_.max_ = bounding_box().max();
-        // }
-        // renderer_.clip_box_.enabled_ = clip_box_enabled;
-        // if (clip_box_enabled) {
-        //     Vec2f x = {renderer_.clip_box_.min_[0],renderer_.clip_box_.max_[0]};
-        //     Vec2f y = {renderer_.clip_box_.min_[1],renderer_.clip_box_.max_[1]};
-        //     Vec2f z = {renderer_.clip_box_.min_[2],renderer_.clip_box_.max_[2]};
-        //     ImGui::SliderFloat2("x", &x[0], bounding_box().min()[0], bounding_box().max()[0]);
-        //     ImGui::SliderFloat2("y", &y[0], bounding_box().min()[1], bounding_box().max()[1]);
-        //     ImGui::SliderFloat2("z", &z[0], bounding_box().min()[2], bounding_box().max()[2]);
-        //     renderer_.clip_box_.min_ = {x[0],y[0],z[0]};
-        //     renderer_.clip_box_.max_ = {x[1],y[1],z[1]};
-        // }
+        // Each entity technically has their own, but we
+        // just modify all at once.
+        const auto& bbox = bounding_box();
+        RendererBase::ClipBox& cb = renderer_.vertices().clip_box();
+        bool clip_box_enabled = cb.enabled_;
+        if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
+            cb.set(bbox.min(),bbox.max());
+        }
+        cb.enabled_ = clip_box_enabled;
+        if (clip_box_enabled)
+        {
+            Vec2f x = {cb.min_[0],cb.max_[0]};
+            Vec2f y = {cb.min_[1],cb.max_[1]};
+            Vec2f z = {cb.min_[2],cb.max_[2]};
+            ImGui::SliderFloat2("x", &x[0], bbox.min()[0], bbox.max()[0]);
+            ImGui::SliderFloat2("y", &y[0], bbox.min()[1], bbox.max()[1]);
+            ImGui::SliderFloat2("z", &z[0], bbox.min()[2], bbox.max()[2]);
+            cb.min_ = {x[0],y[0],z[0]};
+            cb.max_ = {x[1],y[1],z[1]};
+        }
+        renderer_.edges().clip_box() = cb;
+        renderer_.faces().clip_box() = cb;
+        renderer_.cells().clip_box() = cb;
+        vertex_vector_renderer_.clip_box() = cb;
 
         ImGui::EndMenu(); //!Settings
     }
@@ -64,8 +71,13 @@ void VolumeMeshObject::render_ui()
                     } else if ((*v_prop)->typeNameWrapper()=="bool") {
                         upload_property_data<bool,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
                     } else if ((*v_prop)->typeNameWrapper()=="vec3d") {
-                        upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
+                        //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
+                        const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
+                        renderer_.vertices().update_property_data(vectors);
+                        vertex_vector_renderer_.update_vector_data(vectors);
+                        renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
                     }
+                    renderer_.vertices().enabled() = true;
                 }
                 ImGui::PopID();
             }
@@ -166,6 +178,10 @@ void VolumeMeshObject::render_ui()
     {
         ImGui::SeparatorText((*prop_)->name().c_str());
 
+        if (vertex_vector_renderer_.enabled()) {
+            ImGui::InputFloat("Vector Scale", &vertex_vector_renderer_.vector_scale());
+        }
+
         if (!prop_filters_.empty()) {
 
             if (ImGui::BeginMenu("Change Filter")) {
@@ -196,50 +212,79 @@ void VolumeMeshObject::render_ui()
 
 void VolumeMeshObject::init()
 {
-    renderer_.init(
-        scene_->app(),
-        create_static_render_data(mesh_)
-    );
+    const auto& data = create_static_render_data(mesh_);
+    renderer_.init(scene_->app(), data);
     upload_default_property_data();
+    vertex_vector_renderer_.init(scene_->app(), data.positions_);
+
+    // std::vector<RendererBase::Position> cell_centers;
+    // cell_centers.reserve(mesh_.n_cells());
+    // for (OVM::CH ch : mesh_.cells()) {
+    //     const auto& c = mesh_.barycenter(ch);
+    //     cell_centers.emplace_back(c[0],c[1],c[2],1);
+    // }
+    // cell_vector_renderer_.init(scene_->app(), cell_centers);
+}
+
+void VolumeMeshObject::render(
+    wgpu::RenderPassEncoder _render_pass,
+    const Mat4x4f& _view_projection)
+{
+    const auto& mvp = _view_projection * transform_;
+
+    renderer_.render(
+        scene_->app()->scene_viewport(),
+        _render_pass,
+        mvp);
+
+    if (renderer_.vertices().enabled() &&
+        renderer_.vertices().property_mode() ==
+        RendererBase::Property::Mode::VEC3) {
+        vertex_vector_renderer_.render(
+            scene_->app()->scene_viewport(),
+            _render_pass,
+            mvp);
+    }
 }
 
 void VolumeMeshObject::upload_default_property_data()
 {
-    std::vector<RendererBase::Property::Data> props;
+    using D = RendererBase::Property::Data;
+    std::vector<D> props;
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
-        props.push_back({.value_ = Vec4f(0,0,0,1)});
+        props.push_back(D(0,0,0,1));
     }
     renderer_.vertices().update_property_data(props);
 
     props.clear();
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
-        props.push_back({.value_ = Vec4f(0,0,0,1)});
+        props.push_back(D(0,0,0,1));
     }
     renderer_.edges().update_property_data(props);
 
     props.clear();
     for (OVM::FH fh : mesh_.faces()) {
         auto p = ToLoG::normalized(mesh_.normal(fh.halfface_handle(0)));
-        Vec4f sphere_color = Vec4f(
+        D sphere_color = Vec4f(
             0.5 * (p[0] + 1),
             0.5 * (p[1] + 1),
             0.5 * (p[2] + 1),
             1
             );
-        props.push_back({.value_ = sphere_color});
+        props.push_back(sphere_color);
     }
     renderer_.faces().update_property_data(props);
 
     props.clear();
     for (OVM::CH ch : mesh_.cells()) {
         auto p = ToLoG::normalized(mesh_.barycenter(ch));
-        Vec4f sphere_color = Vec4f(
+        D sphere_color = Vec4f(
             0.5 * (p[0] + 1),
             0.5 * (p[1] + 1),
             0.5 * (p[2] + 1),
             1
             );
-        props.push_back({.value_ = sphere_color});
+        props.push_back(sphere_color);
     }
     renderer_.cells().update_property_data(props);
 }
