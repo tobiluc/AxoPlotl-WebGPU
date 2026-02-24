@@ -15,13 +15,13 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/ColorMap.cpp
     AxoPlotl/properties/property_calculations.cpp
     AxoPlotl/rendering/shaders/includes/shader_includes.cpp
-    AxoPlotl/PluginBase.cpp
     AxoPlotl/gui/themes.cpp
     AxoPlotl/rendering/MeshVertexRenderer.cpp
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
     AxoPlotl/rendering/MeshFaceRenderer.cpp
     AxoPlotl/rendering/MeshCellRenderer.cpp
     AxoPlotl/rendering/VectorRenderer.cpp
+    AxoPlotl/gui/fonts.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
@@ -29,11 +29,13 @@ target_link_libraries(AxoPlotlCore PUBLIC
     glfw
     glfw3webgpu
     glm
-    OpenVolumeMesh::OpenVolumeMesh
-    nlohmann_json::nlohmann_json
-    ToLoG
     imgui
     ImGuiFileDialog
+    nlohmann_json::nlohmann_json
+
+    OpenVolumeMesh::OpenVolumeMesh
+    ToLoG
+    rapidobj::rapidobj
 )
 
 add_executable(AxoPlotlApp
@@ -46,6 +48,14 @@ add_executable(AxoPlotlApp
 target_link_libraries(AxoPlotlApp PUBLIC
     AxoPlotlCore
     ibex
+)
+
+target_include_directories(AxoPlotlCore PUBLIC
+    ${iconfontcppheaders_SOURCE_DIR}
+)
+target_compile_definitions(AxoPlotlCore PUBLIC
+AXOPLOTL_FONTS_DIR="${CMAKE_SOURCE_DIR}/assets/fonts/"
+AXOPLOTL_SHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/"
 )
 
 if (XCODE)

@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/AxoPlotl_fwd.hpp"
+#include <array>
 #include <cstring>
 
 namespace AxoPlotl
@@ -18,7 +19,7 @@ public:
 
 private:
     char input_buffer_[1024];
-    float samples_[100];
+    std::array<float,100> samples_;
 };
 
 }

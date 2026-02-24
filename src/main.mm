@@ -1,9 +1,21 @@
+#include "AxoPlotl/gui/themes.hpp"
 #define WEBGPU_CPP_IMPLEMENTATION
 
 #include "AxoPlotl/Application.hpp"
-// #include "AxoPlotl/tools/DataControlTool.hpp"
-// #include "AxoPlotl/tools/DebugTool.hpp"
-// #include "AxoPlotl/tools/PlottingTool.hpp"
+#include "AxoPlotl/tools/DataControlTool.hpp"
+#include "AxoPlotl/tools/DebugTool.hpp"
+#include "AxoPlotl/tools/PlottingTool.hpp"
+
+AxoPlotl::DebugTool tool_debug;
+AxoPlotl::DataControlTool tool_data_control;
+AxoPlotl::PlottingTool tool_plotting;
+
+void user_ui_callback(AxoPlotl::Application* _app)
+{
+  tool_data_control.render_ui(*_app);
+  tool_plotting.render_ui(*_app);
+  tool_debug.render_ui(*_app);
+}
 
 int main()
 {
@@ -11,20 +23,12 @@ int main()
 
     // Initialize main Runner
     AxoPlotl::Application app;
-
-    // AxoPlotl::DebugTool tool_debug;
-    // AxoPlotl::DataControlTool tool_data_control;
-    // AxoPlotl::PlottingTool tool_plotting;
-
-    // config.user_render_callback_ = [&]()
-    // {
-    //   //tool_data_control.render_ui(app);
-    // };
-
+    app.user_ui_callback() = user_ui_callback;
     if (!app.init()) {
         std::cerr << "Failed to initialice AxoPlotl" << std::endl;
         return 1;
     }
+    AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);
 
 #ifdef __EMSCRIPTEN__
     auto callback = [](void *arg) {

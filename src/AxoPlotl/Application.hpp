@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AxoPlotl/PluginBase.hpp"
 #include "AxoPlotl/Scene.hpp"
 #include <webgpu/webgpu.hpp>
 
@@ -49,10 +48,16 @@ public:
         deferred_calls_.push_back(_f);
     }
 
+    inline std::function<void(Application* _app)>& user_ui_callback() {
+        return user_ui_callback_;
+    }
+
 private:
     //float sidebar_width_ = 300.0f;
     float sidebar_rel_width_ = 0.3f;
     bool sidebar_right_aligned_ = false;
+
+    std::function<void(Application* _app)> user_ui_callback_;
 
     // Processed at the end of a frame and then removed
     std::vector<std::function<void()>> deferred_calls_;

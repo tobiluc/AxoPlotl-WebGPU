@@ -18,15 +18,40 @@ inline wgpu::DepthStencilState create_default_depth_state()
     return depthStencilState;
 }
 
-inline wgpu::ShaderModule create_mesh_shader_module(
+// inline wgpu::ShaderModule create_mesh_shader_module(
+//     wgpu::Device _device,
+//     const std::string& _source,
+//     const char* _name = "Unlabeled Shader Module")
+// {
+//     // Specify the WGSL part of the shader module descriptor
+//     wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
+//     wgslDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
+//     std::string parsed_shader_code = parse_shader_with_includes(_source);
+//     wgslDesc.code = parsed_shader_code.c_str();
+
+//     wgpu::ShaderModuleDescriptor desc = {};
+// #ifdef WEBGPU_BACKEND_WGPU
+//     desc.hintCount = 0;
+//     desc.hints = nullptr;
+// #endif
+
+//     // Connect the chain
+//     desc.nextInChain = &wgslDesc.chain;
+//     desc.nextInChain = reinterpret_cast<const WGPUChainedStruct*>(&wgslDesc);
+//     desc.label = _name;
+
+//     return _device.createShaderModule(desc);
+// }
+
+inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     wgpu::Device _device,
-    const std::string& _source,
+    const std::filesystem::path& _path,
     const char* _name = "Unlabeled Shader Module")
 {
     // Specify the WGSL part of the shader module descriptor
     wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
     wgslDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
-    std::string parsed_shader_code = parse_shader_with_includes(_source);
+    std::string parsed_shader_code = parse_shader_file_with_includes(_path);
     wgslDesc.code = parsed_shader_code.c_str();
 
     wgpu::ShaderModuleDescriptor desc = {};

@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
@@ -8,7 +9,6 @@
 #include <imgui.h>
 #include <backends/imgui_impl_wgpu.h>
 #include <backends/imgui_impl_glfw.h>
-#include <AxoPlotl/PluginRegistry.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
@@ -24,7 +24,8 @@
 namespace AxoPlotl
 {
 
-Application::Application()
+Application::Application() :
+    user_ui_callback_([](Application* _app) {})
 {
 }
 
@@ -336,6 +337,9 @@ bool Application::init_gui()
     // This is with the older imgui version from Learn WebGPU
     //ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
 
+    // Font
+    GUI::load_fonts();
+
     return true;
 }
 
@@ -440,6 +444,8 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
+    user_ui_callback_(this);
 
     // data_control_.render_ui(*this)
     // for (const auto& plugin : PluginRegistry::get_plugins()) {

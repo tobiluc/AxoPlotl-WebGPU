@@ -1,5 +1,4 @@
 #include "PlottingTool.hpp"
-#include "AxoPlotl/PluginRegistry.hpp"
 #include "AxoPlotl/Application.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>
@@ -20,21 +19,21 @@ void PlottingTool::render_ui(Application& app)
         auto rpn = ibex::generate_postfix(ibex::tokenize(input_buffer_));
         if (!rpn.empty())
         {
-            // auto func = [&](const float& v) {
-            //     vars["x"] = v;
-            //     return ibex::eval_postfix(rpn, vars, funcs);
-            // };
+            auto func = [&](const float& v) {
+                vars["x"] = v;
+                return ibex::eval_postfix(rpn, vars, funcs);
+            };
 
-            // for (int i = 0; i < sizeof(samples_); ++i) {
-            //     float x = (float)i/(float)sizeof(samples_);
-            //     float y = func(x);
-            //     if (!std::isnan(y)) {
-            //         samples_[i] = y;
-            //     }
-            // }
+            for (int i = 0; i < samples_.size(); ++i) {
+                float x = (float)i/(float)samples_.size();
+                float y = func(x);
+                if (!std::isnan(y)) {
+                    samples_[i] = y;
+                }
+            }
         }
     }
-    // ImGui::PlotLines("##y", samples_, sizeof(samples_));
+    ImGui::PlotLines("##y", samples_.data(), samples_.size());
 }
 
 }

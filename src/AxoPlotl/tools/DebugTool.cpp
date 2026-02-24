@@ -1,6 +1,5 @@
 #include "DebugTool.hpp"
 #include "AxoPlotl/Application.hpp"
-#include "AxoPlotl/PluginRegistry.hpp"
 #include "AxoPlotl/utils/fps.hpp"
 #include <mach/task_info.h>
 #include <mach/mach.h>

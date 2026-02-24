@@ -1,6 +1,5 @@
 #pragma once
 #include "AxoPlotl/AxoPlotl_fwd.hpp"
-#include <AxoPlotl/PluginBase.hpp>
 
 namespace AxoPlotl
 {

@@ -1,5 +1,4 @@
 #pragma once
-#include "AxoPlotl/PluginBase.hpp"
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 #include <unordered_map>
 

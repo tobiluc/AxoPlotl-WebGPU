@@ -2,6 +2,7 @@
 #include "AxoPlotl/Application.hpp"
 #include <mach/task_info.h>
 #include <mach/mach.h>
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -9,12 +10,15 @@ namespace AxoPlotl
 void DataControlTool::render_ui(Application& _app)
 {
     if (!ImGui::CollapsingHeader("Data Control")) {return;}
+    using ConstObj = const std::unique_ptr<ObjectBase>&;
 
     // For Convenience, we can apply things to all objects at once
     if (ImGui::BeginMenu("Apply to all")) {
         ImGui::SeparatorText("Details");
         if (ImGui::Button("Collapse")) {
-            obj_expanded_.clear();
+            for (const auto& obj : _app.scene().get_objects()) {
+                obj_expanded_[obj->id()] = false;
+            }
         }
         ImGui::SameLine();
         if (ImGui::Button("Expand")) {
@@ -22,9 +26,11 @@ void DataControlTool::render_ui(Application& _app)
                 obj_expanded_[obj->id()] = true;
             }
         }
-        // if (ImGui::MenuItem("Sort alphabetically")) {
-        //     _app.scene()
-        // }
+        if (ImGui::MenuItem("Sort alphabetically")) {
+            _app.scene().sort_objects([](ConstObj _obj1, ConstObj _obj2) {
+                return _obj1->name() < _obj2->name();
+            });
+        }
         ImGui::SeparatorText("Visibility");
         if (ImGui::Button("Hide")) {
             for (const auto& obj : _app.scene().get_objects()) {
@@ -57,8 +63,12 @@ void DataControlTool::render_ui(Application& _app)
             obj_expanded_[obj->id()] = false;
         }
 
+        ImGui::Checkbox("##V", &obj->target());
+        ImGui::SameLine();
         // Visible Checkbox
-        ImGui::Checkbox("##V", &obj->visible());
+        if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+            obj->visible() = !obj->visible();
+        }
         ImGui::SameLine();
         if (ImGui::Button("Zoom")) {
             _app.scene().zoom_to_box(obj->bounding_box());
