@@ -12,6 +12,7 @@
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
+#include <AxoPlotl/tools/DataControlTool.hpp>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -146,11 +147,6 @@ bool Application::init()
     if (!init_gui()) {
         return false;
     }
-
-    //----------
-    // Plugins
-    //----------
-    PluginRegistry::instantiate_all();
 
     return true;
 }
@@ -445,11 +441,12 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         ImGuiFileDialog::Instance()->Close();
     }
 
-    for (const auto& plugin : PluginRegistry::get_plugins()) {
-        if (ImGui::CollapsingHeader(plugin.second->name())) {
-            plugin.second->render_ui(*this);
-        }
-    }
+    // data_control_.render_ui(*this)
+    // for (const auto& plugin : PluginRegistry::get_plugins()) {
+    //     if (ImGui::CollapsingHeader(plugin.second->name())) {
+    //         plugin.second->render_ui(*this);
+    //     }
+    // }
 
     ImGui::End();
 

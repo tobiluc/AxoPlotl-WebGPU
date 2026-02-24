@@ -1,25 +1,25 @@
-#pragma once
-#include <filesystem>
-#include <imgui.h>
+// #pragma once
+// #include <filesystem>
+// #include <imgui.h>
 
-namespace AxoPlotl
-{
+// namespace AxoPlotl
+// {
 
-// forward declaration
-class Application;
+// // forward declaration
+// class Application;
 
-class PluginBase
-{
-public:
-    virtual ~PluginBase() = default;
+// class PluginBase
+// {
+// public:
+//     virtual ~PluginBase() = default;
 
-    inline virtual void init() {};
+//     inline virtual void init() {};
 
-    virtual void render_ui(Application& app) = 0;
+//     virtual void render_ui(Application& app) = 0;
 
-    virtual const char* name() const {
-        return "Unnamed Plugin";
-    }
-};
+//     virtual const char* name() const {
+//         return "Unnamed Plugin";
+//     }
+// };
 
-}
+// }

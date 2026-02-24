@@ -51,8 +51,16 @@ public:
         zoom_to_box(objects_.back()->bounding_box());
     }
 
-    const std::vector<std::unique_ptr<ObjectBase>>& get_objects() const {
+    inline const std::vector<std::unique_ptr<ObjectBase>>& get_objects() const {
         return objects_;
+    }
+
+    inline void sort_objects(
+        std::function<bool(
+            const std::unique_ptr<ObjectBase>&,
+            const std::unique_ptr<ObjectBase>&)> _comp)
+    {
+        std::sort(objects_.begin(), objects_.end(), _comp);
     }
 
     inline void zoom_to_box(const ToLoG::AABB<Vec3f>& _bbox) {
@@ -69,7 +77,6 @@ protected:
     std::vector<std::unique_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
     MeshEdgeRenderer axis_renderer_;
-    VectorRenderer vector_renderer_;
 
     PerspectiveCamera perspective_;
 };

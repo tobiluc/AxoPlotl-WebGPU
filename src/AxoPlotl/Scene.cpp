@@ -23,14 +23,6 @@ void Scene::init(Application *_app)
             D(0,1,0,1),
             D(0,0,1,1)
     });
-
-    vector_renderer_.init(app_, std::vector<Vec4f>{
-        {0.5f,0.5f,0.5f,1}
-    });
-    vector_renderer_.update_vector_data(std::vector<Vec4f>{
-        {1,0,0,1}
-    });
-    vector_renderer_.vector_scale() = 10;
 }
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass)
@@ -42,7 +34,6 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
         perspective_.getProjectionMatrix(viewport[2]/viewport[3]) * perspective_.getViewMatrix();
 
     axis_renderer_.render(app_->scene_viewport(), _render_pass, view_projection);
-    vector_renderer_.render(app_->scene_viewport(), _render_pass, view_projection);
 
     for (const auto& obj : objects_) {
         obj->render(_render_pass, view_projection);
@@ -51,7 +42,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     // Remove deleted objects
     // This is deferred to avoid buffers being destroyed
     // before the command buffer is submitted
-    app_->deferred_calls_.push_back([this]() {
+    app_->add_deferred_call([this]() {
         objects_.erase(
             std::remove_if(objects_.begin(), objects_.end(), [&](const std::unique_ptr<ObjectBase>& _obj) {
                 return _obj->deleted();

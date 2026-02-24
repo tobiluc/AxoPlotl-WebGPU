@@ -1,6 +1,7 @@
 #pragma once
-#include "AxoPlotl/rendering/VolumeMeshRenderer.hpp"
+#include "AxoPlotl/typedefs/glm.hpp"
 #include "ToLoG/Core.hpp"
+#include "webgpu/webgpu.hpp"
 
 namespace AxoPlotl
 {
@@ -37,8 +38,8 @@ public:
         return bbox_;
     }
 
-    inline bool& selected() {
-        return selected_;
+    inline bool& target() {
+        return target_;
     }
 
     inline bool& deleted() {
@@ -62,7 +63,7 @@ protected:
     static int id_counter_;
     ToLoG::AABB<Vec3f> bbox_;
     bool deleted_ = false;
-    bool selected_ = false;
+    bool target_ = false;
 };
 
 };

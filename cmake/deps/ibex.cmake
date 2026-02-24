@@ -9,7 +9,5 @@ if (NOT TARGET ibex)
     # add_library(ibex STATIC
     #     ${EXTERNAL_DIR}/ibex/ibex.cpp
     # )
-    target_include_directories(ibex PUBLIC ${EXTERNAL_DIR}/ibex)
+    #target_include_directories(ibex PUBLIC ${EXTERNAL_DIR}/ibex)
 endif()
-
-add_axoplotl_plugin(PlottingPlugin.cpp LINK_LIBS ibex)

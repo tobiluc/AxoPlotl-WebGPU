@@ -1,23 +1,20 @@
 #pragma once
-#include "AxoPlotl/PluginBase.hpp"
+#include "AxoPlotl/AxoPlotl_fwd.hpp"
+#include <cstring>
 
 namespace AxoPlotl
 {
 
-class PlottingPlugin : public PluginBase
+class PlottingTool
 {
 public:
-    PlottingPlugin() {
+    PlottingTool() {
         strncpy(input_buffer_, "", sizeof(input_buffer_)-1);
         input_buffer_[sizeof(input_buffer_)-1] = '\0';
         for (int i = 0; i < sizeof(samples_); ++i) {samples_[i] = 0;}
     }
 
-    void render_ui(Application& app) override;
-
-    const char* name() const override {
-        return "Plotting Plugin";
-    }
+    void render_ui(Application& app);
 
 private:
     char input_buffer_[1024];

@@ -38,10 +38,14 @@ target_link_libraries(AxoPlotlCore PUBLIC
 
 add_executable(AxoPlotlApp
     main.mm
+    AxoPlotl/tools/DataControlTool.cpp
+    AxoPlotl/tools/DebugTool.cpp
+    AxoPlotl/tools/PlottingTool.cpp
 )
 
-target_link_libraries(AxoPlotlApp
-    PRIVATE AxoPlotlCore
+target_link_libraries(AxoPlotlApp PUBLIC
+    AxoPlotlCore
+    ibex
 )
 
 if (XCODE)

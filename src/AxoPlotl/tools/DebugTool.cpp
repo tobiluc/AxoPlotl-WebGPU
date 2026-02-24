@@ -1,4 +1,4 @@
-#include "DebugPlugin.hpp"
+#include "DebugTool.hpp"
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/PluginRegistry.hpp"
 #include "AxoPlotl/utils/fps.hpp"
@@ -15,12 +15,10 @@ static double inline memory_usage_mb() {
 namespace AxoPlotl
 {
 
-void DebugPlugin::render_ui(Application& app)
+void DebugTool::render_ui(Application& app)
 {
-    ImGui::SeparatorText("Loaded Plugins");
-    for (const auto& plugin : PluginRegistry::get_plugins()) {
-        ImGui::Text("%s", plugin.second->name());
-    }
+    if (!ImGui::CollapsingHeader("Debug")) {return;}
+
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", memory_usage_mb());
     ImGui::Text("%f FPS", Time::FRAMES_PER_SECOND);
@@ -28,7 +26,4 @@ void DebugPlugin::render_ui(Application& app)
     ImGui::SeparatorText("Scene");
     ImGui::Text("#Objects: %zu", app.scene().get_objects().size());
 }
-
-REGISTER_AXOPLOTL_PLUGIN(DebugPlugin)
-
 }
