@@ -4,9 +4,8 @@
 #include "AxoPlotl/Camera.hpp"
 #include "AxoPlotl/IO/file_access.h"
 #include "AxoPlotl/objects/BaseObject.hpp"
-#include "AxoPlotl/objects/VolumeMeshObject.hpp"
-#include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
-#include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/objects/OpenMeshObject.hpp"
+#include "AxoPlotl/objects/OpenVolumeMeshObject.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include <filesystem>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
@@ -34,31 +33,43 @@ public:
         std::cout << "Loading from " << _path << "..." << std::endl;
         auto opt = IO::read_mesh(_path);
         if (!opt.has_value()) {return;}
-        if (std::holds_alternative<VolumeMesh>(opt.value())) {
-            add_object<VolumeMeshObject>(std::move(std::get<VolumeMesh>(opt.value())),_path);
+        if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
+            add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
+        } else if (std::holds_alternative<OMSurfaceMesh>(opt.value())) {
+            add_object<OpenMeshObject>(std::move(std::get<OMSurfaceMesh>(opt.value())),_path);
         } else if (std::holds_alternative<SurfaceMesh>(opt.value())) {
-            add_object<VolumeMeshObject>(std::move(
-            volume_mesh(std::get<SurfaceMesh>(opt.value()))),_path);
+            add_object<OpenVolumeMeshObject>(std::move(
+                volume_mesh(std::get<SurfaceMesh>(opt.value()))),_path);
         }
     }
 
     template<typename Object, typename ...Args>
-    void add_object(Args... _args)
+    int add_object(Args... _args)
     {
-        objects_.push_back(std::make_unique<Object>(this, _args...));
+        objects_.push_back(std::make_shared<Object>(this, _args...));
         objects_.back()->init();
         objects_.back()->recompute_bounding_box();
         zoom_to_box(objects_.back()->bounding_box());
+        return objects_.back()->id();
     }
 
-    inline const std::vector<std::unique_ptr<ObjectBase>>& get_objects() const {
+    inline const std::vector<std::shared_ptr<ObjectBase>>& get_objects() const {
         return objects_;
+    }
+
+    inline std::shared_ptr<ObjectBase> get_object(int _id) const {
+        for (auto obj : objects_) {
+            if (obj->id() == _id) {
+                return obj;
+            }
+        }
+        return nullptr;
     }
 
     inline void sort_objects(
         std::function<bool(
-            const std::unique_ptr<ObjectBase>&,
-            const std::unique_ptr<ObjectBase>&)> _comp)
+            const std::shared_ptr<ObjectBase>&,
+            const std::shared_ptr<ObjectBase>&)> _comp)
     {
         std::sort(objects_.begin(), objects_.end(), _comp);
     }
@@ -74,7 +85,7 @@ public:
 
 protected:
     Application* app_ = nullptr;
-    std::vector<std::unique_ptr<ObjectBase>> objects_;
+    std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
     MeshEdgeRenderer axis_renderer_;
 

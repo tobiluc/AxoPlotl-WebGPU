@@ -5,7 +5,7 @@
 namespace AxoPlotl
 {
 
-OVM::CellPropertyT<int> calc_cell_boundary_distance(VolumeMesh& _mesh)
+OVM::CellPropertyT<int> calc_cell_boundary_distance(OVMVolumeMesh& _mesh)
 {
     auto c_boundary_distance = _mesh.request_cell_property<int>("AxoPlotl::boundary_distance", INT_MAX);
     _mesh.set_persistent(c_boundary_distance);
@@ -39,7 +39,7 @@ OVM::CellPropertyT<int> calc_cell_boundary_distance(VolumeMesh& _mesh)
     return c_boundary_distance;
 }
 
-OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(VolumeMesh& _mesh)
+OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(OVMVolumeMesh& _mesh)
 {
     auto c_min_dihedral_angle = _mesh.request_cell_property<double>("AxoPlotl::min_dihedral_angle");
     _mesh.set_persistent(c_min_dihedral_angle);

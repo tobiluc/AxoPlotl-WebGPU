@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AxoPlotl/rendering/VolumeMeshRenderer.hpp>
+#include <AxoPlotl/rendering/OpenVolumeMeshRenderer.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <type_traits>
@@ -11,13 +11,13 @@ namespace AxoPlotl
 
 struct PropertyFilterBase
 {
-    virtual void init(VolumeMeshRenderer& _r) = 0;
-    virtual void renderUI(VolumeMeshRenderer& _r) = 0;
+    virtual void init(OpenVolumeMeshRenderer& _r) = 0;
+    virtual void renderUI(OpenVolumeMeshRenderer& _r) = 0;
     virtual std::string name() = 0;
 };
 
 template<typename Entity>
-static Vec2f& get_property_value_filter(VolumeMeshRenderer& _r)
+static Vec2f& get_property_value_filter(OpenVolumeMeshRenderer& _r)
 {
     if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().property_filter().range_;}
     if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().property_filter().range_;}
@@ -26,7 +26,7 @@ static Vec2f& get_property_value_filter(VolumeMeshRenderer& _r)
 }
 
 template<typename Entity>
-static ColorMap& get_property_color_map(VolumeMeshRenderer& _r)
+static ColorMap& get_property_color_map(OpenVolumeMeshRenderer& _r)
 {
     if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().color_map();}
     if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().color_map();}
@@ -42,12 +42,12 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
     ScalarPropertyRangeFilter(ST _min=0, ST _max=1)
         : total_min_(_min), total_max_(_max) {}
 
-    void init(VolumeMeshRenderer& _r) override
+    void init(OpenVolumeMeshRenderer& _r) override
     {
         get_property_color_map<Entity>(_r).set_coolwarm();
     }
 
-    void renderUI(VolumeMeshRenderer& _r) override
+    void renderUI(OpenVolumeMeshRenderer& _r) override
     {
         Vec2f& vis_range = get_property_value_filter<Entity>(_r);
         ColorMap& cm = get_property_color_map<Entity>(_r);
@@ -128,7 +128,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
     {
     }
 
-    void init(VolumeMeshRenderer& _r) override
+    void init(OpenVolumeMeshRenderer& _r) override
     {
         get_property_color_map<Entity>(_r).set_single_color(
             {1.0f, 0.0f, 0.0f}
@@ -136,7 +136,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
         color = {1.0f, 0.0f, 0.0f};
     }
 
-    void renderUI(VolumeMeshRenderer& _r) override
+    void renderUI(OpenVolumeMeshRenderer& _r) override
     {
         Vec2f& visible_range = get_property_value_filter<Entity>(_r);
 

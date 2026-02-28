@@ -3,9 +3,9 @@
 add_library(AxoPlotlCore
     AxoPlotl/Application.cpp
     AxoPlotl/IO/file_access.cpp
-    AxoPlotl/rendering/VolumeMeshRenderer.cpp
+    AxoPlotl/rendering/OpenVolumeMeshRenderer.cpp
     AxoPlotl/Scene.cpp
-    AxoPlotl/objects/VolumeMeshObject.cpp
+    AxoPlotl/objects/OpenVolumeMeshObject.cpp
     AxoPlotl/input/Mouse.cpp
     AxoPlotl/Camera.cpp
     AxoPlotl/objects/BaseObject.cpp
@@ -22,6 +22,8 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/MeshCellRenderer.cpp
     AxoPlotl/rendering/VectorRenderer.cpp
     AxoPlotl/gui/fonts.cpp
+    AxoPlotl/objects/OpenMeshObject.cpp
+    AxoPlotl/utils/rapidobj_to_openmesh.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
@@ -32,7 +34,8 @@ target_link_libraries(AxoPlotlCore PUBLIC
     imgui
     ImGuiFileDialog
     nlohmann_json::nlohmann_json
-
+    OpenMeshCore
+    OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
     ToLoG
     rapidobj::rapidobj

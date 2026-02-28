@@ -2,23 +2,23 @@
 
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/properties/property_filters.hpp>
-#include <AxoPlotl/rendering/VolumeMeshRenderer.hpp>
+#include <AxoPlotl/rendering/OpenVolumeMeshRenderer.hpp>
 #include <AxoPlotl/typedefs/ToLoG.hpp>
 
 namespace AxoPlotl
 {
 
-template<typename T, typename Entity>
+template<typename T, typename EntityTag>
 std::pair<T,T> get_scalar_property_range(
-    const VolumeMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,Entity>& _prop)
+    const OVMVolumeMesh& _mesh,
+    const OpenVolumeMesh::PropertyPtr<T,EntityTag>& _prop)
 {
-    if (mesh_n_entities<EntityType<Entity>::type()>(_mesh)==0) {return {0,0};}
+    if (_mesh.n<EntityTag>()==0) {return {0,0};}
     if constexpr(std::is_same_v<T,bool>) {return {false,true};}
     else {
-        auto h0 = mesh_entity_handle<EntityType<Entity>::type()>(0);
+        auto h0 = OVM::handle_for_tag_t<EntityTag>(0);
         std::pair<T,T> r = {_prop[h0], _prop[h0]};
-        for (auto h : mesh_entities<EntityType<Entity>::type()>(_mesh)) {
+        for (auto h : entities<EntityTag>(&_mesh)) {
             r.first = std::min(r.first, _prop[h]);
             r.second = std::max(r.second, _prop[h]);
         }
@@ -81,72 +81,87 @@ constexpr RendererBase::Property::Mode vertex_buffer_property_mode()
     return RendererBase::Property::Mode::COLOR;
 }
 
-template<typename T>
-void upload_vertex_property_data(
-    const VolumeMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Vertex>& _prop,
-    VolumeMeshRenderer& _vol_rend)
-{
-    if (_mesh.n_vertices()==0) {return;}
-    std::vector<RendererBase::Property::Data> v_data;
-    for (auto vh : _mesh.vertices()) {
-        v_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[vh]))); // cast to avoid the vector<bool> issue
-    }
-    _vol_rend.vertices().update_property_data(v_data);
-    _vol_rend.vertices().property_mode() = vertex_buffer_property_mode<T>();
-};
+// template<typename T>
+// void upload_vertex_property_data(
+//     const OVMVolumeMesh& _mesh,
+//     const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Vertex>& _prop,
+//     OpenVolumeMeshRenderer& _vol_rend)
+// {
+//     if (_mesh.n_vertices()==0) {return;}
+//     std::vector<RendererBase::Property::Data> v_data;
+//     for (auto vh : _mesh.vertices()) {
+//         v_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[vh]))); // cast to avoid the vector<bool> issue
+//     }
+//     _vol_rend.vertices().update_property_data(v_data);
+//     _vol_rend.vertices().property_mode() = vertex_buffer_property_mode<T>();
+// };
 
-template<typename T>
-void upload_edge_property_data(
-    const VolumeMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Edge>& _prop,
-    VolumeMeshRenderer& _vol_rend)
-{
-    if (_mesh.n_edges()==0) {return;}
-    std::vector<RendererBase::Property::Data> e_data;
-    for (auto eh : _mesh.edges()) {
-        e_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[eh])));
-    }
-    _vol_rend.edges().update_property_data(e_data);
-    _vol_rend.edges().property_mode() = vertex_buffer_property_mode<T>();
-};
+// template<typename T>
+// void upload_edge_property_data(
+//     const OVMVolumeMesh& _mesh,
+//     const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Edge>& _prop,
+//     OpenVolumeMeshRenderer& _vol_rend)
+// {
+//     if (_mesh.n_edges()==0) {return;}
+//     std::vector<RendererBase::Property::Data> e_data;
+//     for (auto eh : _mesh.edges()) {
+//         e_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[eh])));
+//     }
+//     _vol_rend.edges().update_property_data(e_data);
+//     _vol_rend.edges().property_mode() = vertex_buffer_property_mode<T>();
+// };
 
-template<typename T>
-void upload_face_property_data(
-    const VolumeMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Face>& _prop,
-    VolumeMeshRenderer& _vol_rend)
-{
-    if (_mesh.n_faces()==0) {return;}
-    std::vector<RendererBase::Property::Data> f_data;
-    for (auto fh : _mesh.faces()) {
-        f_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[fh])));
-    }
-    _vol_rend.faces().update_property_data(f_data);
-    _vol_rend.faces().property_mode() = vertex_buffer_property_mode<T>();
-};
+// template<typename T>
+// void upload_face_property_data(
+//     const OVMVolumeMesh& _mesh,
+//     const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Face>& _prop,
+//     OpenVolumeMeshRenderer& _vol_rend)
+// {
+//     if (_mesh.n<OVM::Entity::Face>()==0) {return;}
+//     std::vector<RendererBase::Property::Data> f_data;
+//     for (auto fh : _mesh.faces()) {
+//         f_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[fh])));
+//     }
+//     _vol_rend.faces().update_property_data(f_data);
+//     _vol_rend.faces().property_mode() = vertex_buffer_property_mode<T>();
+// };
 
-template<typename T>
-void upload_cell_property_data(
-    const VolumeMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Cell>& _prop,
-    VolumeMeshRenderer& _vol_rend)
+// template<typename T>
+// void upload_cell_property_data(
+//     const OVMVolumeMesh& _mesh,
+//     const OpenVolumeMesh::PropertyPtr<T,OpenVolumeMesh::Entity::Cell>& _prop,
+//     OpenVolumeMeshRenderer& _vol_rend)
+// {
+//     if (_mesh.n_cells()==0) {return;}
+//     std::vector<RendererBase::Property::Data> c_data;
+//     for (auto ch : _mesh.cells()) {
+//         c_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[ch])));
+//     }
+//     _vol_rend.cells().update_property_data(c_data);
+//     _vol_rend.cells().property_mode() = vertex_buffer_property_mode<T>();
+// };
+
+template<typename T, typename EntityTag>
+std::vector<RendererBase::Property::Data> vertex_buffer_property_data(
+    const OVMVolumeMesh& _mesh,
+    OpenVolumeMesh::PropertyStorageBase* _prop
+    )
 {
-    if (_mesh.n_cells()==0) {return;}
-    std::vector<RendererBase::Property::Data> c_data;
-    for (auto ch : _mesh.cells()) {
-        c_data.push_back(vertex_buffer_property_data(static_cast<T>(_prop[ch])));
+    auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
+    std::vector<RendererBase::Property::Data> data;
+    data.reserve(_mesh.n<EntityTag>());
+    for (auto h : entities<EntityTag>(&_mesh)) {
+        data.push_back(vertex_buffer_property_data(static_cast<T>(prop[h])));
     }
-    _vol_rend.cells().update_property_data(c_data);
-    _vol_rend.cells().property_mode() = vertex_buffer_property_mode<T>();
-};
+    return data;
+}
 
 template<typename T, typename Entity>
 void upload_property_data(
-    const VolumeMesh& _mesh,
+    const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop,
     std::vector<std::shared_ptr<PropertyFilterBase>>& _prop_filters,
-    VolumeMeshRenderer& _vol_rend
+    OpenVolumeMeshRenderer& _vol_rend
     )
 {
     _prop_filters.clear();
@@ -154,9 +169,9 @@ void upload_property_data(
 
     // Setup Property Filters
     if constexpr(std::is_same_v<T,bool>
-            || std::is_same_v<T,int>
-            || std::is_same_v<T,float>
-            || std::is_same_v<T,double>)
+                  || std::is_same_v<T,int>
+                  || std::is_same_v<T,float>
+                  || std::is_same_v<T,double>)
     {
         // Compute the Scalar Range and assign it to the visible range
         auto r = get_scalar_property_range<T,Entity>(_mesh, prop);
@@ -169,82 +184,45 @@ void upload_property_data(
         _prop_filters.push_back(std::make_shared<ScalarPropertyExactFilter<T,Entity>>(r.first, r.second));
     }
 
-    // Upload Properties
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
-        upload_vertex_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.vertices().enabled() = true;
-        _vol_rend.edges().enabled() =
-        _vol_rend.faces().enabled() =
-        _vol_rend.cells().enabled() = false;
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
-        upload_edge_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.edges().enabled() = true;
-        _vol_rend.vertices().enabled() =
-        _vol_rend.faces().enabled() =
-        _vol_rend.cells().enabled() = false;
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
-        upload_face_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.faces().enabled() = true;
-        _vol_rend.edges().enabled() =
-        _vol_rend.vertices().enabled() =
-        _vol_rend.cells().enabled() = false;
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
-        upload_cell_property_data<T>(_mesh, prop, _vol_rend);
-        _vol_rend.cells().enabled() = true;
-        _vol_rend.edges().enabled() =
-        _vol_rend.faces().enabled() =
-        _vol_rend.vertices().enabled() = false;
-    }
-}
+    const auto& data = vertex_buffer_property_data<T,Entity>(
+        _mesh, _prop);
+    _vol_rend.entities<Entity>().update_property_data(data);
+    _vol_rend.entities<Entity>().property_mode() = vertex_buffer_property_mode<T>();
+    _vol_rend.vertices().enabled() = false;
+    _vol_rend.edges().enabled() = false;
+    _vol_rend.faces().enabled() = false;
+    _vol_rend.cells().enabled() = false;
+    _vol_rend.entities<Entity>().enabled() = true;
 
-template<typename T, typename Entity>
-std::vector<RendererBase::Property::Data> vertex_buffer_property_data(
-    const VolumeMesh& _mesh,
-    OpenVolumeMesh::PropertyStorageBase* _prop
-    )
-{
-    auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
-    std::vector<RendererBase::Property::Data> data;
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
-        data.reserve(_mesh.n_vertices());
-        for (auto vh : _mesh.vertices()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[vh])));
-        }
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
-        data.reserve(_mesh.n_edges());
-        for (auto eh : _mesh.edges()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[eh])));
-        }
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
-        data.reserve(_mesh.n_faces());
-        for (auto fh : _mesh.faces()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[fh])));
-        }
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
-        data.reserve(_mesh.n_cells());
-        for (auto ch : _mesh.cells()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[ch])));
-        }
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::HalfEdge>) {
-        data.reserve(_mesh.n_halfedges());
-        for (auto heh : _mesh.halfedges()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[heh])));
-        }
-    }
-    if constexpr(std::is_same_v<Entity,OVM::Entity::HalfFace>) {
-        data.reserve(_mesh.n_halffaces());
-        for (auto hfh : _mesh.halffaces()) {
-            data.push_back(vertex_buffer_property_data(static_cast<T>(prop[hfh])));
-        }
-    }
-    return data;
+    // // Upload Properties
+    // if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
+    //     upload_vertex_property_data<T>(_mesh, prop, _vol_rend);
+    //     _vol_rend.vertices().enabled() = true;
+    //     _vol_rend.edges().enabled() =
+    //         _vol_rend.faces().enabled() =
+    //         _vol_rend.cells().enabled() = false;
+    // }
+    // if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
+    //     upload_edge_property_data<T>(_mesh, prop, _vol_rend);
+    //     _vol_rend.edges().enabled() = true;
+    //     _vol_rend.vertices().enabled() =
+    //         _vol_rend.faces().enabled() =
+    //         _vol_rend.cells().enabled() = false;
+    // }
+    // if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
+    //     upload_face_property_data<T>(_mesh, prop, _vol_rend);
+    //     _vol_rend.faces().enabled() = true;
+    //     _vol_rend.edges().enabled() =
+    //         _vol_rend.vertices().enabled() =
+    //         _vol_rend.cells().enabled() = false;
+    // }
+    // if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
+    //     upload_cell_property_data<T>(_mesh, prop, _vol_rend);
+    //     _vol_rend.cells().enabled() = true;
+    //     _vol_rend.edges().enabled() =
+    //         _vol_rend.faces().enabled() =
+    //         _vol_rend.vertices().enabled() = false;
+    // }
 }
 
 }

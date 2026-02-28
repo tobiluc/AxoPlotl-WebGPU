@@ -11,8 +11,8 @@ struct Uniforms {
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
 @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
-@group(0) @binding(2) var<storage, read> props : array<Property>;
-@group(0) @binding(3) var<storage, read> cellCenters : array<vec3<f32>>;
+@group(0) @binding(4) var<storage, read> props : array<Property>;
+@group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,

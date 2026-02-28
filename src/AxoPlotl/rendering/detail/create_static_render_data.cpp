@@ -1,37 +1,66 @@
 #include "create_static_render_data.hpp"
 
 
-AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const SurfaceMesh& _mesh)
-{
-    AxoPlotl::VolumeMeshRenderer::StaticData data;
+// AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const SurfaceMesh& _mesh)
+// {
+//     AxoPlotl::VolumeMeshRenderer::StaticData data;
 
-    for (uint32_t i = 0; i < _mesh.n_vertices(); ++i) {
+//     for (uint32_t i = 0; i < _mesh.n_vertices(); ++i) {
+//         data.positions_.emplace_back(
+//             _mesh.point(i)[0],
+//             _mesh.point(i)[1],
+//             _mesh.point(i)[2],
+//             1
+//             );
+//         data.vertices_.push_back(i);
+//     }
+//     for (uint32_t i = 0; i < _mesh.n_edges(); ++i) {
+//         data.edges_.push_back({
+//             static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
+//             static_cast<uint32_t>(_mesh.edge(i).vertex(1))
+//         });
+//     }
+//     for (uint32_t i = 0; i < _mesh.n_faces(); ++i) {
+//         data.faces_.emplace_back();
+//         for (const auto& vh : _mesh.face(i).vertices()) {
+//             data.faces_.back().push_back(vh);
+//         }
+//     }
+//     return data;
+// }
+
+AxoPlotl::OpenVolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const OMSurfaceMesh& _mesh)
+{
+    AxoPlotl::OpenVolumeMeshRenderer::StaticData data;
+
+    for (const auto& v : _mesh.vertices()) {
+        const auto& p = _mesh.point(v);
         data.positions_.emplace_back(
-            _mesh.point(i)[0],
-            _mesh.point(i)[1],
-            _mesh.point(i)[2],
+            p[0],
+            p[1],
+            p[2],
             1
             );
-        data.vertices_.push_back(i);
+        data.vertices_.push_back(v.idx());
     }
-    for (uint32_t i = 0; i < _mesh.n_edges(); ++i) {
+    for (const auto& e : _mesh.edges()) {
         data.edges_.push_back({
-            static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
-            static_cast<uint32_t>(_mesh.edge(i).vertex(1))
+            static_cast<uint32_t>(e.v0().idx()),
+            static_cast<uint32_t>(e.v1().idx())
         });
     }
-    for (uint32_t i = 0; i < _mesh.n_faces(); ++i) {
+    for (const auto& f : _mesh.faces()) {
         data.faces_.emplace_back();
-        for (const auto& vh : _mesh.face(i).vertices()) {
-            data.faces_.back().push_back(vh);
+        for (const auto& v : f.vertices_ccw()) {
+            data.faces_.back().push_back(v.idx());
         }
     }
     return data;
 }
 
-AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const VolumeMesh& _mesh)
+AxoPlotl::OpenVolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const OVMVolumeMesh& _mesh)
 {
-    AxoPlotl::VolumeMeshRenderer::StaticData data;
+    AxoPlotl::OpenVolumeMeshRenderer::StaticData data;
 
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);

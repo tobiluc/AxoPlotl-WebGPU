@@ -21,14 +21,17 @@ public:
     void render_ui(Application& app);
 
 private:
-    std::string x_input_;
-    std::string y_input_;
-    std::string z_input_;
-    // char u_input_buffer_[1024];
-    // char v_input_buffer_[1024];
-    Vec2f u_range_ = {0,1};
-    Vec2f v_range_ = {0,1};
-    int resolution_ = 10;
+    struct Input
+    {
+        std::string x_;
+        std::string y_;
+        std::string z_;
+        Vec2f u_ = {-1,1};
+        Vec2f v_ = {-1,1};
+        int resolution_ = 16;
+    } input_;
+    std::unordered_map<int,Input> objects_;
+    int selected_id_ = -1;
 };
 
 }

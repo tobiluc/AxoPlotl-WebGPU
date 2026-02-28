@@ -4,6 +4,7 @@ set(SUBMODULES_DIR "${PROJECT_SOURCE_DIR}/submodules")
 set(EXTERNAL_DIR "${PROJECT_SOURCE_DIR}/external")
 
 include(deps/OpenVolumeMesh)
+include(deps/OpenMesh)
 include(deps/glm)
 include(deps/nlohmann_json)
 include(deps/ToLoG)

@@ -44,7 +44,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     // before the command buffer is submitted
     app_->add_deferred_call([this]() {
         objects_.erase(
-            std::remove_if(objects_.begin(), objects_.end(), [&](const std::unique_ptr<ObjectBase>& _obj) {
+            std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
                 return _obj->deleted();
             }), objects_.end());
         objects_.shrink_to_fit();

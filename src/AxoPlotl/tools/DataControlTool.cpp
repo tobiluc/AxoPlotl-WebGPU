@@ -10,10 +10,10 @@ namespace AxoPlotl
 void DataControlTool::render_ui(Application& _app)
 {
     if (!ImGui::CollapsingHeader("Data Control")) {return;}
-    using ConstObj = const std::unique_ptr<ObjectBase>&;
+    using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // For Convenience, we can apply things to all objects at once
-    if (ImGui::BeginMenu("Apply to all")) {
+    if (_app.scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
         ImGui::SeparatorText("Details");
         if (ImGui::Button("Collapse")) {
             for (const auto& obj : _app.scene().get_objects()) {

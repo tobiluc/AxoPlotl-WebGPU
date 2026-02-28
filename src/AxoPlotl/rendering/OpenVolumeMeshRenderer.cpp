@@ -1,4 +1,4 @@
-#include "VolumeMeshRenderer.hpp"
+#include "OpenVolumeMeshRenderer.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <cstddef>
 #include <AxoPlotl/Application.hpp>
@@ -6,7 +6,7 @@
 namespace AxoPlotl
 {
 
-void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
+void OpenVolumeMeshRenderer::init(Application *_app, const StaticData& _data)
 {
     app_ = _app;
 
@@ -33,7 +33,7 @@ void VolumeMeshRenderer::init(Application *_app, const StaticData& _data)
     cell_renderer_.init(app_, position_buffer_, _data.cells_, cell_centers);
 }
 
-void VolumeMeshRenderer::render(const Vec4f &_viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
+void OpenVolumeMeshRenderer::render(const Vec4f &_viewport, wgpu::RenderPassEncoder _render_pass, const Mat4x4f& _mvp)
 {
     if (!enabled_) {return;}
 
@@ -43,7 +43,7 @@ void VolumeMeshRenderer::render(const Vec4f &_viewport, wgpu::RenderPassEncoder 
     vertex_renderer_.render(_viewport, _render_pass, _mvp);
 }
 
-void VolumeMeshRenderer::release()
+void OpenVolumeMeshRenderer::release()
 {
     position_buffer_.destroy();
     position_buffer_.release();

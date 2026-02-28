@@ -1,15 +1,16 @@
-#include "VolumeMeshObject.hpp"
+#include "OpenVolumeMeshObject.hpp"
 #include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "imgui.h"
 #include <AxoPlotl/utils/commons.hpp>
 #include <AxoPlotl/Application.hpp>
+#include <random>
 
 namespace AxoPlotl
 {
 
-void VolumeMeshObject::render_ui()
+void OpenVolumeMeshObject::render_ui()
 {
     if (ImGui::BeginMenu("Render Settings"))
     {
@@ -210,12 +211,42 @@ void VolumeMeshObject::render_ui()
     }
 }
 
-void VolumeMeshObject::init()
+void OpenVolumeMeshObject::init()
 {
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
     const auto& data = create_static_render_data(mesh_);
     renderer_.init(scene_->app(), data);
     upload_default_property_data();
     vertex_vector_renderer_.init(scene_->app(), data.positions_);
+
+    // std::vector<Vec4f> cell_centers;
+    // std::vector<RendererBase::Property::Data> cell_colors;
+    // cell_centers.reserve(data.cells_.size());
+    // for (uint32_t ch = 0; ch < data.cells_.size(); ++ch) {
+    //     cell_centers.push_back({0,0,0,0});
+    //     cell_colors.push_back({dist(mt),dist(mt),dist(mt),1});
+    //     uint32_t n(0);
+    //     for (const auto& f : data.cells_[ch]) {
+    //         for (const auto& vh : f) {
+    //             cell_centers.back() += data.positions_[vh];
+    //             ++n;
+    //         }
+    //     }
+    //     cell_centers.back() /= n;
+    // }
+
+    // cell_translucent_renderer_.init(
+    //     scene_->app(),
+    //     renderer_.position_buffer(),
+    //     data.cells_,
+    //     cell_centers
+    // );
+    // cell_translucent_renderer_.update_property_data(cell_colors);
+    // cell_translucent_renderer_.property_mode() = RendererBase::Property::Mode::COLOR;
+
 
     // std::vector<RendererBase::Position> cell_centers;
     // cell_centers.reserve(mesh_.n_cells());
@@ -226,7 +257,7 @@ void VolumeMeshObject::init()
     // cell_vector_renderer_.init(scene_->app(), cell_centers);
 }
 
-void VolumeMeshObject::render(
+void OpenVolumeMeshObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _view_projection)
 {
@@ -245,9 +276,14 @@ void VolumeMeshObject::render(
             _render_pass,
             mvp);
     }
+
+    // cell_translucent_renderer_.render(
+    //     scene_->app()->scene_viewport(),
+    //     _render_pass,
+    //     mvp);
 }
 
-void VolumeMeshObject::upload_default_property_data()
+void OpenVolumeMeshObject::upload_default_property_data()
 {
     using D = RendererBase::Property::Data;
     std::vector<D> props;
@@ -289,7 +325,7 @@ void VolumeMeshObject::upload_default_property_data()
     renderer_.cells().update_property_data(props);
 }
 
-void VolumeMeshObject::recompute_bounding_box()
+void OpenVolumeMeshObject::recompute_bounding_box()
 {
     bbox_.make_empty();
     for (const auto& p : mesh_.vertex_positions()) {

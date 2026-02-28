@@ -238,7 +238,7 @@ void MeshCellRenderer::create_bind_group()
     groupEntries[5].binding = 5;
     groupEntries[5].buffer = center_buffer_;
     groupEntries[5].offset = 0;
-    groupEntries[5].size = sizeof(Property::Data) * std::max(n_cells_,1lu);
+    groupEntries[5].size = sizeof(Position) * std::max(n_cells_,1lu);
     std::cout << "5: Mesh Cell Incenters #" << groupEntries[5].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};

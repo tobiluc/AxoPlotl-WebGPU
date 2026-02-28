@@ -8,13 +8,14 @@
 #include <cstddef>
 #include <vector>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
+#include <AxoPlotl/typedefs/ovm.hpp>
 
 namespace AxoPlotl
 {
 
 class Application;
 
-class VolumeMeshRenderer : public RendererBase
+class OpenVolumeMeshRenderer : public RendererBase
 {
 public:
     inline MeshVertexRenderer& vertices() {
@@ -33,6 +34,13 @@ public:
         return cell_renderer_;
     }
 
+    template<typename EntityTag>
+    inline auto& entities();
+    template<> inline auto& entities<OVM::Entity::Cell>() {return cell_renderer_;}
+    template<> inline auto& entities<OVM::Entity::Face>() {return face_renderer_;}
+    template<> inline auto& entities<OVM::Entity::Edge>() {return edge_renderer_;}
+    template<> inline auto& entities<OVM::Entity::Vertex>() {return vertex_renderer_;}
+
     struct StaticData
     {
         std::vector<RendererBase::Position> positions_;
@@ -42,9 +50,9 @@ public:
         std::vector<std::vector<std::vector<uint32_t>>> cells_;
     };
 
-    VolumeMeshRenderer() {}
+    OpenVolumeMeshRenderer() {}
 
-    ~VolumeMeshRenderer() {
+    ~OpenVolumeMeshRenderer() {
         release();
     }
 
@@ -56,6 +64,10 @@ public:
                 const Mat4x4f& _mvp) override;
 
     void release();
+
+    inline wgpu::Buffer position_buffer() const {
+        return position_buffer_;
+    }
 private:
     size_t n_positions_;
     wgpu::Buffer position_buffer_;

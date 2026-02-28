@@ -10,11 +10,11 @@
 namespace AxoPlotl
 {
 
-class VolumeMeshObject : public ObjectBase
+class OpenVolumeMeshObject : public ObjectBase
 {
 private:
-    VolumeMesh mesh_;
-    VolumeMeshRenderer renderer_;
+    OVMVolumeMesh mesh_;
+    OpenVolumeMeshRenderer renderer_;
     VectorRenderer vertex_vector_renderer_;
     //VectorRenderer cell_vector_renderer_;
 
@@ -26,7 +26,7 @@ private:
     void upload_default_property_data();
 
 public:
-    VolumeMeshObject(Scene* _scene, VolumeMesh& _mesh,
+    OpenVolumeMeshObject(Scene* _scene, OVMVolumeMesh& _mesh,
         const std::optional<std::filesystem::path>& _filepath = std::nullopt) :
         ObjectBase(_scene, ""),
         mesh_(std::move(_mesh)),
@@ -51,7 +51,7 @@ public:
         return renderer_.enabled();
     }
 
-    inline const VolumeMesh& mesh() const {
+    inline const OVMVolumeMesh& mesh() const {
         return mesh_;
     }
 };
