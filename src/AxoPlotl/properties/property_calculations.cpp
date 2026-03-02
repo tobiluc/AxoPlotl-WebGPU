@@ -12,10 +12,10 @@ OVM::CellPropertyT<int> calc_cell_boundary_distance(OVMVolumeMesh& _mesh)
     std::queue<OVM::CH> queue;
 
     // Init
-    for (auto c_it = _mesh.c_iter(); c_it.is_valid(); ++c_it) {
-        if (_mesh.is_boundary(*c_it)) {
-            c_boundary_distance[*c_it] = 0;
-            queue.push(*c_it);
+    for (auto ch : _mesh.cells()) {
+        if (ch.is_boundary()) {
+            c_boundary_distance[ch] = 0;
+            queue.push(ch);
         }
     }
 
@@ -44,19 +44,20 @@ OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(OVMVolumeMesh& _mesh)
     auto c_min_dihedral_angle = _mesh.request_cell_property<double>("AxoPlotl::min_dihedral_angle");
     _mesh.set_persistent(c_min_dihedral_angle);
 
-    for (auto c_it = _mesh.c_iter(); c_it.is_valid(); ++c_it) {
+    for (auto ch : _mesh.cells()) {
 
         // Compute the dihedral angles
-        c_min_dihedral_angle[*c_it] = std::numeric_limits<double>::infinity();
-        for (auto ce_it = _mesh.ce_iter(*c_it); ce_it.is_valid(); ++ce_it) {
+
+        c_min_dihedral_angle[ch] = std::numeric_limits<double>::infinity();
+        for (auto eh : ch.edges()) {
             std::vector<OpenVolumeMesh::HFH> hfhs;
-            for (auto hfh : _mesh.cell(*c_it).halffaces()) {
-                if (_mesh.is_incident(hfh.face_handle(), *ce_it)) {
+            for (auto hfh :ch.halffaces()) {
+                if (_mesh.is_incident(hfh.face_handle(), eh)) {
                     hfhs.push_back(hfh);
                 }
             }
             assert(hfhs.size()==2);
-            OpenVolumeMesh::HEH heh = ce_it->halfedge_handle(0);
+            OpenVolumeMesh::HEH heh = eh.h0();
             for (auto heh0 : _mesh.halfface_halfedges(hfhs[1])) {
                 if (heh0 == heh) {
                     heh = heh.opposite_handle();
@@ -87,7 +88,7 @@ OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(OVMVolumeMesh& _mesh)
                 _mesh.vertex(vh_p),
                 _mesh.vertex(vh_q)
                 );
-            c_min_dihedral_angle[*c_it] = std::min(c_min_dihedral_angle[*c_it], alpha);
+            c_min_dihedral_angle[ch] = std::min(c_min_dihedral_angle[ch], alpha);
         }
     }
     return c_min_dihedral_angle;

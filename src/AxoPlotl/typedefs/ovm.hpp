@@ -5,41 +5,41 @@
 // These things should be in a future version of OVM
 namespace OpenVolumeMesh
 {
-template<typename EntityTag>
-struct iterator_for_tag;
-template<typename EntityTag>
-using iterator_for_tag_t = typename iterator_for_tag<EntityTag>::type;
-template<> struct iterator_for_tag<Entity::Cell> {using type = CellIter;};
-template<> struct iterator_for_tag<Entity::Face> {using type = FaceIter;};
-template<> struct iterator_for_tag<Entity::HalfFace> {using type = HalfFaceIter;};
-template<> struct iterator_for_tag<Entity::Edge> {using type = EdgeIter;};
-template<> struct iterator_for_tag<Entity::HalfEdge> {using type = HalfEdgeIter;};
-template<> struct iterator_for_tag<Entity::Vertex> {using type = VertexIter;};
+// template<typename EntityTag>
+// struct iterator_for_tag;
+// template<typename EntityTag>
+// using iterator_for_tag_t = typename iterator_for_tag<EntityTag>::type;
+// template<> struct iterator_for_tag<Entity::Cell> {using type = CellIter;};
+// template<> struct iterator_for_tag<Entity::Face> {using type = FaceIter;};
+// template<> struct iterator_for_tag<Entity::HalfFace> {using type = HalfFaceIter;};
+// template<> struct iterator_for_tag<Entity::Edge> {using type = EdgeIter;};
+// template<> struct iterator_for_tag<Entity::HalfEdge> {using type = HalfEdgeIter;};
+// template<> struct iterator_for_tag<Entity::Vertex> {using type = VertexIter;};
 
-template<typename EntityTag>
-using handle_for_tag_t = typename handle_for_tag<EntityTag>::type;
+// template<typename EntityTag>
+// using handle_for_tag_t = typename handle_for_tag<EntityTag>::type;
 
-template<typename EntityTag, typename Mesh>
-iterator_for_tag_t<EntityTag> entities_begin(const Mesh* _mesh) {
-    return iterator_for_tag_t<EntityTag>(
-        _mesh,
-        handle_for_tag_t<EntityTag>(0)
-        );
-}
+// template<typename EntityTag, typename Mesh>
+// iterator_for_tag_t<EntityTag> entities_begin(const Mesh* _mesh) {
+//     return iterator_for_tag_t<EntityTag>(
+//         _mesh,
+//         handle_for_tag_t<EntityTag>(0)
+//         );
+// }
 
-template<typename EntityTag, typename Mesh>
-iterator_for_tag_t<EntityTag> entities_end(const Mesh* _mesh) {
-    return iterator_for_tag_t<EntityTag>(
-        _mesh,
-        handle_for_tag_t<EntityTag>(_mesh->template n<EntityTag>())
-        );
-}
+// template<typename EntityTag, typename Mesh>
+// iterator_for_tag_t<EntityTag> entities_end(const Mesh* _mesh) {
+//     return iterator_for_tag_t<EntityTag>(
+//         _mesh,
+//         handle_for_tag_t<EntityTag>(_mesh->template n<EntityTag>())
+//         );
+// }
 
-template<typename EntityTag, typename Mesh>
-std::pair<iterator_for_tag_t<EntityTag>,iterator_for_tag_t<EntityTag>>
-entities(const Mesh* _mesh) {
-    return {entities_begin<EntityTag>(_mesh), entities_end<EntityTag>(_mesh)};
-}
+// template<typename EntityTag, typename Mesh>
+// std::pair<iterator_for_tag_t<EntityTag>,iterator_for_tag_t<EntityTag>>
+// entities(const Mesh* _mesh) {
+//     return {entities_begin<EntityTag>(_mesh), entities_end<EntityTag>(_mesh)};
+// }
 
 }
 

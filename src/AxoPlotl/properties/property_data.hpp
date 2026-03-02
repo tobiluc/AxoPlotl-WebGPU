@@ -18,7 +18,7 @@ std::pair<T,T> get_scalar_property_range(
     else {
         auto h0 = OVM::handle_for_tag_t<EntityTag>(0);
         std::pair<T,T> r = {_prop[h0], _prop[h0]};
-        for (auto h : entities<EntityTag>(&_mesh)) {
+        for (auto h : _mesh.entities<EntityTag>()) {
             r.first = std::min(r.first, _prop[h]);
             r.second = std::max(r.second, _prop[h]);
         }
@@ -150,7 +150,7 @@ std::vector<RendererBase::Property::Data> vertex_buffer_property_data(
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
     std::vector<RendererBase::Property::Data> data;
     data.reserve(_mesh.n<EntityTag>());
-    for (auto h : entities<EntityTag>(&_mesh)) {
+    for (auto h : _mesh.entities<EntityTag>()) {
         data.push_back(vertex_buffer_property_data(static_cast<T>(prop[h])));
     }
     return data;
