@@ -37,42 +37,48 @@ fn vs_main(
     // given in screen space
     //-------------------------------
 
-    // The two mesh vertex positions in clip space
+    // Define the quad corners: (t, side)
+    // t: 0.0 = start of edge, 1.0 = end of edge
+    // side: -1.0 = left, 1.0 = right
+
+    // For Triangle Strip (0, 1, 2, 3):
+    // 0: Start-Left, 1: Start-Right, 2: End-Left, 3: End-Right
+    var configs = array<vec2<f32>, 4>(
+        vec2<f32>(0.0, -1.0), // 0
+        vec2<f32>(0.0,  1.0), // 1
+        vec2<f32>(1.0, -1.0), // 2
+        vec2<f32>(1.0,  1.0)  // 3
+    );
+
+    let config = configs[vid];
+    let t = config.x;
+    let side = config.y;
+
     let clip0 = ubo.mvp * vec4<f32>(positions[vh0], 1.0);
     let clip1 = ubo.mvp * vec4<f32>(positions[vh1], 1.0);
 
-    // Convert to NDC and get perpendicular offset
-    let ndc0 = clip0.xy / clip0.w;
-    let ndc1 = clip1.xy / clip1.w;
-    let ndcEdgeDir = normalize(ndc1 - ndc0);
-    let ndcPerpOffset = vec2<f32>(-ndcEdgeDir.y, ndcEdgeDir.x);
+    // Project to screen to get the 2D direction
+    let screen0 = (clip0.xy / clip0.w) * ubo.viewportSize;
+    let screen1 = (clip1.xy / clip1.w) * ubo.viewportSize;
+    let edgeDir = normalize(screen1 - screen0);
+    let perpDir = vec2<f32>(-edgeDir.y, edgeDir.x);
 
-    // Get line wifth offset
-    let ndcLwOffset = vec2<f32>(
-        ubo.lineWidth / ubo.viewportSize.x,
-        ubo.lineWidth / ubo.viewportSize.y
-    );
+    // Calculate final position
+    var outPos = mix(clip0, clip1, t);
 
-    // Each edge is rendered as a Quad
-    // p0 - offset, p0 + offset, p1 + offset, p1 - offset
+    // Apply thickness offset
+    let offset = (perpDir * ubo.lineWidth * 0.5 * side) / ubo.viewportSize;
+    outPos.x += offset.x * outPos.w * 2.0;
+    outPos.y += offset.y * outPos.w * 2.0;
 
-    // Get interpolation t between edge vertices (for convenience)
-    var t:f32 = 1.0;
-    if (vid == 0u || vid == 1u) {t = 0.0;}
+    out.position = outPos;
 
-    // Apply offset in NDC
-    var ndcPos = mix(ndc0, ndc1, t);
-    if (vid == 0u || vid == 3u) {ndcPos -= ndcLwOffset * ndcPerpOffset;}
-    else {ndcPos += ndcLwOffset * ndcPerpOffset;}
-
-    // Convert back to clip space
-    let clip = mix(clip0, clip1, t);
-    out.position = vec4<f32>(ndcPos * clip.w, clip.z, clip.w);
-
+    // Property and Clipping
     let value = props[eh].value;
     let pos = mix(positions[vh0], positions[vh1], t);
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+        || (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter)))
+    {
         out.position = clippedPosition();
     }
     out.value = value;

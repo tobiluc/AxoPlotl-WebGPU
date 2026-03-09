@@ -16,7 +16,8 @@ public:
         return "Data Control";
     }
 private:
-    std::unordered_map<int,bool> obj_expanded_;
+    int expanded_object_id_ = -1;
+    int settings_object_id_ = -1;
 };
 
 }

@@ -8,7 +8,12 @@
 namespace AxoPlotl
 {
 
-void OpenMeshObject::render_ui()
+void OpenMeshObject::render_ui_settings()
+{
+
+}
+
+void OpenMeshObject::render_ui_body()
 {
     if (ImGui::BeginMenu("Render Settings"))
     {

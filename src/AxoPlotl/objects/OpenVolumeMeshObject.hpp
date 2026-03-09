@@ -19,11 +19,39 @@ private:
     //VectorRenderer cell_vector_renderer_;
 
     std::optional<std::filesystem::path> filepath_;
-    std::optional<OVM::PropertyStorageBase*> prop_;
-    std::vector<std::shared_ptr<PropertyFilterBase>> prop_filters_;
-    int filter_index_ = 0;
 
-    void upload_default_property_data();
+    struct Property {
+        std::optional<OVM::PropertyStorageBase*> prop_;
+        std::vector<std::shared_ptr<PropertyFilterBase>> filters_;
+        int filter_index_ = 0;
+        bool expanded_menu_ = false;
+    };
+
+    Property v_prop_;
+    Property e_prop_;
+    Property f_prop_;
+    Property c_prop_;
+
+    template<typename EntityTag> Property& prop();
+    template<> Property& prop<OVM::Entity::Vertex>() {return v_prop_;}
+    template<> Property& prop<OVM::Entity::Edge>() {return e_prop_;}
+    template<> Property& prop<OVM::Entity::Face>() {return f_prop_;}
+    template<> Property& prop<OVM::Entity::Cell>() {return c_prop_;}
+
+    void upload_default_vertex_property_data();
+    void upload_default_edge_property_data();
+    void upload_default_face_property_data();
+    void upload_default_cell_property_data();
+
+    template<typename EntityTag> void upload_default_property_data();
+    template<> void upload_default_property_data<OVM::Entity::Vertex>() {
+        upload_default_vertex_property_data();}
+    template<> void upload_default_property_data<OVM::Entity::Edge>() {
+        upload_default_edge_property_data();}
+    template<> void upload_default_property_data<OVM::Entity::Face>() {
+        upload_default_face_property_data();}
+    template<> void upload_default_property_data<OVM::Entity::Cell>() {
+        upload_default_cell_property_data();}
 
 public:
     OpenVolumeMeshObject(Scene* _scene, OVMVolumeMesh& _mesh,
@@ -41,7 +69,9 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _view_projection) override;
 
-    void render_ui() override;
+    void render_ui_body() override;
+
+    void render_ui_settings() override;
 
     void init() override;
 

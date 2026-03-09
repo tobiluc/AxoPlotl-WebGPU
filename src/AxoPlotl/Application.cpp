@@ -423,6 +423,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
 
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
+            ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
             ImGui::EndMenu(); // !Settings
         }
 

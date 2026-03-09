@@ -34,7 +34,9 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _view_projection) override;
 
-    void render_ui() override;
+    void render_ui_body() override;
+
+    void render_ui_settings() override;
 
     void init() override;
 

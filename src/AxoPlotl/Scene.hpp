@@ -83,6 +83,10 @@ public:
         return app_;
     }
 
+    inline bool& axis_cross_enabled() {
+        return axis_renderer_.enabled();
+    }
+
 protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;

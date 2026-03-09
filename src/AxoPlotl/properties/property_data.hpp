@@ -188,41 +188,11 @@ void upload_property_data(
         _mesh, _prop);
     _vol_rend.entities<Entity>().update_property_data(data);
     _vol_rend.entities<Entity>().property_mode() = vertex_buffer_property_mode<T>();
-    _vol_rend.vertices().enabled() = false;
-    _vol_rend.edges().enabled() = false;
-    _vol_rend.faces().enabled() = false;
-    _vol_rend.cells().enabled() = false;
+    // _vol_rend.vertices().enabled() = false;
+    // _vol_rend.edges().enabled() = false;
+    // _vol_rend.faces().enabled() = false;
+    // _vol_rend.cells().enabled() = false;
     _vol_rend.entities<Entity>().enabled() = true;
-
-    // // Upload Properties
-    // if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {
-    //     upload_vertex_property_data<T>(_mesh, prop, _vol_rend);
-    //     _vol_rend.vertices().enabled() = true;
-    //     _vol_rend.edges().enabled() =
-    //         _vol_rend.faces().enabled() =
-    //         _vol_rend.cells().enabled() = false;
-    // }
-    // if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {
-    //     upload_edge_property_data<T>(_mesh, prop, _vol_rend);
-    //     _vol_rend.edges().enabled() = true;
-    //     _vol_rend.vertices().enabled() =
-    //         _vol_rend.faces().enabled() =
-    //         _vol_rend.cells().enabled() = false;
-    // }
-    // if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {
-    //     upload_face_property_data<T>(_mesh, prop, _vol_rend);
-    //     _vol_rend.faces().enabled() = true;
-    //     _vol_rend.edges().enabled() =
-    //         _vol_rend.vertices().enabled() =
-    //         _vol_rend.cells().enabled() = false;
-    // }
-    // if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {
-    //     upload_cell_property_data<T>(_mesh, prop, _vol_rend);
-    //     _vol_rend.cells().enabled() = true;
-    //     _vol_rend.edges().enabled() =
-    //         _vol_rend.faces().enabled() =
-    //         _vol_rend.vertices().enabled() = false;
-    // }
 }
 
 }

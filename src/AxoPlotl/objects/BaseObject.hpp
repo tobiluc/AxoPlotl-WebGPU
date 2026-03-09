@@ -30,7 +30,9 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _view_projection) = 0;
 
-    virtual void render_ui() = 0;
+    virtual void render_ui_body() = 0;
+
+    virtual void render_ui_settings() = 0;
 
     virtual bool& visible() = 0;
 

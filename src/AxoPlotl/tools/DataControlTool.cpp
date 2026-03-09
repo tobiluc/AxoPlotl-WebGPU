@@ -12,20 +12,18 @@ void DataControlTool::render_ui(Application& _app)
     if (!ImGui::CollapsingHeader("Data Control")) {return;}
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
+    // Set Object ids to invalid if objects were deleted
+    if (expanded_object_id_ >= 0 &&
+        !_app.scene().get_object(expanded_object_id_)) {
+        expanded_object_id_ = -1;
+    }
+    if (settings_object_id_ >= 0 &&
+        !_app.scene().get_object(settings_object_id_)) {
+        settings_object_id_ = -1;
+    }
+
     // For Convenience, we can apply things to all objects at once
     if (_app.scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
-        ImGui::SeparatorText("Details");
-        if (ImGui::Button("Collapse")) {
-            for (const auto& obj : _app.scene().get_objects()) {
-                obj_expanded_[obj->id()] = false;
-            }
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Expand")) {
-            for (const auto& obj : _app.scene().get_objects()) {
-                obj_expanded_[obj->id()] = true;
-            }
-        }
         if (ImGui::MenuItem("Sort alphabetically")) {
             _app.scene().sort_objects([](ConstObj _obj1, ConstObj _obj2) {
                 return _obj1->name() < _obj2->name();
@@ -48,20 +46,15 @@ void DataControlTool::render_ui(Application& _app)
             for (const auto& obj : _app.scene().get_objects()) {
                 obj->deleted() = true;
             }
-            _app.add_deferred_call([this] {
-                obj_expanded_.clear();
-            });
+            expanded_object_id_ = -1;
         }
         ImGui::EndMenu();
     }
+    ImGui::Separator();
 
     // Data Control per Object
     for (const auto& obj : _app.scene().get_objects()) {
         ImGui::PushID(obj->id());
-
-        if (!obj_expanded_.contains(obj->id())) {
-            obj_expanded_[obj->id()] = false;
-        }
 
         ImGui::Checkbox("##V", &obj->target());
         ImGui::SameLine();
@@ -70,24 +63,40 @@ void DataControlTool::render_ui(Application& _app)
             obj->visible() = !obj->visible();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Zoom")) {
+        if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
             _app.scene().zoom_to_box(obj->bounding_box());
             obj->visible() = true;
         }
         ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_GEAR)) {
+            ImGui::OpenPopup("popup_object_settings");
+            settings_object_id_ = obj->id();
+        }
+        ImGui::SameLine();
         // Toggle Selected
-        if (ImGui::Selectable(obj->name().c_str())) {
-            obj_expanded_[obj->id()] = !obj_expanded_[obj->id()];
+        if (ImGui::Selectable((obj->name()).c_str())) {
+            if (expanded_object_id_ == obj->id()) {
+                expanded_object_id_ = -1;
+            } else {
+                expanded_object_id_ = obj->id();
+            }
+        }
+
+        // Settings Popup
+        if (settings_object_id_ >= 0 && ImGui::BeginPopup("popup_object_settings")) {
+            _app.scene().get_object(settings_object_id_)->render_ui_settings();
+            ImGui::EndPopup();
         }
 
         // Expand Menu
-        if (obj_expanded_[obj->id()]) {
-            obj->render_ui();
-            if (ImGui::Button("Delete Object")) {
+        if (expanded_object_id_ == obj->id()) {
+            obj->render_ui_body();
+            if (ImGui::Button(("Delete Object (" + obj->name() + ")").c_str())) {
                 obj->deleted() = true;
             }
         }
         ImGui::PopID();
+        ImGui::Separator();
     }
 }
 
