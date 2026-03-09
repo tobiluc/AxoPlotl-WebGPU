@@ -20,6 +20,10 @@ public:
         destroy();
     }
 
+    f16x3 sample_color(float _t) const;
+
+    uint32_t sample_color_packed(float _t) const;
+
     void create(wgpu::Device _device);
 
     inline void destroy() {
@@ -57,6 +61,8 @@ public:
     wgpu::TextureView view_;
     wgpu::Sampler sampler_;
     wgpu::Device device_;
+
+    std::vector<f16x3> colors_ = {};
 };
 
 }

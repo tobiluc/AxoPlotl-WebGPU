@@ -173,15 +173,19 @@ void upload_property_data(
                   || std::is_same_v<T,float>
                   || std::is_same_v<T,double>)
     {
+
         // Compute the Scalar Range and assign it to the visible range
-        auto r = get_scalar_property_range<T,Entity>(_mesh, prop);
+        auto hist = Histogram(_prop->cast_to_StorageT<T>());
+        //std::cerr << hist << std::endl;
+
+        //auto r = get_scalar_property_range<T,Entity>(_mesh, prop);
         get_property_value_filter<Entity>(_vol_rend) = {
-            static_cast<float>(r.first), static_cast<float>(r.second)
+            static_cast<float>(hist.min_), static_cast<float>(hist.max_)
         };
 
         // Create filters
-        _prop_filters.push_back(std::make_shared<ScalarPropertyRangeFilter<T,Entity>>(r.first, r.second));
-        _prop_filters.push_back(std::make_shared<ScalarPropertyExactFilter<T,Entity>>(r.first, r.second));
+        _prop_filters.push_back(std::make_shared<ScalarPropertyRangeFilter<T,Entity>>(hist));
+        _prop_filters.push_back(std::make_shared<ScalarPropertyExactFilter<T,Entity>>(hist));
     }
 
     const auto& data = vertex_buffer_property_data<T,Entity>(

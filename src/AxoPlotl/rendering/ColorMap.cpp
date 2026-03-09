@@ -1,4 +1,5 @@
 #include "ColorMap.hpp"
+#include "imgui.h"
 
 namespace AxoPlotl
 {
@@ -9,30 +10,50 @@ static wgpu::Extent3D extent()
 }
 static inline int N = extent().width;
 
+ColorMap::f16x3 ColorMap::sample_color(float _t) const
+{
+    if (colors_.size()==1) [[unlikely]] {return colors_.front();}
+
+    f16 scaled = _t * (colors_.size() - 1);
+    int idx0 = std::min(int(std::floor(scaled)), int(colors_.size() - 2));
+    int idx1 = idx0 + 1;
+    f16 local_t = scaled - idx0;
+
+    const Vec3f &c0 = colors_.at(idx0);
+    const Vec3f &c1 = colors_.at(idx1);
+
+    f16 r = c0.r + local_t * (c1.r - c0.r);
+    f16 g = c0.g + local_t * (c1.g - c0.g);
+    f16 b = c0.b + local_t * (c1.b - c0.b);
+
+    return {r, g, b};
+}
+
+uint32_t ColorMap::sample_color_packed(float _t) const
+{
+    f16x3 rgb = sample_color(_t);
+    return IM_COL32(
+        static_cast<int>(rgb[0] * 255.0f),
+        static_cast<int>(rgb[1] * 255.0f),
+        static_cast<int>(rgb[2] * 255.0f),
+        255
+    );
+}
+
 void ColorMap::set_gradient(const std::vector<f16x3> &_colors)
 {
+    colors_ = std::move(_colors);
+
     std::vector<f16> data;
     data.reserve(N * 4);
 
     for (int i = 0; i < N; ++i)
     {
         f16 t = f16(i) / f16(N - 1);
-
-        f16 scaled = t * (_colors.size() - 1);
-        int idx0 = std::min(int(std::floor(scaled)), int(_colors.size() - 2));
-        int idx1 = idx0 + 1;
-        f16 local_t = scaled - idx0;
-
-        const Vec3f &c0 = _colors[idx0];
-        const Vec3f &c1 = _colors[idx1];
-
-        f16 r = c0.r + local_t * (c1.r - c0.r);
-        f16 g = c0.g + local_t * (c1.g - c0.g);
-        f16 b = c0.b + local_t * (c1.b - c0.b);
-
-        data.push_back(r);
-        data.push_back(g);
-        data.push_back(b);
+        f16x3 rgb = sample_color(t);
+        data.push_back(rgb[0]);
+        data.push_back(rgb[1]);
+        data.push_back(rgb[2]);
         data.push_back(1.0f);
     }
 

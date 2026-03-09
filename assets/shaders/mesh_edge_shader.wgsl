@@ -18,6 +18,8 @@ struct Uniforms {
 struct V2F {
     @builtin(position) position : vec4<f32>,
     @location(0) value : vec4<f32>,
+    @location(1) quadCorner: vec2<f32>,
+    @location(2) quadSize: vec2<f32>
 };
 
 @vertex
@@ -73,6 +75,11 @@ fn vs_main(
 
     out.position = outPos;
 
+    // Tell the fragment where we are relative to the center of the quad
+    out.quadSize = vec2<f32>(length(screen1-screen0), ubo.lineWidth);
+    out.quadCorner = vec2<f32>((config.x-0.5)*out.quadSize.x,
+                               0.5*config.y*out.quadSize.y);
+
     // Property and Clipping
     let value = props[eh].value;
     let pos = mix(positions[vh0], positions[vh1], t);
@@ -87,7 +94,15 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in:V2F) -> @location(0) vec4<f32> {
+fn fs_main(in:V2F) -> @location(0) vec4<f32>
+{
+    // Round Edge Endpoints
+    let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
+    let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
+    let cy = in.quadCorner.y;
+    if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
+    {discard;}
+
     return getFragmentColorFromPropertyValue(
 in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler);
 }

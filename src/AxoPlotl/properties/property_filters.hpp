@@ -3,8 +3,10 @@
 #include <AxoPlotl/rendering/OpenVolumeMeshRenderer.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
+#include <AxoPlotl/properties/Histogram.hpp>
 #include <type_traits>
 #include <imgui.h>
+
 
 namespace AxoPlotl
 {
@@ -39,8 +41,8 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 {
     using Scalar = ST;
 
-    ScalarPropertyRangeFilter(ST _min=0, ST _max=1)
-        : total_min_(_min), total_max_(_max) {}
+    ScalarPropertyRangeFilter(Histogram<Scalar> _hist)
+        : hist_(_hist) {}
 
     void init(OpenVolumeMeshRenderer& _r) override
     {
@@ -51,6 +53,14 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
     {
         Vec2f& vis_range = get_property_value_filter<Entity>(_r);
         ColorMap& cm = get_property_color_map<Entity>(_r);
+
+        // Render Hostogram.
+        // If we click a bar, set it to the visible range
+        int selected_bucket = hist_.render_ui(cm);
+        if (selected_bucket >= 0) {
+            vis_range.x = static_cast<float>(hist_.bucket_min(selected_bucket));
+            vis_range.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
+        }
 
         std::string colormap_menu_title = "Colormap ("
             + cm.name_ + ")";
@@ -76,29 +86,29 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             ImGui::EndMenu();
         }
 
-        auto draw_colormap = [&]() {
-            ImGui::Image(
-                (ImTextureID)cm.view_,
-                ImVec2(ImGui::GetContentRegionAvail().x, 20),
-                ImVec2(0,0),
-                ImVec2(1,1)
-            );
-            ImGui::Spacing();
-        };
-        draw_colormap();
+        // auto draw_colormap = [&]() {
+        //     ImGui::Image(
+        //         (ImTextureID)cm.view_,
+        //         ImVec2(ImGui::GetContentRegionAvail().x, 20),
+        //         ImVec2(0,0),
+        //         ImVec2(1,1)
+        //     );
+        //     ImGui::Spacing();
+        // };
+        // draw_colormap();
 
         // Slider
         if constexpr(std::is_same_v<ST,int>) {
             Vec2i i = {vis_range[0],vis_range[1]};
-            ImGui::SliderInt2("Show Range", &i.x, total_min_, total_max_);
+            ImGui::SliderInt2("Show Range", &i.x, hist_.min_, hist_.max_);
             vis_range.x = i.x;
             vis_range.y = i.y;
         }
         else if constexpr(std::is_same_v<ST,float> || std::is_same_v<ST,double>) {
             Vec2f f = {vis_range.x,vis_range.y};
-            ImGui::SliderFloat2("Show Range", &f.x, total_min_, total_max_);
-            vis_range.x = std::clamp<float>(f.x, total_min_, vis_range.y);
-            vis_range.y = std::clamp<float>(f.y, vis_range.x, total_max_);
+            ImGui::SliderFloat2("Show Range", &f.x, hist_.min_, hist_.max_);
+            vis_range.x = std::clamp<float>(f.x, hist_.min_, vis_range.y);
+            vis_range.y = std::clamp<float>(f.y, vis_range.x, hist_.max_);
         } else if constexpr(std::is_same_v<ST,bool>) {
             bool b_show_false = !vis_range.x;
             bool b_show_true = vis_range.y;
@@ -114,8 +124,7 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         return "Scalar Range";
     }
 
-    ST total_min_; // global min/total_max_
-    ST total_max_;
+    Histogram<Scalar> hist_;
 };
 
 template<typename ST, typename Entity>
@@ -123,8 +132,8 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
 {
     using Scalar = ST;
 
-    ScalarPropertyExactFilter(ST _min=0, ST _max=1)
-        : total_min_(_min), total_max_(_max)
+    ScalarPropertyExactFilter(Histogram<Scalar> _hist)
+        : hist_(_hist)
     {
     }
 
@@ -158,7 +167,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
         }
 
         // Clamp to total range
-        visible_range[0] = std::clamp<float>(visible_range[0], total_min_, total_max_);
+        visible_range[0] = std::clamp<float>(visible_range[0], hist_.min_, hist_.max_);
         visible_range[1] = visible_range[0];
 
         if (ImGui::ColorEdit3("Color", &color[0])) {
@@ -172,8 +181,7 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
     }
 
     Vec3f color = {1,0,0};
-    ST total_min_; // global min/total_max_
-    ST total_max_;
+    Histogram<Scalar> hist_;
 };
 
 }
