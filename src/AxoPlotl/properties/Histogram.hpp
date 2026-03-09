@@ -37,6 +37,7 @@ struct Histogram
         }
 
         // Determine number of buckets
+        _n_buckets = std::clamp(_n_buckets, 1lu, 100lu);
         if constexpr(std::is_same_v<T, bool>) {
             n_buckets_ = 2;
         } else {
@@ -46,7 +47,6 @@ struct Histogram
                     break;
                 }
             }
-            //std::cerr << "#BUCKETS = " << n_buckets_ << std::endl;
         }
 
         // Compute Buckets

@@ -7,6 +7,6 @@
 namespace AxoPlotl::GUI
 {
 
-void load_fonts();
+void load_fonts(float _font_size = 16.0f);
 
 }

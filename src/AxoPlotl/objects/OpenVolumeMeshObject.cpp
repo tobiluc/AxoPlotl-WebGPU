@@ -2,6 +2,7 @@
 #include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
+#include "IconsFontAwesome7.h"
 #include "imgui.h"
 #include <AxoPlotl/utils/commons.hpp>
 #include <AxoPlotl/Application.hpp>
@@ -57,165 +58,97 @@ void OpenVolumeMeshObject::render_ui_body()
     ImGui::Text("V/E/F/C = %zu/%zu/%zu/%zu",
         mesh_.n_vertices(), mesh_.n_edges(),
         mesh_.n_faces(), mesh_.n_cells());
-
     if (ImGui::CollapsingHeader("Properties"))
     {
-        if (ImGui::BeginMenu("Select Property"))
+        if (ImGui::BeginMenu("Calculate Property"))
         {
-            if (mesh_.n_vertex_props()>0 && ImGui::BeginMenu("Vertices"))
+            if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
+                if (ImGui::MenuItem("Minimum Dihedral Angle")) {
+                    calc_cell_min_dihedral_angle(mesh_);
+                }
+                if (ImGui::MenuItem("Boundary Distance")) {
+                    calc_cell_boundary_distance(mesh_);
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenu(); //!Calculate
+        }
+
+        auto render_property_menu = [&]<typename EntityTag>(const std::string& _prefix)
+        {
+            ImGui::PushID(_prefix.c_str());
+
+            std::string title = _prefix + ": ";
+            if (prop<EntityTag>().prop_.has_value()) {title += (*prop<EntityTag>().prop_)->name();}
+            else {title += "none";}
+
+            // Toggle Expanding Menu
+            if (ImGui::Button(ICON_FA_GEAR)) {
+               prop<EntityTag>().expanded_menu_ = !prop<EntityTag>().expanded_menu_;
+            }
+            ImGui::SameLine();
+
+
+            // Select Property
+            if (mesh_.n_props<EntityTag>()>0 &&
+                ImGui::BeginMenu(title.c_str()))
             {
-                for (auto v_prop = mesh_.vertex_props_begin(); v_prop != mesh_.vertex_props_end(); ++v_prop) {
-                    ImGui::PushID((*v_prop)->name().c_str());
-                    if (ImGui::MenuItem(string_format("%s [%s]", (*v_prop)->name().c_str(), (*v_prop)->typeNameWrapper().c_str()).c_str())) {
-                        v_prop_.prop_ = *v_prop;
-                        if ((*v_prop)->typeNameWrapper()=="double") {
-                            upload_property_data<double,OVM::Entity::Vertex>(mesh_, *v_prop, v_prop_.filters_,  renderer_);
-                        } else if ((*v_prop)->typeNameWrapper()=="int") {
-                            upload_property_data<int,OVM::Entity::Vertex>(mesh_, *v_prop, v_prop_.filters_,  renderer_);
-                        } else if ((*v_prop)->typeNameWrapper()=="float") {
-                            upload_property_data<float,OVM::Entity::Vertex>(mesh_, *v_prop, v_prop_.filters_,  renderer_);
-                        } else if ((*v_prop)->typeNameWrapper()=="bool") {
-                            upload_property_data<bool,OVM::Entity::Vertex>(mesh_, *v_prop, v_prop_.filters_,  renderer_);
-                        } else if ((*v_prop)->typeNameWrapper()=="vec3d") {
+                for (auto pp = mesh_.persistent_props_begin<EntityTag>();
+                     pp != mesh_.persistent_props_end<EntityTag>(); ++pp) {
+                    ImGui::PushID((*pp)->name().c_str());
+                    if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
+                        prop<EntityTag>().prop_ = *pp;
+                        if ((*pp)->typeNameWrapper()=="double") {
+                            upload_property_data<double,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        } else if ((*pp)->typeNameWrapper()=="int") {
+                            upload_property_data<int,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        } else if ((*pp)->typeNameWrapper()=="float") {
+                            upload_property_data<float,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        } else if ((*pp)->typeNameWrapper()=="bool") {
+                            upload_property_data<bool,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        } else if ((*pp)->typeNameWrapper()=="vec3d") {
                             //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
-                            const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
-                            renderer_.vertices().update_property_data(vectors);
-                            vertex_vector_renderer_.update_vector_data(vectors);
-                            renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
+                            // const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
+                            // renderer_.vertices().update_property_data(vectors);
+                            // vertex_vector_renderer_.update_vector_data(vectors);
+                            // renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
                         }
                         renderer_.vertices().enabled() = true;
                     }
                     ImGui::PopID();
                 }
-
-                ImGui::EndMenu(); // Vertex Props
+                ImGui::EndMenu(); // Props
             }
 
-            if (mesh_.n_edge_props()>0 && ImGui::BeginMenu("Edges"))
+            if (prop<EntityTag>().prop_.has_value()
+                && !prop<EntityTag>().expanded_menu_)
             {
-                for (auto e_prop = mesh_.edge_props_begin(); e_prop != mesh_.edge_props_end(); ++e_prop) {
-                    ImGui::PushID((*e_prop)->name().c_str());
-                    if (ImGui::MenuItem(string_format("%s [%s]", (*e_prop)->name().c_str(), (*e_prop)->typeNameWrapper().c_str()).c_str())) {
-                        e_prop_.prop_ = *e_prop;
-                        if ((*e_prop)->typeNameWrapper()=="double") {
-                            upload_property_data<double,OVM::Entity::Edge>(mesh_, *e_prop, e_prop_.filters_,  renderer_);
-                        } else if ((*e_prop)->typeNameWrapper()=="int") {
-                            upload_property_data<int,OVM::Entity::Edge>(mesh_, *e_prop, e_prop_.filters_,  renderer_);
-                        } else if ((*e_prop)->typeNameWrapper()=="float") {
-                            upload_property_data<float,OVM::Entity::Edge>(mesh_, *e_prop, e_prop_.filters_,  renderer_);
-                        } else if ((*e_prop)->typeNameWrapper()=="bool") {
-                            upload_property_data<bool,OVM::Entity::Edge>(mesh_, *e_prop, e_prop_.filters_,  renderer_);
-                        } else if ((*e_prop)->typeNameWrapper()=="vec3d") {
-                            upload_property_data<OVM::Vec3d,OVM::Entity::Edge>(mesh_, *e_prop, e_prop_.filters_,  renderer_);
+                // Render Property Filter Settings
+                if (!prop<EntityTag>().filters_.empty()) {
+
+                    if (ImGui::BeginMenu("Change Filter")) {
+                        for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
+                            if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
+                                prop<EntityTag>().filter_index_ = i;
+                                prop<EntityTag>().filters_[i]->init(renderer_);
+                            }
                         }
+                        ImGui::EndMenu();
                     }
-                    ImGui::PopID();
+                    prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->renderUI(renderer_);
                 }
 
-                ImGui::EndMenu(); // Edge Props
-            }
-
-            if (mesh_.n_face_props()>0 && ImGui::BeginMenu("Faces"))
-            {
-                for (auto f_prop = mesh_.face_props_begin(); f_prop != mesh_.face_props_end(); ++f_prop) {
-                    ImGui::PushID((*f_prop)->name().c_str());
-                    if (ImGui::MenuItem(string_format("%s [%s]", (*f_prop)->name().c_str(), (*f_prop)->typeNameWrapper().c_str()).c_str())) {
-                        f_prop_.prop_ = *f_prop;
-                        if ((*f_prop)->typeNameWrapper()=="double") {
-                            upload_property_data<double,OVM::Entity::Face>(mesh_, *f_prop, f_prop_.filters_,  renderer_);
-                        } else if ((*f_prop)->typeNameWrapper()=="int") {
-                            upload_property_data<int,OVM::Entity::Face>(mesh_, *f_prop, f_prop_.filters_,  renderer_);
-                        } else if ((*f_prop)->typeNameWrapper()=="float") {
-                            upload_property_data<float,OVM::Entity::Face>(mesh_, *f_prop, f_prop_.filters_,  renderer_);
-                        } else if ((*f_prop)->typeNameWrapper()=="bool") {
-                            upload_property_data<bool,OVM::Entity::Face>(mesh_, *f_prop, f_prop_.filters_,  renderer_);
-                        } else if ((*f_prop)->typeNameWrapper()=="vec3d") {
-                            upload_property_data<OVM::Vec3d,OVM::Entity::Face>(mesh_, *f_prop, f_prop_.filters_,  renderer_);
-                        }
-                    }
-                    ImGui::PopID();
+                // Clear
+                if (ImGui::Button("Clear Property")) {
+                    upload_default_property_data<EntityTag>();
+                    renderer_.entities<EntityTag>().property_mode()
+                        = RendererBase::Property::Mode::COLOR;
+                    prop<EntityTag>().prop_ = std::nullopt;
+                    prop<EntityTag>().filters_.clear();
                 }
-
-                ImGui::EndMenu(); // Face Props
             }
 
-            if (mesh_.n_cell_props()>0 && ImGui::BeginMenu("Cells"))
-            {
-                for (auto c_prop = mesh_.cell_props_begin(); c_prop != mesh_.cell_props_end(); ++c_prop) {
-                    ImGui::PushID((*c_prop)->name().c_str());
-                    if (ImGui::MenuItem(string_format("%s [%s]", (*c_prop)->name().c_str(), (*c_prop)->typeNameWrapper().c_str()).c_str())) {
-                        c_prop_.prop_ = *c_prop;
-                        if ((*c_prop)->typeNameWrapper()=="double") {
-                            upload_property_data<double,OVM::Entity::Cell>(mesh_, *c_prop, c_prop_.filters_,  renderer_);
-                        } else if ((*c_prop)->typeNameWrapper()=="int") {
-                            upload_property_data<int,OVM::Entity::Cell>(mesh_, *c_prop, c_prop_.filters_,  renderer_);
-                        } else if ((*c_prop)->typeNameWrapper()=="float") {
-                            upload_property_data<float,OVM::Entity::Cell>(mesh_, *c_prop, c_prop_.filters_,  renderer_);
-                        } else if ((*c_prop)->typeNameWrapper()=="bool") {
-                            upload_property_data<bool,OVM::Entity::Cell>(mesh_, *c_prop, c_prop_.filters_,  renderer_);
-                        } else if ((*c_prop)->typeNameWrapper()=="vec3d") {
-                            upload_property_data<OVM::Vec3d,OVM::Entity::Cell>(mesh_, *c_prop, c_prop_.filters_,  renderer_);
-                        }
-                    }
-                    ImGui::PopID();
-                }
-
-                ImGui::EndMenu(); // Cell Props
-            }
-
-            if (ImGui::BeginMenu("Calculate"))
-            {
-                if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
-                    if (ImGui::MenuItem("Minimum Dihedral Angle")) {
-                        calc_cell_min_dihedral_angle(mesh_);
-                    }
-                    if (ImGui::MenuItem("Boundary Distance")) {
-                        calc_cell_boundary_distance(mesh_);
-                    }
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMenu(); //!Calculate
-            }
-
-            ImGui::EndMenu(); //!Properties
-        }
-
-        auto render_property_menu = [&]<typename EntityTag>(const std::string& _prefix)
-        {
-            if (!prop<EntityTag>().prop_.has_value()) {
-                ImGui::Text("%s", (_prefix + ": none").c_str());
-                return;
-            }
-
-            // Control Entity Property Menu Expansion
-            if (ImGui::Selectable((_prefix + ": " + (*prop<EntityTag>().prop_)->name()).c_str())) {
-                prop<EntityTag>().expanded_menu_ = !prop<EntityTag>().expanded_menu_;
-            }
-            if (!prop<EntityTag>().expanded_menu_) {return;}
-
-            // Render Property Filter Settings
-            if (!prop<EntityTag>().filters_.empty()) {
-
-                if (ImGui::BeginMenu("Change Filter")) {
-                    for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
-                        if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
-                            prop<EntityTag>().filter_index_ = i;
-                            prop<EntityTag>().filters_[i]->init(renderer_);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->renderUI(renderer_);
-            }
-
-            // Clear
-            if (ImGui::Button("Clear Property")) {
-                upload_default_property_data<EntityTag>();
-                renderer_.entities<EntityTag>().property_mode()
-                    = RendererBase::Property::Mode::COLOR;
-                prop<EntityTag>().prop_ = std::nullopt;
-                prop<EntityTag>().filters_.clear();
-            }
+            ImGui::PopID();
         };
         render_property_menu.operator()<OVM::Entity::Vertex>(" V");
         render_property_menu.operator()<OVM::Entity::Edge>(" E");

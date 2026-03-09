@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include <filesystem>
 
-void AxoPlotl::GUI::load_fonts()
+void AxoPlotl::GUI::load_fonts(float _font_size)
 {
     auto& io = ImGui::GetIO();
     {
@@ -10,7 +10,7 @@ void AxoPlotl::GUI::load_fonts()
         ImFontConfig config;
         io.Fonts->AddFontFromFileTTF(
             font_path.c_str(),
-            16.0f,
+            _font_size,
             &config
         );
     }
@@ -22,10 +22,9 @@ void AxoPlotl::GUI::load_fonts()
         config.PixelSnapH = true;
         io.Fonts->AddFontFromFileTTF(
             font_path.c_str(),
-            10.0f,
+            _font_size,
             &config,
             icons_ranges
         );
     }
-
 }

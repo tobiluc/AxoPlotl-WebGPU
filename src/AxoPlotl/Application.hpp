@@ -31,6 +31,7 @@ public:
     void terminate();
 
     float clear_color_[3] = {1,1,1};
+    float font_scale_ = 1.0f;
 
     inline Scene& scene() {return scene_;}
 

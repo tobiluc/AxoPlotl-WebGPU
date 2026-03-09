@@ -382,6 +382,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
                              ImGuiWindowFlags_NoCollapse;
 
     ImGui::Begin("Inspector", nullptr, flags);
+    ImGui::SetWindowFontScale(font_scale_);
 
     //ImGui::Text("Render Settings");
     //ImGui::ColorEdit3("Background", clear_color_);
@@ -420,6 +421,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
                 if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
                 ImGui::EndMenu(); //!Theme
             }
+            ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
 
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
@@ -455,6 +457,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
     //     }
     // }
 
+    ImGui::SetWindowFontScale(1.0f);
     ImGui::End();
 
     ImGui::Render();
