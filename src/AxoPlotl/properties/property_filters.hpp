@@ -51,7 +51,7 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
     void renderUI(OpenVolumeMeshRenderer& _r) override
     {
-        Vec2f& vis_range = get_property_value_filter<Entity>(_r);
+        Vec2f& vis_range_f = get_property_value_filter<Entity>(_r);
         ColorMap& cm = get_property_color_map<Entity>(_r);
 
         if (!hist_.any_valid_) [[unlikely]] {
@@ -69,16 +69,16 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         int selected_bucket(-1);
         if (show_only_visble_buckets_) {
             selected_bucket = hist_.render_ui(
-                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range.x))),
-                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range.y)))+1,
+                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range_f.x))),
+                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range_f.y)))+1,
                 cm);
         } else {
             selected_bucket = hist_.render_ui(cm);
         }
 
         if (selected_bucket >= 0) {
-            vis_range.x = static_cast<float>(hist_.bucket_min(selected_bucket));
-            vis_range.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
+            vis_range_f.x = static_cast<float>(hist_.bucket_min(selected_bucket));
+            vis_range_f.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
         }
 
         std::string colormap_menu_title = "Colormap ("
@@ -133,8 +133,8 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             };
 
             // Draw the Colormap Image
-            const float visible_left = val_to_screen_x(vis_range.x);
-            const float visible_right = val_to_screen_x(vis_range.y);
+            const float visible_left = val_to_screen_x(vis_range_f.x);
+            const float visible_right = val_to_screen_x(vis_range_f.y);
             draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
             ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
             ImGui::Image((ImTextureID)cm.view_, ImVec2(visible_right-visible_left, total_size.y));
@@ -142,8 +142,8 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
             // Setup interaction
             bool changed = false;
-            float handle_x[2] = {val_to_screen_x(vis_range.x),
-                                 val_to_screen_x(vis_range.y)};
+            float handle_x[2] = {val_to_screen_x(vis_range_f.x),
+                                 val_to_screen_x(vis_range_f.y)};
 
             for (int i = 0; i < 2; ++i)
             {
@@ -163,11 +163,19 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
                     const float valf = hist_minf + t * (hist_maxf - hist_minf);
 
                     // Clamp
-                    if (i == 0) {vis_range.x = std::min(valf, vis_range.y);}
-                    else {vis_range.y = std::max(valf, vis_range.x);}
+                    if (i == 0) {vis_range_f.x = std::min(valf, vis_range_f.y);}
+                    else {vis_range_f.y = std::max(valf, vis_range_f.x);}
 
                     changed = true;
                 }
+
+                // Get visible range in scalar type
+                glm::vec<2,Scalar> vis_range_s = {
+                    static_cast<Scalar>(vis_range_f.x),
+                    static_cast<Scalar>(vis_range_f.y)
+                };
+                vis_range_f.x = static_cast<float>(vis_range_s.x);
+                vis_range_f.y = static_cast<float>(vis_range_s.y);
 
                 // Draw the visual handle
                 const ImU32 handle_fill_color = changed? ImGui::GetColorU32(ImGuiCol_SliderGrabActive) : ImGui::GetColorU32(ImGuiCol_SliderGrab);
@@ -178,7 +186,9 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
                 // Handle Label
                 char buf[32];
-                snprintf(buf, sizeof(buf), "%.2f", (i == 0) ? vis_range.x : vis_range.y);
+                snprintf(buf, sizeof(buf), "%s", (i == 0)?
+                    std::to_string(vis_range_s.x).c_str() :
+                    std::to_string(vis_range_s.y).c_str());
                 ImVec2 text_size = ImGui::CalcTextSize(buf);
                 const float text_x = handle_x[i] - (text_size.x * 0.5f);
                 const float text_y = bot_right.y + 5.0f;
@@ -195,13 +205,13 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         };
 
         if constexpr(std::is_same_v<ST,bool>) {
-            bool b_show_false = !vis_range.x;
-            bool b_show_true = vis_range.y;
+            bool b_show_false = !vis_range_f.x;
+            bool b_show_true = vis_range_f.y;
             ImGui::Checkbox("Show False", &b_show_false);
             ImGui::SameLine();
             ImGui::Checkbox("Show True", &b_show_true);
-            vis_range.x = !b_show_false;
-            vis_range.y = b_show_true;
+            vis_range_f.x = !b_show_false;
+            vis_range_f.y = b_show_true;
         } else {
             draw_colormap_sliders();
         }

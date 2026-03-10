@@ -62,7 +62,7 @@ void OpenVolumeMeshObject::render_ui_info()
 
 void OpenVolumeMeshObject::render_ui_properties()
 {
-    if (ImGui::BeginMenu("Calculate Property"))
+    if (ImGui::BeginMenu("Calculate"))
     {
         if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
             if (ImGui::MenuItem("Minimum Dihedral Angle")) {
@@ -96,17 +96,36 @@ void OpenVolumeMeshObject::render_ui_properties()
             for (auto pp = mesh_.persistent_props_begin<EntityTag>();
                  pp != mesh_.persistent_props_end<EntityTag>(); ++pp) {
                 ImGui::PushID((*pp)->name().c_str());
+
+                auto upload_data = [&]<typename T>() {
+                    upload_property_data<T,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                };
+
                 if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
                     prop<EntityTag>().prop_ = *pp;
                     selected_prop_entity_type_ = EntityTag::type();
                     if ((*pp)->typeNameWrapper()=="double") {
-                        upload_property_data<double,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        upload_data.template operator()<double>();
                     } else if ((*pp)->typeNameWrapper()=="int") {
-                        upload_property_data<int,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        upload_data.template operator()<int>();
+                    } else if ((*pp)->typeNameWrapper()=="uint") {
+                        upload_data.template operator()<unsigned int>();
                     } else if ((*pp)->typeNameWrapper()=="float") {
-                        upload_property_data<float,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        upload_data.template operator()<float>();
                     } else if ((*pp)->typeNameWrapper()=="bool") {
-                        upload_property_data<bool,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                        upload_data.template operator()<bool>();
+                    } else if ((*pp)->typeNameWrapper()=="short") {
+                        upload_data.template operator()<short>();
+                    } else if ((*pp)->typeNameWrapper()=="ushort") {
+                        upload_data.template operator()<unsigned short>();
+                    } else if ((*pp)->typeNameWrapper()=="char") {
+                        upload_data.template operator()<char>();
+                    } else if ((*pp)->typeNameWrapper()=="uchar") {
+                        upload_data.template operator()<unsigned char>();
+                    } else if ((*pp)->typeNameWrapper()=="long") {
+                        upload_data.template operator()<long>();
+                    } else if ((*pp)->typeNameWrapper()=="ulong") {
+                        upload_data.template operator()<unsigned long>();
                     } else if ((*pp)->typeNameWrapper()=="vec3d") {
                         //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
                         // const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
@@ -114,7 +133,7 @@ void OpenVolumeMeshObject::render_ui_properties()
                         // vertex_vector_renderer_.update_vector_data(vectors);
                         // renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
                     }
-                    renderer_.vertices().enabled() = true;
+                    renderer_.entities<EntityTag>().enabled() = true;
                 }
                 ImGui::PopID();
             }

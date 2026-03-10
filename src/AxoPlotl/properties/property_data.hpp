@@ -177,12 +177,8 @@ void upload_property_data(
     auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
 
     // Setup Property Filters
-    if constexpr(std::is_same_v<T,bool>
-                  || std::is_same_v<T,int>
-                  || std::is_same_v<T,float>
-                  || std::is_same_v<T,double>)
+    if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>)
     {
-
         // Compute the Scalar Range and assign it to the visible range
         auto hist = Histogram(_prop->cast_to_StorageT<T>());
         //std::cerr << hist << std::endl;
