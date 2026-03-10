@@ -53,108 +53,119 @@ void OpenVolumeMeshObject::render_ui_settings()
     vertex_vector_renderer_.clip_box() = cb;
 }
 
-void OpenVolumeMeshObject::render_ui_body()
+void OpenVolumeMeshObject::render_ui_info()
 {
     ImGui::Text("V/E/F/C = %zu/%zu/%zu/%zu",
         mesh_.n_vertices(), mesh_.n_edges(),
         mesh_.n_faces(), mesh_.n_cells());
-    if (ImGui::CollapsingHeader("Properties"))
+}
+
+void OpenVolumeMeshObject::render_ui_properties()
+{
+    if (ImGui::BeginMenu("Calculate Property"))
     {
-        if (ImGui::BeginMenu("Calculate Property"))
+        if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
+            if (ImGui::MenuItem("Minimum Dihedral Angle")) {
+                calc_cell_min_dihedral_angle(mesh_);
+            }
+            if (ImGui::MenuItem("Boundary Distance")) {
+                calc_cell_boundary_distance(mesh_);
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenu(); //!Calculate
+    }
+
+    auto render_property_selection_menu = [&]<typename EntityTag>(const std::string& _prefix)
+    {
+        ImGui::PushID(_prefix.c_str());
+
+        std::string title = _prefix + ": ";
+        if (prop<EntityTag>().prop_.has_value()) {title += (*prop<EntityTag>().prop_)->name();}
+        else {title += "none";}
+
+        // Select Property
+        if (mesh_.n_props<EntityTag>()>0 &&
+            ImGui::BeginMenu(title.c_str()))
         {
-            if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
-                if (ImGui::MenuItem("Minimum Dihedral Angle")) {
-                    calc_cell_min_dihedral_angle(mesh_);
+            // Select an already selected property
+            if (ImGui::IsItemClicked()) {
+                selected_prop_entity_type_ = EntityTag::type();
+            }
+
+            for (auto pp = mesh_.persistent_props_begin<EntityTag>();
+                 pp != mesh_.persistent_props_end<EntityTag>(); ++pp) {
+                ImGui::PushID((*pp)->name().c_str());
+                if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
+                    prop<EntityTag>().prop_ = *pp;
+                    selected_prop_entity_type_ = EntityTag::type();
+                    if ((*pp)->typeNameWrapper()=="double") {
+                        upload_property_data<double,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    } else if ((*pp)->typeNameWrapper()=="int") {
+                        upload_property_data<int,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    } else if ((*pp)->typeNameWrapper()=="float") {
+                        upload_property_data<float,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    } else if ((*pp)->typeNameWrapper()=="bool") {
+                        upload_property_data<bool,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    } else if ((*pp)->typeNameWrapper()=="vec3d") {
+                        //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
+                        // const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
+                        // renderer_.vertices().update_property_data(vectors);
+                        // vertex_vector_renderer_.update_vector_data(vectors);
+                        // renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
+                    }
+                    renderer_.vertices().enabled() = true;
                 }
-                if (ImGui::MenuItem("Boundary Distance")) {
-                    calc_cell_boundary_distance(mesh_);
+                ImGui::PopID();
+            }
+            ImGui::EndMenu(); // Props
+        }
+        ImGui::PopID();
+    };
+
+    auto render_property_visualization_settings_menu = [&]<typename EntityTag>()
+    {
+        if (!selected_prop_entity_type_.has_value()
+            || *selected_prop_entity_type_ != EntityTag::type()
+            || !prop<EntityTag>().prop_.has_value())
+        {return;}
+
+        // Render Property Filter Settings
+        if (!prop<EntityTag>().filters_.empty()) {
+
+            if (ImGui::BeginMenu("Change Filter")) {
+                for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
+                    if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
+                        prop<EntityTag>().filter_index_ = i;
+                        prop<EntityTag>().filters_[i]->init(renderer_);
+                    }
                 }
                 ImGui::EndMenu();
             }
-            ImGui::EndMenu(); //!Calculate
+            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->renderUI(renderer_);
         }
 
-        auto render_property_menu = [&]<typename EntityTag>(const std::string& _prefix)
-        {
-            ImGui::PushID(_prefix.c_str());
+        // Clear
+        if (ImGui::Button("Clear Property")) {
+            upload_default_property_data<EntityTag>();
+            renderer_.entities<EntityTag>().property_mode()
+                = RendererBase::Property::Mode::COLOR;
+            prop<EntityTag>().prop_ = std::nullopt;
+            prop<EntityTag>().filters_.clear();
+        }
+    };
 
-            std::string title = _prefix + ": ";
-            if (prop<EntityTag>().prop_.has_value()) {title += (*prop<EntityTag>().prop_)->name();}
-            else {title += "none";}
-
-            // Toggle Expanding Menu
-            if (ImGui::Button(ICON_FA_GEAR)) {
-               prop<EntityTag>().expanded_menu_ = !prop<EntityTag>().expanded_menu_;
-            }
-            ImGui::SameLine();
-
-
-            // Select Property
-            if (mesh_.n_props<EntityTag>()>0 &&
-                ImGui::BeginMenu(title.c_str()))
-            {
-                for (auto pp = mesh_.persistent_props_begin<EntityTag>();
-                     pp != mesh_.persistent_props_end<EntityTag>(); ++pp) {
-                    ImGui::PushID((*pp)->name().c_str());
-                    if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
-                        prop<EntityTag>().prop_ = *pp;
-                        if ((*pp)->typeNameWrapper()=="double") {
-                            upload_property_data<double,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
-                        } else if ((*pp)->typeNameWrapper()=="int") {
-                            upload_property_data<int,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
-                        } else if ((*pp)->typeNameWrapper()=="float") {
-                            upload_property_data<float,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
-                        } else if ((*pp)->typeNameWrapper()=="bool") {
-                            upload_property_data<bool,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
-                        } else if ((*pp)->typeNameWrapper()=="vec3d") {
-                            //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
-                            // const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
-                            // renderer_.vertices().update_property_data(vectors);
-                            // vertex_vector_renderer_.update_vector_data(vectors);
-                            // renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
-                        }
-                        renderer_.vertices().enabled() = true;
-                    }
-                    ImGui::PopID();
-                }
-                ImGui::EndMenu(); // Props
-            }
-
-            if (prop<EntityTag>().prop_.has_value()
-                && !prop<EntityTag>().expanded_menu_)
-            {
-                // Render Property Filter Settings
-                if (!prop<EntityTag>().filters_.empty()) {
-
-                    if (ImGui::BeginMenu("Change Filter")) {
-                        for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
-                            if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
-                                prop<EntityTag>().filter_index_ = i;
-                                prop<EntityTag>().filters_[i]->init(renderer_);
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->renderUI(renderer_);
-                }
-
-                // Clear
-                if (ImGui::Button("Clear Property")) {
-                    upload_default_property_data<EntityTag>();
-                    renderer_.entities<EntityTag>().property_mode()
-                        = RendererBase::Property::Mode::COLOR;
-                    prop<EntityTag>().prop_ = std::nullopt;
-                    prop<EntityTag>().filters_.clear();
-                }
-            }
-
-            ImGui::PopID();
-        };
-        render_property_menu.operator()<OVM::Entity::Vertex>(" V");
-        render_property_menu.operator()<OVM::Entity::Edge>(" E");
-        render_property_menu.operator()<OVM::Entity::Face>(" F");
-        render_property_menu.operator()<OVM::Entity::Cell>(" C");
+    if (ImGui::BeginMenu("Select")) {
+        render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
+        render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
+        render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
+        render_property_selection_menu.operator()<OVM::Entity::Cell>(" C");
+        ImGui::EndMenu();
     }
+    render_property_visualization_settings_menu.operator()<OVM::Entity::Vertex>();
+    render_property_visualization_settings_menu.operator()<OVM::Entity::Edge>();
+    render_property_visualization_settings_menu.operator()<OVM::Entity::Face>();
+    render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
 }
 
 void OpenVolumeMeshObject::init()

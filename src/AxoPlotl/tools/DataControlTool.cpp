@@ -13,12 +13,10 @@ void DataControlTool::render_ui(Application& _app)
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted
-    if (expanded_object_id_ >= 0 &&
-        !_app.scene().get_object(expanded_object_id_)) {
-        expanded_object_id_ = -1;
+    if (!_app.scene().get_object(info_object_id_)) {
+        info_object_id_ = -1;
     }
-    if (settings_object_id_ >= 0 &&
-        !_app.scene().get_object(settings_object_id_)) {
+    if (!_app.scene().get_object(settings_object_id_)) {
         settings_object_id_ = -1;
     }
 
@@ -46,17 +44,20 @@ void DataControlTool::render_ui(Application& _app)
             for (const auto& obj : _app.scene().get_objects()) {
                 obj->deleted() = true;
             }
-            expanded_object_id_ = -1;
+            info_object_id_ = -1;
         }
         ImGui::EndMenu();
     }
     ImGui::Separator();
 
     // Data Control per Object
+    std::shared_ptr<ObjectBase> unique_target = nullptr;
     for (const auto& obj : _app.scene().get_objects()) {
         ImGui::PushID(obj->id());
 
         ImGui::Checkbox("##V", &obj->target());
+        if (obj->target()) {unique_target = (unique_target)? nullptr : obj;}
+
         ImGui::SameLine();
         // Visible Checkbox
         if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
@@ -75,10 +76,10 @@ void DataControlTool::render_ui(Application& _app)
         ImGui::SameLine();
         // Toggle Selected
         if (ImGui::Selectable((obj->name()).c_str())) {
-            if (expanded_object_id_ == obj->id()) {
-                expanded_object_id_ = -1;
+            if (info_object_id_ == obj->id()) {
+                info_object_id_ = -1;
             } else {
-                expanded_object_id_ = obj->id();
+                info_object_id_ = obj->id();
             }
         }
 
@@ -89,14 +90,21 @@ void DataControlTool::render_ui(Application& _app)
         }
 
         // Expand Menu
-        if (expanded_object_id_ == obj->id()) {
-            obj->render_ui_body();
-            if (ImGui::Button(("Delete Object (" + obj->name() + ")").c_str())) {
+        if (info_object_id_ == obj->id()) {
+            obj->render_ui_info();
+            if (ImGui::Button(ICON_FA_TRASH)) {
                 obj->deleted() = true;
             }
         }
         ImGui::PopID();
         ImGui::Separator();
+    }
+
+    // Property Visualization
+    std::string title = "Properties ";
+    //if (unique_target) {title }
+    if (ImGui::CollapsingHeader("Properties") && unique_target) {
+        unique_target->render_ui_properties();
     }
 }
 

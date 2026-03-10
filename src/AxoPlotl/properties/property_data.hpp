@@ -46,11 +46,20 @@ template<typename T>
 RendererBase::Property::Data vertex_buffer_property_data(const T& _val)
 {
     using D = RendererBase::Property::Data;
-    if constexpr(std::is_same_v<T,bool>) {return D{_val,0,0,1};}
-    if constexpr(std::is_same_v<T,int>) {return D{_val,0,0,1};}
-    if constexpr(std::is_same_v<T,double>) {return D{_val,0,0,1};}
-    if constexpr(std::is_same_v<T,float>) {return {_val,0,0,1};}
-    if constexpr (ToLoG::vector_type<T>) {
+
+    if constexpr(std::is_floating_point_v<T>) {
+        if (std::isnan(_val)) {
+            constexpr float nanf = std::numeric_limits<float>::signaling_NaN();
+            return D{nanf,0,0,1};
+        }
+        else if (std::isinf(_val)) {
+            constexpr float inff = std::numeric_limits<float>::infinity();
+            return D{inff,0,0,1};
+        }
+        else {return D{_val,0,0,1};}
+    } else if constexpr(std::is_integral_v<T>) {
+        return D{_val,0,0,1};
+    } else if constexpr (ToLoG::vector_type<T>) {
         if (ToLoG::Traits<T>::dim <= 4) {
             D v;
             for (int i = 0; i < ToLoG::Traits<T>::dim; ++i) {

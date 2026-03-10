@@ -16,7 +16,7 @@ public:
         return "Data Control";
     }
 private:
-    int expanded_object_id_ = -1;
+    int info_object_id_ = -1;
     int settings_object_id_ = -1;
 };
 

@@ -24,13 +24,13 @@ private:
         std::optional<OVM::PropertyStorageBase*> prop_;
         std::vector<std::shared_ptr<PropertyFilterBase>> filters_;
         int filter_index_ = 0;
-        bool expanded_menu_ = false;
     };
 
     Property v_prop_;
     Property e_prop_;
     Property f_prop_;
     Property c_prop_;
+    std::optional<OVM::EntityType> selected_prop_entity_type_ = std::nullopt;
 
     template<typename EntityTag> Property& prop();
     template<> Property& prop<OVM::Entity::Vertex>() {return v_prop_;}
@@ -60,6 +60,8 @@ public:
         mesh_(std::move(_mesh)),
         filepath_(_filepath)
     {
+        if (mesh_.n_vertices()==0) [[unlikely]] {deleted_ = true;}
+
         this->name_ = _filepath.has_value()?
             _filepath.value().stem().string() :
             "New Volume Mesh Object " + std::to_string(id_);
@@ -69,9 +71,11 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _view_projection) override;
 
-    void render_ui_body() override;
+    void render_ui_info() override;
 
     void render_ui_settings() override;
+
+    void render_ui_properties() override;
 
     void init() override;
 
@@ -81,7 +85,7 @@ public:
         return renderer_.enabled();
     }
 
-    inline const OVMVolumeMesh& mesh() const {
+    inline OVMVolumeMesh& mesh() {
         return mesh_;
     }
 };

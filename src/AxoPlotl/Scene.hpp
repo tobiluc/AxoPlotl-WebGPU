@@ -47,9 +47,11 @@ public:
     int add_object(Args... _args)
     {
         objects_.push_back(std::make_shared<Object>(this, _args...));
-        objects_.back()->init();
-        objects_.back()->recompute_bounding_box();
-        zoom_to_box(objects_.back()->bounding_box());
+        if (!objects_.back()->deleted()) [[likely]] {
+            objects_.back()->init();
+            objects_.back()->recompute_bounding_box();
+            zoom_to_box(objects_.back()->bounding_box());
+        }
         return objects_.back()->id();
     }
 

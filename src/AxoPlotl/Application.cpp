@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include "AxoPlotl/debug/mesh_with_nan_and_inf_props.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
@@ -429,10 +430,13 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
             ImGui::EndMenu(); // !Settings
         }
 
-#if 0
-        if (ImGui::BeginMenu("ImGui Style Editor"))
+#if 1
+        if (ImGui::BeginMenu("Debug"))
         {
-            ImGui::ShowStyleEditor();
+            if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
+                scene_.add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
+            }
+            ImGui::EndMenu(); // !Debug
         }
 #endif
 

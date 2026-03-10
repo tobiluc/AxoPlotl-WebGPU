@@ -36,7 +36,7 @@ fn vs_main(
 
     let value = props[cell_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.mode==MODE_SCALAR && !isInf(value.x) && isOutsideRange(value.x, ubo.valueFilter))) {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -46,6 +46,8 @@ fn vs_main(
 
 @fragment
 fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    return getFragmentColorFromPropertyValue(
-in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler);
+    let fragColor = getFragmentColorFromPropertyValue(
+        in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler
+        );
+    return fragColor;
 }

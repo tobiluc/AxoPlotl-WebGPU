@@ -10,53 +10,51 @@ namespace AxoPlotl
 
 void OpenMeshObject::render_ui_settings()
 {
+    ImGui::Checkbox("V", &renderer_.vertices().enabled());
+    ImGui::SameLine();
+    ImGui::Checkbox("E", &renderer_.edges().enabled());
+    ImGui::SameLine();
+    ImGui::Checkbox("F", &renderer_.faces().enabled());
+    ImGui::SameLine();
+    ImGui::Checkbox("C", &renderer_.cells().enabled());
 
+
+    ImGui::SliderFloat("Point Size", &renderer_.vertices().point_size(), 0.0f, 32.0f);
+    ImGui::SliderFloat("Line Width", &renderer_.edges().line_width(), 0.0f, 32.0f);
+    ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
+
+    // Clip Box
+    // Each entity technically has their own, but we
+    // just modify all at once.
+    const auto& bbox = bounding_box();
+    RendererBase::ClipBox& cb = renderer_.vertices().clip_box();
+    bool clip_box_enabled = cb.enabled_;
+    if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
+        cb.set(bbox.min(),bbox.max());
+    }
+    cb.enabled_ = clip_box_enabled;
+    if (clip_box_enabled)
+    {
+        Vec2f x = {cb.min_[0],cb.max_[0]};
+        Vec2f y = {cb.min_[1],cb.max_[1]};
+        Vec2f z = {cb.min_[2],cb.max_[2]};
+        ImGui::SliderFloat2("x", &x[0], bbox.min()[0], bbox.max()[0]);
+        ImGui::SliderFloat2("y", &y[0], bbox.min()[1], bbox.max()[1]);
+        ImGui::SliderFloat2("z", &z[0], bbox.min()[2], bbox.max()[2]);
+        cb.min_ = {x[0],y[0],z[0]};
+        cb.max_ = {x[1],y[1],z[1]};
+    }
+    renderer_.edges().clip_box() = cb;
+    renderer_.faces().clip_box() = cb;
+    renderer_.cells().clip_box() = cb;
 }
 
-void OpenMeshObject::render_ui_body()
+void OpenMeshObject::render_ui_properties()
 {
-    if (ImGui::BeginMenu("Render Settings"))
-    {
-        ImGui::Checkbox("V", &renderer_.vertices().enabled());
-        ImGui::SameLine();
-        ImGui::Checkbox("E", &renderer_.edges().enabled());
-        ImGui::SameLine();
-        ImGui::Checkbox("F", &renderer_.faces().enabled());
-        ImGui::SameLine();
-        ImGui::Checkbox("C", &renderer_.cells().enabled());
+}
 
-
-        ImGui::SliderFloat("Point Size", &renderer_.vertices().point_size(), 0.0f, 32.0f);
-        ImGui::SliderFloat("Line Width", &renderer_.edges().line_width(), 0.0f, 32.0f);
-        ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
-
-        // Clip Box
-        // Each entity technically has their own, but we
-        // just modify all at once.
-        const auto& bbox = bounding_box();
-        RendererBase::ClipBox& cb = renderer_.vertices().clip_box();
-        bool clip_box_enabled = cb.enabled_;
-        if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
-            cb.set(bbox.min(),bbox.max());
-        }
-        cb.enabled_ = clip_box_enabled;
-        if (clip_box_enabled)
-        {
-            Vec2f x = {cb.min_[0],cb.max_[0]};
-            Vec2f y = {cb.min_[1],cb.max_[1]};
-            Vec2f z = {cb.min_[2],cb.max_[2]};
-            ImGui::SliderFloat2("x", &x[0], bbox.min()[0], bbox.max()[0]);
-            ImGui::SliderFloat2("y", &y[0], bbox.min()[1], bbox.max()[1]);
-            ImGui::SliderFloat2("z", &z[0], bbox.min()[2], bbox.max()[2]);
-            cb.min_ = {x[0],y[0],z[0]};
-            cb.max_ = {x[1],y[1],z[1]};
-        }
-        renderer_.edges().clip_box() = cb;
-        renderer_.faces().clip_box() = cb;
-        renderer_.cells().clip_box() = cb;
-
-        ImGui::EndMenu(); //!Settings
-    }
+void OpenMeshObject::render_ui_info()
+{
 }
 
 void OpenMeshObject::init()

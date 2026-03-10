@@ -6,7 +6,7 @@
 #include <AxoPlotl/properties/Histogram.hpp>
 #include <type_traits>
 #include <imgui.h>
-
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -54,9 +54,28 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         Vec2f& vis_range = get_property_value_filter<Entity>(_r);
         ColorMap& cm = get_property_color_map<Entity>(_r);
 
-        // Render Hostogram.
+        if (!hist_.any_valid_) [[unlikely]] {
+            ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
+            return;
+        }
+
+        if constexpr(!std::is_same_v<Scalar,bool>) {
+            ImGui::Checkbox(ICON_FA_EYE_LOW_VISION, &show_only_visble_buckets_);
+            ImGui::SameLine();
+        }
+
+        // Render Histogram.
         // If we click a bar, set it to the visible range
-        int selected_bucket = hist_.render_ui(cm);
+        int selected_bucket(-1);
+        if (show_only_visble_buckets_) {
+            selected_bucket = hist_.render_ui(
+                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range.x))),
+                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range.y)))+1,
+                cm);
+        } else {
+            selected_bucket = hist_.render_ui(cm);
+        }
+
         if (selected_bucket >= 0) {
             vis_range.x = static_cast<float>(hist_.bucket_min(selected_bucket));
             vis_range.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
@@ -86,30 +105,96 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             ImGui::EndMenu();
         }
 
-        // auto draw_colormap = [&]() {
-        //     ImGui::Image(
-        //         (ImTextureID)cm.view_,
-        //         ImVec2(ImGui::GetContentRegionAvail().x, 20),
-        //         ImVec2(0,0),
-        //         ImVec2(1,1)
-        //     );
-        //     ImGui::Spacing();
-        // };
-        // draw_colormap();
+        auto draw_colormap = [&]() {
+            ImGui::Image(
+                (ImTextureID)cm.view_,
+                ImVec2(ImGui::GetContentRegionAvail().x, 20),
+                ImVec2(0,0),
+                ImVec2(1,1)
+            );
+            ImGui::Spacing();
+        };
+        auto draw_colormap_sliders = [&]() -> bool
+        {
+            const float hist_minf = static_cast<float>(hist_.min_);
+            const float hist_maxf = static_cast<float>(hist_.max_);
 
-        // Slider
-        if constexpr(std::is_same_v<ST,int>) {
-            Vec2i i = {vis_range[0],vis_range[1]};
-            ImGui::SliderInt2("Show Range", &i.x, hist_.min_, hist_.max_);
-            vis_range.x = i.x;
-            vis_range.y = i.y;
-        }
-        else if constexpr(std::is_same_v<ST,float> || std::is_same_v<ST,double>) {
-            Vec2f f = {vis_range.x,vis_range.y};
-            ImGui::SliderFloat2("Show Range", &f.x, hist_.min_, hist_.max_);
-            vis_range.x = std::clamp<float>(f.x, hist_.min_, vis_range.y);
-            vis_range.y = std::clamp<float>(f.y, vis_range.x, hist_.max_);
-        } else if constexpr(std::is_same_v<ST,bool>) {
+            ImVec2 top_left = ImGui::GetCursorScreenPos();
+            ImVec2 total_size = ImVec2(ImGui::GetContentRegionAvail().x, 20);
+            ImVec2 bot_right = ImVec2(top_left.x + total_size.x, top_left.y + total_size.y);
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            // Helper to map property value float
+            // to screen x coordinates
+            auto val_to_screen_x = [&](const float& val) {
+                float t = (val - hist_minf) / (hist_maxf - hist_minf);
+                return top_left.x + t * total_size.x;
+            };
+
+            // Draw the Colormap Image
+            const float visible_left = val_to_screen_x(vis_range.x);
+            const float visible_right = val_to_screen_x(vis_range.y);
+            draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
+            ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
+            ImGui::Image((ImTextureID)cm.view_, ImVec2(visible_right-visible_left, total_size.y));
+            ImGui::SetCursorScreenPos(top_left);
+
+            // Setup interaction
+            bool changed = false;
+            float handle_x[2] = {val_to_screen_x(vis_range.x),
+                                 val_to_screen_x(vis_range.y)};
+
+            for (int i = 0; i < 2; ++i)
+            {
+                ImGui::PushID(i);
+                ImVec2 pos = ImVec2(handle_x[i], top_left.y + total_size.y * 0.5f);
+
+                // Transparent invisible button to capture drag
+                const float button_width = 16.0f;
+                ImGui::SetCursorScreenPos(ImVec2(pos.x - 0.5f*button_width, top_left.y));
+                ImGui::InvisibleButton("##handle", ImVec2(button_width, total_size.y));
+
+                if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                {
+                    const float mouse_x = ImGui::GetIO().MousePos.x;
+                    const float t = std::clamp((mouse_x - top_left.x) / total_size.x, 0.0f, 1.0f);
+
+                    const float valf = hist_minf + t * (hist_maxf - hist_minf);
+
+                    // Clamp
+                    if (i == 0) {vis_range.x = std::min(valf, vis_range.y);}
+                    else {vis_range.y = std::max(valf, vis_range.x);}
+
+                    changed = true;
+                }
+
+                // Draw the visual handle
+                const ImU32 handle_fill_color = changed? ImGui::GetColorU32(ImGuiCol_SliderGrabActive) : ImGui::GetColorU32(ImGuiCol_SliderGrab);
+                const ImU32 handle_outline_color = ImGui::GetColorU32(ImGuiCol_Border);
+                draw_list->AddLine(ImVec2(handle_x[i], top_left.y), ImVec2(handle_x[i], bot_right.y), handle_fill_color, 4.0f);
+                draw_list->AddCircleFilled(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_fill_color);
+                draw_list->AddCircle(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_outline_color);
+
+                // Handle Label
+                char buf[32];
+                snprintf(buf, sizeof(buf), "%.2f", (i == 0) ? vis_range.x : vis_range.y);
+                ImVec2 text_size = ImGui::CalcTextSize(buf);
+                const float text_x = handle_x[i] - (text_size.x * 0.5f);
+                const float text_y = bot_right.y + 5.0f;
+                draw_list->AddText(ImVec2(text_x, text_y), ImGui::GetColorU32(ImGuiCol_Text), buf);
+
+                ImGui::PopID();
+            }
+
+            // Move the cursor down so the next ImGui element doesn't overlap the text
+            const float reserved_space = 5.0f + ImGui::GetFontSize();
+            ImGui::SetCursorScreenPos(ImVec2(top_left.x, bot_right.y + reserved_space + ImGui::GetStyle().ItemSpacing.y));
+
+            return changed;
+        };
+
+        if constexpr(std::is_same_v<ST,bool>) {
             bool b_show_false = !vis_range.x;
             bool b_show_true = vis_range.y;
             ImGui::Checkbox("Show False", &b_show_false);
@@ -117,6 +202,8 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             ImGui::Checkbox("Show True", &b_show_true);
             vis_range.x = !b_show_false;
             vis_range.y = b_show_true;
+        } else {
+            draw_colormap_sliders();
         }
     }
 
@@ -125,6 +212,7 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
     }
 
     Histogram<Scalar> hist_;
+    bool show_only_visble_buckets_ = false;
 };
 
 template<typename ST, typename Entity>
@@ -147,6 +235,11 @@ struct ScalarPropertyExactFilter : public PropertyFilterBase
 
     void renderUI(OpenVolumeMeshRenderer& _r) override
     {
+        if (!hist_.any_valid_) [[unlikely]] {
+            ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
+            return;
+        }
+
         Vec2f& visible_range = get_property_value_filter<Entity>(_r);
 
         //_r.v_prop_range

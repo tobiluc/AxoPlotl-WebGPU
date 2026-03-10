@@ -34,7 +34,7 @@ fn vs_main(
 
     let value = props[cell_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.mode==MODE_SCALAR && !isInf(value.x) && isOutsideRange(value.x, ubo.valueFilter))) {
         out.position = clippedPosition();
     }
     out.color = vec4<f32>(0,0,0,1);

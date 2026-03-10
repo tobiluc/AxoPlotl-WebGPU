@@ -16,7 +16,7 @@ struct Uniforms {
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
-    @location(0) value : vec4<f32>,
+    @location(0) @interpolate(flat) value : vec4<f32>,
 };
 
 @vertex
@@ -33,7 +33,7 @@ fn vs_main(
 
     let value = props[face_index].value;
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==1u && isOutsideRange(value.x, ubo.valueFilter))) {
+|| (ubo.mode==MODE_SCALAR && !isInf(value.x) && isOutsideRange(value.x, ubo.valueFilter))) {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -43,6 +43,8 @@ fn vs_main(
 
 @fragment
 fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    return getFragmentColorFromPropertyValue(
-in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler);
+    let fragColor = getFragmentColorFromPropertyValue(
+        in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler
+        );
+    return fragColor;
 }
