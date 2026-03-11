@@ -21,7 +21,6 @@ void OpenVolumeMeshObject::render_ui_settings()
     ImGui::SameLine();
     ImGui::Checkbox("C", &renderer_.cells().enabled());
 
-
     ImGui::SliderFloat("Point Size", &renderer_.vertices().point_size(), 0.0f, 32.0f);
     ImGui::SliderFloat("Line Width", &renderer_.edges().line_width(), 0.0f, 32.0f);
     ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
@@ -98,7 +97,7 @@ void OpenVolumeMeshObject::render_ui_properties()
                 ImGui::PushID((*pp)->name().c_str());
 
                 auto upload_data = [&]<typename T>() {
-                    upload_property_data<T,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    upload_buffer_property_data<T,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
                 };
 
                 if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
@@ -127,11 +126,13 @@ void OpenVolumeMeshObject::render_ui_properties()
                     } else if ((*pp)->typeNameWrapper()=="ulong") {
                         upload_data.template operator()<unsigned long>();
                     } else if ((*pp)->typeNameWrapper()=="vec3d") {
-                        //upload_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_, *v_prop, prop_filters_,  renderer_);
-                        // const auto& vectors = vertex_buffer_property_data<OVM::Vec3d,OVM::Entity::Vertex>(mesh_,*v_prop);
-                        // renderer_.vertices().update_property_data(vectors);
-                        // vertex_vector_renderer_.update_vector_data(vectors);
-                        // renderer_.vertices().property_mode() = RendererBase::Property::Mode::VEC3;
+                        upload_data.template operator()<OVM::Vec3d>();
+                    } else if ((*pp)->typeNameWrapper()=="vec3f") {
+                        upload_data.template operator()<OVM::Vec3f>();
+                    } else if ((*pp)->typeNameWrapper()=="vec4d") {
+                        upload_data.template operator()<OVM::Vec4d>();
+                    } else if ((*pp)->typeNameWrapper()=="vec4f") {
+                        upload_data.template operator()<OVM::Vec4f>();
                     }
                     renderer_.entities<EntityTag>().enabled() = true;
                 }
@@ -167,8 +168,8 @@ void OpenVolumeMeshObject::render_ui_properties()
         // Clear
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data<EntityTag>();
-            renderer_.entities<EntityTag>().property_mode()
-                = RendererBase::Property::Mode::COLOR;
+            renderer_.entities<EntityTag>().property_type()
+                = RendererBase::Property::Type::COLOR;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().filters_.clear();
         }
@@ -248,8 +249,8 @@ void OpenVolumeMeshObject::render(
         mvp);
 
     if (renderer_.vertices().enabled() &&
-        renderer_.vertices().property_mode() ==
-        RendererBase::Property::Mode::VEC3) {
+        renderer_.vertices().property_type() ==
+        RendererBase::Property::Type::VEC3) {
         vertex_vector_renderer_.render(
             scene_->app()->scene_viewport(),
             _render_pass,

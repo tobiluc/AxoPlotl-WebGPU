@@ -13,12 +13,8 @@ void DataControlTool::render_ui(Application& _app)
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted
-    if (!_app.scene().get_object(info_object_id_)) {
-        info_object_id_ = -1;
-    }
-    if (!_app.scene().get_object(settings_object_id_)) {
-        settings_object_id_ = -1;
-    }
+    if (!_app.scene().get_object(info_object_id_)) {info_object_id_ = -1;}
+    if (!_app.scene().get_object(settings_object_id_)) {settings_object_id_ = -1;}
 
     // For Convenience, we can apply things to all objects at once
     if (_app.scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
@@ -51,12 +47,10 @@ void DataControlTool::render_ui(Application& _app)
     ImGui::Separator();
 
     // Data Control per Object
-    std::shared_ptr<ObjectBase> unique_target = nullptr;
     for (const auto& obj : _app.scene().get_objects()) {
         ImGui::PushID(obj->id());
 
         ImGui::Checkbox("##V", &obj->target());
-        if (obj->target()) {unique_target = (unique_target)? nullptr : obj;}
 
         ImGui::SameLine();
         // Visible Checkbox
@@ -101,10 +95,26 @@ void DataControlTool::render_ui(Application& _app)
     }
 
     // Property Visualization
-    std::string title = "Properties ";
-    //if (unique_target) {title }
-    if (ImGui::CollapsingHeader("Properties") && unique_target) {
-        unique_target->render_ui_properties();
+    std::string title = "Properties";
+    if (ImGui::CollapsingHeader(title.c_str())) {
+        if (ImGui::BeginMenu("Object")) {
+            for (const auto& obj : _app.scene().get_objects()) {
+                ImGui::PushID(obj->id());
+                if (ImGui::MenuItem(obj->name().c_str())) {
+                    if (properties_object_id_ == obj->id()) {
+                        properties_object_id_ = -1;
+                    } else {
+                        properties_object_id_ = obj->id();
+                    }
+                }
+                ImGui::PopID();
+            }
+            ImGui::EndMenu();
+        }
+        if (auto obj = _app.scene().get_object(properties_object_id_)) {
+            ImGui::SeparatorText(obj->name().c_str());
+            obj->render_ui_properties();
+        } else {properties_object_id_ = -1;}
     }
 }
 

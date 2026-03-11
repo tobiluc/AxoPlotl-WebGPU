@@ -38,7 +38,7 @@ protected:
 public:
     struct Property
     {
-        enum class Mode : uint32_t {
+        enum class Type : uint32_t {
             COLOR = 0u,
             SCALAR = 1u,
             VEC3 = 2u,

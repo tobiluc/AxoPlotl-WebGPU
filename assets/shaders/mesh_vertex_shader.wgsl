@@ -5,7 +5,7 @@ struct Uniforms {
     @align(16) viewportSize: vec2<f32>,
     @align(16) pointSize: f32,
     @align(16) clipBox: ClipBox,
-    @align(16) mode:Mode,
+    @align(16) valueType:ValueType,
     @align(16) valueFilter: vec2<f32>
 };
 
@@ -49,7 +49,7 @@ fn vs_main(
     let value = props[iid].value;
 
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==MODE_SCALAR && !isInf(value.x) && isOutsideRange(value.x, ubo.valueFilter))) {
+        || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -61,7 +61,7 @@ fn vs_main(
 fn fs_main(in : VSOut) -> @location(0) vec4<f32>
 {
     let fragColor = getFragmentColorFromPropertyValue(
-        in.value, ubo.mode, ubo.valueFilter, colorMap, colorSampler
+        in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
     if (length(in.corner) > 1.0) {discard;} //round
     return fragColor;

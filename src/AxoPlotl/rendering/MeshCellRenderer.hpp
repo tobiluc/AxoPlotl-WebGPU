@@ -13,11 +13,11 @@ protected:
         alignas(16) Vec2f viewport_size_;
         alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) Property::Mode mode_ = Property::Mode::COLOR;
+        alignas(16) Property::Type type_ = Property::Type::COLOR;
         alignas(16) Property::Filter value_filter_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
-    static_assert(offsetof(Uniforms,mode_)%16==0);
+    static_assert(offsetof(Uniforms,type_)%16==0);
     static_assert(offsetof(Uniforms,cell_scale_)%16==0);
     static_assert(offsetof(Uniforms,viewport_size_)%16==0);
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
@@ -30,8 +30,8 @@ public:
         return uniforms_.cell_scale_;
     }
 
-    inline Property::Mode& property_mode() {
-        return uniforms_.mode_;
+    inline Property::Type& property_type() {
+        return uniforms_.type_;
     }
 
     inline Property::Filter& property_filter() {

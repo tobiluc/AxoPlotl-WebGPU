@@ -5,7 +5,7 @@ struct Uniforms {
     @align(16) viewportSize: vec2<f32>,
     @align(16) cellScale:f32,
     @align(16) clipBox: ClipBox,
-    @align(16) mode:Mode,
+    @align(16) valueType:ValueType,
     @align(16) valueFilter: vec2<f32>
 };
 
@@ -33,8 +33,9 @@ fn vs_main(
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
     let value = props[cell_index].value;
+
     if (isOutsideClipBox(pos, ubo.clipBox)
-|| (ubo.mode==MODE_SCALAR && !isInf(value.x) && isOutsideRange(value.x, ubo.valueFilter))) {
+        || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
         out.position = clippedPosition();
     }
     out.color = vec4<f32>(0,0,0,1);

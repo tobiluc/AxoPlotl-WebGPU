@@ -2,10 +2,10 @@ struct Property {
     value : vec4<f32>
 };
 
-alias Mode = u32;
-const MODE_COLOR:Mode = 0;
-const MODE_SCALAR:Mode = 1;
-const MODE_VEC3:Mode = 2;
+alias ValueType = u32;
+const VALUE_TYPE_COLOR:ValueType = 0;
+const VALUE_TYPE_SCALAR:ValueType = 1;
+const VALUE_TYPE_VEC3:ValueType = 2;
 
 const COLOR_NAN:vec4<f32> = vec4<f32>(0,0,0,1);
 const COLOR_INF:vec4<f32> = vec4<f32>(1,0,0,1);
@@ -21,6 +21,16 @@ fn isOutsideClipBox(pos:vec3<f32>, clipBox:ClipBox) -> bool {
 || (pos.x > clipBox.max.x) || (pos.y < clipBox.min.y)
 || (pos.y > clipBox.max.y) || (pos.z < clipBox.min.z)
 || (pos.z > clipBox.max.z)));
+};
+
+fn isOutsideValueFilter(
+    value:vec4<f32>,
+    valueType:ValueType,
+    valueFilter:vec2<f32>) -> bool
+{
+    return valueType==VALUE_TYPE_SCALAR
+        && !isInf(value.x)
+        && isOutsideRange(value.x, valueFilter);
 };
 
 fn clippedPosition() -> vec4<f32> {
@@ -47,7 +57,7 @@ fn isOutsideRange(val:f32, range:vec2<f32>) -> bool {
 
 fn getFragmentColorFromPropertyValue(
     value:vec4<f32>,
-    mode:Mode,
+    valueType:ValueType,
     valueFilter:vec2<f32>,
     colorMap : texture_2d<f32>,
     colorMapSampler: sampler
@@ -56,12 +66,12 @@ fn getFragmentColorFromPropertyValue(
     var color = vec4<f32>(1,0.9,0.9,0);
 
     // Interpret Value based on Property Mode
-    if (mode == MODE_COLOR) {
+    if (valueType == VALUE_TYPE_COLOR) {
         color = value;
-    } else if (mode == MODE_SCALAR) {
+    } else if (valueType == VALUE_TYPE_SCALAR) {
         let t = clamp((value.x-valueFilter.x)/(valueFilter.y-valueFilter.x), 0.0, 1.0);
         color = textureSample(colorMap, colorMapSampler, vec2<f32>(t,0.5));
-    } else if (mode == MODE_VEC3) {
+    } else if (valueType == VALUE_TYPE_VEC3) {
         color = vec4<f32>(normalize(value.xyz), 1.0);
     }
 

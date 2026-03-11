@@ -10,6 +10,9 @@ inline OVMVolumeMesh mesh_with_nan_and_inf_props()
     OVMVolumeMesh mesh;
     auto v_d = mesh.create_persistent_vertex_property<double>("v_double").value();
     auto e_f = mesh.create_persistent_edge_property<float>("e_float").value();
+    auto f_d = mesh.create_persistent_face_property<double>("f_double").value();
+    auto c_d = mesh.create_persistent_cell_property<double>("c_double").value();
+
     v_d[mesh.add_vertex(OVM::Vec3f(1,1,0))] = 0.0;
     v_d[mesh.add_vertex(OVM::Vec3f(2,1,0))] = 1.0;
     v_d[mesh.add_vertex(OVM::Vec3f(3,1,0))] = 2.0;

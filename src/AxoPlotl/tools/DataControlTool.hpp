@@ -1,6 +1,6 @@
 #pragma once
+
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
-#include <unordered_map>
 
 namespace AxoPlotl
 {
@@ -18,6 +18,7 @@ public:
 private:
     int info_object_id_ = -1;
     int settings_object_id_ = -1;
+    int properties_object_id_ = -1;
 };
 
 }
