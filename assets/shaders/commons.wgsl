@@ -30,7 +30,7 @@ fn isOutsideValueFilter(
 {
     return valueType==VALUE_TYPE_SCALAR
         && !isInf(value.x)
-        && (value.x < valueFilter.x || value.x >= valueFilter.y);
+        && (value.x < valueFilter.x || value.x > valueFilter.y);
 };
 
 fn clippedPosition() -> vec4<f32> {

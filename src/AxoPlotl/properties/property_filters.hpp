@@ -73,7 +73,6 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         const float hist_maxf = static_cast<float>(hist_.max_);
 
         Vec2f& vis_range_f = get_property_value_filter<Entity>(_r);
-        if (vis_range_f.y > hist_maxf) {vis_range_f.y = hist_maxf;}
         ColorMap& cm = get_property_color_map<Entity>(_r);
 
         if (!hist_.any_valid_) [[unlikely]] {
@@ -87,7 +86,7 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         }
 
         // Render Histogram.
-        // If we click a bar, set it to the visible range
+        // Select a bucket
         int selected_bucket(-1);
         if (show_only_visble_buckets_) {
             selected_bucket = hist_.render_ui(
@@ -97,10 +96,17 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         } else {
             selected_bucket = hist_.render_ui(cm);
         }
-
         if (selected_bucket >= 0) {
             vis_range_f.x = static_cast<float>(hist_.bucket_min(selected_bucket));
             vis_range_f.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
+            if (selected_bucket < hist_.n_buckets_-1) {
+                // The bucket should be a half open interval
+                // so if we don't select the last bucket, we subtract
+                // a tiny amount
+                vis_range_f.y = std::nextafter(
+                    vis_range_f.y,
+                    -std::numeric_limits<float>::infinity());
+            }
         }
 
         std::string colormap_menu_title = "Colormap ("
@@ -231,14 +237,6 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             vis_range_f.y = b_show_true;
         } else {
             draw_colormap_sliders();
-
-            // Since a bucket corresponds to a half open interval [.,.)
-            // we increase the maximum visible range if the last backet
-            // is selected to allow the max. element to be shown
-            // (i.e. the last bucket is an interval [.,.])
-            if (vis_range_f.y >= hist_maxf) {
-                vis_range_f.y = hist_maxf + 1.0f;
-            }
         }
     }
 

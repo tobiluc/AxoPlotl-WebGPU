@@ -208,9 +208,10 @@ struct Histogram
             // Calculate the top-left of this specific bar's slot
             ImVec2 bar_slot_pos = ImVec2(start_pos.x + i * (bar_width + spacing), start_pos.y);
 
-            // Color Calculation
+            // Color Calculation. Interpolate in color map
             const ImU32 bar_color = _cm.sample_color_packed(
-                (n_buckets_==1)? 0.5f : (static_cast<float>(i)-b_begin)/(b_end-b_begin-1));
+                (b_end-b_begin==1)? 0.5f :
+                (static_cast<float>(i)-b_begin)/(b_end-b_begin-1));
 
             // Draw the Bar Rectangle
             const float h = (static_cast<float>(count) / max_vis_count) * max_bar_height;
