@@ -210,7 +210,7 @@ struct Histogram
 
             // Color Calculation
             const ImU32 bar_color = _cm.sample_color_packed(
-                (n_buckets_==1)? 0.5f : static_cast<float>(i)/(n_buckets_-1));
+                (n_buckets_==1)? 0.5f : (static_cast<float>(i)-b_begin)/(b_end-b_begin-1));
 
             // Draw the Bar Rectangle
             const float h = (static_cast<float>(count) / max_vis_count) * max_bar_height;
