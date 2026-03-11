@@ -103,11 +103,13 @@ wgpu::Buffer AxoPlotl::create_position_buffer(
         wgpu::BufferUsage::Storage |
         wgpu::BufferUsage::CopyDst |
         wgpu::BufferUsage::Vertex;
-    desc.size = sizeof(RendererBase::Position) * _positions.size();
+    desc.size = sizeof(RendererBase::Position) * std::max(_positions.size(), 1lu);
     desc.mappedAtCreation = false;
     desc.label = "Position";
 
     wgpu::Buffer buffer = _device.createBuffer(desc);
-    _device.getQueue().writeBuffer(buffer, 0, _positions.data(), desc.size);
+    if (!_positions.empty()) [[likely]] {
+        _device.getQueue().writeBuffer(buffer, 0, _positions.data(), desc.size);
+    }
     return buffer;
 }

@@ -77,6 +77,8 @@ void OpenMeshObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _view_projection)
 {
+    if (deleted()) [[unlikely]] {return;}
+
     const auto& mvp = _view_projection * transform_;
 
     renderer_.render(

@@ -47,11 +47,9 @@ public:
     int add_object(Args... _args)
     {
         objects_.push_back(std::make_shared<Object>(this, _args...));
-        if (!objects_.back()->deleted()) [[likely]] {
-            objects_.back()->init();
-            objects_.back()->recompute_bounding_box();
-            zoom_to_box(objects_.back()->bounding_box());
-        }
+        objects_.back()->init();
+        objects_.back()->recompute_bounding_box();
+        zoom_to_box(objects_.back()->bounding_box());
         return objects_.back()->id();
     }
 
@@ -61,7 +59,7 @@ public:
 
     inline std::shared_ptr<ObjectBase> get_object(int _id) const {
         for (auto obj : objects_) {
-            if (obj->id() == _id) {
+            if (!obj->deleted() && obj->id() == _id) {
                 return obj;
             }
         }

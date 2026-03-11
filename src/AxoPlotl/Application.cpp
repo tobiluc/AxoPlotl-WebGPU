@@ -1,5 +1,5 @@
 #include "Application.hpp"
-#include "AxoPlotl/debug/mesh_with_nan_and_inf_props.hpp"
+#include "AxoPlotl/debug/meshes.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
@@ -436,6 +436,10 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
                 scene_.add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
             }
+            if (ImGui::MenuItem("Add empty Mesh")) {
+                scene_.add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
+            }
+
             ImGui::EndMenu(); // !Debug
         }
 #endif

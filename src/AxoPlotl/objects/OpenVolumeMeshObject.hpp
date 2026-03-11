@@ -60,8 +60,6 @@ public:
         mesh_(std::move(_mesh)),
         filepath_(_filepath)
     {
-        if (mesh_.n_vertices()==0) [[unlikely]] {deleted_ = true;}
-
         this->name_ = _filepath.has_value()?
             _filepath.value().stem().string() :
             "New Volume Mesh Object " + std::to_string(id_);
