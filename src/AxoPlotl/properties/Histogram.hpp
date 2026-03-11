@@ -226,7 +226,9 @@ struct Histogram
             ImGui::PushID(i);
             ImGui::InvisibleButton("##bar_hitbox", ImVec2(bar_width, max_bar_height));
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Range %s - %s\nCount: %zu (%.2f %%)",
+                ImGui::SetTooltip((std::string("[%s, %s")
+                        + ((i==n_buckets_-1)? "]" : ")")
+                        + "\n%zu (%.2f %%)").c_str(),
                     std::to_string(bucket_min(i)).c_str(),
                     std::to_string(bucket_max_[i]).c_str(),
                     count,

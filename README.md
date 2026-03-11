@@ -7,6 +7,7 @@ This is the currently developed WebGPU version of
 - TODO
 
 ### Wishlist
+- [ ] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
 - [x] Histogram: Handle special case when all properties are either NaN or Inf
 - [ ] Histogram: Handle special case when all properties have same values. In general #distinct values should be >= #buckets. Also, make buckets a partition i.e. intervals [a,b) instead of [a,b].
 - [x] Histogram: Handle NaN & Infinity values separately.
@@ -19,8 +20,8 @@ more transparent, the larger/smaller a property value is.
 - [ ] Warning Popup when input mesh contains no vertices or any position with NaN or INF.
 
 ### Bugs
+- [ ] For some model, when selecting the computed dihedral angle property, the range filter seems posessed by a ghost (could not reproduce).  
 - [x] Application crashes when loading a mesh with no vertices (size of position buffer = 0)
-- [ ] For some model, when selecting the computed dihedral angle property, the range filter seems posedded by a ghost (could not reproduce).  
 - [x] When selecting a face/cell scalar property,
 it is visualized as expected, but when
 then also enabling vertices/edges rendering

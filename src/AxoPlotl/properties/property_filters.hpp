@@ -11,6 +11,24 @@
 namespace AxoPlotl
 {
 
+template<typename FT>
+inline bool InputScalar(const char* _lbl, FT* _val)
+{
+    bool changed = false;
+    if constexpr(std::is_same_v<FT,bool>) {
+        changed = ImGui::Checkbox(_lbl, _val);
+    } else if constexpr(std::is_floating_point_v<FT>) {
+        float f = static_cast<float>(*_val);
+        changed = ImGui::InputFloat(_lbl, &f);
+        *_val = static_cast<FT>(f);
+    } else if constexpr(std::is_integral_v<FT>) {
+        int i = static_cast<int>(*_val);
+        changed = ImGui::InputInt(_lbl, &i);
+        *_val = static_cast<FT>(i);
+    }
+    return changed;
+}
+
 struct PropertyFilterBase
 {
     virtual void init(OpenVolumeMeshRenderer& _r) = 0;
@@ -51,7 +69,11 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
 
     void renderUI(OpenVolumeMeshRenderer& _r) override
     {
+        const float hist_minf = static_cast<float>(hist_.min_);
+        const float hist_maxf = static_cast<float>(hist_.max_);
+
         Vec2f& vis_range_f = get_property_value_filter<Entity>(_r);
+        if (vis_range_f.y > hist_maxf) {vis_range_f.y = hist_maxf;}
         ColorMap& cm = get_property_color_map<Entity>(_r);
 
         if (!hist_.any_valid_) [[unlikely]] {
@@ -116,9 +138,6 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
         };
         auto draw_colormap_sliders = [&]() -> bool
         {
-            const float hist_minf = static_cast<float>(hist_.min_);
-            const float hist_maxf = static_cast<float>(hist_.max_);
-
             ImVec2 top_left = ImGui::GetCursorScreenPos();
             ImVec2 total_size = ImVec2(ImGui::GetContentRegionAvail().x, 20);
             ImVec2 bot_right = ImVec2(top_left.x + total_size.x, top_left.y + total_size.y);
@@ -169,20 +188,18 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
                     changed = true;
                 }
 
-                // Get visible range in scalar type
-                glm::vec<2,Scalar> vis_range_s = {
-                    static_cast<Scalar>(vis_range_f.x),
-                    static_cast<Scalar>(vis_range_f.y)
-                };
-                vis_range_f.x = static_cast<float>(vis_range_s.x);
-                vis_range_f.y = static_cast<float>(vis_range_s.y);
-
                 // Draw the visual handle
                 const ImU32 handle_fill_color = changed? ImGui::GetColorU32(ImGuiCol_SliderGrabActive) : ImGui::GetColorU32(ImGuiCol_SliderGrab);
                 const ImU32 handle_outline_color = ImGui::GetColorU32(ImGuiCol_Border);
                 draw_list->AddLine(ImVec2(handle_x[i], top_left.y), ImVec2(handle_x[i], bot_right.y), handle_fill_color, 4.0f);
                 draw_list->AddCircleFilled(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_fill_color);
                 draw_list->AddCircle(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_outline_color);
+
+                // Get visible range in scalar type
+                glm::vec<2,Scalar> vis_range_s = {
+                    static_cast<Scalar>(vis_range_f.x),
+                    static_cast<Scalar>(vis_range_f.y)
+                };
 
                 // Handle Label
                 char buf[32];
@@ -214,6 +231,14 @@ struct ScalarPropertyRangeFilter : public PropertyFilterBase
             vis_range_f.y = b_show_true;
         } else {
             draw_colormap_sliders();
+
+            // Since a bucket corresponds to a half open interval [.,.)
+            // we increase the maximum visible range if the last backet
+            // is selected to allow the max. element to be shown
+            // (i.e. the last bucket is an interval [.,.])
+            if (vis_range_f.y >= hist_maxf) {
+                vis_range_f.y = hist_maxf + 1.0f;
+            }
         }
     }
 
