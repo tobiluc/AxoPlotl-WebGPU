@@ -7,7 +7,7 @@ namespace AxoPlotl
 
 class Application;
 
-class RendererBase
+class PropertyRendererBase
 {
 public:
     using Position = Vec4f; // ensure 16 byte alignment with 4f vector

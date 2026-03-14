@@ -15,7 +15,7 @@ namespace AxoPlotl
 
 class Application;
 
-class OpenVolumeMeshRenderer : public RendererBase
+class OpenVolumeMeshRenderer : public PropertyRendererBase
 {
 public:
     inline MeshVertexRenderer& vertices() {
@@ -43,7 +43,7 @@ public:
 
     struct StaticData
     {
-        std::vector<RendererBase::Position> positions_;
+        std::vector<PropertyRendererBase::Position> positions_;
         std::vector<uint32_t> vertices_;
         std::vector<std::pair<uint32_t,uint32_t>> edges_;
         std::vector<std::vector<uint32_t>> faces_;

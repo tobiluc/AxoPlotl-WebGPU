@@ -10,304 +10,178 @@
 
 namespace AxoPlotl
 {
-
-template<typename FT>
-inline bool InputScalar(const char* _lbl, FT* _val)
-{
-    bool changed = false;
-    if constexpr(std::is_same_v<FT,bool>) {
-        changed = ImGui::Checkbox(_lbl, _val);
-    } else if constexpr(std::is_floating_point_v<FT>) {
-        float f = static_cast<float>(*_val);
-        changed = ImGui::InputFloat(_lbl, &f);
-        *_val = static_cast<FT>(f);
-    } else if constexpr(std::is_integral_v<FT>) {
-        int i = static_cast<int>(*_val);
-        changed = ImGui::InputInt(_lbl, &i);
-        *_val = static_cast<FT>(i);
-    }
-    return changed;
-}
-
 struct PropertyFilterBase
 {
     virtual void init(OpenVolumeMeshRenderer& _r) = 0;
-    virtual void renderUI(OpenVolumeMeshRenderer& _r) = 0;
+    virtual void render_ui(OpenVolumeMeshRenderer& _r) = 0;
     virtual std::string name() = 0;
 };
 
-template<typename Entity>
-static Vec2f& get_property_value_filter(OpenVolumeMeshRenderer& _r)
+template<typename EntityTag>
+struct PropertyFilterBool : public PropertyFilterBase
 {
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().property_filter().range_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().property_filter().range_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.faces().property_filter().range_;}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cells().property_filter().range_;}
-}
+public:
+    PropertyFilterBool(OVM::PropertyStorageT<bool>* _prop)
+        : hist_(_prop) {}
 
-template<typename Entity>
-static ColorMap& get_property_color_map(OpenVolumeMeshRenderer& _r)
-{
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Vertex>) {return _r.vertices().color_map();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Edge>) {return _r.edges().color_map();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Face>) {return _r.faces().color_map();}
-    if constexpr(std::is_same_v<Entity,OVM::Entity::Cell>) {return _r.cells().color_map();}
-}
+    inline void init(OpenVolumeMeshRenderer& _r) override {
 
-template<typename ST, typename Entity>
-struct ScalarPropertyRangeFilter : public PropertyFilterBase
-{
-    using Scalar = ST;
-
-    ScalarPropertyRangeFilter(Histogram<Scalar> _hist)
-        : hist_(_hist) {}
-
-    void init(OpenVolumeMeshRenderer& _r) override
-    {
-        get_property_color_map<Entity>(_r).set_coolwarm();
     }
 
-    void renderUI(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(OpenVolumeMeshRenderer& _r) override
     {
-        const float hist_minf = static_cast<float>(hist_.min_);
-        const float hist_maxf = static_cast<float>(hist_.max_);
+        auto& cm = _r.entities<EntityTag>().color_map();
 
-        Vec2f& vis_range_f = get_property_value_filter<Entity>(_r);
-        ColorMap& cm = get_property_color_map<Entity>(_r);
+        int b = hist_.render_ui(cm);
+        if (b==0) {show_false_ = true; show_true_ = false;}
+        else if (b==1) {show_false_ = false; show_true_ = true;}
 
-        if (!hist_.any_valid_) [[unlikely]] {
-            ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
-            return;
-        }
+        changed_ |= ImGui::Checkbox("False", &show_false_);
+        ImGui::SameLine();
+        changed_ |= ImGui::ColorEdit3("##FalseCol", &color_false_[0]);
 
-        if constexpr(!std::is_same_v<Scalar,bool>) {
-            ImGui::Checkbox(ICON_FA_EYE_LOW_VISION, &show_only_visble_buckets_);
-            ImGui::SameLine();
-        }
+        changed_ |= ImGui::Checkbox("True", &show_true_);
+        ImGui::SameLine();
+        changed_ |= ImGui::ColorEdit3("##TrueCol", &color_true_[0]);
 
-        // Render Histogram.
-        // Select a bucket
-        int selected_bucket(-1);
-        if (show_only_visble_buckets_) {
-            selected_bucket = hist_.render_ui(
-                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range_f.x))),
-                hist_.bucket(hist_.interpolate(hist_.interpolation_t(vis_range_f.y)))+1,
-                cm);
-        } else {
-            selected_bucket = hist_.render_ui(cm);
-        }
-        if (selected_bucket >= 0) {
-            vis_range_f.x = static_cast<float>(hist_.bucket_min(selected_bucket));
-            vis_range_f.y = static_cast<float>(hist_.bucket_max_[selected_bucket]);
-            if (selected_bucket < hist_.n_buckets_-1) {
-                // The bucket should be a half open interval
-                // so if we don't select the last bucket, we subtract
-                // a tiny amount
-                vis_range_f.y = std::nextafter(
-                    vis_range_f.y,
-                    -std::numeric_limits<float>::infinity());
-            }
-        }
-
-        std::string colormap_menu_title = "Colormap ("
-            + cm.name_ + ")";
-        if (ImGui::BeginMenu(colormap_menu_title.c_str())) {
-            if (ImGui::MenuItem("Viridis")) {
-                cm.set_viridis();
-            }
-            if (ImGui::MenuItem("Magma")) {
-                cm.set_magma();
-            }
-            if (ImGui::MenuItem("Plasma")) {
-                cm.set_plasma();
-            }
-            if (ImGui::MenuItem("Diverging Red Blue")) {
-                cm.set_rd_bu();
-            }
-            if (ImGui::MenuItem("Coolwarm")) {
-                cm.set_coolwarm();
-            }
-            if (ImGui::MenuItem("Rainbow")) {
-                cm.set_rainbow();
-            }
-            ImGui::EndMenu();
-        }
-
-        auto draw_colormap = [&]() {
-            ImGui::Image(
-                (ImTextureID)cm.view_,
-                ImVec2(ImGui::GetContentRegionAvail().x, 20),
-                ImVec2(0,0),
-                ImVec2(1,1)
-            );
-            ImGui::Spacing();
-        };
-        auto draw_colormap_sliders = [&]() -> bool
-        {
-            ImVec2 top_left = ImGui::GetCursorScreenPos();
-            ImVec2 total_size = ImVec2(ImGui::GetContentRegionAvail().x, 20);
-            ImVec2 bot_right = ImVec2(top_left.x + total_size.x, top_left.y + total_size.y);
-
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-            // Helper to map property value float
-            // to screen x coordinates
-            auto val_to_screen_x = [&](const float& val) {
-                float t = (val - hist_minf) / (hist_maxf - hist_minf);
-                return top_left.x + t * total_size.x;
+        if (changed_) {
+            // Update Range
+            _r.entities<EntityTag>().property_filter().range_ = {
+                !show_false_, show_true_
             };
 
-            // Draw the Colormap Image
-            const float visible_left = val_to_screen_x(vis_range_f.x);
-            const float visible_right = val_to_screen_x(vis_range_f.y);
-            draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
-            ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
-            ImGui::Image((ImTextureID)cm.view_, ImVec2(visible_right-visible_left, total_size.y));
-            ImGui::SetCursorScreenPos(top_left);
-
-            // Setup interaction
-            bool changed = false;
-            float handle_x[2] = {val_to_screen_x(vis_range_f.x),
-                                 val_to_screen_x(vis_range_f.y)};
-
-            for (int i = 0; i < 2; ++i)
-            {
-                ImGui::PushID(i);
-                ImVec2 pos = ImVec2(handle_x[i], top_left.y + total_size.y * 0.5f);
-
-                // Transparent invisible button to capture drag
-                const float button_width = 16.0f;
-                ImGui::SetCursorScreenPos(ImVec2(pos.x - 0.5f*button_width, top_left.y));
-                ImGui::InvisibleButton("##handle", ImVec2(button_width, total_size.y));
-
-                if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-                {
-                    const float mouse_x = ImGui::GetIO().MousePos.x;
-                    const float t = std::clamp((mouse_x - top_left.x) / total_size.x, 0.0f, 1.0f);
-
-                    const float valf = hist_minf + t * (hist_maxf - hist_minf);
-
-                    // Clamp
-                    if (i == 0) {vis_range_f.x = std::min(valf, vis_range_f.y);}
-                    else {vis_range_f.y = std::max(valf, vis_range_f.x);}
-
-                    changed = true;
-                }
-
-                // Draw the visual handle
-                const ImU32 handle_fill_color = changed? ImGui::GetColorU32(ImGuiCol_SliderGrabActive) : ImGui::GetColorU32(ImGuiCol_SliderGrab);
-                const ImU32 handle_outline_color = ImGui::GetColorU32(ImGuiCol_Border);
-                draw_list->AddLine(ImVec2(handle_x[i], top_left.y), ImVec2(handle_x[i], bot_right.y), handle_fill_color, 4.0f);
-                draw_list->AddCircleFilled(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_fill_color);
-                draw_list->AddCircle(ImVec2(handle_x[i], bot_right.y), 4.0f, handle_outline_color);
-
-                // Get visible range in scalar type
-                glm::vec<2,Scalar> vis_range_s = {
-                    static_cast<Scalar>(vis_range_f.x),
-                    static_cast<Scalar>(vis_range_f.y)
-                };
-
-                // Handle Label
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%s", (i == 0)?
-                    std::to_string(vis_range_s.x).c_str() :
-                    std::to_string(vis_range_s.y).c_str());
-                ImVec2 text_size = ImGui::CalcTextSize(buf);
-                const float text_x = handle_x[i] - (text_size.x * 0.5f);
-                const float text_y = bot_right.y + 5.0f;
-                draw_list->AddText(ImVec2(text_x, text_y), ImGui::GetColorU32(ImGuiCol_Text), buf);
-
-                ImGui::PopID();
+            // Update Color Map
+            if (show_true_ && show_false_) {
+                cm.set_gradient(color_false_, color_true_);
+            } else if (show_false_) {
+                cm.set_single_color(color_false_);
+            } else if (show_true_) {
+                cm.set_single_color(color_true_);
             }
-
-            // Move the cursor down so the next ImGui element doesn't overlap the text
-            const float reserved_space = 5.0f + ImGui::GetFontSize();
-            ImGui::SetCursorScreenPos(ImVec2(top_left.x, bot_right.y + reserved_space + ImGui::GetStyle().ItemSpacing.y));
-
-            return changed;
-        };
-
-        if constexpr(std::is_same_v<ST,bool>) {
-            bool b_show_false = !vis_range_f.x;
-            bool b_show_true = vis_range_f.y;
-            ImGui::Checkbox("Show False", &b_show_false);
-            ImGui::SameLine();
-            ImGui::Checkbox("Show True", &b_show_true);
-            vis_range_f.x = !b_show_false;
-            vis_range_f.y = b_show_true;
-        } else {
-            draw_colormap_sliders();
         }
+        changed_ = false;
     }
 
-    std::string name() override {
-        return "Scalar Range";
+    inline std::string name() override {
+        return "Bool Filter";
     }
 
-    Histogram<Scalar> hist_;
-    bool show_only_visble_buckets_ = false;
+private:
+    HistogramBool hist_;
+    Vec3f color_true_ = {0,1,0};
+    Vec3f color_false_ = {1,0,0};
+    bool show_true_ = true;
+    bool show_false_ = true;
+    bool changed_ = true;
 };
 
-template<typename ST, typename Entity>
-struct ScalarPropertyExactFilter : public PropertyFilterBase
+template<typename FT, typename EntityTag> requires(std::is_floating_point_v<FT>)
+struct PropertyFilterFloatRange : public PropertyFilterBase
 {
-    using Scalar = ST;
+public:
+    PropertyFilterFloatRange(OVM::PropertyStorageT<FT>* _prop)
+        : hist_(_prop) {}
 
-    ScalarPropertyExactFilter(Histogram<Scalar> _hist)
-        : hist_(_hist)
-    {
+    inline void init(OpenVolumeMeshRenderer& _r) override {
+        _r.entities<EntityTag>().color_map().set_coolwarm();
+        _r.entities<EntityTag>().property_filter().range_ = {
+            hist_.min(), hist_.max()
+        };
     }
 
-    void init(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(OpenVolumeMeshRenderer& _r) override
     {
-        get_property_color_map<Entity>(_r).set_single_color(
-            {1.0f, 0.0f, 0.0f}
-        );
-        color = {1.0f, 0.0f, 0.0f};
-    }
-
-    void renderUI(OpenVolumeMeshRenderer& _r) override
-    {
-        if (!hist_.any_valid_) [[unlikely]] {
+        if (!hist_.has_valid_values()) [[unlikely]] {
             ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
             return;
         }
-
-        Vec2f& visible_range = get_property_value_filter<Entity>(_r);
-
-        //_r.v_prop_range
-        if constexpr(std::is_same_v<ST,int>) {
-            int i = visible_range[0];
-            ImGui::InputInt("Value", &i);
-            visible_range[0] = visible_range[1] = i;
+        Vec2f& rangef = _r.entities<EntityTag>().property_filter().range_;
+        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        int b = hist_.render_ui(cm);
+        if (b >= 0) {
+            rangef.x = hist_.bucket_min(b);
+            rangef.y = hist_.bucket_max(b);
         }
-        else if constexpr(std::is_same_v<ST,float> || std::is_same_v<ST,double>) {
-            float f = visible_range[0];
-            ImGui::InputFloat("Value", &f);
-            visible_range[0] = visible_range[1] = f;
-        }
-        else if constexpr(std::is_same_v<ST,bool>) {
-            bool b = visible_range[0];
-            ImGui::Checkbox("True", &b);
-            visible_range[0] = visible_range[1] = b;
-        }
-
-        // Clamp to total range
-        visible_range[0] = std::clamp<float>(visible_range[0], hist_.min_, hist_.max_);
-        visible_range[1] = visible_range[0];
-
-        if (ImGui::ColorEdit3("Color", &color[0])) {
-            auto& cm = get_property_color_map<Entity>(_r);
-            cm.set_single_color({color[0],color[1],color[2]});
-        }
+        cm.render_menu();
+        // std::cerr << rangef.x << "/"<< rangef.y<< "/"<< hist_.min()<< "/"<< hist_.max() << std::endl;
+        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
     }
 
-    std::string name() override {
-        return "Exact Scalar";
+    inline std::string name() override {
+        return "Float Range";
     }
 
-    Vec3f color = {1,0,0};
-    Histogram<Scalar> hist_;
+private:
+    HistogramFT<FT> hist_;
+    //bool show_only_visble_buckets_ = false;
+};
+
+template<typename IT, typename EntityTag> requires(std::is_integral_v<IT>)
+struct PropertyFilterIntRange : public PropertyFilterBase
+{
+public:
+    PropertyFilterIntRange(OVM::PropertyStorageT<IT>* _prop)
+        : hist_(_prop) {}
+
+    inline void init(OpenVolumeMeshRenderer& _r) override {
+        _r.entities<EntityTag>().color_map().set_coolwarm();
+        _r.entities<EntityTag>().property_filter().range_ = {
+            hist_.min(), hist_.max()
+        };
+    }
+
+    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    {
+        Vec2f& rangef = _r.entities<EntityTag>().property_filter().range_;
+        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        int b = hist_.render_ui(cm);
+        if (b >= 0) {
+            rangef.x = hist_.bucket_min(b);
+            rangef.y = hist_.bucket_max(b);
+        }
+        cm.render_menu();
+        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
+    }
+
+    inline std::string name() override {
+        return "Int Range";
+    }
+
+private:
+    HistogramIT<IT> hist_;
+};
+
+template<typename IT, typename EntityTag> requires(std::is_integral_v<IT>)
+struct PropertyFilterIntValue : public PropertyFilterBase
+{
+public:
+    PropertyFilterIntValue(OVM::PropertyStorageT<IT>* _prop)
+        : hist_(_prop) {}
+
+    inline void init(OpenVolumeMeshRenderer& _r) override {
+        vali_ = hist_.min();
+        _r.entities<EntityTag>().color_map().set_coolwarm();
+        _r.entities<EntityTag>().property_filter().range_ = {
+            vali_, vali_
+        };
+    }
+
+    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    {
+        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        cm.render_menu();
+        ImGui::InputInt("Value", &vali_);
+        vali_ = std::clamp(static_cast<IT>(vali_), hist_.min(), hist_.max());
+        _r.entities<EntityTag>().property_filter().range_ = {vali_,vali_};
+    }
+
+    inline std::string name() override {
+        return "Int Value";
+    }
+
+private:
+    int vali_;
+    HistogramIT<IT> hist_;
 };
 
 }

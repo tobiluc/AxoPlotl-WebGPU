@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class VectorRenderer : public RendererBase
+class VectorRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!

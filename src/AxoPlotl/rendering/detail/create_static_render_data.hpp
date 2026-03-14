@@ -16,6 +16,6 @@ OpenVolumeMeshRenderer::StaticData create_static_render_data(const OVMVolumeMesh
 
 wgpu::Buffer create_position_buffer(
     wgpu::Device _device,
-    const std::vector<RendererBase::Position>& _positions);
+    const std::vector<PropertyRendererBase::Position>& _positions);
 
 }

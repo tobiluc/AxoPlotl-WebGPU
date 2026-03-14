@@ -225,5 +225,29 @@ void ColorMap::update(const std::vector<f16>& _data)
     std::cout << "Update Color Map" << std::endl;
 }
 
+void ColorMap::render_menu()
+{
+    if (ImGui::BeginMenu(("Colormap ("+name_+")").c_str())) {
+        if (ImGui::MenuItem("Viridis")) {
+            set_viridis();
+        }
+        if (ImGui::MenuItem("Magma")) {
+            set_magma();
+        }
+        if (ImGui::MenuItem("Plasma")) {
+            set_plasma();
+        }
+        if (ImGui::MenuItem("Diverging Red Blue")) {
+            set_rd_bu();
+        }
+        if (ImGui::MenuItem("Coolwarm")) {
+            set_coolwarm();
+        }
+        if (ImGui::MenuItem("Rainbow")) {
+            set_rainbow();
+        }
+        ImGui::EndMenu();
+    }
+}
 
 }

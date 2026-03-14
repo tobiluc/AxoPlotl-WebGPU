@@ -43,9 +43,9 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-RendererBase::Property::Data get_buffer_property_data(const T& _val)
+PropertyRendererBase::Property::Data get_buffer_property_data(const T& _val)
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
 
     if constexpr(std::is_floating_point_v<T>) {
         if (std::isnan(_val)) {
@@ -75,26 +75,26 @@ RendererBase::Property::Data get_buffer_property_data(const T& _val)
 }
 
 template<typename T>
-constexpr RendererBase::Property::Type get_buffer_property_type()
+constexpr PropertyRendererBase::Property::Type get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
-        return RendererBase::Property::Type::SCALAR;
+        return PropertyRendererBase::Property::Type::SCALAR;
     } else if constexpr(ToLoG::vector_type<T>) {
         if constexpr(ToLoG::Traits<T>::dim == 3) {
-            return RendererBase::Property::Type::VEC3;
+            return PropertyRendererBase::Property::Type::VEC3;
         }
     }
-    return RendererBase::Property::Type::COLOR;
+    return PropertyRendererBase::Property::Type::COLOR;
 }
 
 template<typename T, typename EntityTag>
-std::vector<RendererBase::Property::Data> get_buffer_property_data(
+std::vector<PropertyRendererBase::Property::Data> get_buffer_property_data(
     const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
 {
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
-    std::vector<RendererBase::Property::Data> data;
+    std::vector<PropertyRendererBase::Property::Data> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
         data.push_back(get_buffer_property_data(static_cast<T>(prop[h])));
@@ -114,30 +114,23 @@ void upload_buffer_property_data(
     auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
 
     // Setup Property Filters
-    if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>)
-    {
-        // Compute the Scalar Range and assign it to the visible range
-        auto hist = Histogram(_prop->cast_to_StorageT<T>());
-        //std::cerr << hist << std::endl;
-
-        //auto r = get_scalar_property_range<T,Entity>(_mesh, prop);
-        get_property_value_filter<Entity>(_vol_rend) = {
-            static_cast<float>(hist.min_), static_cast<float>(hist.max_)
-        };
-
-        // Create filters
-        _prop_filters.push_back(std::make_shared<ScalarPropertyRangeFilter<T,Entity>>(hist));
-        _prop_filters.push_back(std::make_shared<ScalarPropertyExactFilter<T,Entity>>(hist));
+    if constexpr(std::is_same_v<bool,T>) {
+        _prop_filters.push_back(std::make_shared<PropertyFilterBool<Entity>>(_prop->cast_to_StorageT<bool>()));
+        _prop_filters.back()->init(_vol_rend);
+    } else if constexpr(std::is_floating_point_v<T>) {
+        _prop_filters.push_back(std::make_shared<PropertyFilterFloatRange<T,Entity>>(_prop->cast_to_StorageT<T>()));
+        _prop_filters.back()->init(_vol_rend);
+    } else if constexpr(std::is_integral_v<T>) {
+        _prop_filters.push_back(std::make_shared<PropertyFilterIntValue<T,Entity>>(_prop->cast_to_StorageT<T>()));
+        _prop_filters.back()->init(_vol_rend);
+        _prop_filters.push_back(std::make_shared<PropertyFilterIntRange<T,Entity>>(_prop->cast_to_StorageT<T>()));
+        _prop_filters.back()->init(_vol_rend);
     }
 
     const auto& data = get_buffer_property_data<T,Entity>(
         _mesh, _prop);
     _vol_rend.entities<Entity>().update_property_data(data);
     _vol_rend.entities<Entity>().property_type() = get_buffer_property_type<T>();
-    // _vol_rend.vertices().enabled() = false;
-    // _vol_rend.edges().enabled() = false;
-    // _vol_rend.faces().enabled() = false;
-    // _vol_rend.cells().enabled() = false;
     _vol_rend.entities<Entity>().enabled() = true;
 }
 

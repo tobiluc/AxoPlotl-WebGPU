@@ -29,7 +29,7 @@ void OpenVolumeMeshObject::render_ui_settings()
     // Each entity technically has their own, but we
     // just modify all at once.
     const auto& bbox = bounding_box();
-    RendererBase::ClipBox& cb = renderer_.vertices().clip_box();
+    PropertyRendererBase::ClipBox& cb = renderer_.vertices().clip_box();
     bool clip_box_enabled = cb.enabled_;
     if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
         cb.set(bbox.min(),bbox.max());
@@ -98,6 +98,7 @@ void OpenVolumeMeshObject::render_ui_properties()
 
                 auto upload_data = [&]<typename T>() {
                     upload_buffer_property_data<T,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    prop<EntityTag>().filter_index_ = 0;
                 };
 
                 if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
@@ -162,14 +163,14 @@ void OpenVolumeMeshObject::render_ui_properties()
                 }
                 ImGui::EndMenu();
             }
-            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->renderUI(renderer_);
+            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui(renderer_);
         }
 
         // Clear
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data<EntityTag>();
             renderer_.entities<EntityTag>().property_type()
-                = RendererBase::Property::Type::COLOR;
+                = PropertyRendererBase::Property::Type::COLOR;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().filters_.clear();
         }
@@ -252,7 +253,7 @@ void OpenVolumeMeshObject::render(
 
     if (renderer_.vertices().enabled() &&
         renderer_.vertices().property_type() ==
-        RendererBase::Property::Type::VEC3) {
+        PropertyRendererBase::Property::Type::VEC3) {
         vertex_vector_renderer_.render(
             scene_->app()->scene_viewport(),
             _render_pass,
@@ -267,7 +268,7 @@ void OpenVolumeMeshObject::render(
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_vertices());
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
@@ -277,7 +278,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
 }
 void OpenVolumeMeshObject::upload_default_edge_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_edges());
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
@@ -287,7 +288,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
 }
 void OpenVolumeMeshObject::upload_default_face_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_faces());
     for (OVM::FH fh : mesh_.faces()) {
@@ -304,7 +305,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
 }
 void OpenVolumeMeshObject::upload_default_cell_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_cells());
     for (OVM::CH ch : mesh_.cells()) {

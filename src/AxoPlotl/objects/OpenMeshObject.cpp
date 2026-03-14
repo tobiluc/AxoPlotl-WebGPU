@@ -27,7 +27,7 @@ void OpenMeshObject::render_ui_settings()
     // Each entity technically has their own, but we
     // just modify all at once.
     const auto& bbox = bounding_box();
-    RendererBase::ClipBox& cb = renderer_.vertices().clip_box();
+    PropertyRendererBase::ClipBox& cb = renderer_.vertices().clip_box();
     bool clip_box_enabled = cb.enabled_;
     if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
         cb.set(bbox.min(),bbox.max());
@@ -89,7 +89,7 @@ void OpenMeshObject::render(
 
 void OpenMeshObject::upload_default_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Property::Data;
     std::vector<D> props;
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
         props.push_back(D(0,0,0,1));

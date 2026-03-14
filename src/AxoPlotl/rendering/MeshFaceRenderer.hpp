@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class MeshFaceRenderer : public RendererBase
+class MeshFaceRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
