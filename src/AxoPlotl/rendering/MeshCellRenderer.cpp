@@ -14,11 +14,12 @@ struct CellIndex {
     uint32_t ch_;
 };
 
-void ColoredCellPropertyRenderer::init(Application* _app,
-    wgpu::Buffer _vertices_position_buffer,
-    const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-    wgpu::Buffer _cells_center_buffer)
+void ColoredCellPropertyRenderer::init(uint32_t _object_id, Application* _app,
+                                       wgpu::Buffer _vertices_position_buffer,
+                                       const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+                                       wgpu::Buffer _cells_center_buffer)
 {
+    object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
@@ -445,6 +446,7 @@ void ColoredCellPropertyRenderer::render(
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.object_id_ = object_id_;
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 

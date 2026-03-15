@@ -65,7 +65,7 @@ public:
         uint32_t eh_; // points to EdgePropertyData
     };
 
-    void init(Application* _app,
+    void init(uint32_t _object_id, Application* _app,
               wgpu::Buffer _position_buffer,
               const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 
@@ -76,6 +76,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 private:
+    uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;
     size_t n_edges_;
 

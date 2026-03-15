@@ -63,7 +63,7 @@ public:
         // center_buffer_.release();
     }
 
-    void init(Application* _app,
+    void init(uint32_t _object_id, Application* _app,
       wgpu::Buffer _vertices_position_buffer,
       const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
         wgpu::Buffer _cells_center_buffer);
@@ -75,6 +75,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 private:
+    uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;
     size_t n_cells_;
     size_t n_triangle_indices_;

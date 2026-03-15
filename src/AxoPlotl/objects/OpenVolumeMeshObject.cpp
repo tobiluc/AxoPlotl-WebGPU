@@ -204,10 +204,10 @@ void OpenVolumeMeshObject::init()
     n_positions_ = mesh_.n_vertices();
     vertices_position_buffer_ = create_position_buffer(scene_->app()->device_, data.positions_);
     cells_center_buffer_ = create_position_buffer(scene_->app()->device_, get_cell_centers(mesh_));
-    vertex_renderer_.init(scene_->app(), vertices_position_buffer_, data.vertices_);
-    edge_renderer_.init(scene_->app(), vertices_position_buffer_, data.edges_);
-    face_renderer_.init(scene_->app(), vertices_position_buffer_, data.faces_);
-    cell_renderer_.init(scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
+    vertex_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.vertices_);
+    edge_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.edges_);
+    face_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.faces_);
+    cell_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
     //vectors_on_vertices_renderer_.init(scene_->app(), vertices_position_buffer_);
 
     upload_default_property_data<OVM::Entity::Vertex>();
@@ -248,6 +248,82 @@ void OpenVolumeMeshObject::render(
     //     scene_->app()->scene_viewport(),
     //     _render_pass,
     //     mvp);
+}
+
+void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p)
+{
+    if (_p.object_id_ != id()) [[unlikely]] {return;}
+
+    auto show_prop_list = [&]<typename EntityTag>() {
+        for (auto pp = mesh_.persistent_props_begin<EntityTag>();
+             pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+        {
+            auto show_item = [&]<typename T>() {
+                auto prop = mesh_.get_property<T,EntityTag>((*pp)->name()).value();
+                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.index_)];
+                ImGui::Text("%s: %s",
+                    (*pp)->name().c_str(),
+                    value_to_string(val).c_str()
+                );
+            };
+
+            ImGui::PushID((*pp)->name().c_str());
+            if ((*pp)->typeNameWrapper()=="double") {
+                show_item.template operator()<double>();
+            } else if ((*pp)->typeNameWrapper()=="int") {
+                show_item.template operator()<int>();
+            } else if ((*pp)->typeNameWrapper()=="uint") {
+                show_item.template operator()<unsigned int>();
+            } else if ((*pp)->typeNameWrapper()=="float") {
+                show_item.template operator()<float>();
+            } else if ((*pp)->typeNameWrapper()=="bool") {
+                show_item.template operator()<bool>();
+            } else if ((*pp)->typeNameWrapper()=="short") {
+                show_item.template operator()<short>();
+            } else if ((*pp)->typeNameWrapper()=="ushort") {
+                show_item.template operator()<unsigned short>();
+            } else if ((*pp)->typeNameWrapper()=="char") {
+                show_item.template operator()<char>();
+            } else if ((*pp)->typeNameWrapper()=="uchar") {
+                show_item.template operator()<unsigned char>();
+            } else if ((*pp)->typeNameWrapper()=="long") {
+                show_item.template operator()<long>();
+            } else if ((*pp)->typeNameWrapper()=="ulong") {
+                show_item.template operator()<unsigned long>();
+            } else if ((*pp)->typeNameWrapper()=="vec3d") {
+                show_item.template operator()<OVM::Vec3d>();
+            } else if ((*pp)->typeNameWrapper()=="vec3f") {
+                show_item.template operator()<OVM::Vec3f>();
+            } else if ((*pp)->typeNameWrapper()=="vec4d") {
+                show_item.template operator()<OVM::Vec4d>();
+            } else if ((*pp)->typeNameWrapper()=="vec4f") {
+                show_item.template operator()<OVM::Vec4f>();
+            }
+            ImGui::PopID();
+        }
+    };
+
+    ImGui::SeparatorText(name().c_str());
+
+    switch (_p.type_) {
+    case 0:
+        ImGui::Text("Vertex(%u)", _p.index_);
+        show_prop_list.operator()<OVM::Entity::Vertex>();
+        break;
+    case 1:
+        ImGui::Text("Edge(%u)", _p.index_);
+        show_prop_list.operator()<OVM::Entity::Edge>();
+        break;
+    case 2:
+        ImGui::Text("Face(%u)", _p.index_);
+        show_prop_list.operator()<OVM::Entity::Face>();
+        break;
+    case 3:
+        ImGui::Text("Cell(%u)", _p.index_);
+        show_prop_list.operator()<OVM::Entity::Cell>();
+        break;
+    default: break;
+    }
 }
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()

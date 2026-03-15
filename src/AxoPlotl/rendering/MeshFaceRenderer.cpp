@@ -14,10 +14,12 @@ struct FaceIndex {
     uint32_t fh_;
 };
 
-void ColoredFacePropertyRenderer::init(Application* _app,
+void ColoredFacePropertyRenderer::init(
+    uint32_t _object_id, Application* _app,
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
 {
+    object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
@@ -288,6 +290,7 @@ void ColoredFacePropertyRenderer::render(
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.object_id_ = object_id_;
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 

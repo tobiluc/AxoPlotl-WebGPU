@@ -15,7 +15,7 @@ void Scene::init(Application *_app)
     app_->device_, {
         Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,1,0,1),Vec4f(0,0,1,1)
     });
-    axis_renderer_.init(app_, axis_position_buffer_,
+    axis_renderer_.init(UINT32_MAX, app_, axis_position_buffer_,
         {{0,1},{0,2},{0,3}});
     axis_renderer_.update_property_data(
         std::vector<D>{

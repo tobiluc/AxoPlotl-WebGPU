@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/Scene.hpp"
+#include "AxoPlotl/picking.hpp"
 #include <webgpu/webgpu.hpp>
 
 #include <GLFW/glfw3.h>
@@ -53,21 +54,13 @@ public:
         return user_ui_callback_;
     }
 
-    struct PickResult {
-        uint32_t p0 = 0;
-        uint32_t p1 = 1;
-        uint32_t p2 = 2;
-        uint32_t p3 = 3;
-        friend inline std::ostream& operator<<(std::ostream& _os, const PickResult& _p) {
-            return _os << _p.p0 << "/"<< _p.p1 << "/"<< _p.p2 << "/"<< _p.p3;
-        }
-    };
     PickResult request_pick_result(float _x, float _y);
 
 private:
     //float sidebar_width_ = 300.0f;
     float sidebar_rel_width_ = 0.3f;
     bool sidebar_right_aligned_ = false;
+    PickResult pick_result_;
 
     std::function<void(Application* _app)> user_ui_callback_;
 
@@ -90,7 +83,8 @@ private:
 
     bool init_gui();
 
-    void update_gui(wgpu::RenderPassEncoder _render_pass);
+    void update_gui(
+        wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
 
     void configure_surface();
 

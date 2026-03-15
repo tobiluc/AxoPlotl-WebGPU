@@ -279,6 +279,24 @@ void Application::run()
     renderPass.end();
 
     //------------------
+    // Click to Pick
+    //------------------
+    bool just_clicked_on_object(false);
+    if (Input::Mouse::RIGHT_JUST_PRESSED) {
+        int width, height;
+        glfwGetWindowSize(window(), &width, &height);
+        float x_scale = (float)viewport[2] / (float)width;
+        float y_scale = (float)viewport[3] / (float)height;
+        float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
+        float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
+        pick_result_ = request_pick_result(x, y);
+        //std::cerr << pick_result_ << std::endl;
+        if (pick_result_.object_id_ < UINT32_MAX) {
+            just_clicked_on_object = true;
+        }
+    }
+
+    //------------------
     // GUI Render Pass
     //------------------
     // only expects pixel color attachment (no picking texture)
@@ -290,7 +308,7 @@ void Application::run()
     guiPassDesc.colorAttachments = &color_attachments[0];
     guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
     wgpu::RenderPassEncoder guiPass = cmd_encoder.beginRenderPass(guiPassDesc);
-    update_gui(guiPass);
+    update_gui(guiPass, just_clicked_on_object);
     guiPass.end();
 
     // Submit
@@ -309,19 +327,6 @@ void Application::run()
 #endif
 
     wgpuPollEvents(device_, false);
-
-    // Click to Pick
-    if (Input::Mouse::LEFT_JUST_PRESSED) {
-        // Mouse is in screen coordinates, we need
-        // in texture coordinates
-        int width, height;
-        glfwGetWindowSize(window(), &width, &height);
-        float x_scale = (float)viewport[2] / (float)width;
-        float y_scale = (float)viewport[3] / (float)height;
-        float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
-        float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
-        std::cerr << request_pick_result(x, y) << std::endl;
-    }
 
     // Functions to execute after the command buffer submit
     // For example deletion of scene objects.
@@ -417,7 +422,7 @@ glm::vec<4,float> Application::total_viewport()
     return {0.0f, 0.0f, fbWidth, fbHeight};
 }
 
-void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
+void Application::update_gui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
 {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -510,6 +515,13 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         ImGuiFileDialog::Instance()->Close();
     }
 
+    if (_just_clicked_on_object) [[unlikely]] {ImGui::OpenPopup("PickingPopup");}
+    if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+        auto obj = scene().get_object(pick_result_.object_id_);
+        if (obj) [[likely]] {obj->render_ui_picking(pick_result_);}
+        ImGui::EndPopup();
+    }
+
     user_ui_callback_(this);
 
     // data_control_.render_ui(*this)
@@ -526,7 +538,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
 }
 
-Application::PickResult Application::request_pick_result(float _x, float _y)
+PickResult Application::request_pick_result(float _x, float _y)
 {
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 

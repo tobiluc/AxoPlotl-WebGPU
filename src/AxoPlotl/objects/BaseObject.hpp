@@ -1,4 +1,5 @@
 #pragma once
+#include <AxoPlotl/picking.hpp>
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "ToLoG/Core.hpp"
 #include "webgpu/webgpu.hpp"
@@ -35,6 +36,8 @@ public:
     virtual void render_ui_settings() = 0;
 
     virtual void render_ui_properties() = 0;
+
+    virtual void render_ui_picking(const PickResult& _p) = 0;
 
     inline const ToLoG::AABB<Vec3f>& bounding_box() const {
         return bbox_;

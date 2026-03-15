@@ -7,7 +7,7 @@ This is the currently developed WebGPU version of
 - TODO
 
 ### Wishlist
-- [ ] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
+- [x] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
 - [x] Histogram: Handle special case when all properties are either NaN or Inf
 - [ ] Histogram: Handle special case when all properties have same values. In general #distinct values should be >= #buckets. Also, make buckets a partition i.e. intervals [a,b) instead of [a,b].
 - [x] Histogram: Handle NaN & Infinity values separately.

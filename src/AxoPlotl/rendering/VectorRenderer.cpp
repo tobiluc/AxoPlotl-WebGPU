@@ -9,9 +9,10 @@ namespace AxoPlotl
 wgpu::RenderPipeline VectorRenderer::pipeline_;
 wgpu::BindGroupLayout VectorRenderer::bind_group_layout_;
 
-void VectorRenderer::init(Application* _app,
+void VectorRenderer::init(uint32_t _object_id, Application* _app,
                           wgpu::Buffer _position_buffer)
 {
+    object_id_ = _object_id;
     app_ = _app;
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     create_buffers();
@@ -206,6 +207,7 @@ void VectorRenderer::render(
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.object_id_ = object_id_;
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 

@@ -94,6 +94,8 @@ public:
 
     void render_ui_properties() override;
 
+    void render_ui_picking(const PickResult& _p) override;
+
     void init() override;
 
     void recompute_bounding_box() override;
