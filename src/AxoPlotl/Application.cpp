@@ -134,9 +134,10 @@ bool Application::init()
     configure_surface();
 
     //----------
-    // Depth
+    // Special Textures
     //----------
     create_depth_texture();
+    create_picking_texture();
 
     //----------
     // Scene
@@ -185,23 +186,35 @@ void Application::run()
 
 #ifndef WEBGPU_BACKEND_WGPU
         wgpuTextureRelease(surfaceTexture.texture);
-#endif // WEBGPU_BACKEND_WGPU
+#endif // WEBGPU_BACKEND_WGPU \
+
+    wgpu::RenderPassColorAttachment color_attachments[2];
 
     // Color Attachment
-    wgpu::RenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = targetView;
-    colorAttachment.loadOp = wgpu::LoadOp::Clear;
-    colorAttachment.storeOp = wgpu::StoreOp::Store;
-    colorAttachment.clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
-    colorAttachment.resolveTarget = nullptr;
-    colorAttachment.nextInChain = nullptr;
+    color_attachments[0].view = targetView;
+    color_attachments[0].loadOp = wgpu::LoadOp::Clear;
+    color_attachments[0].storeOp = wgpu::StoreOp::Store;
+    color_attachments[0].clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
+    color_attachments[0].resolveTarget = nullptr;
+    color_attachments[0].nextInChain = nullptr;
 #ifndef WEBGPU_BACKEND_WGPU
-    colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    color_attachments[0].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif //!WEBGPU_BACKEND_WGPU
+
+    // Picking Attachment
+    color_attachments[1].view = picking_view_;
+    color_attachments[1].loadOp = wgpu::LoadOp::Clear;
+    color_attachments[1].storeOp = wgpu::StoreOp::Store;
+    color_attachments[1].clearValue = {0, 0, 0, 0 };
+    color_attachments[1].resolveTarget = nullptr;
+    color_attachments[1].nextInChain = nullptr;
+#ifndef WEBGPU_BACKEND_WGPU
+    color_attachments[1].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
 #endif //!WEBGPU_BACKEND_WGPU
 
     wgpu::RenderPassDescriptor renderPassDesc{};
-    renderPassDesc.colorAttachmentCount = 1;
-    renderPassDesc.colorAttachments = &colorAttachment;
+    renderPassDesc.colorAttachmentCount = 2;
+    renderPassDesc.colorAttachments = color_attachments;
     renderPassDesc.label = "Main Render Pass";
 
     // Depth Attachment
@@ -242,11 +255,26 @@ void Application::run()
     renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
     renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // Render  Gui
-    update_gui(renderPass);
+    renderPass.end();
+
+    //------------------
+    // GUI Render Pass
+    //------------------
+    // only expects pixel color attachment (no picking texture)
+    // wgpu::RenderPassColorAttachment guiColorAttachment{};
+    // guiColorAttachment.view = targetView;
+    color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
+    // guiColorAttachment.storeOp = wgpu::StoreOp::Store;
+    wgpu::RenderPassDescriptor guiPassDesc{};
+    guiPassDesc.colorAttachmentCount = 1;
+    guiPassDesc.colorAttachments = &color_attachments[0];
+    wgpu::RenderPassEncoder guiPass = cmd_encoder.beginRenderPass(guiPassDesc);
+    update_gui(guiPass);
+    guiPass.end();
+
 
     // End pass
-    renderPass.end();
+    //renderPass.end();
 
     // Submit
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
@@ -287,6 +315,7 @@ void Application::on_window_resize(float width, float height)
     //surface_.unconfigure();
     configure_surface();
     create_depth_texture();
+    create_picking_texture();
 
     //pipeline.updateProjection(width/height);
 }
@@ -541,6 +570,32 @@ void Application::create_depth_texture()
 
     depthStencilState.stencilReadMask = 0;
     depthStencilState.stencilWriteMask = 0;
+}
+
+void Application::create_picking_texture()
+{
+    if (picking_view_) {picking_view_.release();}
+    if (picking_texture_) {
+        picking_texture_.destroy();
+        picking_texture_.release();
+    }
+    auto viewport = total_viewport();
+
+    wgpu::TextureDescriptor pickDesc{};
+    pickDesc.label = "Picking Texture";
+    pickDesc.dimension = wgpu::TextureDimension::_2D;
+    pickDesc.size = {
+        static_cast<uint32_t>(viewport[2]),
+        static_cast<uint32_t>(viewport[3]),
+        1
+    };
+    pickDesc.format = wgpu::TextureFormat::RGBA32Uint;
+    pickDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
+    pickDesc.sampleCount = 1;
+    pickDesc.mipLevelCount = 1;
+
+    picking_texture_ = device_.createTexture(pickDesc);
+    picking_view_ = picking_texture_.createView();
 }
 
 }

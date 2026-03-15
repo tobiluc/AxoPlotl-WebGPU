@@ -207,18 +207,27 @@ void ColoredEdgePropertyRenderer::create_pipeline()
     vertexState.bufferCount = 1;
     vertexState.buffers = &vertexBufferLayout;
 
+    // ---------------
     // Fragment state
-    wgpu::ColorTargetState colorTarget{};
+    //-----------------
+    wgpu::ColorTargetState color_targets[2] = {};
     wgpu::SurfaceCapabilities surf_caps;
     app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
-    colorTarget.format = surf_caps.formats[0];
-    colorTarget.writeMask = wgpu::ColorWriteMask::All;
+
+    // color
+    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].writeMask = wgpu::ColorWriteMask::All;
+
+    // picking
+    color_targets[1].format = wgpu::TextureFormat::RGBA32Uint;
+    color_targets[1].blend = nullptr;
+    color_targets[1].writeMask = wgpu::ColorWriteMask::All;
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
     fragmentState.entryPoint = "fs_main";
-    fragmentState.targetCount = 1;
-    fragmentState.targets = &colorTarget;
+    fragmentState.targetCount = 2;
+    fragmentState.targets = color_targets;
 
     // Primitive state
     wgpu::PrimitiveState primitive{};

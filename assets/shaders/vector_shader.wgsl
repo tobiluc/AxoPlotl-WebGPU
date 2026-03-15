@@ -40,7 +40,9 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in : VSOut) -> @location(0) vec4<f32>
+fn fs_main(in : VSOut) -> FragmentOutput
 {
-    return in.color;
+    var out:FragmentOutput;
+    out.color = in.color;
+    return out;
 }

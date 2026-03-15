@@ -93,8 +93,10 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in:V2F) -> @location(0) vec4<f32>
+fn fs_main(in:V2F) -> FragmentOutput
 {
+    var out : FragmentOutput;
+
     // Round Edge Endpoints
     let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
     let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
@@ -102,8 +104,8 @@ fn fs_main(in:V2F) -> @location(0) vec4<f32>
     if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
     {discard;}
 
-    let fragColor = getFragmentColorFromPropertyValue(
+    out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
-    return fragColor;
+    return out;
 }

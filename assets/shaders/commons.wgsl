@@ -54,6 +54,11 @@ fn isOutsideRange(val:f32, range:vec2<f32>) -> bool {
     return val < range.x || val > range.y;
 };
 
+struct FragmentOutput {
+    @location(0) color : vec4<f32>,
+    @location(1) pick : vec4<u32> // picking
+};
+
 fn getFragmentColorFromPropertyValue(
     value:PropertyValue,
     valueType:ValueType,

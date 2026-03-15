@@ -58,11 +58,12 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in : VSOut) -> @location(0) vec4<f32>
+fn fs_main(in : VSOut) -> FragmentOutput
 {
-    let fragColor = getFragmentColorFromPropertyValue(
+    var out: FragmentOutput;
+    out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
     if (length(in.corner) > 1.0) {discard;} //round
-    return fragColor;
+    return out;
 }

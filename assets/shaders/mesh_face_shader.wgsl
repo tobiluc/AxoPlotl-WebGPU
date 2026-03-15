@@ -42,9 +42,11 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in:V2F) -> @location(0) vec4<f32> {
-    let fragColor = getFragmentColorFromPropertyValue(
+fn fs_main(in:V2F) -> FragmentOutput
+{
+    var out: FragmentOutput;
+    out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
-    return fragColor;
+    return out;
 }

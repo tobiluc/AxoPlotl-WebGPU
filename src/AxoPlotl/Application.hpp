@@ -69,6 +69,8 @@ private:
     wgpu::Texture depthTexture;
     wgpu::TextureView depthTextureView;
     wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Undefined;
+    wgpu::Texture picking_texture_;
+    wgpu::TextureView picking_view_;
 
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
@@ -81,6 +83,8 @@ private:
     void configure_surface();
 
     void create_depth_texture();
+
+    void create_picking_texture();
 };
 
 }
