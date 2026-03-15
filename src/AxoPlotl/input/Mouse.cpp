@@ -38,7 +38,7 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
     Mouse::POSITION[0] = (float)mouse_x;
     Mouse::POSITION[1] = (float)mouse_y;
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) return; // Rotate by dragging
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) return; // Rotate by dragging
 }
 
 void scroll_callback(GLFWwindow* window, double dx, double dy)

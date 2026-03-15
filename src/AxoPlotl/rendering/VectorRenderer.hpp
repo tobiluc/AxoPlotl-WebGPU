@@ -14,6 +14,7 @@ protected:
         alignas(16) float line_width_ = 8.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) float vec_scale_ = 0.05f;
+        alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);

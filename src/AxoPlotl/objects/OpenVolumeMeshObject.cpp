@@ -208,7 +208,7 @@ void OpenVolumeMeshObject::init()
     edge_renderer_.init(scene_->app(), vertices_position_buffer_, data.edges_);
     face_renderer_.init(scene_->app(), vertices_position_buffer_, data.faces_);
     cell_renderer_.init(scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
-    vectors_on_vertices_renderer_.init(scene_->app(), vertices_position_buffer_);
+    //vectors_on_vertices_renderer_.init(scene_->app(), vertices_position_buffer_);
 
     upload_default_property_data<OVM::Entity::Vertex>();
     upload_default_property_data<OVM::Entity::Edge>();

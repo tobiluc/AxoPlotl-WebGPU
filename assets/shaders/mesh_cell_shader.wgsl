@@ -6,7 +6,8 @@ struct Uniforms {
     @align(16) cellScale:f32,
     @align(16) clipBox: ClipBox,
     @align(16) valueType:ValueType,
-    @align(16) valueFilter: vec2<f32>
+    @align(16) valueFilter: vec2<f32>,
+    @align(16) objectId:u32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -19,6 +20,7 @@ struct Uniforms {
 struct V2F {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
+    @location(1) @interpolate(flat) cellHandle: u32
 };
 
 @vertex
@@ -40,6 +42,7 @@ fn vs_main(
         out.position = clippedPosition();
     }
     out.value = value;
+    out.cellHandle = cell_index;
 
     return out;
 }
@@ -51,5 +54,6 @@ fn fs_main(in:V2F) -> FragmentOutput
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
+    out.pick = vec4<u32>(ubo.objectId, 3, in.cellHandle, 0);
     return out;
 }

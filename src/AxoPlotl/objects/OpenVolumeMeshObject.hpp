@@ -117,7 +117,7 @@ private:
     ColoredEdgePropertyRenderer edge_renderer_;
     ColoredFacePropertyRenderer face_renderer_;
     ColoredCellPropertyRenderer cell_renderer_;
-    VectorRenderer vectors_on_vertices_renderer_;
+    //VectorRenderer vectors_on_vertices_renderer_;
 };
 
 }

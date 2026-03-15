@@ -6,7 +6,8 @@ struct Uniforms {
     @align(16) pointSize: f32,
     @align(16) clipBox: ClipBox,
     @align(16) valueType:ValueType,
-    @align(16) valueFilter: vec2<f32>
+    @align(16) valueFilter: vec2<f32>,
+    @align(16) objectId:u32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -18,7 +19,8 @@ struct Uniforms {
 struct VSOut {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
-    @location(1) corner : vec2<f32>
+    @location(1) corner : vec2<f32>,
+    @location(2) @interpolate(flat) vertexHandle: u32
 };
 
 @vertex
@@ -53,6 +55,7 @@ fn vs_main(
         out.position = clippedPosition();
     }
     out.value = value;
+    out.vertexHandle = iid;
 
     return out;
 }
@@ -65,5 +68,6 @@ fn fs_main(in : VSOut) -> FragmentOutput
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
     if (length(in.corner) > 1.0) {discard;} //round
+    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, 0);
     return out;
 }

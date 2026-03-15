@@ -22,6 +22,20 @@
 #  include <webgpu/wgpu.h>
 #endif // WEBGPU_BACKEND_WGPU
 
+void wgpuPollEvents(
+    [[maybe_unused]] wgpu::Device _device,
+    [[maybe_unused]] bool _yield_to_browser) {
+#if defined(WEBGPU_BACKEND_DAWN)
+    _device.tick();
+#elif defined(WEBGPU_BACKEND_WGPU)
+    _device.poll(false);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+    if (_yield_to_browser) {
+        emscripten_sleep(100);
+    }
+#endif
+}
+
 namespace AxoPlotl
 {
 
@@ -133,11 +147,18 @@ bool Application::init()
     color_format_ = capabilities.formats[0];
     configure_surface();
 
-    //----------
+    //-------------------
     // Special Textures
-    //----------
+    //-------------------
     create_depth_texture();
     create_picking_texture();
+
+    wgpu::BufferDescriptor pickBuffDesc{};
+    pickBuffDesc.label = "Pixel Picking Buffer";
+    pickBuffDesc.size = sizeof(PickResult);
+    pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+    pickBuffDesc.mappedAtCreation = false;
+    picking_buffer_ = device_.createBuffer(pickBuffDesc);
 
     //----------
     // Scene
@@ -205,7 +226,7 @@ void Application::run()
     color_attachments[1].view = picking_view_;
     color_attachments[1].loadOp = wgpu::LoadOp::Clear;
     color_attachments[1].storeOp = wgpu::StoreOp::Store;
-    color_attachments[1].clearValue = {0, 0, 0, 0 };
+    color_attachments[1].clearValue = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
     color_attachments[1].resolveTarget = nullptr;
     color_attachments[1].nextInChain = nullptr;
 #ifndef WEBGPU_BACKEND_WGPU
@@ -264,17 +285,13 @@ void Application::run()
     // wgpu::RenderPassColorAttachment guiColorAttachment{};
     // guiColorAttachment.view = targetView;
     color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
-    // guiColorAttachment.storeOp = wgpu::StoreOp::Store;
     wgpu::RenderPassDescriptor guiPassDesc{};
     guiPassDesc.colorAttachmentCount = 1;
     guiPassDesc.colorAttachments = &color_attachments[0];
+    guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
     wgpu::RenderPassEncoder guiPass = cmd_encoder.beginRenderPass(guiPassDesc);
     update_gui(guiPass);
     guiPass.end();
-
-
-    // End pass
-    //renderPass.end();
 
     // Submit
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
@@ -291,17 +308,25 @@ void Application::run()
     surface_.present();
 #endif
 
-#if defined(WEBGPU_BACKEND_DAWN)
-    device_.tick();
-#elif defined(WEBGPU_BACKEND_WGPU)
-    device.poll(false);
-#endif
+    wgpuPollEvents(device_, false);
+
+    // Click to Pick
+    if (Input::Mouse::LEFT_JUST_PRESSED) {
+        // Mouse is in screen coordinates, we need
+        // in texture coordinates
+        int width, height;
+        glfwGetWindowSize(window(), &width, &height);
+        float x_scale = (float)viewport[2] / (float)width;
+        float y_scale = (float)viewport[3] / (float)height;
+        float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
+        float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
+        std::cerr << request_pick_result(x, y) << std::endl;
+    }
 
     // Functions to execute after the command buffer submit
     // For example deletion of scene objects.
     for (auto& fn : deferred_calls_) {fn();}
     deferred_calls_.clear();
-
 }
 
 void Application::on_window_resize(float width, float height)
@@ -499,6 +524,71 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
 
     ImGui::Render();
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
+}
+
+Application::PickResult Application::request_pick_result(float _x, float _y)
+{
+    wgpu::CommandEncoder encoder = device_.createCommandEncoder();
+
+    // We copy FROM the picking texture
+    wgpu::ImageCopyTexture src{};
+    src.texture = picking_texture_;
+    src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
+    src.mipLevel = 0;
+    src.aspect = wgpu::TextureAspect::All;
+
+    // We copy TO the picking buffer
+    wgpu::ImageCopyBuffer dst{};
+    dst.buffer = picking_buffer_;
+    dst.layout.offset = 0;
+    dst.layout.bytesPerRow = 256; // needs to be multiple of 256
+    dst.layout.rowsPerImage = 1;
+
+    // Copy the single pixel we clicked on (1 pixel is 1x1x1)
+    wgpu::Extent3D copySize = {1,1,1};
+    encoder.copyTextureToBuffer(src, dst, copySize);
+
+    wgpu::CommandBuffer cb = encoder.finish();
+    queue_.submit(1, &cb);
+    cb.release();
+    encoder.release();
+
+    struct Context {
+        bool ready;
+        wgpu::Buffer buffer;
+        PickResult pick;
+    };
+
+    auto on_buffer_mapped = [](
+        WGPUBufferMapAsyncStatus status,
+        void* _user_data)
+    {
+        Context* context = reinterpret_cast<Context*>(_user_data);
+        context->ready = true;
+        //std::cout << "Buffer mapped with status " << status << std::endl;
+        if (status != wgpu::BufferMapAsyncStatus::Success) {return;}
+
+        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
+        context->pick = {data[0],data[1],data[2],data[3]};
+
+        // std::cout << "bufferData = [";
+        // for (int i = 0; i < 4; ++i) {
+        //     if (i > 0) std::cout << ", ";
+        //     std::cout << data[i];
+        // }
+        // std::cout << "]" << std::endl;
+
+        // unmap the memory
+        context->buffer.unmap();
+    };
+
+    // Create the Context instance
+    Context context = {false, picking_buffer_};
+    wgpuBufferMapAsync(picking_buffer_, wgpu::MapMode::Read, 0, sizeof(PickResult), on_buffer_mapped, (void*)&context);
+    while (!context.ready) {
+        wgpuPollEvents(device_, true);
+    }
+    return context.pick;
 }
 
 void Application::configure_surface()

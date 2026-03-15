@@ -132,6 +132,7 @@ void ColoredFacePropertyRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 5;
     layoutDesc.entries = entries;
+    layoutDesc.label = "Face Bind Group Layout";
 
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }

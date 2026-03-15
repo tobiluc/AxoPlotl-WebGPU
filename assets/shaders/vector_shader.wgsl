@@ -6,7 +6,8 @@ struct Uniforms {
     @align(16) viewportSize: vec2<f32>,
     @align(16) pointSize: f32,
     @align(16) clipBox: ClipBox,
-    @align(16) vecScale:f32
+    @align(16) vecScale:f32,
+    @align(16) objectId:u32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;

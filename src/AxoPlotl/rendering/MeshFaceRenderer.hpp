@@ -14,6 +14,7 @@ protected:
         alignas(16) ClipBox clip_box_;
         alignas(16) Property::Type type_ = Property::Type::COLOR;
         alignas(16) Property::Filter value_filter_;
+        alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);

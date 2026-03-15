@@ -53,6 +53,17 @@ public:
         return user_ui_callback_;
     }
 
+    struct PickResult {
+        uint32_t p0 = 0;
+        uint32_t p1 = 1;
+        uint32_t p2 = 2;
+        uint32_t p3 = 3;
+        friend inline std::ostream& operator<<(std::ostream& _os, const PickResult& _p) {
+            return _os << _p.p0 << "/"<< _p.p1 << "/"<< _p.p2 << "/"<< _p.p3;
+        }
+    };
+    PickResult request_pick_result(float _x, float _y);
+
 private:
     //float sidebar_width_ = 300.0f;
     float sidebar_rel_width_ = 0.3f;
@@ -71,6 +82,7 @@ private:
     wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Undefined;
     wgpu::Texture picking_texture_;
     wgpu::TextureView picking_view_;
+    wgpu::Buffer picking_buffer_;
 
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
