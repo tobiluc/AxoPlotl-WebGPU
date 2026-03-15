@@ -168,7 +168,7 @@ bool Application::init()
     //----------
     // Gui
     //----------
-    if (!init_gui()) {
+    if (!init_imgui()) {
         return false;
     }
 
@@ -308,7 +308,7 @@ void Application::run()
     guiPassDesc.colorAttachments = &color_attachments[0];
     guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
     wgpu::RenderPassEncoder guiPass = cmd_encoder.beginRenderPass(guiPassDesc);
-    update_gui(guiPass, just_clicked_on_object);
+    render_imgui(guiPass, just_clicked_on_object);
     guiPass.end();
 
     // Submit
@@ -372,7 +372,7 @@ void Application::terminate()
     glfwTerminate();
 }
 
-bool Application::init_gui()
+bool Application::init_imgui()
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -422,7 +422,7 @@ glm::vec<4,float> Application::total_viewport()
     return {0.0f, 0.0f, fbWidth, fbHeight};
 }
 
-void Application::update_gui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
+void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
 {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -515,6 +515,7 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass, bool _just_cl
         ImGuiFileDialog::Instance()->Close();
     }
 
+    // Clicking on an Object
     if (_just_clicked_on_object) [[unlikely]] {ImGui::OpenPopup("PickingPopup");}
     if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
         auto obj = scene().get_object(pick_result_.object_id_);
@@ -523,13 +524,6 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass, bool _just_cl
     }
 
     user_ui_callback_(this);
-
-    // data_control_.render_ui(*this)
-    // for (const auto& plugin : PluginRegistry::get_plugins()) {
-    //     if (ImGui::CollapsingHeader(plugin.second->name())) {
-    //         plugin.second->render_ui(*this);
-    //     }
-    // }
 
     ImGui::SetWindowFontScale(1.0f);
     ImGui::End();

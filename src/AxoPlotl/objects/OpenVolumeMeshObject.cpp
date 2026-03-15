@@ -304,6 +304,10 @@ void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p)
     };
 
     ImGui::SeparatorText(name().c_str());
+    if (ImGui::BeginMenu("Settings")) {
+        render_ui_settings();
+        ImGui::EndMenu();
+    }
 
     switch (_p.type_) {
     case 0:

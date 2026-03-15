@@ -81,9 +81,9 @@ private:
 
     Scene scene_;
 
-    bool init_gui();
+    bool init_imgui();
 
-    void update_gui(
+    void render_imgui(
         wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
 
     void configure_surface();
