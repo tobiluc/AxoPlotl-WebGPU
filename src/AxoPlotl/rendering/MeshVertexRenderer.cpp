@@ -5,10 +5,10 @@
 namespace AxoPlotl
 {
 
-wgpu::RenderPipeline MeshVertexRenderer::pipeline_;
-wgpu::BindGroupLayout MeshVertexRenderer::bind_group_layout_;
+wgpu::RenderPipeline ColoredVertexPropertyRenderer::pipeline_;
+wgpu::BindGroupLayout ColoredVertexPropertyRenderer::bind_group_layout_;
 
-void MeshVertexRenderer::init(Application* _app,
+void ColoredVertexPropertyRenderer::init(Application* _app,
           wgpu::Buffer _position_buffer,
           const std::vector<uint32_t>& _indices)
 {
@@ -24,7 +24,7 @@ void MeshVertexRenderer::init(Application* _app,
     create_pipeline();
 }
 
-void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
+void ColoredVertexPropertyRenderer::create_buffers(const std::vector<uint32_t> &_indices)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -75,7 +75,7 @@ void MeshVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
     }
 }
 
-void MeshVertexRenderer::create_bind_group_layout()
+void ColoredVertexPropertyRenderer::create_bind_group_layout()
 {
     if (bind_group_layout_) {return;}
 
@@ -117,7 +117,7 @@ void MeshVertexRenderer::create_bind_group_layout()
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void MeshVertexRenderer::create_bind_group()
+void ColoredVertexPropertyRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -160,7 +160,7 @@ void MeshVertexRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void MeshVertexRenderer::create_pipeline()
+void ColoredVertexPropertyRenderer::create_pipeline()
 {
     if (pipeline_ || n_vertices_==0) {return;}
 
@@ -218,7 +218,7 @@ void MeshVertexRenderer::create_pipeline()
     pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void MeshVertexRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredVertexPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -229,7 +229,7 @@ void MeshVertexRenderer::update_property_data(const std::vector<Property::Data>&
     std::cout << "Update Vertex Property Data" << std::endl;
 }
 
-void MeshVertexRenderer::render(
+void ColoredVertexPropertyRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

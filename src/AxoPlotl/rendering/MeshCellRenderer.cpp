@@ -5,36 +5,36 @@
 namespace AxoPlotl
 {
 
-wgpu::RenderPipeline MeshCellRenderer::triangle_pipeline_;
-wgpu::RenderPipeline MeshCellRenderer::line_pipeline_;
-wgpu::BindGroupLayout MeshCellRenderer::bind_group_layout_;
+wgpu::RenderPipeline ColoredCellPropertyRenderer::triangle_pipeline_;
+wgpu::RenderPipeline ColoredCellPropertyRenderer::line_pipeline_;
+wgpu::BindGroupLayout ColoredCellPropertyRenderer::bind_group_layout_;
 
 struct CellIndex {
     uint32_t vh_;
     uint32_t ch_;
 };
 
-void MeshCellRenderer::init(Application* _app,
-    wgpu::Buffer _position_buffer,
+void ColoredCellPropertyRenderer::init(Application* _app,
+    wgpu::Buffer _vertices_position_buffer,
     const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-    const std::vector<Position> &_centers)
+    wgpu::Buffer _cells_center_buffer)
 {
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
     n_cells_ = _cells.size();
-    n_positions_ = _position_buffer.getSize()/sizeof(Position);
-    position_buffer_ = _position_buffer;
-    create_buffers(_cells, _centers);
+    n_positions_ = _vertices_position_buffer.getSize()/sizeof(Position);
+    vertices_position_buffer_ = _vertices_position_buffer;
+    cells_center_buffer_ = _cells_center_buffer;
+    create_buffers(_cells);
     create_bind_group_layout();
     create_bind_group();
     create_triangle_pipeline();
     create_line_pipeline();
 }
 
-void MeshCellRenderer::create_buffers(
-    const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-    const std::vector<Position> &_centers)
+void ColoredCellPropertyRenderer::create_buffers(
+    const std::vector<std::vector<std::vector<uint32_t>>>& _cells)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -69,24 +69,24 @@ void MeshCellRenderer::create_buffers(
     n_line_indices_ = line_indices.size();
 
     // Cell Incenter Buffer
-    {
-        wgpu::BufferDescriptor desc{};
-        desc.usage =
-            wgpu::BufferUsage::Storage |
-            wgpu::BufferUsage::CopyDst |
-            wgpu::BufferUsage::Vertex;
-        desc.size = sizeof(Position) * std::max(n_cells_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = "Mesh Cell Incenter Buffer";
+    // {
+    //     wgpu::BufferDescriptor desc{};
+    //     desc.usage =
+    //         wgpu::BufferUsage::Storage |
+    //         wgpu::BufferUsage::CopyDst |
+    //         wgpu::BufferUsage::Vertex;
+    //     desc.size = sizeof(Position) * std::max(n_cells_,1lu);
+    //     desc.mappedAtCreation = false;
+    //     desc.label = "Mesh Cell Incenter Buffer";
 
-        center_buffer_ = device.createBuffer(desc);
-        queue.writeBuffer(
-            center_buffer_, 0,
-            _centers.data(),
-            sizeof(Position)*_centers.size());
+    //     center_buffer_ = device.createBuffer(desc);
+    //     queue.writeBuffer(
+    //         center_buffer_, 0,
+    //         _centers.data(),
+    //         sizeof(Position)*_centers.size());
 
-        std::cout << "Mesh Cell Incenter Buffer Size: " << desc.size << std::endl;
-    }
+    //     std::cout << "Mesh Cell Incenter Buffer Size: " << desc.size << std::endl;
+    // }
 
     // Cell Triangle Index Buffer
     {
@@ -151,7 +151,7 @@ void MeshCellRenderer::create_buffers(
     }
 }
 
-void MeshCellRenderer::create_bind_group_layout()
+void ColoredCellPropertyRenderer::create_bind_group_layout()
 {
     if (bind_group_layout_) {return;}
 
@@ -199,7 +199,7 @@ void MeshCellRenderer::create_bind_group_layout()
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void MeshCellRenderer::create_bind_group()
+void ColoredCellPropertyRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[6]{};
 
@@ -212,7 +212,7 @@ void MeshCellRenderer::create_bind_group()
 
     // 1 - Positions
     groupEntries[1].binding = 1;
-    groupEntries[1].buffer = position_buffer_;
+    groupEntries[1].buffer = vertices_position_buffer_;
     groupEntries[1].offset = 0;
     groupEntries[1].size = sizeof(Position) * n_positions_;
     std::cout << "1: Mesh Cell Positions #" << groupEntries[1].size << std::endl;
@@ -236,7 +236,7 @@ void MeshCellRenderer::create_bind_group()
 
     // 5 - Cell Centers
     groupEntries[5].binding = 5;
-    groupEntries[5].buffer = center_buffer_;
+    groupEntries[5].buffer = cells_center_buffer_;
     groupEntries[5].offset = 0;
     groupEntries[5].size = sizeof(Position) * std::max(n_cells_,1lu);
     std::cout << "5: Mesh Cell Incenters #" << groupEntries[5].size << std::endl;
@@ -249,7 +249,7 @@ void MeshCellRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void MeshCellRenderer::create_triangle_pipeline()
+void ColoredCellPropertyRenderer::create_triangle_pipeline()
 {
     if (triangle_pipeline_ || n_cells_==0) {return;}
 
@@ -327,7 +327,7 @@ void MeshCellRenderer::create_triangle_pipeline()
     triangle_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void MeshCellRenderer::create_line_pipeline()
+void ColoredCellPropertyRenderer::create_line_pipeline()
 {
     if (line_pipeline_ || n_cells_==0) {return;}
 
@@ -405,7 +405,7 @@ void MeshCellRenderer::create_line_pipeline()
     line_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void MeshCellRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredCellPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -416,7 +416,7 @@ void MeshCellRenderer::update_property_data(const std::vector<Property::Data>& _
     std::cout << "Update Cell Property Data" << std::endl;
 }
 
-void MeshCellRenderer::render(
+void ColoredCellPropertyRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

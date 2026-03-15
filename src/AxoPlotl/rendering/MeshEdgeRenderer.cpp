@@ -4,10 +4,10 @@
 
 namespace AxoPlotl
 {
-wgpu::RenderPipeline MeshEdgeRenderer::pipeline_;
-wgpu::BindGroupLayout MeshEdgeRenderer::bind_group_layout_;
+wgpu::RenderPipeline ColoredEdgePropertyRenderer::pipeline_;
+wgpu::BindGroupLayout ColoredEdgePropertyRenderer::bind_group_layout_;
 
-void MeshEdgeRenderer::init(Application* _app,
+void ColoredEdgePropertyRenderer::init(Application* _app,
     wgpu::Buffer _position_buffer,
     const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
@@ -23,7 +23,7 @@ void MeshEdgeRenderer::init(Application* _app,
     create_pipeline();
 }
 
-void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
+void ColoredEdgePropertyRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -84,7 +84,7 @@ void MeshEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint3
     }
 }
 
-void MeshEdgeRenderer::create_bind_group_layout()
+void ColoredEdgePropertyRenderer::create_bind_group_layout()
 {
     if (bind_group_layout_) {return;}
 
@@ -126,7 +126,7 @@ void MeshEdgeRenderer::create_bind_group_layout()
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void MeshEdgeRenderer::create_bind_group()
+void ColoredEdgePropertyRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -169,7 +169,7 @@ void MeshEdgeRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void MeshEdgeRenderer::create_pipeline()
+void ColoredEdgePropertyRenderer::create_pipeline()
 {
     if (pipeline_ || n_edges_==0) {return;}
 
@@ -255,7 +255,7 @@ void MeshEdgeRenderer::create_pipeline()
     pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void MeshEdgeRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredEdgePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -266,7 +266,7 @@ void MeshEdgeRenderer::update_property_data(const std::vector<Property::Data>& _
     std::cout << "Update Edge Property Data" << std::endl;
 }
 
-void MeshEdgeRenderer::render(
+void ColoredEdgePropertyRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

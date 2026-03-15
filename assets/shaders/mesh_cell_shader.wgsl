@@ -13,7 +13,7 @@ struct Uniforms {
 @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
 @group(0) @binding(2) var colorMap : texture_2d<f32>;
 @group(0) @binding(3) var colorSampler : sampler;
-@group(0) @binding(4) var<storage, read> props : array<Property>;
+@group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
 @group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
 
 struct V2F {
@@ -34,7 +34,7 @@ fn vs_main(
 + ubo.cellScale * (positions[vertex_index]-cellCenters[cell_index]);
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
-    let value = props[cell_index].value;
+    let value = props[cell_index];
     if (isOutsideClipBox(pos, ubo.clipBox)
         || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
         out.position = clippedPosition();

@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class MeshEdgeRenderer : public PropertyRendererBase
+class ColoredEdgePropertyRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -46,9 +46,9 @@ public:
         return property_color_map_;
     }
 
-    MeshEdgeRenderer() {}
+    ColoredEdgePropertyRenderer() {}
 
-    ~MeshEdgeRenderer()
+    ~ColoredEdgePropertyRenderer()
     {
         property_buffer_.destroy();
         property_buffer_.release();

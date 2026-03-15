@@ -3,7 +3,7 @@
 add_library(AxoPlotlCore
     AxoPlotl/Application.cpp
     AxoPlotl/IO/file_access.cpp
-    AxoPlotl/rendering/OpenVolumeMeshRenderer.cpp
+
     AxoPlotl/Scene.cpp
     AxoPlotl/objects/OpenVolumeMeshObject.cpp
     AxoPlotl/input/Mouse.cpp

@@ -36,7 +36,7 @@ public:
         if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
             add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
         } else if (std::holds_alternative<OMSurfaceMesh>(opt.value())) {
-            add_object<OpenMeshObject>(std::move(std::get<OMSurfaceMesh>(opt.value())),_path);
+            //add_object<OpenMeshObject>(std::move(std::get<OMSurfaceMesh>(opt.value())),_path);
         } else if (std::holds_alternative<SurfaceMesh>(opt.value())) {
             add_object<OpenVolumeMeshObject>(std::move(
                 volume_mesh(std::get<SurfaceMesh>(opt.value()))),_path);
@@ -91,7 +91,7 @@ protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
-    MeshEdgeRenderer axis_renderer_;
+    ColoredEdgePropertyRenderer axis_renderer_;
 
     PerspectiveCamera perspective_;
 };

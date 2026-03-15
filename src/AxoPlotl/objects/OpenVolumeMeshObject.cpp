@@ -13,23 +13,23 @@ namespace AxoPlotl
 
 void OpenVolumeMeshObject::render_ui_settings()
 {
-    ImGui::Checkbox("V", &renderer_.vertices().enabled());
+    ImGui::Checkbox("V", &vertex_renderer_.enabled());
     ImGui::SameLine();
-    ImGui::Checkbox("E", &renderer_.edges().enabled());
+    ImGui::Checkbox("E", &edge_renderer_.enabled());
     ImGui::SameLine();
-    ImGui::Checkbox("F", &renderer_.faces().enabled());
+    ImGui::Checkbox("F", &face_renderer_.enabled());
     ImGui::SameLine();
-    ImGui::Checkbox("C", &renderer_.cells().enabled());
+    ImGui::Checkbox("C", &cell_renderer_.enabled());
 
-    ImGui::SliderFloat("Point Size", &renderer_.vertices().point_size(), 0.0f, 32.0f);
-    ImGui::SliderFloat("Line Width", &renderer_.edges().line_width(), 0.0f, 32.0f);
-    ImGui::SliderFloat("Cell Scale", &renderer_.cells().cell_scale(), 0.0f, 1.0f);
+    ImGui::SliderFloat("Point Size", &vertex_renderer_.point_size(), 0.0f, 32.0f);
+    ImGui::SliderFloat("Line Width", &edge_renderer_.line_width(), 0.0f, 32.0f);
+    ImGui::SliderFloat("Cell Scale", &cell_renderer_.cell_scale(), 0.0f, 1.0f);
 
     // Clip Box
     // Each entity technically has their own, but we
     // just modify all at once.
     const auto& bbox = bounding_box();
-    PropertyRendererBase::ClipBox& cb = renderer_.vertices().clip_box();
+    PropertyRendererBase::ClipBox& cb = vertex_renderer_.clip_box();
     bool clip_box_enabled = cb.enabled_;
     if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
         cb.set(bbox.min(),bbox.max());
@@ -46,10 +46,10 @@ void OpenVolumeMeshObject::render_ui_settings()
         cb.min_ = {x[0],y[0],z[0]};
         cb.max_ = {x[1],y[1],z[1]};
     }
-    renderer_.edges().clip_box() = cb;
-    renderer_.faces().clip_box() = cb;
-    renderer_.cells().clip_box() = cb;
-    vertex_vector_renderer_.clip_box() = cb;
+    edge_renderer_.clip_box() = cb;
+    face_renderer_.clip_box() = cb;
+    cell_renderer_.clip_box() = cb;
+    // vertex_vector_renderer_.clip_box() = cb;
 }
 
 void OpenVolumeMeshObject::render_ui_info()
@@ -97,7 +97,12 @@ void OpenVolumeMeshObject::render_ui_properties()
                 ImGui::PushID((*pp)->name().c_str());
 
                 auto upload_data = [&]<typename T>() {
-                    upload_buffer_property_data<T,EntityTag>(mesh_, *pp, prop<EntityTag>().filters_,  renderer_);
+                    upload_buffer_property_data<T,EntityTag>(
+                        mesh_,
+                        *pp,
+                        prop<EntityTag>().filters_,
+                        renderer<EntityTag>()
+                    );
                     prop<EntityTag>().filter_index_ = 0;
                 };
 
@@ -135,7 +140,7 @@ void OpenVolumeMeshObject::render_ui_properties()
                     } else if ((*pp)->typeNameWrapper()=="vec4f") {
                         upload_data.template operator()<OVM::Vec4f>();
                     }
-                    renderer_.entities<EntityTag>().enabled() = true;
+                    renderer<EntityTag>().enabled() = true;
                 }
                 ImGui::PopID();
             }
@@ -158,18 +163,18 @@ void OpenVolumeMeshObject::render_ui_properties()
                 for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
                     if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
                         prop<EntityTag>().filter_index_ = i;
-                        prop<EntityTag>().filters_[i]->init(renderer_);
+                        prop<EntityTag>().filters_[i]->init(renderer<EntityTag>());
                     }
                 }
                 ImGui::EndMenu();
             }
-            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui(renderer_);
+            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui(renderer<EntityTag>());
         }
 
         // Clear
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data<EntityTag>();
-            renderer_.entities<EntityTag>().property_type()
+            renderer<EntityTag>().property_type()
                 = PropertyRendererBase::Property::Type::COLOR;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().filters_.clear();
@@ -196,69 +201,48 @@ void OpenVolumeMeshObject::init()
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     const auto& data = create_static_render_data(mesh_);
-    renderer_.init(scene_->app(), data);
+    n_positions_ = mesh_.n_vertices();
+    vertices_position_buffer_ = create_position_buffer(scene_->app()->device_, data.positions_);
+    cells_center_buffer_ = create_position_buffer(scene_->app()->device_, get_cell_centers(mesh_));
+    vertex_renderer_.init(scene_->app(), vertices_position_buffer_, data.vertices_);
+    edge_renderer_.init(scene_->app(), vertices_position_buffer_, data.edges_);
+    face_renderer_.init(scene_->app(), vertices_position_buffer_, data.faces_);
+    cell_renderer_.init(scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
+    vectors_on_vertices_renderer_.init(scene_->app(), vertices_position_buffer_);
+
     upload_default_property_data<OVM::Entity::Vertex>();
     upload_default_property_data<OVM::Entity::Edge>();
     upload_default_property_data<OVM::Entity::Face>();
     upload_default_property_data<OVM::Entity::Cell>();
-    vertex_vector_renderer_.init(scene_->app(), data.positions_);
-
-    // std::vector<Vec4f> cell_centers;
-    // std::vector<RendererBase::Property::Data> cell_colors;
-    // cell_centers.reserve(data.cells_.size());
-    // for (uint32_t ch = 0; ch < data.cells_.size(); ++ch) {
-    //     cell_centers.push_back({0,0,0,0});
-    //     cell_colors.push_back({dist(mt),dist(mt),dist(mt),1});
-    //     uint32_t n(0);
-    //     for (const auto& f : data.cells_[ch]) {
-    //         for (const auto& vh : f) {
-    //             cell_centers.back() += data.positions_[vh];
-    //             ++n;
-    //         }
-    //     }
-    //     cell_centers.back() /= n;
-    // }
-
-    // cell_translucent_renderer_.init(
-    //     scene_->app(),
-    //     renderer_.position_buffer(),
-    //     data.cells_,
-    //     cell_centers
-    // );
-    // cell_translucent_renderer_.update_property_data(cell_colors);
-    // cell_translucent_renderer_.property_mode() = RendererBase::Property::Mode::COLOR;
-
-
-    // std::vector<RendererBase::Position> cell_centers;
-    // cell_centers.reserve(mesh_.n_cells());
-    // for (OVM::CH ch : mesh_.cells()) {
-    //     const auto& c = mesh_.barycenter(ch);
-    //     cell_centers.emplace_back(c[0],c[1],c[2],1);
-    // }
-    // cell_vector_renderer_.init(scene_->app(), cell_centers);
 }
 
 void OpenVolumeMeshObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _view_projection)
 {
-    if (deleted()) [[unlikely]] {return;}
+    if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
+    const auto& vp = scene_->app()->scene_viewport();
 
-    renderer_.render(
-        scene_->app()->scene_viewport(),
-        _render_pass,
-        mvp);
+    cell_renderer_.render(vp, _render_pass, mvp);
+    face_renderer_.render(vp, _render_pass, mvp);
+    edge_renderer_.render(vp, _render_pass, mvp);
+    vertex_renderer_.render(vp, _render_pass, mvp);
 
-    if (renderer_.vertices().enabled() &&
-        renderer_.vertices().property_type() ==
-        PropertyRendererBase::Property::Type::VEC3) {
-        vertex_vector_renderer_.render(
-            scene_->app()->scene_viewport(),
-            _render_pass,
-            mvp);
-    }
+    // renderer_.render(
+    //     scene_->app()->scene_viewport(),
+    //     _render_pass,
+    //     mvp);
+
+    // if (renderer_.vertices().enabled() &&
+    //     renderer_.vertices().property_type() ==
+    //     PropertyRendererBase::Property::Type::VEC3) {
+    //     vertex_vector_renderer_.render(
+    //         scene_->app()->scene_viewport(),
+    //         _render_pass,
+    //         mvp);
+    // }
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),
@@ -274,7 +258,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
         props.push_back(D(0,0,0,1));
     }
-    renderer_.vertices().update_property_data(props);
+    vertex_renderer_.update_property_data(props);
 }
 void OpenVolumeMeshObject::upload_default_edge_property_data()
 {
@@ -284,7 +268,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
         props.push_back(D(0,0,0,1));
     }
-    renderer_.edges().update_property_data(props);
+    edge_renderer_.update_property_data(props);
 }
 void OpenVolumeMeshObject::upload_default_face_property_data()
 {
@@ -301,7 +285,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
             );
         props.push_back(sphere_color);
     }
-    renderer_.faces().update_property_data(props);
+    face_renderer_.update_property_data(props);
 }
 void OpenVolumeMeshObject::upload_default_cell_property_data()
 {
@@ -318,7 +302,7 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
             );
         props.push_back(sphere_color);
     }
-    renderer_.cells().update_property_data(props);
+    cell_renderer_.update_property_data(props);
 }
 
 void OpenVolumeMeshObject::recompute_bounding_box()

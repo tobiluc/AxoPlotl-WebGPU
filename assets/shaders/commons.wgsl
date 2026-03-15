@@ -1,6 +1,5 @@
-struct Property {
-    value : vec4<f32>
-};
+
+alias PropertyValue = vec4<f32>;
 
 alias ValueType = u32;
 const VALUE_TYPE_COLOR:ValueType = 0;
@@ -24,7 +23,7 @@ fn isOutsideClipBox(pos:vec3<f32>, clipBox:ClipBox) -> bool {
 };
 
 fn isOutsideValueFilter(
-    value:vec4<f32>,
+    value:PropertyValue,
     valueType:ValueType,
     valueFilter:vec2<f32>) -> bool
 {
@@ -56,7 +55,7 @@ fn isOutsideRange(val:f32, range:vec2<f32>) -> bool {
 };
 
 fn getFragmentColorFromPropertyValue(
-    value:vec4<f32>,
+    value:PropertyValue,
     valueType:ValueType,
     valueFilter:vec2<f32>,
     colorMap : texture_2d<f32>,

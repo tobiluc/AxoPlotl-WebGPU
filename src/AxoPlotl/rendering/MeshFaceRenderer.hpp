@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class MeshFaceRenderer : public PropertyRendererBase
+class ColoredFacePropertyRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -41,9 +41,9 @@ public:
         return property_color_map_;
     }
 
-    MeshFaceRenderer() {}
+    ColoredFacePropertyRenderer() {}
 
-    ~MeshFaceRenderer()
+    ~ColoredFacePropertyRenderer()
     {
         property_buffer_.destroy();
         property_buffer_.release();

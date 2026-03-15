@@ -13,7 +13,7 @@ struct Uniforms {
 @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
 @group(0) @binding(2) var colorMap : texture_2d<f32>;
 @group(0) @binding(3) var colorSampler : sampler;
-@group(0) @binding(4) var<storage, read> props : array<Property>;
+@group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -81,7 +81,7 @@ fn vs_main(
                                0.5*config.y*out.quadSize.y);
 
     // Property and Clipping
-    let value = props[eh].value;
+    let value = props[eh];
     let pos = mix(positions[vh0], positions[vh1], t);
     if (isOutsideClipBox(pos, ubo.clipBox)
         || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {

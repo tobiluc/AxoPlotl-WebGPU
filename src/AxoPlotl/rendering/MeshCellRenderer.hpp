@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class MeshCellRenderer : public PropertyRendererBase
+class ColoredCellPropertyRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -46,9 +46,9 @@ public:
         return property_color_map_;
     }
 
-    MeshCellRenderer() {}
+    ColoredCellPropertyRenderer() {}
 
-    ~MeshCellRenderer()
+    ~ColoredCellPropertyRenderer()
     {
         property_buffer_.destroy();
         property_buffer_.release();
@@ -58,14 +58,14 @@ public:
         line_index_buffer_.release();
         uniform_buffer_.destroy();
         uniform_buffer_.release();
-        center_buffer_.destroy();
-        center_buffer_.release();
+        // center_buffer_.destroy();
+        // center_buffer_.release();
     }
 
     void init(Application* _app,
-      wgpu::Buffer _position_buffer,
+      wgpu::Buffer _vertices_position_buffer,
       const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-              const std::vector<Position>& _centers);
+        wgpu::Buffer _cells_center_buffer);
 
     void update_property_data(const std::vector<Property::Data>& _data);
 
@@ -80,8 +80,7 @@ private:
     size_t n_line_indices_;
 
     void create_buffers(
-        const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-        const std::vector<Position>& _centers);
+        const std::vector<std::vector<std::vector<uint32_t>>>& _cells);
 
     void create_bind_group_layout();
 
@@ -94,9 +93,9 @@ private:
     wgpu::Buffer triangle_index_buffer_;
     wgpu::Buffer line_index_buffer_;
     wgpu::Buffer property_buffer_;
-    wgpu::Buffer position_buffer_;
+    wgpu::Buffer vertices_position_buffer_;
     wgpu::Buffer uniform_buffer_;
-    wgpu::Buffer center_buffer_;
+    wgpu::Buffer cells_center_buffer_;
 
     static wgpu::RenderPipeline triangle_pipeline_;
     static wgpu::RenderPipeline line_pipeline_;

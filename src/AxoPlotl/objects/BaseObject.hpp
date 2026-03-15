@@ -36,8 +36,6 @@ public:
 
     virtual void render_ui_properties() = 0;
 
-    virtual bool& visible() = 0;
-
     inline const ToLoG::AABB<Vec3f>& bounding_box() const {
         return bbox_;
     }
@@ -58,6 +56,10 @@ public:
         return id_;
     }
 
+    inline bool& visible() {
+        return visible_;
+    }
+
 protected:
     Scene* scene_;
     int id_;
@@ -68,6 +70,7 @@ protected:
     ToLoG::AABB<Vec3f> bbox_;
     bool deleted_ = false;
     bool target_ = false;
+    bool visible_ = true;
 };
 
 };

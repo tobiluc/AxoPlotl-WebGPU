@@ -72,8 +72,8 @@ void PlottingTool::render_ui(Application& app)
                     mesh.add_face({vh0,vh1,vh2,vh3});
                 }
             }
-            objects_[app.scene().add_object<OpenMeshObject>(mesh)]
-                = input_;
+            // objects_[app.scene().add_object<OpenMeshObject>(mesh)]
+            //     = input_;
         }
     }
 }

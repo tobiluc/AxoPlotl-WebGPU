@@ -6,15 +6,15 @@ namespace AxoPlotl
 {
 
 
-wgpu::RenderPipeline MeshFaceRenderer::pipeline_;
-wgpu::BindGroupLayout MeshFaceRenderer::bind_group_layout_;
+wgpu::RenderPipeline ColoredFacePropertyRenderer::pipeline_;
+wgpu::BindGroupLayout ColoredFacePropertyRenderer::bind_group_layout_;
 
 struct FaceIndex {
     uint32_t vh_;
     uint32_t fh_;
 };
 
-void MeshFaceRenderer::init(Application* _app,
+void ColoredFacePropertyRenderer::init(Application* _app,
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
 {
@@ -30,7 +30,7 @@ void MeshFaceRenderer::init(Application* _app,
     create_pipeline();
 }
 
-void MeshFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
+void ColoredFacePropertyRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -94,7 +94,7 @@ void MeshFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &
     }
 }
 
-void MeshFaceRenderer::create_bind_group_layout()
+void ColoredFacePropertyRenderer::create_bind_group_layout()
 {
     if (bind_group_layout_) {return;}
 
@@ -136,7 +136,7 @@ void MeshFaceRenderer::create_bind_group_layout()
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void MeshFaceRenderer::create_bind_group()
+void ColoredFacePropertyRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -179,7 +179,7 @@ void MeshFaceRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void MeshFaceRenderer::create_pipeline()
+void ColoredFacePropertyRenderer::create_pipeline()
 {
     if (pipeline_ || n_faces_==0) {return;}
 
@@ -257,7 +257,7 @@ void MeshFaceRenderer::create_pipeline()
     pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void MeshFaceRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredFacePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -268,7 +268,7 @@ void MeshFaceRenderer::update_property_data(const std::vector<Property::Data>& _
     std::cout << "Update Face Property Data" << std::endl;
 }
 
-void MeshFaceRenderer::render(
+void ColoredFacePropertyRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

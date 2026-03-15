@@ -41,14 +41,11 @@ public:
     {
         vector_buffer_.destroy();
         vector_buffer_.release();
-        position_buffer_.destroy();
-        position_buffer_.release();
         uniform_buffer_.destroy();
         uniform_buffer_.release();
     }
 
-    void init(Application* _app,
-        const std::vector<Position>& _positions);
+    void init(Application* _app, wgpu::Buffer _position_buffer);
 
     void update_vector_data(const std::vector<Vec4f>& _data);
 
@@ -59,7 +56,7 @@ public:
 private:
     size_t n_positions_;
 
-    void create_buffers(const std::vector<Position>& _positions);
+    void create_buffers();
 
     void create_bind_group_layout();
 

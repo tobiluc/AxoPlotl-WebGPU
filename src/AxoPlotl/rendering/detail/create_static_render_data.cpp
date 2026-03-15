@@ -29,9 +29,9 @@
 //     return data;
 // }
 
-AxoPlotl::OpenVolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const OMSurfaceMesh& _mesh)
+AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OMSurfaceMesh& _mesh)
 {
-    AxoPlotl::OpenVolumeMeshRenderer::StaticData data;
+    AxoPlotl::StaticRenderData data;
 
     for (const auto& v : _mesh.vertices()) {
         const auto& p = _mesh.point(v);
@@ -58,9 +58,9 @@ AxoPlotl::OpenVolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data
     return data;
 }
 
-AxoPlotl::OpenVolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const OVMVolumeMesh& _mesh)
+AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMesh& _mesh)
 {
-    AxoPlotl::OpenVolumeMeshRenderer::StaticData data;
+    AxoPlotl::StaticRenderData data;
 
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);
@@ -112,4 +112,15 @@ wgpu::Buffer AxoPlotl::create_position_buffer(
         _device.getQueue().writeBuffer(buffer, 0, _positions.data(), desc.size);
     }
     return buffer;
+}
+
+std::vector<AxoPlotl::Vec4f> AxoPlotl::get_cell_centers(const OVMVolumeMesh& _mesh)
+{
+    std::vector<Vec4f> cell_centers;
+    cell_centers.reserve(_mesh.n_cells());
+    for (OVM::CH ch : _mesh.cells()) {
+        const auto& p = _mesh.barycenter(ch);
+        cell_centers.emplace_back(p[0],p[1],p[2],1);
+    }
+    return cell_centers;
 }

@@ -10,23 +10,20 @@ wgpu::RenderPipeline VectorRenderer::pipeline_;
 wgpu::BindGroupLayout VectorRenderer::bind_group_layout_;
 
 void VectorRenderer::init(Application* _app,
-    const std::vector<Position>& _positions)
+                          wgpu::Buffer _position_buffer)
 {
     app_ = _app;
-    n_positions_ = _positions.size();
-    create_buffers(_positions);
+    n_positions_ = _position_buffer.getSize()/sizeof(Position);
+    create_buffers();
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
 }
 
-void VectorRenderer::create_buffers(const std::vector<Position>& _positions)
+void VectorRenderer::create_buffers()
 {
     wgpu::Device device = app_->device_;
-    wgpu::Queue queue = device.getQueue();
-
-    // Position Buffer
-    position_buffer_ = create_position_buffer(device, _positions);
+    // wgpu::Queue queue = device.getQueue();
 
     // Vector Buffer
     {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <AxoPlotl/rendering/OpenVolumeMeshRenderer.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <AxoPlotl/properties/Histogram.hpp>
@@ -10,27 +9,28 @@
 
 namespace AxoPlotl
 {
-struct PropertyFilterBase
+template<class Renderer>
+struct PropertyFilterForRenderer
 {
-    virtual void init(OpenVolumeMeshRenderer& _r) = 0;
-    virtual void render_ui(OpenVolumeMeshRenderer& _r) = 0;
+    virtual void init(Renderer& _r) = 0;
+    virtual void render_ui(Renderer& _r) = 0;
     virtual std::string name() = 0;
 };
 
-template<typename EntityTag>
-struct PropertyFilterBool : public PropertyFilterBase
+template<typename EntityTag, class Renderer>
+struct PropertyFilterBool : public PropertyFilterForRenderer<Renderer>
 {
 public:
     PropertyFilterBool(OVM::PropertyStorageT<bool>* _prop)
         : hist_(_prop) {}
 
-    inline void init(OpenVolumeMeshRenderer& _r) override {
+    inline void init(Renderer& _r) override {
 
     }
 
-    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(Renderer& _r) override
     {
-        auto& cm = _r.entities<EntityTag>().color_map();
+        auto& cm = _r.color_map();
 
         int b = hist_.render_ui(cm);
         if (b==0) {show_false_ = true; show_true_ = false;}
@@ -46,7 +46,7 @@ public:
 
         if (changed_) {
             // Update Range
-            _r.entities<EntityTag>().property_filter().range_ = {
+            _r.property_filter().range_ = {
                 !show_false_, show_true_
             };
 
@@ -75,28 +75,29 @@ private:
     bool changed_ = true;
 };
 
-template<typename FT, typename EntityTag> requires(std::is_floating_point_v<FT>)
-struct PropertyFilterFloatRange : public PropertyFilterBase
+template<typename FT, typename EntityTag, class Renderer>
+requires(std::is_floating_point_v<FT>)
+struct PropertyFilterFloatRange : public PropertyFilterForRenderer<Renderer>
 {
 public:
     PropertyFilterFloatRange(OVM::PropertyStorageT<FT>* _prop)
         : hist_(_prop) {}
 
-    inline void init(OpenVolumeMeshRenderer& _r) override {
-        _r.entities<EntityTag>().color_map().set_coolwarm();
-        _r.entities<EntityTag>().property_filter().range_ = {
+    inline void init(Renderer& _r) override {
+        _r.color_map().set_coolwarm();
+        _r.property_filter().range_ = {
             hist_.min(), hist_.max()
         };
     }
 
-    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(Renderer& _r) override
     {
         if (!hist_.has_valid_values()) [[unlikely]] {
             ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
             return;
         }
-        Vec2f& rangef = _r.entities<EntityTag>().property_filter().range_;
-        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        Vec2f& rangef = _r.property_filter().range_;
+        ColorMap& cm = _r.color_map();
         int b = hist_.render_ui(cm);
         if (b >= 0) {
             rangef.x = hist_.bucket_min(b);
@@ -116,24 +117,25 @@ private:
     //bool show_only_visble_buckets_ = false;
 };
 
-template<typename IT, typename EntityTag> requires(std::is_integral_v<IT>)
-struct PropertyFilterIntRange : public PropertyFilterBase
+template<typename IT, typename EntityTag, class Renderer>
+requires(std::is_integral_v<IT>)
+struct PropertyFilterIntRange : public PropertyFilterForRenderer<Renderer>
 {
 public:
     PropertyFilterIntRange(OVM::PropertyStorageT<IT>* _prop)
         : hist_(_prop) {}
 
-    inline void init(OpenVolumeMeshRenderer& _r) override {
-        _r.entities<EntityTag>().color_map().set_coolwarm();
-        _r.entities<EntityTag>().property_filter().range_ = {
+    inline void init(Renderer& _r) override {
+        _r.color_map().set_coolwarm();
+        _r.property_filter().range_ = {
             hist_.min(), hist_.max()
         };
     }
 
-    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(Renderer& _r) override
     {
-        Vec2f& rangef = _r.entities<EntityTag>().property_filter().range_;
-        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        Vec2f& rangef = _r.property_filter().range_;
+        ColorMap& cm = _r.color_map();
         int b = hist_.render_ui(cm);
         if (b >= 0) {
             rangef.x = hist_.bucket_min(b);
@@ -151,28 +153,29 @@ private:
     HistogramIT<IT> hist_;
 };
 
-template<typename IT, typename EntityTag> requires(std::is_integral_v<IT>)
-struct PropertyFilterIntValue : public PropertyFilterBase
+template<typename IT, typename EntityTag, class Renderer>
+requires(std::is_integral_v<IT>)
+struct PropertyFilterIntValue : public PropertyFilterForRenderer<Renderer>
 {
 public:
     PropertyFilterIntValue(OVM::PropertyStorageT<IT>* _prop)
         : hist_(_prop) {}
 
-    inline void init(OpenVolumeMeshRenderer& _r) override {
+    inline void init(Renderer& _r) override {
         vali_ = hist_.min();
-        _r.entities<EntityTag>().color_map().set_coolwarm();
-        _r.entities<EntityTag>().property_filter().range_ = {
+        _r.color_map().set_coolwarm();
+        _r.property_filter().range_ = {
             vali_, vali_
         };
     }
 
-    inline void render_ui(OpenVolumeMeshRenderer& _r) override
+    inline void render_ui(Renderer& _r) override
     {
-        ColorMap& cm = _r.entities<EntityTag>().color_map();
+        ColorMap& cm = _r.color_map();
         cm.render_menu();
         ImGui::InputInt("Value", &vali_);
         vali_ = std::clamp(static_cast<IT>(vali_), hist_.min(), hist_.max());
-        _r.entities<EntityTag>().property_filter().range_ = {vali_,vali_};
+        _r.property_filter().range_ = {vali_,vali_};
     }
 
     inline std::string name() override {
