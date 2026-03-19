@@ -1,5 +1,6 @@
 #pragma once
 
+#include <webgpu/webgpu.hpp>
 #include <cstdint>
 #include <iostream>
 

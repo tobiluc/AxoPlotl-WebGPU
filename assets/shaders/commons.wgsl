@@ -71,12 +71,12 @@ fn getFragmentColorFromPropertyValue(
 
     // Interpret Value based on Property Mode
     if (valueType == VALUE_TYPE_COLOR) {
-        color = value;
+        color = abs(value);
     } else if (valueType == VALUE_TYPE_SCALAR) {
         let t = clamp((value.x-valueFilter.x)/(valueFilter.y-valueFilter.x), 0.0, 1.0);
         color = textureSample(colorMap, colorMapSampler, vec2<f32>(t,0.5));
     } else if (valueType == VALUE_TYPE_VEC3) {
-        color = vec4<f32>(normalize(value.xyz), 1.0);
+        color = vec4<f32>(normalize(abs(value.xyz)), 1.0);
     }
 
     if (isNan(value.x)) {

@@ -69,7 +69,7 @@ private:
 
     GLFWwindow* window_;
     wgpu::Queue queue_;
-    wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
+    //wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
     wgpu::Texture depthTexture;
     wgpu::TextureView depthTextureView;
     wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Undefined;

@@ -142,9 +142,6 @@ bool Application::init()
     //----------
     // Surface
     //----------
-    wgpu::SurfaceCapabilities capabilities = {};
-    surface_.getCapabilities(adapter_, &capabilities);
-    color_format_ = capabilities.formats[0];
     configure_surface();
 
     //-------------------
@@ -184,15 +181,24 @@ void Application::run()
 
     // Only render a certain number of frames
     // before redrawing
-    if (!on_draw()) [[likely]] {
-        return;
-    }
+    if (!on_draw()) [[likely]] {return;}
 
     wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
 
     // Acquire next frame texture
     wgpu::SurfaceTexture surfaceTexture;
     surface_.getCurrentTexture(&surfaceTexture);
+
+    // Safety Check
+    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) [[unlikely]] {
+#ifndef WEBGPU_BACKEND_WGPU
+        if (surfaceTexture.texture) {
+            wgpuTextureRelease(surfaceTexture.texture);
+        }
+#endif //! WEBGPU_BACKEND_WGPU
+        return;
+    }
+
     wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
     viewDescriptor.label = "Surface texture view";
@@ -204,10 +210,6 @@ void Application::run()
     viewDescriptor.arrayLayerCount = 1;
     viewDescriptor.aspect = WGPUTextureAspect_All;
     wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
-
-#ifndef WEBGPU_BACKEND_WGPU
-        wgpuTextureRelease(surfaceTexture.texture);
-#endif // WEBGPU_BACKEND_WGPU \
 
     wgpu::RenderPassColorAttachment color_attachments[2];
 
@@ -315,16 +317,18 @@ void Application::run()
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
     queue_.submit(1, &cmdBuffer);
 
+#ifndef __EMSCRIPTEN__
+    surface_.present();
+#endif
+
     // Cleanup
+#ifndef WEBGPU_BACKEND_WGPU
+    wgpuTextureRelease(surfaceTexture.texture);
+#endif //! WEBGPU_BACKEND_WGPU
     targetView.release();
     renderPass.release();
     cmdBuffer.release();
     cmd_encoder.release();
-    //wgpuTextureRelease(surfaceTexture.texture);
-
-#ifndef __EMSCRIPTEN__
-    surface_.present();
-#endif
 
     wgpuPollEvents(device_, false);
 
@@ -338,16 +342,11 @@ void Application::on_window_resize(float width, float height)
 {
     if (width == 0|| height == 0) {return;} // window minimized
 
-    // Framebuffer size
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-
-    //surface_.unconfigure();
     configure_surface();
     create_depth_texture();
     create_picking_texture();
 
-    //pipeline.updateProjection(width/height);
+    wgpuPollEvents(device_, true);
 }
 
 void Application::terminate()
@@ -599,9 +598,8 @@ PickResult Application::request_pick_result(float _x, float _y)
 
 void Application::configure_surface()
 {
-    if (surface_) {surface_.unconfigure();}
-
     auto viewport = total_viewport();
+    //std::cerr << viewport[2] << "/" << viewport[3] << std::endl;
 
     // Configure the surface
     wgpu::SurfaceConfiguration config = {};
@@ -610,15 +608,18 @@ void Application::configure_surface()
     config.width = static_cast<uint32_t>(viewport[2]);
     config.height = static_cast<uint32_t>(viewport[3]);
     config.usage = wgpu::TextureUsage::RenderAttachment;
-    config.format = color_format_;
+    wgpu::SurfaceCapabilities capabilities = {};
+    surface_.getCapabilities(adapter_, &capabilities);
+    config.format = capabilities.formats[0];
 
     // And we do not need any particular view format:
     config.viewFormatCount = 0;
     config.viewFormats = nullptr;
     config.device = device_;
     config.presentMode = wgpu::PresentMode::Fifo;
-    config.alphaMode = wgpu::CompositeAlphaMode::Auto;
+    config.alphaMode = capabilities.alphaModes[0];
 
+    surface_.unconfigure();
     surface_.configure(config);
 }
 

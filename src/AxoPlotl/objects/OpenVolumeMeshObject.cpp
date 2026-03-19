@@ -356,13 +356,8 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_faces());
     for (OVM::FH fh : mesh_.faces()) {
-        auto p = ToLoG::normalized(mesh_.normal(fh.halfface_handle(0)));
-        D sphere_color = Vec4f(
-            0.5 * (p[0] + 1),
-            0.5 * (p[1] + 1),
-            0.5 * (p[2] + 1),
-            1
-            );
+        auto n = ToLoG::normalized(mesh_.normal(fh.halfface_handle(0)));
+        D sphere_color{std::abs(n[0]),std::abs(n[1]),std::abs(n[2]),1};
         props.push_back(sphere_color);
     }
     face_renderer_.update_property_data(props);
