@@ -182,7 +182,7 @@ public:
         }
 
         n_buckets_ = std::clamp(n_buckets_, 1lu,
-            static_cast<size_t>(max_-min_));
+            std::max(static_cast<size_t>(max_-min_),1lu));
 
         bucket_counts_.clear();
         bucket_max_.clear();
@@ -195,7 +195,8 @@ public:
             if (b<m) {bucket_max_[b] += 1;}
         }
         for (const IT& v : prop_->data_vector()) {
-            bucket_counts_[find_bucket(v)] += 1;
+            int b = find_bucket(v);
+            if (b >= 0) {bucket_counts_[b] += 1;}
         }
     }
 
