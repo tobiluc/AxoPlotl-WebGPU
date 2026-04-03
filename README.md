@@ -6,6 +6,25 @@ This is the currently developed WebGPU version of
 ### Features
 - TODO
 
+### Examples
+```cpp
+#define WEBGPU_CPP_IMPLEMENTATION
+#include <AxoPlotl/Application.hpp>
+
+int main()
+{
+  AxoPlotl::Application app;
+  app.init();
+  
+  auto obj = app.scene().add_openvolumemesh("coolmesh.ovmb");
+  obj->visualize_property("v_weights");
+
+  app.run();
+
+  return 0;
+}
+```
+
 ### Wishlist
 - [x] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
 - [x] Histogram: Handle special case when all properties are either NaN or Inf
