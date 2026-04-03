@@ -4,13 +4,14 @@
 
 namespace AxoPlotl
 {
-wgpu::RenderPipeline ColoredEdgePropertyRenderer::pipeline_;
-wgpu::BindGroupLayout ColoredEdgePropertyRenderer::bind_group_layout_;
+PipelineState ColoredEdgePropertyRenderer::pipeline_state_;
 
 void ColoredEdgePropertyRenderer::init(uint32_t _object_id, Application* _app,
                                        wgpu::Buffer _position_buffer,
                                        const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
+    pipeline_state_.set_device(_app->device_);
+
     object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
@@ -87,7 +88,7 @@ void ColoredEdgePropertyRenderer::create_buffers(const std::vector<std::pair<uin
 
 void ColoredEdgePropertyRenderer::create_bind_group_layout()
 {
-    if (bind_group_layout_) {return;}
+    if (pipeline_state_.bind_group_layout_) {return;}
 
     wgpu::BindGroupLayoutEntry entries[5]{};
 
@@ -125,7 +126,7 @@ void ColoredEdgePropertyRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = "Edge Bind Group Layout";
 
-    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
 void ColoredEdgePropertyRenderer::create_bind_group()
@@ -164,7 +165,7 @@ void ColoredEdgePropertyRenderer::create_bind_group()
     std::cout << "4: Mesh Edge Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
+    bgDesc.layout = pipeline_state_.bind_group_layout_;
     bgDesc.entryCount = 5;
     bgDesc.entries = groupEntries;
 
@@ -173,7 +174,7 @@ void ColoredEdgePropertyRenderer::create_bind_group()
 
 void ColoredEdgePropertyRenderer::create_pipeline()
 {
-    if (pipeline_ || n_edges_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_edges_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_,
@@ -246,7 +247,7 @@ void ColoredEdgePropertyRenderer::create_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
     wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
@@ -263,7 +264,7 @@ void ColoredEdgePropertyRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Mesh Edge Pipeline";
 
-    pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredEdgePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
@@ -291,7 +292,7 @@ void ColoredEdgePropertyRenderer::render(
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
-    _render_pass.setPipeline(pipeline_);
+    _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.setVertexBuffer(0, edge_index_buffer_, 0, n_edges_*sizeof(EdgeInstance));
 

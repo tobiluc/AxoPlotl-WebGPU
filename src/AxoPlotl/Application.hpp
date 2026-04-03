@@ -21,12 +21,11 @@ private:
     float clear_color_[3] = {1,1,1};
     float font_scale_ = 1.0f;
     PickConfig picking_config_;
-    bool enable_imgui_sidebar_ = false;
 
 public:
     Application();
 
-    ~Application() = default;
+    ~Application();
 
     // init everything and return true if it went all right
     bool init();
@@ -38,7 +37,7 @@ public:
 
     void on_window_resize(float width, float height);
 
-    void terminate();
+    void terminate_run();
 
     inline Scene& scene() {return scene_;}
 
@@ -76,9 +75,9 @@ private:
     GLFWwindow* window_;
     wgpu::Queue queue_;
     //wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
-    wgpu::Texture depthTexture;
-    wgpu::TextureView depthTextureView;
-    wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Undefined;
+    wgpu::Texture depth_texture_;
+    wgpu::TextureView depth_texture_view_;
+    wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;
     wgpu::Texture picking_texture_;
     wgpu::TextureView picking_view_;
     wgpu::Buffer picking_buffer_;
@@ -88,6 +87,8 @@ private:
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
     Scene scene_;
+
+    bool init_glfw();
 
     bool init_imgui();
 

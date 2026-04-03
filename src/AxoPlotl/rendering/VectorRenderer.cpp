@@ -6,12 +6,13 @@
 namespace AxoPlotl
 {
 
-wgpu::RenderPipeline VectorRenderer::pipeline_;
-wgpu::BindGroupLayout VectorRenderer::bind_group_layout_;
+PipelineState VectorRenderer::pipeline_state_;
 
 void VectorRenderer::init(uint32_t _object_id, Application* _app,
                           wgpu::Buffer _position_buffer)
 {
+    pipeline_state_.set_device(_app->device_);
+
     object_id_ = _object_id;
     app_ = _app;
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
@@ -55,7 +56,7 @@ void VectorRenderer::create_buffers()
 
 void VectorRenderer::create_bind_group_layout()
 {
-    if (bind_group_layout_) {return;}
+    if (pipeline_state_.bind_group_layout_) {return;}
 
     wgpu::BindGroupLayoutEntry entries[3]{};
 
@@ -81,7 +82,7 @@ void VectorRenderer::create_bind_group_layout()
     layoutDesc.entryCount = 3;
     layoutDesc.entries = entries;
 
-    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
 void VectorRenderer::create_bind_group()
@@ -110,7 +111,7 @@ void VectorRenderer::create_bind_group()
     std::cout << "2: Vectors #" << groupEntries[2].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
+    bgDesc.layout = pipeline_state_.bind_group_layout_;
     bgDesc.entryCount = 3;
     bgDesc.entries = groupEntries;
 
@@ -119,7 +120,7 @@ void VectorRenderer::create_bind_group()
 
 void VectorRenderer::create_pipeline()
 {
-    if (pipeline_ || n_positions_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_,
@@ -170,7 +171,7 @@ void VectorRenderer::create_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
 
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -183,7 +184,7 @@ void VectorRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Vector Pipeline";
 
-    pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void VectorRenderer::update_vector_data(const std::vector<Vec4f>& _data)
@@ -211,7 +212,7 @@ void VectorRenderer::render(
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
-    _render_pass.setPipeline(pipeline_);
+    _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.draw(2, n_positions_, 0, 0);
 }

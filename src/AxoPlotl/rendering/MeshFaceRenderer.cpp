@@ -4,10 +4,7 @@
 
 namespace AxoPlotl
 {
-
-
-wgpu::RenderPipeline ColoredFacePropertyRenderer::pipeline_;
-wgpu::BindGroupLayout ColoredFacePropertyRenderer::bind_group_layout_;
+PipelineState ColoredFacePropertyRenderer::pipeline_state_;
 
 struct FaceIndex {
     uint32_t vh_;
@@ -19,6 +16,8 @@ void ColoredFacePropertyRenderer::init(
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
 {
+    pipeline_state_.set_device(_app->device_);
+
     object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
@@ -98,7 +97,7 @@ void ColoredFacePropertyRenderer::create_buffers(const std::vector<std::vector<u
 
 void ColoredFacePropertyRenderer::create_bind_group_layout()
 {
-    if (bind_group_layout_) {return;}
+    if (pipeline_state_.bind_group_layout_) {return;}
 
     wgpu::BindGroupLayoutEntry entries[5]{};
 
@@ -136,7 +135,7 @@ void ColoredFacePropertyRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = "Face Bind Group Layout";
 
-    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
 void ColoredFacePropertyRenderer::create_bind_group()
@@ -175,7 +174,7 @@ void ColoredFacePropertyRenderer::create_bind_group()
     std::cout << "4: Mesh Face Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
+    bgDesc.layout = pipeline_state_.bind_group_layout_;
     bgDesc.entryCount = 5;
     bgDesc.entries = groupEntries;
 
@@ -184,7 +183,7 @@ void ColoredFacePropertyRenderer::create_bind_group()
 
 void ColoredFacePropertyRenderer::create_pipeline()
 {
-    if (pipeline_ || n_faces_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_faces_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_,
@@ -252,7 +251,7 @@ void ColoredFacePropertyRenderer::create_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
     wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
@@ -266,7 +265,7 @@ void ColoredFacePropertyRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Face Triangle Pipeline";
 
-    pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredFacePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
@@ -294,7 +293,7 @@ void ColoredFacePropertyRenderer::render(
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
-    _render_pass.setPipeline(pipeline_);
+    _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.setVertexBuffer(0, face_index_buffer_, 0, n_indices_*sizeof(FaceIndex));
     _render_pass.draw(n_indices_, 1, 0, 0);

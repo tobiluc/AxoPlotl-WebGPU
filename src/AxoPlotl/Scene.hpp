@@ -20,13 +20,20 @@ public:
     Scene() {};
 
     ~Scene() {
-        axis_position_buffer_.destroy();
-        axis_position_buffer_.release();
+        clear();
     }
 
     void init(Application* _app);
 
     void render(wgpu::RenderPassEncoder _render_pass);
+
+    inline void clear() {
+        if (axis_position_buffer_) {
+            axis_position_buffer_.destroy();
+            axis_position_buffer_.release();
+        }
+        objects_.clear();
+    }
 
     inline std::shared_ptr<ObjectBase> add_mesh(const std::filesystem::path& _path)
     {

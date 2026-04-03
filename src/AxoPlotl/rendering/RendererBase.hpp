@@ -7,6 +7,21 @@ namespace AxoPlotl
 
 class Application;
 
+struct PipelineState
+{
+    wgpu::Device device_;
+    wgpu::RenderPipeline pipeline_;
+    wgpu::BindGroupLayout bind_group_layout_;
+
+    inline void set_device(wgpu::Device _device) {
+        if (device_ != _device) {
+            device_ = _device;
+            if (pipeline_) {pipeline_.release(); pipeline_ = nullptr;}
+            if (bind_group_layout_) {bind_group_layout_.release(); bind_group_layout_ = nullptr;}
+        }
+    }
+};
+
 class PropertyRendererBase
 {
 public:

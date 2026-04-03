@@ -4,14 +4,14 @@
 
 namespace AxoPlotl
 {
-
-wgpu::RenderPipeline ColoredVertexPropertyRenderer::pipeline_;
-wgpu::BindGroupLayout ColoredVertexPropertyRenderer::bind_group_layout_;
+PipelineState ColoredVertexPropertyRenderer::pipeline_state_;
 
 void ColoredVertexPropertyRenderer::init(uint32_t _object_id, Application* _app,
                                          wgpu::Buffer _position_buffer,
                                          const std::vector<uint32_t>& _indices)
 {
+    pipeline_state_.set_device(_app->device_);
+
     object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
@@ -78,7 +78,7 @@ void ColoredVertexPropertyRenderer::create_buffers(const std::vector<uint32_t> &
 
 void ColoredVertexPropertyRenderer::create_bind_group_layout()
 {
-    if (bind_group_layout_) {return;}
+    if (pipeline_state_.bind_group_layout_) {return;}
 
     wgpu::BindGroupLayoutEntry entries[5]{};
 
@@ -116,7 +116,7 @@ void ColoredVertexPropertyRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = "Vertex Bind Group Layout";
 
-    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
 void ColoredVertexPropertyRenderer::create_bind_group()
@@ -155,7 +155,7 @@ void ColoredVertexPropertyRenderer::create_bind_group()
     std::cout << "4: Mesh Vertex Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
+    bgDesc.layout = pipeline_state_.bind_group_layout_;
     bgDesc.entryCount = 5;
     bgDesc.entries = groupEntries;
 
@@ -164,7 +164,7 @@ void ColoredVertexPropertyRenderer::create_bind_group()
 
 void ColoredVertexPropertyRenderer::create_pipeline()
 {
-    if (pipeline_ || n_vertices_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_vertices_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_, "mesh_vertex_shader.wgsl", "Mesh Vertex Shader");
@@ -213,7 +213,7 @@ void ColoredVertexPropertyRenderer::create_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
 
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -226,7 +226,7 @@ void ColoredVertexPropertyRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Vertex Point Pipeline";
 
-    pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredVertexPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
@@ -256,7 +256,7 @@ void ColoredVertexPropertyRenderer::render(
 
     // Instancing. For each instance, we draw 4 vertices
     // that form a quad
-    _render_pass.setPipeline(pipeline_);
+    _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.draw(4, n_vertices_, 0, 0);
 }

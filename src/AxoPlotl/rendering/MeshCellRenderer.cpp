@@ -5,9 +5,8 @@
 namespace AxoPlotl
 {
 
-wgpu::RenderPipeline ColoredCellPropertyRenderer::triangle_pipeline_;
-wgpu::RenderPipeline ColoredCellPropertyRenderer::line_pipeline_;
-wgpu::BindGroupLayout ColoredCellPropertyRenderer::bind_group_layout_;
+PipelineState ColoredCellPropertyRenderer::triangle_pipeline_state_;
+PipelineState ColoredCellPropertyRenderer::outline_pipeline_state_;
 
 struct CellIndex {
     uint32_t vh_;
@@ -19,6 +18,9 @@ void ColoredCellPropertyRenderer::init(uint32_t _object_id, Application* _app,
                                        const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
                                        wgpu::Buffer _cells_center_buffer)
 {
+    triangle_pipeline_state_.set_device(_app->device_);
+    outline_pipeline_state_.set_device(_app->device_);
+
     object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
@@ -154,7 +156,7 @@ void ColoredCellPropertyRenderer::create_buffers(
 
 void ColoredCellPropertyRenderer::create_bind_group_layout()
 {
-    if (bind_group_layout_) {return;}
+    if (triangle_pipeline_state_.bind_group_layout_) {return;}
 
     wgpu::BindGroupLayoutEntry entries[6]{};
 
@@ -198,7 +200,8 @@ void ColoredCellPropertyRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = "Cell Bind Group Layout";
 
-    bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    triangle_pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    outline_pipeline_state_.bind_group_layout_ = triangle_pipeline_state_.bind_group_layout_;
 }
 
 void ColoredCellPropertyRenderer::create_bind_group()
@@ -244,7 +247,7 @@ void ColoredCellPropertyRenderer::create_bind_group()
     std::cout << "5: Mesh Cell Incenters #" << groupEntries[5].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
-    bgDesc.layout = bind_group_layout_;
+    bgDesc.layout = triangle_pipeline_state_.bind_group_layout_;
     bgDesc.entryCount = 6;
     bgDesc.entries = groupEntries;
 
@@ -253,7 +256,7 @@ void ColoredCellPropertyRenderer::create_bind_group()
 
 void ColoredCellPropertyRenderer::create_triangle_pipeline()
 {
-    if (triangle_pipeline_ || n_cells_==0) {return;}
+    if (triangle_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_,
@@ -321,7 +324,7 @@ void ColoredCellPropertyRenderer::create_triangle_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&triangle_pipeline_state_.bind_group_layout_);
     wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
@@ -335,12 +338,12 @@ void ColoredCellPropertyRenderer::create_triangle_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Cell Triangle Pipeline";
 
-    triangle_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    triangle_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredCellPropertyRenderer::create_line_pipeline()
 {
-    if (line_pipeline_ || n_cells_==0) {return;}
+    if (outline_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         app_->device_,
@@ -408,7 +411,7 @@ void ColoredCellPropertyRenderer::create_line_pipeline()
     // Pipeline layout
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
-    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&bind_group_layout_);
+    layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&outline_pipeline_state_.bind_group_layout_);
     wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
 
     // Render pipeline
@@ -422,7 +425,7 @@ void ColoredCellPropertyRenderer::create_line_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = "Cell Outline Pipeline";
 
-    line_pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    outline_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredCellPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
@@ -450,12 +453,12 @@ void ColoredCellPropertyRenderer::render(
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
-    _render_pass.setPipeline(triangle_pipeline_);
+    _render_pass.setPipeline(triangle_pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.setVertexBuffer(0, triangle_index_buffer_, 0, n_triangle_indices_*sizeof(CellIndex));
     _render_pass.draw(n_triangle_indices_, 1, 0, 0);
 
-    _render_pass.setPipeline(line_pipeline_);
+    _render_pass.setPipeline(outline_pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
     _render_pass.setVertexBuffer(0, line_index_buffer_, 0, n_line_indices_*sizeof(CellIndex));
     _render_pass.draw(n_line_indices_, 1, 0, 0);

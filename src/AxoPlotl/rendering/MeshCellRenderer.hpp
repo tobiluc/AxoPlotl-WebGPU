@@ -99,9 +99,8 @@ private:
     wgpu::Buffer uniform_buffer_;
     wgpu::Buffer cells_center_buffer_;
 
-    static wgpu::RenderPipeline triangle_pipeline_;
-    static wgpu::RenderPipeline line_pipeline_;
-    static wgpu::BindGroupLayout bind_group_layout_;
+    static PipelineState triangle_pipeline_state_;
+    static PipelineState outline_pipeline_state_;
     wgpu::BindGroup bind_group_;
 };
 

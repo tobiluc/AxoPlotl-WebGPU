@@ -45,18 +45,30 @@ Application::Application() :
 {
 }
 
-bool Application::init()
+Application::~Application()
 {
-    // Create Window
+    terminate_run();
+    glfwTerminate();
+}
+
+bool Application::init_glfw()
+{
+    if (window_) {
+        glfwDestroyWindow(window_);
+    }
+
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     window_ = glfwCreateWindow(640, 480, "AxoPlotl - WebGPU", nullptr, nullptr);
-    if (!window_) {
-        std::cerr << "Failed to create window" << std::endl;
-        return false;
-    }
-    assert(window_);
+
+    return window_;
+}
+
+bool Application::init()
+{
+    // Create Window
+    if (!init_glfw()) {return false;}
 
     //-----------
     // Callbacks
@@ -90,7 +102,6 @@ bool Application::init()
     //------------------
     // Instance
     //------------------
-
     wgpu::Instance instance = wgpuCreateInstance(nullptr);
 
     surface_ = glfwGetWGPUSurface(instance, window_);
@@ -243,7 +254,7 @@ void Application::frame_tick()
 
     // Depth Attachment
     wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
-    depthStencilAttachment.view = depthTextureView;
+    depthStencilAttachment.view = depth_texture_view_;
     depthStencilAttachment.depthClearValue = 1.0f; // "far"
     depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
     depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
@@ -354,7 +365,7 @@ void Application::run()
         frame_tick();
     }
 #endif // __EMSCRIPTEN__
-    terminate();
+    terminate_run();
 }
 
 void Application::on_window_resize(float width, float height)
@@ -368,26 +379,45 @@ void Application::on_window_resize(float width, float height)
     wgpuPollEvents(device_, true);
 }
 
-void Application::terminate()
+void Application::terminate_run()
 {
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
 
-    if (queue_) {queue_.release();}
+    scene().clear();
+
+    if (queue_) {
+        queue_.release();
+        queue_ = nullptr;
+    }
     if (surface_) {
         surface_.unconfigure();
         surface_.release();
+        surface_ = nullptr;
     }
-    if (adapter_) {adapter_.release();}
-    if (depthTextureView) {depthTextureView.release();}
-    if (depthTexture) {
-        depthTexture.destroy();
-        depthTexture.release();
+    if (depth_texture_view_) {
+        depth_texture_view_.release();
+        depth_texture_view_ = nullptr;
     }
-    if (device_) {device_.release();}
+    if (depth_texture_) {
+        depth_texture_.destroy();
+        depth_texture_.release();
+        depth_texture_ = nullptr;
+    }
 
-    glfwDestroyWindow(window_);
-    glfwTerminate();
+    if (adapter_) {
+        adapter_.release();
+        adapter_ = nullptr;
+    }
+    if (device_) {
+        device_.release();
+        device_ = nullptr;
+    }
+
+    if (window_) {
+        glfwDestroyWindow(window_);
+        window_ = nullptr;
+    }
 }
 
 bool Application::init_imgui()
@@ -408,7 +438,7 @@ bool Application::init_imgui()
     imgui_init_info.Device = device_;
     imgui_init_info.NumFramesInFlight = 3;
     imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
-    imgui_init_info.DepthStencilFormat = depthTextureFormat;
+    imgui_init_info.DepthStencilFormat = depth_texture_format_;
     imgui_init_info.PipelineMultisampleState.count = 1;
     ImGui_ImplWGPU_Init(&imgui_init_info);
 
@@ -655,10 +685,12 @@ void Application::configure_surface()
 
 void Application::create_depth_texture()
 {
-    if (depthTextureView) {depthTextureView.release();}
-    if (depthTexture) {
-        depthTexture.destroy();
-        depthTexture.release();
+    if (depth_texture_view_) {
+        depth_texture_view_.release();
+    }
+    if (depth_texture_) {
+        depth_texture_.destroy();
+        depth_texture_.release();
     }
 
     // int fbWidth, fbHeight;
@@ -667,12 +699,12 @@ void Application::create_depth_texture()
     auto viewport = total_viewport();
 
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
-    depthTextureFormat = depthStencilState.format;
+    depth_texture_format_ = depthStencilState.format;
 
     // Create the depth texture
     wgpu::TextureDescriptor depthTextureDesc;
     depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
-    depthTextureDesc.format = depthTextureFormat;
+    depthTextureDesc.format = depth_texture_format_;
     depthTextureDesc.mipLevelCount = 1;
     depthTextureDesc.sampleCount = 1;
     depthTextureDesc.size = {
@@ -681,8 +713,8 @@ void Application::create_depth_texture()
         1};
     depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
     depthTextureDesc.viewFormatCount = 1;
-    depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depthTextureFormat;
-    depthTexture = device_.createTexture(depthTextureDesc);
+    depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depth_texture_format_;
+    depth_texture_ = device_.createTexture(depthTextureDesc);
 
     // Create the view of the depth texture manipulated by the rasterizer
     wgpu::TextureViewDescriptor depthTextureViewDesc;
@@ -692,8 +724,8 @@ void Application::create_depth_texture()
     depthTextureViewDesc.baseMipLevel = 0;
     depthTextureViewDesc.mipLevelCount = 1;
     depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
-    depthTextureViewDesc.format = depthTextureFormat;
-    depthTextureView = depthTexture.createView(depthTextureViewDesc);
+    depthTextureViewDesc.format = depth_texture_format_;
+    depth_texture_view_ = depth_texture_.createView(depthTextureViewDesc);
 
     depthStencilState.stencilReadMask = 0;
     depthStencilState.stencilWriteMask = 0;

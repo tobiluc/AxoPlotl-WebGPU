@@ -93,8 +93,7 @@ private:
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
 
-    static wgpu::RenderPipeline pipeline_;
-    static wgpu::BindGroupLayout bind_group_layout_;
+    static PipelineState pipeline_state_;
     wgpu::BindGroup bind_group_;
 };
 
