@@ -40,7 +40,8 @@ namespace AxoPlotl
 {
 
 Application::Application() :
-    user_ui_callback_([](Application* _app) {})
+    user_ui_callback_([](Application* _app) {}),
+    error_callback_(nullptr)
 {
 }
 
@@ -172,7 +173,7 @@ bool Application::init()
     return true;
 }
 
-void Application::run()
+void Application::frame_tick()
 {
     // Input and Time Update
     Time::update();
@@ -261,24 +262,24 @@ void Application::run()
     renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
 
     // Begin render pass
-    wgpu::RenderPassEncoder renderPass =
+    scene_render_pass_ =
         cmd_encoder.beginRenderPass(renderPassDesc);
 
     // Set the Scene Viewport
     auto viewport = scene_viewport();
-    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     // Render the Scene with its objects
-    scene_.render(renderPass);
+    scene_.render(scene_render_pass_);
 
-    // Reset Viewport to full screen before drawing ImGui
-    // Otherwise, ImGui will be squashed and unclickable!
+    // For the picking to work correctly, we resize the
+    // scene viewprt to the full rectangle after rendering
     viewport = total_viewport();
-    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    renderPass.end();
+    scene_render_pass_.end();
 
     //------------------
     // Click to Pick
@@ -292,7 +293,7 @@ void Application::run()
         float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
         float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
         pick_result_ = request_pick_result(x, y);
-        //std::cerr << pick_result_ << std::endl;
+        std::cerr << pick_result_ << std::endl;
         if (pick_result_.object_id_ < UINT32_MAX) {
             just_clicked_on_object = true;
         }
@@ -309,9 +310,10 @@ void Application::run()
     guiPassDesc.colorAttachmentCount = 1;
     guiPassDesc.colorAttachments = &color_attachments[0];
     guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
-    wgpu::RenderPassEncoder guiPass = cmd_encoder.beginRenderPass(guiPassDesc);
-    render_imgui(guiPass, just_clicked_on_object);
-    guiPass.end();
+    gui_render_pass_ = cmd_encoder.beginRenderPass(guiPassDesc);
+    render_imgui(gui_render_pass_, just_clicked_on_object);
+
+    gui_render_pass_.end();
 
     // Submit
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
@@ -321,12 +323,13 @@ void Application::run()
     surface_.present();
 #endif
 
-    // Cleanup
+// Cleanup
 #ifndef WEBGPU_BACKEND_WGPU
     wgpuTextureRelease(surfaceTexture.texture);
 #endif //! WEBGPU_BACKEND_WGPU
     targetView.release();
-    renderPass.release();
+    scene_render_pass_.release();
+    gui_render_pass_.release();
     cmdBuffer.release();
     cmd_encoder.release();
 
@@ -336,6 +339,22 @@ void Application::run()
     // For example deletion of scene objects.
     for (auto& fn : deferred_calls_) {fn();}
     deferred_calls_.clear();
+}
+
+void Application::run()
+{
+#ifdef __EMSCRIPTEN__
+    auto callback = [](void *arg) {
+        Application* app_ptr = reinterpret_cast<Application*>(arg);
+        app_ptr->run();
+    };
+    emscripten_set_main_loop_arg(callback, this, 0, true);
+#else // __EMSCRIPTEN__
+    while (!glfwWindowShouldClose(window())) {
+        frame_tick();
+    }
+#endif // __EMSCRIPTEN__
+    terminate();
 }
 
 void Application::on_window_resize(float width, float height)
@@ -485,6 +504,17 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
             ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
+
+            ImGui::SeparatorText("Picking");
+            ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
+            ImGui::SameLine();
+
             ImGui::EndMenu(); // !Settings
         }
 
@@ -518,7 +548,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
     if (_just_clicked_on_object) [[unlikely]] {ImGui::OpenPopup("PickingPopup");}
     if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
         auto obj = scene().get_object(pick_result_.object_id_);
-        if (obj) [[likely]] {obj->render_ui_picking(pick_result_);}
+        if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
         ImGui::EndPopup();
     }
 

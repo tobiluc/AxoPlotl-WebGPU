@@ -23,7 +23,7 @@ public:
 
     virtual ~ObjectBase() = default;
 
-    virtual void init() = 0;
+    virtual void init_gpu_buffers() = 0;
 
     virtual void recompute_bounding_box() = 0;
 
@@ -37,7 +37,7 @@ public:
 
     virtual void render_ui_properties() = 0;
 
-    virtual void render_ui_picking(const PickResult& _p) = 0;
+    virtual void render_ui_picking(const PickResult& _p, const PickConfig& _cfg) = 0;
 
     inline const ToLoG::AABB<Vec3f>& bounding_box() const {
         return bbox_;

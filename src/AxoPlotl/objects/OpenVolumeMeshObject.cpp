@@ -93,54 +93,11 @@ void OpenVolumeMeshObject::render_ui_properties()
             }
 
             for (auto pp = mesh_.persistent_props_begin<EntityTag>();
-                 pp != mesh_.persistent_props_end<EntityTag>(); ++pp) {
+                 pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+            {
                 ImGui::PushID((*pp)->name().c_str());
-
-                auto upload_data = [&]<typename T>() {
-                    upload_buffer_property_data<T,EntityTag>(
-                        mesh_,
-                        *pp,
-                        prop<EntityTag>().filters_,
-                        renderer<EntityTag>()
-                    );
-                    prop<EntityTag>().filter_index_ = 0;
-                };
-
                 if (ImGui::MenuItem(string_format("%s [%s]", (*pp)->name().c_str(), (*pp)->typeNameWrapper().c_str()).c_str())) {
-                    prop<EntityTag>().prop_ = *pp;
-                    selected_prop_entity_type_ = EntityTag::type();
-                    if ((*pp)->typeNameWrapper()=="double") {
-                        upload_data.template operator()<double>();
-                    } else if ((*pp)->typeNameWrapper()=="int") {
-                        upload_data.template operator()<int>();
-                    } else if ((*pp)->typeNameWrapper()=="uint") {
-                        upload_data.template operator()<unsigned int>();
-                    } else if ((*pp)->typeNameWrapper()=="float") {
-                        upload_data.template operator()<float>();
-                    } else if ((*pp)->typeNameWrapper()=="bool") {
-                        upload_data.template operator()<bool>();
-                    } else if ((*pp)->typeNameWrapper()=="short") {
-                        upload_data.template operator()<short>();
-                    } else if ((*pp)->typeNameWrapper()=="ushort") {
-                        upload_data.template operator()<unsigned short>();
-                    } else if ((*pp)->typeNameWrapper()=="char") {
-                        upload_data.template operator()<char>();
-                    } else if ((*pp)->typeNameWrapper()=="uchar") {
-                        upload_data.template operator()<unsigned char>();
-                    } else if ((*pp)->typeNameWrapper()=="long") {
-                        upload_data.template operator()<long>();
-                    } else if ((*pp)->typeNameWrapper()=="ulong") {
-                        upload_data.template operator()<unsigned long>();
-                    } else if ((*pp)->typeNameWrapper()=="vec3d") {
-                        upload_data.template operator()<OVM::Vec3d>();
-                    } else if ((*pp)->typeNameWrapper()=="vec3f") {
-                        upload_data.template operator()<OVM::Vec3f>();
-                    } else if ((*pp)->typeNameWrapper()=="vec4d") {
-                        upload_data.template operator()<OVM::Vec4d>();
-                    } else if ((*pp)->typeNameWrapper()=="vec4f") {
-                        upload_data.template operator()<OVM::Vec4f>();
-                    }
-                    renderer<EntityTag>().enabled() = true;
+                    visualize_property((*pp)->name(), EntityTag::type(), (*pp)->typeNameWrapper());
                 }
                 ImGui::PopID();
             }
@@ -194,7 +151,7 @@ void OpenVolumeMeshObject::render_ui_properties()
     render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
 }
 
-void OpenVolumeMeshObject::init()
+void OpenVolumeMeshObject::init_gpu_buffers()
 {
     std::random_device rd;
     std::mt19937 mt(rd());
@@ -250,7 +207,7 @@ void OpenVolumeMeshObject::render(
     //     mvp);
 }
 
-void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p)
+void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p, const PickConfig &_cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;}
 
@@ -328,6 +285,86 @@ void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p)
         break;
     default: break;
     }
+}
+
+void OpenVolumeMeshObject::visualize_property(
+    const std::string& _property_name,
+    std::optional<OVM::EntityType> _entity_type,
+    std::optional<std::string> _type_name)
+{
+    bool uploaded_property = false;
+
+    auto select_property = [&]<typename EntityTag,typename T>(OVM::PropertyStorageBase* _pp) {
+
+        prop<EntityTag>().prop_ = _pp;
+        upload_buffer_property_data<T,EntityTag>(
+            mesh_,
+            _pp,
+            prop<EntityTag>().filters_,
+            renderer<EntityTag>()
+            );
+        prop<EntityTag>().filter_index_ = 0;
+        selected_prop_entity_type_ = EntityTag::type();
+        renderer<OVM::Entity::Vertex>().enabled() = false;
+        renderer<OVM::Entity::Edge>().enabled() = false;
+        renderer<OVM::Entity::Face>().enabled() = false;
+        renderer<OVM::Entity::Cell>().enabled() = false;
+        renderer<EntityTag>().enabled() = true;
+        uploaded_property = true;
+    };
+
+    auto search_and_select_property = [&]<typename EntityTag>()
+    {
+        if (_entity_type.has_value() && _entity_type.value() != EntityTag::type()) {return;}
+        for (auto pp = mesh_.persistent_props_begin<EntityTag>();
+             pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+        {
+            if (uploaded_property || (_type_name.has_value()
+                && (*pp)->typeNameWrapper() != _type_name.value())
+                || _property_name != (*pp)->name())
+            {continue;}
+
+            if ((*pp)->typeNameWrapper()=="double") {
+                select_property.template operator()<EntityTag,double>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="int") {
+                select_property.template operator()<EntityTag,int>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="uint") {
+                select_property.template operator()<EntityTag,unsigned int>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="float") {
+                select_property.template operator()<EntityTag,float>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="bool") {
+                select_property.template operator()<EntityTag,bool>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="short") {
+                select_property.template operator()<EntityTag,short>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="ushort") {
+                select_property.template operator()<EntityTag,unsigned short>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="char") {
+                select_property.template operator()<EntityTag,char>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="uchar") {
+                select_property.template operator()<EntityTag,unsigned char>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="long") {
+                select_property.template operator()<EntityTag,long>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="ulong") {
+                select_property.template operator()<EntityTag,unsigned long>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="vec3d") {
+                select_property.template operator()<EntityTag,OVM::Vec3d>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="vec3f") {
+                select_property.template operator()<EntityTag,OVM::Vec3f>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="vec4d") {
+                select_property.template operator()<EntityTag,OVM::Vec4d>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="vec4f") {
+                select_property.template operator()<EntityTag,OVM::Vec4f>(*pp);
+            }
+            if (uploaded_property) {
+                break;
+            }
+        }
+    };
+
+    search_and_select_property.template operator()<OVM::Entity::Vertex>();
+    search_and_select_property.template operator()<OVM::Entity::Edge>();
+    search_and_select_property.template operator()<OVM::Entity::Face>();
+    search_and_select_property.template operator()<OVM::Entity::Cell>();
 }
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()

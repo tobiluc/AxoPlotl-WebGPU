@@ -28,29 +28,39 @@ public:
 
     void render(wgpu::RenderPassEncoder _render_pass);
 
-    inline void add_mesh(const std::filesystem::path& _path)
+    inline std::shared_ptr<ObjectBase> add_mesh(const std::filesystem::path& _path)
     {
-        std::cout << "Loading from " << _path << "..." << std::endl;
         auto opt = IO::read_mesh(_path);
-        if (!opt.has_value()) {return;}
+        if (!opt.has_value()) {return nullptr;}
         if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
-            add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
+            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
         } else if (std::holds_alternative<OMSurfaceMesh>(opt.value())) {
             //add_object<OpenMeshObject>(std::move(std::get<OMSurfaceMesh>(opt.value())),_path);
         } else if (std::holds_alternative<SurfaceMesh>(opt.value())) {
-            add_object<OpenVolumeMeshObject>(std::move(
+            return add_object<OpenVolumeMeshObject>(std::move(
                 volume_mesh(std::get<SurfaceMesh>(opt.value()))),_path);
         }
+        return nullptr;
+    }
+
+    inline std::shared_ptr<OpenVolumeMeshObject> add_openvolumemesh(const std::filesystem::path& _path)
+    {
+        auto opt = IO::read_mesh(_path);
+        if (!opt.has_value()) {return nullptr;}
+        if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
+            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
+        }
+        return nullptr;
     }
 
     template<typename Object, typename ...Args>
-    int add_object(Args... _args)
+    std::shared_ptr<Object> add_object(Args... _args)
     {
         objects_.push_back(std::make_shared<Object>(this, _args...));
-        objects_.back()->init();
+        objects_.back()->init_gpu_buffers();
         objects_.back()->recompute_bounding_box();
         zoom_to_box(objects_.back()->bounding_box());
-        return objects_.back()->id();
+        return std::static_pointer_cast<Object>(objects_.back());
     }
 
     inline const std::vector<std::shared_ptr<ObjectBase>>& get_objects() const {
@@ -61,6 +71,16 @@ public:
         for (auto obj : objects_) {
             if (!obj->deleted() && obj->id() == _id) {
                 return obj;
+            }
+        }
+        return nullptr;
+    }
+
+    template <typename Object>
+    inline std::shared_ptr<Object> get_object(int _id) const {
+        for (auto const& obj : objects_) {
+            if (!obj->deleted() && obj->id() == _id) {
+                return std::dynamic_pointer_cast<Object>(obj);
             }
         }
         return nullptr;

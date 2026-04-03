@@ -15,7 +15,14 @@
 namespace AxoPlotl
 {
 
-class Application {
+class Application
+{
+private:
+    float clear_color_[3] = {1,1,1};
+    float font_scale_ = 1.0f;
+    PickConfig picking_config_;
+    bool enable_imgui_sidebar_ = false;
+
 public:
     Application();
 
@@ -25,14 +32,13 @@ public:
     bool init();
 
     // Draw a frame and handle events
+    void frame_tick();
+
     void run();
 
     void on_window_resize(float width, float height);
 
     void terminate();
-
-    float clear_color_[3] = {1,1,1};
-    float font_scale_ = 1.0f;
 
     inline Scene& scene() {return scene_;}
 
@@ -76,6 +82,8 @@ private:
     wgpu::Texture picking_texture_;
     wgpu::TextureView picking_view_;
     wgpu::Buffer picking_buffer_;
+    wgpu::RenderPassEncoder gui_render_pass_;
+    wgpu::RenderPassEncoder scene_render_pass_;
 
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 

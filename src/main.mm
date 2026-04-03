@@ -19,31 +19,19 @@ void user_ui_callback(AxoPlotl::Application* _app)
 
 int main()
 {
-    std::cout << std::filesystem::current_path()  << std::endl;
+  // Initialize main Runner
+  AxoPlotl::Application app;
+  app.user_ui_callback() = user_ui_callback;
+  if (!app.init()) {
+      std::cerr << "Failed to initialice AxoPlotl" << std::endl;
+      return 1;
+  }
+  AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);
 
-    // Initialize main Runner
-    AxoPlotl::Application app;
-    app.user_ui_callback() = user_ui_callback;
-    if (!app.init()) {
-        std::cerr << "Failed to initialice AxoPlotl" << std::endl;
-        return 1;
-    }
-    AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);
+  // auto obj = app.scene().add_openvolumemesh("/Users/tobiaskohler/Uni/OpenFlipper-Free/libs/libigrec/build/Desktop_arm_darwin_generic_mach_o_64bit/Build/bin/RelWithDebInfo/tet_mesh.ovmb");
+  // obj->visualize_property("IGRec::c_frame_dot");
 
-#ifdef __EMSCRIPTEN__
-    auto callback = [](void *arg) {
-        Application* app_ptr = reinterpret_cast<Application*>(arg);
-        app_ptr->run();
-    };
-    emscripten_set_main_loop_arg(callback, &app, 0, true);
-#else // __EMSCRIPTEN__
-    while (!glfwWindowShouldClose(app.window())) {
-        @autoreleasepool {
-            app.run();
-        }
-    }
-#endif // __EMSCRIPTEN__
-    app.terminate();
+  app.run();
 
-    return 0;
+  return 0;
 }
