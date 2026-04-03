@@ -15,6 +15,7 @@ protected:
         alignas(16) ClipBox clip_box_;
         alignas(16) Property::Type type_ = Property::Type::COLOR;;
         alignas(16) Property::Filter value_filter_;
+        alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);
@@ -58,7 +59,7 @@ public:
         uniform_buffer_.release();
     }
 
-    void init(Application* _app,
+    void init(uint32_t _object_id, Application* _app,
               wgpu::Buffer _position_buffer,
               const std::vector<uint32_t>& _indices);
 
@@ -69,6 +70,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 private:
+    uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;
     size_t n_vertices_;
 

@@ -22,11 +22,26 @@
 #  include <webgpu/wgpu.h>
 #endif // WEBGPU_BACKEND_WGPU
 
+void wgpuPollEvents(
+    [[maybe_unused]] wgpu::Device _device,
+    [[maybe_unused]] bool _yield_to_browser) {
+#if defined(WEBGPU_BACKEND_DAWN)
+    _device.tick();
+#elif defined(WEBGPU_BACKEND_WGPU)
+    _device.poll(false);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+    if (_yield_to_browser) {
+        emscripten_sleep(100);
+    }
+#endif
+}
+
 namespace AxoPlotl
 {
 
 Application::Application() :
-    user_ui_callback_([](Application* _app) {})
+    user_ui_callback_([](Application* _app) {}),
+    error_callback_(nullptr)
 {
 }
 
@@ -128,15 +143,20 @@ bool Application::init()
     //----------
     // Surface
     //----------
-    wgpu::SurfaceCapabilities capabilities = {};
-    surface_.getCapabilities(adapter_, &capabilities);
-    color_format_ = capabilities.formats[0];
     configure_surface();
 
-    //----------
-    // Depth
-    //----------
+    //-------------------
+    // Special Textures
+    //-------------------
     create_depth_texture();
+    create_picking_texture();
+
+    wgpu::BufferDescriptor pickBuffDesc{};
+    pickBuffDesc.label = "Pixel Picking Buffer";
+    pickBuffDesc.size = sizeof(PickResult);
+    pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+    pickBuffDesc.mappedAtCreation = false;
+    picking_buffer_ = device_.createBuffer(pickBuffDesc);
 
     //----------
     // Scene
@@ -146,14 +166,14 @@ bool Application::init()
     //----------
     // Gui
     //----------
-    if (!init_gui()) {
+    if (!init_imgui()) {
         return false;
     }
 
     return true;
 }
 
-void Application::run()
+void Application::frame_tick()
 {
     // Input and Time Update
     Time::update();
@@ -162,15 +182,24 @@ void Application::run()
 
     // Only render a certain number of frames
     // before redrawing
-    if (!on_draw()) [[likely]] {
-        return;
-    }
+    if (!on_draw()) [[likely]] {return;}
 
     wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
 
     // Acquire next frame texture
     wgpu::SurfaceTexture surfaceTexture;
     surface_.getCurrentTexture(&surfaceTexture);
+
+    // Safety Check
+    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) [[unlikely]] {
+#ifndef WEBGPU_BACKEND_WGPU
+        if (surfaceTexture.texture) {
+            wgpuTextureRelease(surfaceTexture.texture);
+        }
+#endif //! WEBGPU_BACKEND_WGPU
+        return;
+    }
+
     wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
     viewDescriptor.label = "Surface texture view";
@@ -183,25 +212,33 @@ void Application::run()
     viewDescriptor.aspect = WGPUTextureAspect_All;
     wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 
-#ifndef WEBGPU_BACKEND_WGPU
-        wgpuTextureRelease(surfaceTexture.texture);
-#endif // WEBGPU_BACKEND_WGPU
+    wgpu::RenderPassColorAttachment color_attachments[2];
 
     // Color Attachment
-    wgpu::RenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = targetView;
-    colorAttachment.loadOp = wgpu::LoadOp::Clear;
-    colorAttachment.storeOp = wgpu::StoreOp::Store;
-    colorAttachment.clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
-    colorAttachment.resolveTarget = nullptr;
-    colorAttachment.nextInChain = nullptr;
+    color_attachments[0].view = targetView;
+    color_attachments[0].loadOp = wgpu::LoadOp::Clear;
+    color_attachments[0].storeOp = wgpu::StoreOp::Store;
+    color_attachments[0].clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
+    color_attachments[0].resolveTarget = nullptr;
+    color_attachments[0].nextInChain = nullptr;
 #ifndef WEBGPU_BACKEND_WGPU
-    colorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    color_attachments[0].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif //!WEBGPU_BACKEND_WGPU
+
+    // Picking Attachment
+    color_attachments[1].view = picking_view_;
+    color_attachments[1].loadOp = wgpu::LoadOp::Clear;
+    color_attachments[1].storeOp = wgpu::StoreOp::Store;
+    color_attachments[1].clearValue = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
+    color_attachments[1].resolveTarget = nullptr;
+    color_attachments[1].nextInChain = nullptr;
+#ifndef WEBGPU_BACKEND_WGPU
+    color_attachments[1].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
 #endif //!WEBGPU_BACKEND_WGPU
 
     wgpu::RenderPassDescriptor renderPassDesc{};
-    renderPassDesc.colorAttachmentCount = 1;
-    renderPassDesc.colorAttachments = &colorAttachment;
+    renderPassDesc.colorAttachmentCount = 2;
+    renderPassDesc.colorAttachments = color_attachments;
     renderPassDesc.label = "Main Render Pass";
 
     // Depth Attachment
@@ -225,70 +262,110 @@ void Application::run()
     renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
 
     // Begin render pass
-    wgpu::RenderPassEncoder renderPass =
+    scene_render_pass_ =
         cmd_encoder.beginRenderPass(renderPassDesc);
 
     // Set the Scene Viewport
     auto viewport = scene_viewport();
-    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     // Render the Scene with its objects
-    scene_.render(renderPass);
+    scene_.render(scene_render_pass_);
 
-    // Reset Viewport to full screen before drawing ImGui
-    // Otherwise, ImGui will be squashed and unclickable!
+    // For the picking to work correctly, we resize the
+    // scene viewprt to the full rectangle after rendering
     viewport = total_viewport();
-    renderPass.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    renderPass.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // Render  Gui
-    update_gui(renderPass);
+    scene_render_pass_.end();
 
-    // End pass
-    renderPass.end();
+    //------------------
+    // Click to Pick
+    //------------------
+    bool just_clicked_on_object(false);
+    if (Input::Mouse::RIGHT_JUST_PRESSED) {
+        int width, height;
+        glfwGetWindowSize(window(), &width, &height);
+        float x_scale = (float)viewport[2] / (float)width;
+        float y_scale = (float)viewport[3] / (float)height;
+        float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
+        float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
+        pick_result_ = request_pick_result(x, y);
+        std::cerr << pick_result_ << std::endl;
+        if (pick_result_.object_id_ < UINT32_MAX) {
+            just_clicked_on_object = true;
+        }
+    }
+
+    //------------------
+    // GUI Render Pass
+    //------------------
+    // only expects pixel color attachment (no picking texture)
+    // wgpu::RenderPassColorAttachment guiColorAttachment{};
+    // guiColorAttachment.view = targetView;
+    color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
+    wgpu::RenderPassDescriptor guiPassDesc{};
+    guiPassDesc.colorAttachmentCount = 1;
+    guiPassDesc.colorAttachments = &color_attachments[0];
+    guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
+    gui_render_pass_ = cmd_encoder.beginRenderPass(guiPassDesc);
+    render_imgui(gui_render_pass_, just_clicked_on_object);
+
+    gui_render_pass_.end();
 
     // Submit
     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
     queue_.submit(1, &cmdBuffer);
 
-    // Cleanup
-    targetView.release();
-    renderPass.release();
-    cmdBuffer.release();
-    cmd_encoder.release();
-    //wgpuTextureRelease(surfaceTexture.texture);
-
 #ifndef __EMSCRIPTEN__
     surface_.present();
 #endif
 
-#if defined(WEBGPU_BACKEND_DAWN)
-    device_.tick();
-#elif defined(WEBGPU_BACKEND_WGPU)
-    device.poll(false);
-#endif
+// Cleanup
+#ifndef WEBGPU_BACKEND_WGPU
+    wgpuTextureRelease(surfaceTexture.texture);
+#endif //! WEBGPU_BACKEND_WGPU
+    targetView.release();
+    scene_render_pass_.release();
+    gui_render_pass_.release();
+    cmdBuffer.release();
+    cmd_encoder.release();
+
+    wgpuPollEvents(device_, false);
 
     // Functions to execute after the command buffer submit
     // For example deletion of scene objects.
     for (auto& fn : deferred_calls_) {fn();}
     deferred_calls_.clear();
+}
 
+void Application::run()
+{
+#ifdef __EMSCRIPTEN__
+    auto callback = [](void *arg) {
+        Application* app_ptr = reinterpret_cast<Application*>(arg);
+        app_ptr->run();
+    };
+    emscripten_set_main_loop_arg(callback, this, 0, true);
+#else // __EMSCRIPTEN__
+    while (!glfwWindowShouldClose(window())) {
+        frame_tick();
+    }
+#endif // __EMSCRIPTEN__
+    terminate();
 }
 
 void Application::on_window_resize(float width, float height)
 {
     if (width == 0|| height == 0) {return;} // window minimized
 
-    // Framebuffer size
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-
-    //surface_.unconfigure();
     configure_surface();
     create_depth_texture();
+    create_picking_texture();
 
-    //pipeline.updateProjection(width/height);
+    wgpuPollEvents(device_, true);
 }
 
 void Application::terminate()
@@ -313,7 +390,7 @@ void Application::terminate()
     glfwTerminate();
 }
 
-bool Application::init_gui()
+bool Application::init_imgui()
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -363,7 +440,7 @@ glm::vec<4,float> Application::total_viewport()
     return {0.0f, 0.0f, fbWidth, fbHeight};
 }
 
-void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
+void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
 {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -427,6 +504,17 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
             ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
+
+            ImGui::SeparatorText("Picking");
+            ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
+            ImGui::SameLine();
+
             ImGui::EndMenu(); // !Settings
         }
 
@@ -456,14 +544,15 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
         ImGuiFileDialog::Instance()->Close();
     }
 
-    user_ui_callback_(this);
+    // Clicking on an Object
+    if (_just_clicked_on_object) [[unlikely]] {ImGui::OpenPopup("PickingPopup");}
+    if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+        auto obj = scene().get_object(pick_result_.object_id_);
+        if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
+        ImGui::EndPopup();
+    }
 
-    // data_control_.render_ui(*this)
-    // for (const auto& plugin : PluginRegistry::get_plugins()) {
-    //     if (ImGui::CollapsingHeader(plugin.second->name())) {
-    //         plugin.second->render_ui(*this);
-    //     }
-    // }
+    user_ui_callback_(this);
 
     ImGui::SetWindowFontScale(1.0f);
     ImGui::End();
@@ -472,11 +561,75 @@ void Application::update_gui(wgpu::RenderPassEncoder _render_pass)
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
 }
 
+PickResult Application::request_pick_result(float _x, float _y)
+{
+    wgpu::CommandEncoder encoder = device_.createCommandEncoder();
+
+    // We copy FROM the picking texture
+    wgpu::ImageCopyTexture src{};
+    src.texture = picking_texture_;
+    src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
+    src.mipLevel = 0;
+    src.aspect = wgpu::TextureAspect::All;
+
+    // We copy TO the picking buffer
+    wgpu::ImageCopyBuffer dst{};
+    dst.buffer = picking_buffer_;
+    dst.layout.offset = 0;
+    dst.layout.bytesPerRow = 256; // needs to be multiple of 256
+    dst.layout.rowsPerImage = 1;
+
+    // Copy the single pixel we clicked on (1 pixel is 1x1x1)
+    wgpu::Extent3D copySize = {1,1,1};
+    encoder.copyTextureToBuffer(src, dst, copySize);
+
+    wgpu::CommandBuffer cb = encoder.finish();
+    queue_.submit(1, &cb);
+    cb.release();
+    encoder.release();
+
+    struct Context {
+        bool ready;
+        wgpu::Buffer buffer;
+        PickResult pick;
+    };
+
+    auto on_buffer_mapped = [](
+        WGPUBufferMapAsyncStatus status,
+        void* _user_data)
+    {
+        Context* context = reinterpret_cast<Context*>(_user_data);
+        context->ready = true;
+        //std::cout << "Buffer mapped with status " << status << std::endl;
+        if (status != wgpu::BufferMapAsyncStatus::Success) {return;}
+
+        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
+        context->pick = {data[0],data[1],data[2],data[3]};
+
+        // std::cout << "bufferData = [";
+        // for (int i = 0; i < 4; ++i) {
+        //     if (i > 0) std::cout << ", ";
+        //     std::cout << data[i];
+        // }
+        // std::cout << "]" << std::endl;
+
+        // unmap the memory
+        context->buffer.unmap();
+    };
+
+    // Create the Context instance
+    Context context = {false, picking_buffer_};
+    wgpuBufferMapAsync(picking_buffer_, wgpu::MapMode::Read, 0, sizeof(PickResult), on_buffer_mapped, (void*)&context);
+    while (!context.ready) {
+        wgpuPollEvents(device_, true);
+    }
+    return context.pick;
+}
+
 void Application::configure_surface()
 {
-    if (surface_) {surface_.unconfigure();}
-
     auto viewport = total_viewport();
+    //std::cerr << viewport[2] << "/" << viewport[3] << std::endl;
 
     // Configure the surface
     wgpu::SurfaceConfiguration config = {};
@@ -485,15 +638,18 @@ void Application::configure_surface()
     config.width = static_cast<uint32_t>(viewport[2]);
     config.height = static_cast<uint32_t>(viewport[3]);
     config.usage = wgpu::TextureUsage::RenderAttachment;
-    config.format = color_format_;
+    wgpu::SurfaceCapabilities capabilities = {};
+    surface_.getCapabilities(adapter_, &capabilities);
+    config.format = capabilities.formats[0];
 
     // And we do not need any particular view format:
     config.viewFormatCount = 0;
     config.viewFormats = nullptr;
     config.device = device_;
     config.presentMode = wgpu::PresentMode::Fifo;
-    config.alphaMode = wgpu::CompositeAlphaMode::Auto;
+    config.alphaMode = capabilities.alphaModes[0];
 
+    surface_.unconfigure();
     surface_.configure(config);
 }
 
@@ -541,6 +697,32 @@ void Application::create_depth_texture()
 
     depthStencilState.stencilReadMask = 0;
     depthStencilState.stencilWriteMask = 0;
+}
+
+void Application::create_picking_texture()
+{
+    if (picking_view_) {picking_view_.release();}
+    if (picking_texture_) {
+        picking_texture_.destroy();
+        picking_texture_.release();
+    }
+    auto viewport = total_viewport();
+
+    wgpu::TextureDescriptor pickDesc{};
+    pickDesc.label = "Picking Texture";
+    pickDesc.dimension = wgpu::TextureDimension::_2D;
+    pickDesc.size = {
+        static_cast<uint32_t>(viewport[2]),
+        static_cast<uint32_t>(viewport[3]),
+        1
+    };
+    pickDesc.format = wgpu::TextureFormat::RGBA32Uint;
+    pickDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
+    pickDesc.sampleCount = 1;
+    pickDesc.mipLevelCount = 1;
+
+    picking_texture_ = device_.createTexture(pickDesc);
+    picking_view_ = picking_texture_.createView();
 }
 
 }

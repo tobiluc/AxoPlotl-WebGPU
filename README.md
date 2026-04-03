@@ -6,8 +6,27 @@ This is the currently developed WebGPU version of
 ### Features
 - TODO
 
+### Examples
+```cpp
+#define WEBGPU_CPP_IMPLEMENTATION
+#include <AxoPlotl/Application.hpp>
+
+int main()
+{
+  AxoPlotl::Application app;
+  app.init();
+  
+  auto obj = app.scene().add_openvolumemesh("coolmesh.ovmb");
+  obj->visualize_property("v_weights");
+
+  app.run();
+
+  return 0;
+}
+```
+
 ### Wishlist
-- [ ] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
+- [x] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
 - [x] Histogram: Handle special case when all properties are either NaN or Inf
 - [ ] Histogram: Handle special case when all properties have same values. In general #distinct values should be >= #buckets. Also, make buckets a partition i.e. intervals [a,b) instead of [a,b].
 - [x] Histogram: Handle NaN & Infinity values separately.
@@ -20,6 +39,7 @@ more transparent, the larger/smaller a property value is.
 - [ ] Warning Popup when input mesh contains no vertices or any position with NaN or INF.
 
 ### Bugs
+- [ ] When enabling fullscreen, the screen starts flickering before turning pink. (No visible error messages)
 - [ ] For some model, when selecting the computed dihedral angle property, the range filter seems posessed by a ghost (could not reproduce).  
 - [x] Application crashes when loading a mesh with no vertices (size of position buffer = 0)
 - [x] When selecting a face/cell scalar property,

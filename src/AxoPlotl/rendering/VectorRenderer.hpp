@@ -14,6 +14,7 @@ protected:
         alignas(16) float line_width_ = 8.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) float vec_scale_ = 0.05f;
+        alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);
@@ -45,7 +46,7 @@ public:
         uniform_buffer_.release();
     }
 
-    void init(Application* _app, wgpu::Buffer _position_buffer);
+    void init(uint32_t _object_id, Application* _app, wgpu::Buffer _position_buffer);
 
     void update_vector_data(const std::vector<Vec4f>& _data);
 
@@ -54,6 +55,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 private:
+    uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;
 
     void create_buffers();

@@ -29,13 +29,14 @@ template<typename T>
 static std::string value_to_string(const T& _val)
 {
     if constexpr(std::is_same_v<T,bool>) {return _val? "True" : "False";}
-    if constexpr(std::is_scalar_v<T>) {return std::string(_val);}
-    if constexpr (ToLoG::vector_type<T>) {
+    else if constexpr(std::is_scalar_v<T>) {return std::to_string(_val);}
+    else if constexpr (ToLoG::vector_type<T>) {
         std::string s = "[";
         for (int i = 0; i < ToLoG::Traits<T>::dim-1; ++i) {
-            s += std::string(_val[i]) + ", ";
+            s += std::to_string(_val[i]) + ", ";
         }
-        s += std::string(_val[ToLoG::Traits<T>::dim-1]) + "]";
+        s += std::to_string(_val[ToLoG::Traits<T>::dim-1]) + "]";
+        return s;
     }
     return "UNKNOWN";
 }

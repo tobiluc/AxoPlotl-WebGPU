@@ -8,10 +8,11 @@ namespace AxoPlotl
 wgpu::RenderPipeline ColoredVertexPropertyRenderer::pipeline_;
 wgpu::BindGroupLayout ColoredVertexPropertyRenderer::bind_group_layout_;
 
-void ColoredVertexPropertyRenderer::init(Application* _app,
-          wgpu::Buffer _position_buffer,
-          const std::vector<uint32_t>& _indices)
+void ColoredVertexPropertyRenderer::init(uint32_t _object_id, Application* _app,
+                                         wgpu::Buffer _position_buffer,
+                                         const std::vector<uint32_t>& _indices)
 {
+    object_id_ = _object_id;
     property_color_map_.create(_app->device_);
     property_color_map_.set_coolwarm();
     app_ = _app;
@@ -113,6 +114,7 @@ void ColoredVertexPropertyRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 5;
     layoutDesc.entries = entries;
+    layoutDesc.label = "Vertex Bind Group Layout";
 
     bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
@@ -174,18 +176,27 @@ void ColoredVertexPropertyRenderer::create_pipeline()
     vertexState.bufferCount = 0;
     vertexState.buffers = nullptr;
 
+    // ---------------
     // Fragment state
-    wgpu::ColorTargetState colorTarget{};
+    //-----------------
+    wgpu::ColorTargetState color_targets[2] = {};
     wgpu::SurfaceCapabilities surf_caps;
     app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
-    colorTarget.format = surf_caps.formats[0];
-    colorTarget.writeMask = wgpu::ColorWriteMask::All;
+
+    // color
+    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].writeMask = wgpu::ColorWriteMask::All;
+
+    // picking
+    color_targets[1].format = wgpu::TextureFormat::RGBA32Uint;
+    color_targets[1].blend = nullptr;
+    color_targets[1].writeMask = wgpu::ColorWriteMask::All;
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
     fragmentState.entryPoint = "fs_main";
-    fragmentState.targetCount = 1;
-    fragmentState.targets = &colorTarget;
+    fragmentState.targetCount = 2;
+    fragmentState.targets = color_targets;
 
     // Primitive state
     wgpu::PrimitiveState primitive{};
@@ -239,6 +250,7 @@ void ColoredVertexPropertyRenderer::render(
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.object_id_ = object_id_;
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 

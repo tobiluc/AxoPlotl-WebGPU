@@ -94,9 +94,16 @@ public:
 
     void render_ui_properties() override;
 
-    void init() override;
+    void render_ui_picking(const PickResult& _p, const PickConfig& _cfg) override;
+
+    void init_gpu_buffers() override;
 
     void recompute_bounding_box() override;
+
+    void visualize_property(
+        const std::string& _property_name,
+        std::optional<OVM::EntityType> _entity_type = std::nullopt,
+        std::optional<std::string> _type_name = std::nullopt);
 
     inline OVMVolumeMesh& mesh() {
         return mesh_;
@@ -117,7 +124,7 @@ private:
     ColoredEdgePropertyRenderer edge_renderer_;
     ColoredFacePropertyRenderer face_renderer_;
     ColoredCellPropertyRenderer cell_renderer_;
-    VectorRenderer vectors_on_vertices_renderer_;
+    //VectorRenderer vectors_on_vertices_renderer_;
 };
 
 }
