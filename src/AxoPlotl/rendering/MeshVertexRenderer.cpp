@@ -25,6 +25,13 @@ void ColoredVertexPropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_pipeline();
 }
 
+void ColoredVertexPropertyRenderer::clear()
+{
+    destroy_buffer(property_buffer_);
+    destroy_buffer(vertex_index_buffer_);
+    destroy_buffer(uniform_buffer_);
+}
+
 void ColoredVertexPropertyRenderer::create_buffers(const std::vector<uint32_t> &_indices)
 {
     wgpu::Device device = app_->device_;

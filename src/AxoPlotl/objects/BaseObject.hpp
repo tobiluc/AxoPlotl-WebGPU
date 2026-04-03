@@ -23,7 +23,9 @@ public:
 
     virtual ~ObjectBase() = default;
 
-    virtual void init_gpu_buffers() = 0;
+    virtual void init_buffers() = 0;
+
+    virtual void delete_buffers() = 0;
 
     virtual void recompute_bounding_box() = 0;
 

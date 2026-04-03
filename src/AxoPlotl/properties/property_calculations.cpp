@@ -94,4 +94,16 @@ OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(OVMVolumeMesh& _mesh)
     return c_min_dihedral_angle;
 }
 
+OVM::VertexPropertyT<OVM::Vec3f> calc_vertex_normalized_position(OVMVolumeMesh& _mesh)
+{
+    auto v_normalized_pos = _mesh.request_vertex_property<OVM::Vec3f>("AxoPlotl::normalized_position");
+    _mesh.set_persistent(v_normalized_pos);
+
+    for (auto vh : _mesh.vertices()) {
+        v_normalized_pos[vh] = _mesh.vertex(vh).normalized();
+    }
+
+    return v_normalized_pos;
+}
+
 }

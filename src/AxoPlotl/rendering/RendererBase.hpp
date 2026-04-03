@@ -7,6 +7,14 @@ namespace AxoPlotl
 
 class Application;
 
+inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
+    if (_buffer) {
+        _buffer.destroy();
+        _buffer.release();
+        _buffer = nullptr;
+    }
+}
+
 struct PipelineState
 {
     wgpu::Device device_;
@@ -39,6 +47,8 @@ public:
         }
     };
     static_assert(sizeof(ClipBox)==3*16);
+
+    virtual void clear() = 0;
 
 protected:
     using Pad4 = uint32_t[1];

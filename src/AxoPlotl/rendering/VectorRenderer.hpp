@@ -13,7 +13,7 @@ protected:
         alignas(16) Vec2f viewport_size_;
         alignas(16) float line_width_ = 8.0f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) float vec_scale_ = 0.05f;
+        alignas(16) float vec_scale_ = 1.0f;
         alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -38,13 +38,9 @@ public:
 
     VectorRenderer() {}
 
-    ~VectorRenderer()
-    {
-        vector_buffer_.destroy();
-        vector_buffer_.release();
-        uniform_buffer_.destroy();
-        uniform_buffer_.release();
-    }
+    ~VectorRenderer() {clear();}
+
+    void clear() override;
 
     void init(uint32_t _object_id, Application* _app, wgpu::Buffer _position_buffer);
 

@@ -22,13 +22,13 @@ private:
 
 private:
     template<typename EntityTag>
-    struct renderer_for_property;
-    template<> struct renderer_for_property<OVM::Entity::Vertex> {using type=ColoredVertexPropertyRenderer;};
-    template<> struct renderer_for_property<OVM::Entity::Edge> {using type=ColoredEdgePropertyRenderer;};
-    template<> struct renderer_for_property<OVM::Entity::Face> {using type=ColoredFacePropertyRenderer;};
-    template<> struct renderer_for_property<OVM::Entity::Cell> {using type=ColoredCellPropertyRenderer;};
-    template<typename EntityTag> using renderer_t = typename renderer_for_property<EntityTag>::type;
-    template<typename EntityTag> using filter_t = PropertyFilterForRenderer<renderer_t<EntityTag>>;
+    struct colored_renderer_for_entity;
+    template<> struct colored_renderer_for_entity<OVM::Entity::Vertex> {using type=ColoredVertexPropertyRenderer;};
+    template<> struct colored_renderer_for_entity<OVM::Entity::Edge> {using type=ColoredEdgePropertyRenderer;};
+    template<> struct colored_renderer_for_entity<OVM::Entity::Face> {using type=ColoredFacePropertyRenderer;};
+    template<> struct colored_renderer_for_entity<OVM::Entity::Cell> {using type=ColoredCellPropertyRenderer;};
+    template<typename EntityTag> using colored_entity_renderer_t = typename colored_renderer_for_entity<EntityTag>::type;
+    template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
 
     template<typename EntityTag>
     struct Property {
@@ -76,12 +76,8 @@ public:
             "New Volume Mesh Object " + std::to_string(id_);
     }
 
-    ~OpenVolumeMeshObject()
-    {
-        vertices_position_buffer_.destroy();
-        vertices_position_buffer_.release();
-        cells_center_buffer_.destroy();
-        cells_center_buffer_.release();
+    ~OpenVolumeMeshObject() {
+        delete_buffers();
     }
 
     void render(
@@ -96,7 +92,9 @@ public:
 
     void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
 
-    void init_gpu_buffers() override;
+    void init_buffers() override;
+
+    void delete_buffers() override;
 
     void recompute_bounding_box() override;
 
@@ -110,11 +108,11 @@ public:
     }
 
     template<typename EntityTag>
-    inline auto& renderer();
-    template<> inline auto& renderer<OVM::Entity::Cell>() {return cell_renderer_;}
-    template<> inline auto& renderer<OVM::Entity::Face>() {return face_renderer_;}
-    template<> inline auto& renderer<OVM::Entity::Edge>() {return edge_renderer_;}
-    template<> inline auto& renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
+    inline auto& colored_entity_renderer();
+    template<> inline auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
+    template<> inline auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
+    template<> inline auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
+    template<> inline auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
 private:
     size_t n_positions_;
@@ -124,7 +122,7 @@ private:
     ColoredEdgePropertyRenderer edge_renderer_;
     ColoredFacePropertyRenderer face_renderer_;
     ColoredCellPropertyRenderer cell_renderer_;
-    //VectorRenderer vectors_on_vertices_renderer_;
+    VectorRenderer vectors_on_vertices_renderer_;
 };
 
 }

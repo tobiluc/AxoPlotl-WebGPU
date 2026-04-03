@@ -28,14 +28,14 @@ fn vs_main(
 
     var pos:vec3<f32> = positions[iid];
 
+    let v = vectors[iid];
+
     // A Point Instance is rendered as a Line in some direction
     if (vid == 0u) {}
-    if (vid == 1u) {
-        pos += ubo.vecScale * vectors[iid];
-    }
+    if (vid == 1u) {pos += ubo.vecScale * v;}
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
-    out.color = vec4<f32>(normalize(pos),1.0);
+    out.color = vec4<f32>(abs(normalize(v)),1.0);
 
     return out;
 }

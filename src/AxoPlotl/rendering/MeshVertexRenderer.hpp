@@ -51,13 +51,10 @@ public:
 
     ~ColoredVertexPropertyRenderer()
     {
-        property_buffer_.destroy();
-        property_buffer_.release();
-        vertex_index_buffer_.destroy();
-        vertex_index_buffer_.release();
-        uniform_buffer_.destroy();
-        uniform_buffer_.release();
+        clear();
     }
+
+    void clear() override;
 
     void init(uint32_t _object_id, Application* _app,
               wgpu::Buffer _position_buffer,

@@ -31,6 +31,13 @@ void ColoredFacePropertyRenderer::init(
     create_pipeline();
 }
 
+void ColoredFacePropertyRenderer::clear()
+{
+    destroy_buffer(property_buffer_);
+    destroy_buffer(face_index_buffer_);
+    destroy_buffer(uniform_buffer_);
+}
+
 void ColoredFacePropertyRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
 {
     wgpu::Device device = app_->device_;

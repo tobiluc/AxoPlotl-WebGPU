@@ -63,6 +63,12 @@ void OpenVolumeMeshObject::render_ui_properties()
 {
     if (ImGui::BeginMenu("Calculate"))
     {
+        if (mesh_.n_vertices()>0 && ImGui::BeginMenu("Vertices")){
+            if (ImGui::MenuItem("Normalized Position")) {
+                calc_vertex_normalized_position(mesh_);
+            }
+            ImGui::EndMenu();
+        }
         if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
             if (ImGui::MenuItem("Minimum Dihedral Angle")) {
                 calc_cell_min_dihedral_angle(mesh_);
@@ -120,18 +126,18 @@ void OpenVolumeMeshObject::render_ui_properties()
                 for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
                     if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
                         prop<EntityTag>().filter_index_ = i;
-                        prop<EntityTag>().filters_[i]->init(renderer<EntityTag>());
+                        prop<EntityTag>().filters_[i]->init(colored_entity_renderer<EntityTag>());
                     }
                 }
                 ImGui::EndMenu();
             }
-            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui(renderer<EntityTag>());
+            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui(colored_entity_renderer<EntityTag>());
         }
 
         // Clear
         if (ImGui::Button("Clear Property")) {
             upload_default_property_data<EntityTag>();
-            renderer<EntityTag>().property_type()
+            colored_entity_renderer<EntityTag>().property_type()
                 = PropertyRendererBase::Property::Type::COLOR;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().filters_.clear();
@@ -151,7 +157,7 @@ void OpenVolumeMeshObject::render_ui_properties()
     render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
 }
 
-void OpenVolumeMeshObject::init_gpu_buffers()
+void OpenVolumeMeshObject::init_buffers()
 {
     std::random_device rd;
     std::mt19937 mt(rd());
@@ -165,12 +171,23 @@ void OpenVolumeMeshObject::init_gpu_buffers()
     edge_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.edges_);
     face_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.faces_);
     cell_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
-    //vectors_on_vertices_renderer_.init(scene_->app(), vertices_position_buffer_);
+    vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
 
     upload_default_property_data<OVM::Entity::Vertex>();
     upload_default_property_data<OVM::Entity::Edge>();
     upload_default_property_data<OVM::Entity::Face>();
     upload_default_property_data<OVM::Entity::Cell>();
+}
+
+void OpenVolumeMeshObject::delete_buffers()
+{
+    destroy_buffer(vertices_position_buffer_);
+    destroy_buffer(cells_center_buffer_);
+    vertex_renderer_.clear();
+    edge_renderer_.clear();
+    face_renderer_.clear();
+    cell_renderer_.clear();
+    vectors_on_vertices_renderer_.clear();
 }
 
 void OpenVolumeMeshObject::render(
@@ -192,14 +209,10 @@ void OpenVolumeMeshObject::render(
     //     _render_pass,
     //     mvp);
 
-    // if (renderer_.vertices().enabled() &&
-    //     renderer_.vertices().property_type() ==
-    //     PropertyRendererBase::Property::Type::VEC3) {
-    //     vertex_vector_renderer_.render(
-    //         scene_->app()->scene_viewport(),
-    //         _render_pass,
-    //         mvp);
-    // }
+    vectors_on_vertices_renderer_.enabled() = vertex_renderer_.enabled()
+        && vertex_renderer_.property_type() == PropertyRendererBase::Property::Type::VEC3;
+
+    vectors_on_vertices_renderer_.render(vp, _render_pass, mvp);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),
@@ -349,19 +362,48 @@ void OpenVolumeMeshObject::visualize_property(
     auto select_property = [&]<typename EntityTag,typename T>(OVM::PropertyStorageBase* _pp) {
 
         prop<EntityTag>().prop_ = _pp;
-        upload_buffer_property_data<T,EntityTag>(
-            mesh_,
-            _pp,
-            prop<EntityTag>().filters_,
-            renderer<EntityTag>()
-            );
+
+        // Setup Property Filters
+        prop<EntityTag>().filters_.clear();
+        if constexpr(std::is_same_v<bool,T>) {
+            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterBool<EntityTag,colored_entity_renderer_t<EntityTag>>>(_pp->cast_to_StorageT<bool>()));
+            prop<EntityTag>().filters_.back()->init(colored_entity_renderer<EntityTag>());
+        } else if constexpr(std::is_floating_point_v<T>) {
+            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterFloatRange<T,EntityTag,colored_entity_renderer_t<EntityTag>>>(_pp->cast_to_StorageT<T>()));
+            prop<EntityTag>().filters_.back()->init(colored_entity_renderer<EntityTag>());
+        } else if constexpr(std::is_integral_v<T>) {
+            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterIntValue<T,EntityTag,colored_entity_renderer_t<EntityTag>>>(_pp->cast_to_StorageT<T>()));
+            prop<EntityTag>().filters_.back()->init(colored_entity_renderer<EntityTag>());
+            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterIntRange<T,EntityTag,colored_entity_renderer_t<EntityTag>>>(_pp->cast_to_StorageT<T>()));
+            prop<EntityTag>().filters_.back()->init(colored_entity_renderer<EntityTag>());
+        }
+
+        // Upload Data to Color Renderer
+        const auto& data = get_buffer_property_data<T,EntityTag>(
+            mesh_, _pp);
+        colored_entity_renderer<EntityTag>().update_property_data(data);
+        colored_entity_renderer<EntityTag>().property_type() = get_buffer_property_type<T>();
+
+        // Upload Data to Vector Renderer
+        if constexpr(ToLoG::vector_type<T>) {
+            if constexpr(ToLoG::Traits<T>::dim==3) {
+                if constexpr(std::is_same_v<EntityTag,OVM::Entity::Vertex>) {
+                    const auto& data = get_buffer_property_data<T,OVM::Entity::Vertex>(
+                        mesh_, _pp);
+                    vectors_on_vertices_renderer_.update_vector_data(data);
+                }
+            }
+        }
+
+        // Visibility Settings
         prop<EntityTag>().filter_index_ = 0;
         selected_prop_entity_type_ = EntityTag::type();
-        renderer<OVM::Entity::Vertex>().enabled() = false;
-        renderer<OVM::Entity::Edge>().enabled() = false;
-        renderer<OVM::Entity::Face>().enabled() = false;
-        renderer<OVM::Entity::Cell>().enabled() = false;
-        renderer<EntityTag>().enabled() = true;
+        colored_entity_renderer<OVM::Entity::Vertex>().enabled() = false;
+        colored_entity_renderer<OVM::Entity::Edge>().enabled() = false;
+        colored_entity_renderer<OVM::Entity::Face>().enabled() = false;
+        colored_entity_renderer<OVM::Entity::Cell>().enabled() = false;
+        vectors_on_vertices_renderer_.enabled() = false;
+        colored_entity_renderer<EntityTag>().enabled() = true;
         uploaded_property = true;
     };
 

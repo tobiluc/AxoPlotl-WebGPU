@@ -51,17 +51,10 @@ public:
 
     ~ColoredCellPropertyRenderer()
     {
-        property_buffer_.destroy();
-        property_buffer_.release();
-        triangle_index_buffer_.destroy();
-        triangle_index_buffer_.release();
-        line_index_buffer_.destroy();
-        line_index_buffer_.release();
-        uniform_buffer_.destroy();
-        uniform_buffer_.release();
-        // center_buffer_.destroy();
-        // center_buffer_.release();
+        clear();
     }
+
+    void clear() override;
 
     void init(uint32_t _object_id, Application* _app,
       wgpu::Buffer _vertices_position_buffer,

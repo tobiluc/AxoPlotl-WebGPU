@@ -102,36 +102,36 @@ std::vector<PropertyRendererBase::Property::Data> get_buffer_property_data(
     return data;
 }
 
-template<typename T, typename Entity, typename Renderer>
-void upload_buffer_property_data(
-    const OVMVolumeMesh& _mesh,
-    OpenVolumeMesh::PropertyStorageBase* _prop,
-    std::vector<std::shared_ptr<PropertyFilterForRenderer<Renderer>>>& _prop_filters,
-    Renderer& _r
-    )
-{
-    _prop_filters.clear();
-    auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
+// template<typename T, typename Entity, typename Renderer>
+// void upload_buffer_property_data(
+//     const OVMVolumeMesh& _mesh,
+//     OpenVolumeMesh::PropertyStorageBase* _prop,
+//     std::vector<std::shared_ptr<PropertyFilterForRenderer<Renderer>>>& _prop_filters,
+//     Renderer& _r
+//     )
+// {
+//     _prop_filters.clear();
+//     //auto prop = _mesh.get_property<T,Entity>((_prop)->name()).value();
 
-    // Setup Property Filters
-    if constexpr(std::is_same_v<bool,T>) {
-        _prop_filters.push_back(std::make_shared<PropertyFilterBool<Entity,Renderer>>(_prop->cast_to_StorageT<bool>()));
-        _prop_filters.back()->init(_r);
-    } else if constexpr(std::is_floating_point_v<T>) {
-        _prop_filters.push_back(std::make_shared<PropertyFilterFloatRange<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
-        _prop_filters.back()->init(_r);
-    } else if constexpr(std::is_integral_v<T>) {
-        _prop_filters.push_back(std::make_shared<PropertyFilterIntValue<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
-        _prop_filters.back()->init(_r);
-        _prop_filters.push_back(std::make_shared<PropertyFilterIntRange<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
-        _prop_filters.back()->init(_r);
-    }
+//     // Setup Property Filters
+//     if constexpr(std::is_same_v<bool,T>) {
+//         _prop_filters.push_back(std::make_shared<PropertyFilterBool<Entity,Renderer>>(_prop->cast_to_StorageT<bool>()));
+//         _prop_filters.back()->init(_r);
+//     } else if constexpr(std::is_floating_point_v<T>) {
+//         _prop_filters.push_back(std::make_shared<PropertyFilterFloatRange<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
+//         _prop_filters.back()->init(_r);
+//     } else if constexpr(std::is_integral_v<T>) {
+//         _prop_filters.push_back(std::make_shared<PropertyFilterIntValue<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
+//         _prop_filters.back()->init(_r);
+//         _prop_filters.push_back(std::make_shared<PropertyFilterIntRange<T,Entity,Renderer>>(_prop->cast_to_StorageT<T>()));
+//         _prop_filters.back()->init(_r);
+//     }
 
-    const auto& data = get_buffer_property_data<T,Entity>(
-        _mesh, _prop);
-    _r.update_property_data(data);
-    _r.property_type() = get_buffer_property_type<T>();
-    _r.enabled() = true;
-}
+//     const auto& data = get_buffer_property_data<T,Entity>(
+//         _mesh, _prop);
+//     _r.update_property_data(data);
+//     _r.property_type() = get_buffer_property_type<T>();
+//     _r.enabled() = true;
+// }
 
 }

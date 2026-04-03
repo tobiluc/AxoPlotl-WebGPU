@@ -25,6 +25,13 @@ void ColoredEdgePropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_pipeline();
 }
 
+void ColoredEdgePropertyRenderer::clear()
+{
+    destroy_buffer(property_buffer_);
+    destroy_buffer(edge_index_buffer_);
+    destroy_buffer(uniform_buffer_);
+}
+
 void ColoredEdgePropertyRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
     wgpu::Device device = app_->device_;

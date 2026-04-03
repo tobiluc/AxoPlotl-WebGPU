@@ -20,18 +20,15 @@ public:
     Scene() {};
 
     ~Scene() {
-        clear();
+        destroy();
     }
 
     void init(Application* _app);
 
     void render(wgpu::RenderPassEncoder _render_pass);
 
-    inline void clear() {
-        if (axis_position_buffer_) {
-            axis_position_buffer_.destroy();
-            axis_position_buffer_.release();
-        }
+    inline void destroy() {
+        destroy_buffer(axis_position_buffer_);
         objects_.clear();
     }
 
@@ -68,7 +65,7 @@ public:
     std::shared_ptr<Object> add_object(Args... _args)
     {
         objects_.push_back(std::make_shared<Object>(this, _args...));
-        objects_.back()->init_gpu_buffers();
+        objects_.back()->init_buffers();
         objects_.back()->recompute_bounding_box();
         zoom_to_box(objects_.back()->bounding_box());
         return std::static_pointer_cast<Object>(objects_.back());

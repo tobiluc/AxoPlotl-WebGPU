@@ -36,6 +36,16 @@ void ColoredCellPropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_line_pipeline();
 }
 
+void ColoredCellPropertyRenderer::clear()
+{
+    // We only delete the buffers that were created by this
+    // renderer
+    destroy_buffer(property_buffer_);
+    destroy_buffer(triangle_index_buffer_);
+    destroy_buffer(line_index_buffer_);
+    destroy_buffer(uniform_buffer_);
+}
+
 void ColoredCellPropertyRenderer::create_buffers(
     const std::vector<std::vector<std::vector<uint32_t>>>& _cells)
 {

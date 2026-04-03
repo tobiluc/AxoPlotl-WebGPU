@@ -24,6 +24,9 @@ add_library(AxoPlotlCore
     AxoPlotl/gui/fonts.cpp
     AxoPlotl/objects/OpenMeshObject.cpp
     AxoPlotl/utils/rapidobj_to_openmesh.cpp
+
+    AxoPlotl/tools/DataControlTool.cpp
+    AxoPlotl/tools/DebugTool.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
@@ -42,8 +45,6 @@ target_link_libraries(AxoPlotlCore PUBLIC
 
 add_executable(AxoPlotlApp
     main.mm
-    AxoPlotl/tools/DataControlTool.cpp
-    AxoPlotl/tools/DebugTool.cpp
     AxoPlotl/tools/PlottingTool.cpp
 )
 

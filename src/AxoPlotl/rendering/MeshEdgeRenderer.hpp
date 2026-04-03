@@ -51,13 +51,10 @@ public:
 
     ~ColoredEdgePropertyRenderer()
     {
-        property_buffer_.destroy();
-        property_buffer_.release();
-        edge_index_buffer_.destroy();
-        edge_index_buffer_.release();
-        uniform_buffer_.destroy();
-        uniform_buffer_.release();
+        clear();
     }
+
+    void clear() override;
 
     struct EdgeInstance {
         uint32_t vh0_; // used to lookup position

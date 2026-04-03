@@ -12,14 +12,22 @@ void VectorRenderer::init(uint32_t _object_id, Application* _app,
                           wgpu::Buffer _position_buffer)
 {
     pipeline_state_.set_device(_app->device_);
+    clear();
 
     object_id_ = _object_id;
     app_ = _app;
+    position_buffer_ = _position_buffer;
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     create_buffers();
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
+}
+
+void VectorRenderer::clear()
+{
+    destroy_buffer(vector_buffer_);
+    destroy_buffer(uniform_buffer_);
 }
 
 void VectorRenderer::create_buffers()
@@ -81,6 +89,7 @@ void VectorRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 3;
     layoutDesc.entries = entries;
+    layoutDesc.label = "Vector Bind Group Layout";
 
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
@@ -187,7 +196,7 @@ void VectorRenderer::create_pipeline()
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void VectorRenderer::update_vector_data(const std::vector<Vec4f>& _data)
+void VectorRenderer::update_vector_data(const std::vector<Vec4f> &_data)
 {
     app_->device_.getQueue().writeBuffer(
         vector_buffer_,

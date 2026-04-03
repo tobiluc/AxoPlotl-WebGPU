@@ -386,7 +386,7 @@ void Application::clear()
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
 
-    scene().clear();
+    scene().destroy();
 
     if (queue_) {
         queue_.release();
