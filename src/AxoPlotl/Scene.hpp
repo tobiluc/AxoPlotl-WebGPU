@@ -38,25 +38,25 @@ public:
 
     inline std::shared_ptr<ObjectBase> add_mesh(const std::filesystem::path& _path)
     {
-        auto opt = IO::read_mesh(_path);
-        if (!opt.has_value()) {return nullptr;}
-        if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
-            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
-        } else if (std::holds_alternative<OMSurfaceMesh>(opt.value())) {
+        auto rr = IO::read_mesh(_path);
+        if (!rr.mesh_.has_value() || rr.status_ != IO::ReadMeshStatus::OK) {return nullptr;}
+        if (std::holds_alternative<OVMVolumeMesh>(rr.mesh_.value())) {
+            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(rr.mesh_.value())),_path);
+        } else if (std::holds_alternative<OMSurfaceMesh>(rr.mesh_.value())) {
             //add_object<OpenMeshObject>(std::move(std::get<OMSurfaceMesh>(opt.value())),_path);
-        } else if (std::holds_alternative<SurfaceMesh>(opt.value())) {
+        } else if (std::holds_alternative<SurfaceMesh>(rr.mesh_.value())) {
             return add_object<OpenVolumeMeshObject>(std::move(
-                volume_mesh(std::get<SurfaceMesh>(opt.value()))),_path);
+                volume_mesh(std::get<SurfaceMesh>(rr.mesh_.value()))),_path);
         }
         return nullptr;
     }
 
     inline std::shared_ptr<OpenVolumeMeshObject> add_openvolumemesh(const std::filesystem::path& _path)
     {
-        auto opt = IO::read_mesh(_path);
-        if (!opt.has_value()) {return nullptr;}
-        if (std::holds_alternative<OVMVolumeMesh>(opt.value())) {
-            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(opt.value())),_path);
+        auto rr = IO::read_mesh(_path);
+        if (!rr.mesh_.has_value() || rr.status_ != IO::ReadMeshStatus::OK) {return nullptr;}
+        if (std::holds_alternative<OVMVolumeMesh>(rr.mesh_.value())) {
+            return add_object<OpenVolumeMeshObject>(std::move(std::get<OVMVolumeMesh>(rr.mesh_.value())),_path);
         }
         return nullptr;
     }

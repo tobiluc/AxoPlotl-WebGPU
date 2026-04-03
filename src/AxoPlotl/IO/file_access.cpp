@@ -1,5 +1,6 @@
 #include "file_access.h"
 #include <ToLoG/utils/OVM_Traits.hpp>
+#include "AxoPlotl/IO/rapidobj_to_ovm.hpp"
 #include "OpenVolumeMesh/FileManager/FileManager.hh"
 #include "OpenVolumeMesh/IO/ovmb_read.hh"
 #include <OpenVolumeMesh/FileManager/VtkColorReader.hh>
@@ -10,35 +11,51 @@
 #include <ToLoG/io/medit_reader.hpp>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/IO/Options.hh>
+#include <AxoPlotl/IO/happly_to_ovm.hpp>
 
 namespace AxoPlotl
 {
 
-std::optional<std::variant<SurfaceMesh,OVMVolumeMesh,OMSurfaceMesh>>
-IO::read_mesh(const std::filesystem::path& _path)
+IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
 {
+    IO::ReadMeshResult res;
+    res.status_ = ReadMeshStatus::READ_ERROR;
+
     if (_path.extension() == ".obj") {
-        const auto& obj = rapidobj::ParseFile(_path);
-        SurfaceMesh mesh;
-        if (ToLoG::IO::read_polygon_mesh_obj(_path, mesh)==0) {return mesh;}
+        const auto& robj = rapidobj::ParseFile(_path);
+        if (!robj.error) {
+            res.mesh_ = rapidobj_to_openvolumemesh(robj);
+            res.status_ = ReadMeshStatus::OK;
+        }
     } else if (_path.extension() == ".ply") {
-        SurfaceMesh mesh;
-        if (ToLoG::IO::read_polygon_mesh_ply(_path, mesh)==0) {return mesh;}
-    } else if (_path.extension() == ".mesh") {
-        // VolumeMesh mesh;
-        // if (ToLoG::IO::read_polyhedral_mesh_medit(_path, mesh)==0) {return mesh;}
+        try {
+            happly::PLYData plyIn(_path);
+            res.mesh_ = happly_to_openvolumemesh(plyIn);
+            res.status_ = ReadMeshStatus::OK;
+        } catch (std::runtime_error& _err) {
+            std::cerr << _err.what() << std::endl;
+        }
     } else if (_path.extension() == ".ovmb") {
         OVMVolumeMesh mesh;
         if (OVM::IO::ovmb_read(_path.c_str(), mesh)
-            ==OVM::IO::ReadResult::Ok) {return mesh;}
+            ==OVM::IO::ReadResult::Ok) {
+            res.mesh_ = std::move(mesh);
+            res.status_ = ReadMeshStatus::OK;
+        }
     } else if (_path.extension() == ".ovm") {
         OVMVolumeMesh mesh;
         OVM::IO::FileManager fm;
-        if (fm.readFile(_path, mesh)) {return mesh;}
+        if (fm.readFile(_path, mesh)) {
+            res.mesh_ = std::move(mesh);
+            res.status_ = ReadMeshStatus::OK;
+        }
     } else if (_path.extension() == ".vtk") {
         OVMVolumeMesh mesh;
         OVM::Reader::VtkColorReader fm;
-        fm.readFile(_path, mesh, true, true);
+        if (fm.readFile(_path, mesh, true, true)) {
+            res.mesh_ = std::move(mesh);
+            res.status_ = ReadMeshStatus::OK;
+        }
     } else {
         OMSurfaceMesh mesh;
         mesh.request_vertex_colors();
@@ -46,10 +63,11 @@ IO::read_mesh(const std::filesystem::path& _path)
         mesh.request_face_normals();
         OpenMesh::IO::Options opt(OpenMesh::IO::Options::VertexColor);
         if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
-            return mesh;
+            res.mesh_ = std::move(mesh);
+            res.status_ = ReadMeshStatus::OK;
         }
     }
-    return std::nullopt;
+    return res;
 }
 
 }

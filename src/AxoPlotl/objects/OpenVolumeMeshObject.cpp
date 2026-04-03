@@ -515,7 +515,9 @@ void OpenVolumeMeshObject::recompute_bounding_box()
 {
     bbox_.make_empty();
     for (const auto& p : mesh_.vertex_positions()) {
-        bbox_.expand(Vec3f(p[0],p[1],p[2]));
+        if (std::isfinite(p[0]) && std::isfinite(p[1]) && std::isfinite(p[2])) {
+            bbox_.expand(Vec3f(p[0],p[1],p[2]));
+        }
     }
     bbox_ = bbox_.scaled(1.01f);
 }

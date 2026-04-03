@@ -23,10 +23,12 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/VectorRenderer.cpp
     AxoPlotl/gui/fonts.cpp
     AxoPlotl/objects/OpenMeshObject.cpp
-    AxoPlotl/utils/rapidobj_to_openmesh.cpp
+
 
     AxoPlotl/tools/DataControlTool.cpp
     AxoPlotl/tools/DebugTool.cpp
+    AxoPlotl/IO/rapidobj_to_ovm.cpp
+    AxoPlotl/IO/happly_to_ovm.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
