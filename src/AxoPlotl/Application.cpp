@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "AxoPlotl/utils/fps.hpp"
 #include "ImGuiFileDialog.h"
+#include "glm/ext/matrix_projection.hpp"
 #include <cassert>
 #include <imgui.h>
 #include <backends/imgui_impl_wgpu.h>
@@ -47,7 +48,7 @@ Application::Application() :
 
 Application::~Application()
 {
-    terminate_run();
+    clear();
     glfwTerminate();
 }
 
@@ -286,9 +287,9 @@ void Application::frame_tick()
 
     // For the picking to work correctly, we resize the
     // scene viewprt to the full rectangle after rendering
-    viewport = total_viewport();
-    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+    // viewport = total_viewport();
+    // scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+    // scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     scene_render_pass_.end();
 
@@ -299,12 +300,12 @@ void Application::frame_tick()
     if (Input::Mouse::RIGHT_JUST_PRESSED) {
         int width, height;
         glfwGetWindowSize(window(), &width, &height);
-        float x_scale = (float)viewport[2] / (float)width;
-        float y_scale = (float)viewport[3] / (float)height;
-        float x = x_scale*Input::Mouse::POSITION[0] - viewport[0];
-        float y = y_scale*Input::Mouse::POSITION[1] - viewport[1];
+        float x_scale = (float)total_viewport()[2] / (float)width;
+        float y_scale = (float)total_viewport()[3] / (float)height;
+        float x = x_scale*Input::Mouse::POSITION[0] - total_viewport()[0];
+        float y = y_scale*Input::Mouse::POSITION[1] - total_viewport()[1];
         pick_result_ = request_pick_result(x, y);
-        std::cerr << pick_result_ << std::endl;
+        //std::cerr << pick_result_ << std::endl;
         if (pick_result_.object_id_ < UINT32_MAX) {
             just_clicked_on_object = true;
         }
@@ -365,7 +366,8 @@ void Application::run()
         frame_tick();
     }
 #endif // __EMSCRIPTEN__
-    terminate_run();
+    clear();
+    init(); // prepare for next run
 }
 
 void Application::on_window_resize(float width, float height)
@@ -379,7 +381,7 @@ void Application::on_window_resize(float width, float height)
     wgpuPollEvents(device_, true);
 }
 
-void Application::terminate_run()
+void Application::clear()
 {
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
@@ -622,6 +624,10 @@ PickResult Application::request_pick_result(float _x, float _y)
         bool ready;
         wgpu::Buffer buffer;
         PickResult pick;
+        Vec4f ndc;
+        Scene* scene;
+        Vec4f scene_viewport;
+        float aspect_ratio;
     };
 
     auto on_buffer_mapped = [](
@@ -633,15 +639,23 @@ PickResult Application::request_pick_result(float _x, float _y)
         //std::cout << "Buffer mapped with status " << status << std::endl;
         if (status != wgpu::BufferMapAsyncStatus::Success) {return;}
 
+        // Extract Info from Picking Result
+        // and Map clicked position back to world space
         uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
-        context->pick = {data[0],data[1],data[2],data[3]};
+        context->pick.object_id_ = data[0];
+        context->pick.type_ = data[1];
+        context->pick.index_ = data[2];
 
-        // std::cout << "bufferData = [";
-        // for (int i = 0; i < 4; ++i) {
-        //     if (i > 0) std::cout << ", ";
-        //     std::cout << data[i];
-        // }
-        // std::cout << "]" << std::endl;
+        float depth = std::bit_cast<float>(data[3]);
+        context->ndc.z = depth;
+        context->ndc.w = 1;
+        const auto& v = context->scene->perspective().getViewMatrix();
+        const auto& p = context->scene->perspective().getProjectionMatrix(context->aspect_ratio);
+        Vec4f pos = glm::inverse(p * v) * context->ndc;
+        pos /= pos.w;
+        context->pick.position[0] = pos[0];
+        context->pick.position[1] = pos[1];
+        context->pick.position[2] = pos[2];
 
         // unmap the memory
         context->buffer.unmap();
@@ -649,6 +663,18 @@ PickResult Application::request_pick_result(float _x, float _y)
 
     // Create the Context instance
     Context context = {false, picking_buffer_};
+    context.scene = &scene_;
+    context.aspect_ratio = scene_viewport()[2]/scene_viewport()[3];
+
+    // Get x and y components of Noramlzied Device Coordinates
+    _x -= scene_viewport()[0];
+    _y -= scene_viewport()[1];
+    context.ndc = {
+        (2.0*_x)/scene_viewport()[2] - 1.0,
+        1.0-(2.0*_y)/scene_viewport()[3],
+        0, 1
+    };
+
     wgpuBufferMapAsync(picking_buffer_, wgpu::MapMode::Read, 0, sizeof(PickResult), on_buffer_mapped, (void*)&context);
     while (!context.ready) {
         wgpuPollEvents(device_, true);

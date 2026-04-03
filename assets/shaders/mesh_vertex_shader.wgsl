@@ -68,6 +68,6 @@ fn fs_main(in : VSOut) -> FragmentOutput
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
     if (length(in.corner) > 1.0) {discard;} //round
-    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, 0);
+    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(in.position.z));
     return out;
 }

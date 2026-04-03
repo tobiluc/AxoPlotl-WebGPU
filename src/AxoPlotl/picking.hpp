@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AxoPlotl/typedefs/glm.hpp>
 #include <webgpu/webgpu.hpp>
 #include <cstdint>
 #include <iostream>
@@ -20,9 +21,10 @@ struct PickResult
     uint32_t object_id_ = 0;
     uint32_t type_ = 1;
     uint32_t index_ = 2;
-    uint32_t p3 = 3;
+    Vec3f position;
     friend inline std::ostream& operator<<(std::ostream& _os, const PickResult& _p) {
-        return _os << _p.object_id_ << "/"<< _p.type_ << "/"<< _p.index_ << "/"<< _p.p3;
+        return _os << _p.object_id_ << "/"<< _p.type_ << "/"<< _p.index_ << "/"
+                   << _p.position[0] << " "<< _p.position[1] << " "<< _p.position[2] ;
     }
 };
 

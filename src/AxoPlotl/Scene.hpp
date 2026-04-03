@@ -35,6 +35,10 @@ public:
         objects_.clear();
     }
 
+    inline const PerspectiveCamera& perspective() const {
+        return perspective_;
+    }
+
     inline std::shared_ptr<ObjectBase> add_mesh(const std::filesystem::path& _path)
     {
         auto opt = IO::read_mesh(_path);

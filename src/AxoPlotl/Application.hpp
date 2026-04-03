@@ -37,8 +37,6 @@ public:
 
     void on_window_resize(float width, float height);
 
-    void terminate_run();
-
     inline Scene& scene() {return scene_;}
 
     inline GLFWwindow* window() {return window_;}
@@ -87,6 +85,8 @@ private:
     std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
     Scene scene_;
+
+    void clear();
 
     bool init_glfw();
 

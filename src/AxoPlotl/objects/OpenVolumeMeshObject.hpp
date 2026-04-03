@@ -94,7 +94,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(const PickResult& _p, const PickConfig& _cfg) override;
+    void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
 
     void init_gpu_buffers() override;
 

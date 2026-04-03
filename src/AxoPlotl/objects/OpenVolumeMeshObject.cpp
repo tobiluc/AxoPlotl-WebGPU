@@ -207,9 +207,16 @@ void OpenVolumeMeshObject::render(
     //     mvp);
 }
 
-void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p, const PickConfig &_cfg)
+void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;}
+
+    auto squared_distance = [](const Vec3f _p0, const OVM::Vec3f& _p1) -> float {
+        float dx = _p0[0] - _p1[0];
+        float dy = _p0[1] - _p1[1];
+        float dz = _p0[2] - _p1[2];
+        return dx*dx + dy*dy + dz*dz;
+    };
 
     auto show_prop_list = [&]<typename EntityTag>() {
         for (auto pp = mesh_.persistent_props_begin<EntityTag>();
@@ -260,12 +267,57 @@ void OpenVolumeMeshObject::render_ui_picking(const PickResult& _p, const PickCon
         }
     };
 
+    // Better Picking. We might only want vertex picking in which
+    // case we find the closest incident vertex to the actually
+    // clicked entity
+    if (_p.type_==3 && !_cfg.enable_cell_picking_) {
+        float min_dist_sq = std::numeric_limits<float>::infinity();
+        for (auto fh : mesh_.cell_faces(OVM::CH(_p.index_))) {
+            float dist_sq = squared_distance(_p.position,mesh_.barycenter(fh));
+            if (dist_sq < min_dist_sq) {
+                _p.type_ = 2;
+                _p.index_ = fh.idx();
+                min_dist_sq = dist_sq;
+            }
+        }
+    }
+    if (_p.type_==2 && !_cfg.enable_face_picking_) {
+        float min_dist_sq = std::numeric_limits<float>::infinity();
+        for (auto eh : mesh_.face_edges(OVM::FH(_p.index_))) {
+            float dist_sq = squared_distance(_p.position,mesh_.barycenter(eh));
+            if (dist_sq < min_dist_sq) {
+                _p.type_ = 1;
+                _p.index_ = eh.idx();
+                min_dist_sq = dist_sq;
+            }
+        }
+    }
+    if (_p.type_==1 && !_cfg.enable_edge_picking_) {
+        OVM::HEH heh = OVM::EH(_p.index_).halfedge_handle(0);
+        OVM::VH vh0 = mesh_.from_vertex_handle(heh);
+        OVM::VH vh1 = mesh_.to_vertex_handle(heh);
+        const auto& p0 = mesh_.vertex(vh0);
+        const auto& p1 = mesh_.vertex(vh1);
+        if (squared_distance(_p.position,p0) < squared_distance(_p.position,p1)) {
+            _p.type_ = 0;
+            _p.index_ = vh0.idx();
+        } else {
+            _p.type_ = 0;
+            _p.index_ = vh1.idx();
+        }
+    }
+    if (_p.type_==0 && !_cfg.enable_vertex_picking_) {
+        return;
+    }
+
     ImGui::SeparatorText(name().c_str());
     if (ImGui::BeginMenu("Settings")) {
         render_ui_settings();
         ImGui::EndMenu();
     }
 
+    ImGui::Text("Position = (%f, %f, %f)",
+        _p.position[0], _p.position[1], _p.position[2]);
     switch (_p.type_) {
     case 0:
         ImGui::Text("Vertex(%u)", _p.index_);

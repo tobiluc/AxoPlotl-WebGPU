@@ -13,22 +13,26 @@ This is the currently developed WebGPU version of
 
 int main()
 {
-  AxoPlotl::Application app;
-  app.init();
+    AxoPlotl::Application app;
+    app.init();
   
-  auto obj = app.scene().add_openvolumemesh("coolmesh.ovmb");
-  obj->visualize_property("v_weights");
+    auto obj = app.scene().add_openvolumemesh("coolmesh.ovmb");
+    obj->visualize_property("v_weights");
 
-  app.run();
-
-  return 0;
+    app.run(); // blocking
+  
+    obj = app.scene().add_mesh("anothercoolmesh.obj");
+  
+    app.run();
+    
+    return 0;
 }
 ```
 
 ### Wishlist
 - [x] Picking: Render scene to a picking texture. Each pixel of the texture stores [object id, entity type, entity index,  ?]. Then we can click somewhere to for example show all properties of the clicked entity, zoom closer to it, etc. 
 - [x] Histogram: Handle special case when all properties are either NaN or Inf
-- [ ] Histogram: Handle special case when all properties have same values. In general #distinct values should be >= #buckets. Also, make buckets a partition i.e. intervals [a,b) instead of [a,b].
+- [x] Histogram: Handle special case when all properties have same values. In general #distinct values should be >= #buckets. Also, make buckets a partition i.e. intervals [a,b) instead of [a,b].
 - [x] Histogram: Handle NaN & Infinity values separately.
 - [ ] Transparency. Allow rendering of meshes with transparency to better inspect them.
 For example, for property visualization, colors would be in RGBA to make cell

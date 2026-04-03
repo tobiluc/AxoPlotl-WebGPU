@@ -33,8 +33,6 @@ int main()
 
   // app.run();
 
-  // app.init();
-
   // obj = app.scene().add_openvolumemesh("/Users/tobiaskohler/Uni/OpenFlipper-Free/libs/libigrec/build/Desktop_arm_darwin_generic_mach_o_64bit/Build/bin/RelWithDebInfo/tet_mesh.ovmb");
 
   app.run();

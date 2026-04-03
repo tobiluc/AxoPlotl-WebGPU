@@ -50,6 +50,6 @@ fn vs_main(
 fn fs_main(in:V2F) -> FragmentOutput {
     var out: FragmentOutput;
     out.color = in.color;
-    out.pick = vec4<u32>(ubo.objectId, 3, in.cellHandle, 0);
+    out.pick = vec4<u32>(ubo.objectId, 3, in.cellHandle, bitcast<u32>(in.position.z));
     return out;
 }
