@@ -13,13 +13,33 @@ This is the currently developed WebGPU version of
 
 int main()
 {
+    // Create the main application. Always call init() first!
     AxoPlotl::Application app;
     app.init();
+    
+    // You can add custom UI code via the inspector callback.
+    // This is shown in a side panel
+    // There are some predefined "tools" that should be used here
+    // like the DataContolTool
+    AxoPlotl::DataControlTool dct;
+    app.inspector_callback() = [&](AxoPlotl::Application* _app) {
+        ImGui::Text("Hello World");
+        dct.render_ui(*_app);
+    };
   
+    // Add an OpenVolumeMesh from a file
     auto obj = app.scene().add_mesh("coolmesh.ovmb");
     obj->visualize_property("v_weights");
 
-    app.run(); // blocking
+    // Show the application window. While running, you can still add new meshes, visualize properties,
+    // and more. If the window is closed, the program continues and the app is reset can be used again.
+    app.run();
+    
+    // Visualize another mesh in a new window
+    // This time we only show the scene and no inspector.
+    // Note that this and other UI settings can also be set in the window
+    // under Settings -> UI
+    app.inspector_enabled() = false;
   
     obj = app.scene().add_mesh("anothercoolmesh.obj");
   

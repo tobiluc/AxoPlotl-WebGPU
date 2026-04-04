@@ -53,7 +53,7 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    user_ui_callback_([](Application* _app) {}),
+    inspector_callback_([](Application* _app) {}),
     error_callback_(nullptr)
 {
 }
@@ -469,8 +469,8 @@ glm::vec<4,float> Application::scene_viewport()
 {
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    float sidebar_width = sidebar_rel_width_ * fbWidth;
-    if (sidebar_right_aligned_) {
+    float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
+    if (inspector_right_aligned_) {
         return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
     } else {
         return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
@@ -490,20 +490,13 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Set Viewport
-    ImGuiViewport* vp = ImGui::GetMainViewport();
-    float sidebar_width = sidebar_rel_width_ * vp->WorkSize.x;
-    vp->WorkPos.x = sidebar_right_aligned_?
-        vp->WorkSize.x - sidebar_width : 0.0f;
-    ImGui::SetNextWindowPos(vp->WorkPos);
-    ImGui::SetNextWindowSize(ImVec2(sidebar_width, vp->WorkSize.y));
-
-    // Lock the window so it can't be moved or closed
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
-                             ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoCollapse;
-
-    ImGui::Begin("Inspector", nullptr, flags);
+    ImGui::SetNextWindowPos(ImVec2(-100,-100));
+    ImGui::SetNextWindowSize(ImVec2(0,0));
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoInputs |
+                             ImGuiWindowFlags_MenuBar;
+    ImGui::Begin("MenuBar", nullptr, flags);
     ImGui::SetWindowFontScale(font_scale_);
 
     //ImGui::Text("Render Settings");
@@ -546,8 +539,10 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         if (ImGui::BeginMenu("Settings"))
         {
             ImGui::SeparatorText("UI");
-            ImGui::Checkbox("Right", &sidebar_right_aligned_);
-            ImGui::SliderFloat("Width", &sidebar_rel_width_, 0.1f, 0.9f);
+            ImGui::Checkbox("Inspector", &inspector_enabled_);
+            ImGui::SameLine();
+            ImGui::Checkbox("Right", &inspector_right_aligned_);
+            ImGui::SliderFloat("Width", &inspector_rel_width_, 0.1f, 0.9f);
             if (ImGui::BeginMenu("Theme")) {
                 if (ImGui::MenuItem("Dark")) {GUI::apply_theme(GUI::Theme::Dark);}
                 if (ImGui::MenuItem("Light")) {GUI::apply_theme(GUI::Theme::Light);}
@@ -575,7 +570,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             ImGui::EndMenu(); // !Settings
         }
 
-#if 1
+    #if 1
         if (ImGui::BeginMenu("Debug"))
         {
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
@@ -587,7 +582,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
             ImGui::EndMenu(); // !Debug
         }
-#endif
+    #endif
 
         ImGui::EndMainMenuBar();
     }
@@ -621,10 +616,29 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         ImGui::EndPopup();
     }
 
-    user_ui_callback_(this);
+    ImGui::End(); // MenuBar
 
-    ImGui::SetWindowFontScale(1.0f);
-    ImGui::End();
+    if (inspector_enabled_)
+    {
+        // Set Viewport
+        ImGuiViewport* vp = ImGui::GetMainViewport();
+        float sidebar_width = inspector_enabled_? (inspector_rel_width_ * vp->WorkSize.x) : 0.0f;
+        vp->WorkPos.x = inspector_right_aligned_?
+                            vp->WorkSize.x - sidebar_width : 0.0f;
+        ImGui::SetNextWindowPos(vp->WorkPos);
+        ImGui::SetNextWindowSize(ImVec2(sidebar_width, vp->WorkSize.y));
+
+        // Lock the window so it can't be moved or closed
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoResize |
+                                 ImGuiWindowFlags_NoCollapse;
+        ImGui::Begin("Inspector", nullptr, flags);
+
+        inspector_callback_(this);
+
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::End();
+    }
 
     ImGui::Render();
     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);

@@ -19,7 +19,6 @@ class Application
 {
 private:
     float clear_color_[3] = {1,1,1};
-    float font_scale_ = 1.0f;
     PickConfig picking_config_;
 
     struct Time {
@@ -29,6 +28,12 @@ private:
         float time_of_last_frame_ = 0;
         void update();
     } time_;
+
+    float font_scale_ = 1.0f;
+    float inspector_rel_width_ = 0.3f;
+    bool inspector_right_aligned_ = false;
+    bool inspector_enabled_ = true;
+    std::function<void(Application* _app)> inspector_callback_;
 
 public:
     Application();
@@ -61,8 +66,12 @@ public:
         deferred_calls_.push_back(_f);
     }
 
-    inline std::function<void(Application* _app)>& user_ui_callback() {
-        return user_ui_callback_;
+    inline std::function<void(Application* _app)>& inspector_callback() {
+        return inspector_callback_;
+    }
+
+    inline bool& inspector_enabled() {
+        return inspector_enabled_;
     }
 
     PickResult request_pick_result(float _x, float _y);
@@ -72,12 +81,7 @@ public:
     }
 
 private:
-    //float sidebar_width_ = 300.0f;
-    float sidebar_rel_width_ = 0.3f;
-    bool sidebar_right_aligned_ = false;
     PickResult pick_result_;
-
-    std::function<void(Application* _app)> user_ui_callback_;
 
     // Processed at the end of a frame and then removed
     std::vector<std::function<void()>> deferred_calls_;

@@ -44,7 +44,7 @@ target_link_libraries(AxoPlotlCore PUBLIC
 )
 
 add_executable(AxoPlotlApp
-    main.mm
+    main.cpp
     AxoPlotl/tools/PlottingTool.cpp
 )
 
