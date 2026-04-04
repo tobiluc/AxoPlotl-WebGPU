@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AxoPlotl/rendering/shaders/includes/shader_includes.hpp"
+#include <AxoPlotl/IO/read_shader.hpp>
 #include "webgpu/webgpu.hpp"
 
 namespace AxoPlotl
@@ -78,7 +78,7 @@ inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     // Specify the WGSL part of the shader module descriptor
     wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
     wgslDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
-    std::string parsed_shader_code = parse_shader_file_with_includes(_path);
+    std::string parsed_shader_code = IO::parse_shader_file_with_includes(_path);
     wgslDesc.code = parsed_shader_code.c_str();
 
     wgpu::ShaderModuleDescriptor desc = {};
@@ -93,6 +93,14 @@ inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     desc.label = _name;
 
     return _device.createShaderModule(desc);
+}
+
+inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
+    if (_buffer) {
+        _buffer.destroy();
+        _buffer.release();
+        _buffer = nullptr;
+    }
 }
 
 }

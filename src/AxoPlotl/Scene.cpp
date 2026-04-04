@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "AxoPlotl/IO/file_access.h"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <AxoPlotl/Application.hpp>
 
@@ -10,7 +11,7 @@ void Scene::init(Application *_app)
     app_ = _app;
 
     // Initialize the Coordinate Axes Cross
-    using D = ColoredEdgePropertyRenderer::Property::Data;
+    using D = ColoredEdgeRenderer::Property::Data;
     axis_position_buffer_ = create_position_buffer(
     app_->device_, {
         Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,1,0,1),Vec4f(0,0,1,1)

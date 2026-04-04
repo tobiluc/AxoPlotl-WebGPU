@@ -1,8 +1,6 @@
 #pragma once
 
 #include <filesystem>
-//#include "AxoPlotl/typedefs/ToLoG.hpp"
-//#include "AxoPlotl/typedefs/om.hpp"
 #include <AxoPlotl/typedefs/ovm.hpp>
 
 namespace AxoPlotl::IO

@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class ColoredCellPropertyRenderer : public PropertyRendererBase
+class ColoredCellRenderer : public RendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -47,9 +47,9 @@ public:
         return property_color_map_;
     }
 
-    ColoredCellPropertyRenderer() {}
+    ColoredCellRenderer() {}
 
-    ~ColoredCellPropertyRenderer()
+    ~ColoredCellRenderer()
     {
         clear();
     }

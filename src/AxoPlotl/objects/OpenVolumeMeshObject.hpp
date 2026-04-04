@@ -7,7 +7,6 @@
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/rendering/VectorRenderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
-#include "AxoPlotl/typedefs/ToLoG.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
@@ -121,10 +120,10 @@ private:
     wgpu::Buffer edges_center_buffer_;
     wgpu::Buffer faces_center_buffer_;
     wgpu::Buffer cells_center_buffer_;
-    ColoredVertexPropertyRenderer vertex_renderer_;
-    ColoredEdgePropertyRenderer edge_renderer_;
-    ColoredFacePropertyRenderer face_renderer_;
-    ColoredCellPropertyRenderer cell_renderer_;
+    ColoredVertexRenderer vertex_renderer_;
+    ColoredEdgeRenderer edge_renderer_;
+    ColoredFaceRenderer face_renderer_;
+    ColoredCellRenderer cell_renderer_;
     VectorRenderer vectors_on_vertices_renderer_;
     VectorRenderer vectors_on_edges_renderer_;
     VectorRenderer vectors_on_faces_renderer_;

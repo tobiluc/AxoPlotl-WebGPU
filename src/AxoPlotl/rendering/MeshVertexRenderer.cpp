@@ -4,9 +4,9 @@
 
 namespace AxoPlotl
 {
-PipelineState ColoredVertexPropertyRenderer::pipeline_state_;
+PipelineState ColoredVertexRenderer::pipeline_state_;
 
-void ColoredVertexPropertyRenderer::init(uint32_t _object_id, Application* _app,
+void ColoredVertexRenderer::init(uint32_t _object_id, Application* _app,
                                          wgpu::Buffer _position_buffer,
                                          const std::vector<uint32_t>& _indices)
 {
@@ -25,14 +25,14 @@ void ColoredVertexPropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_pipeline();
 }
 
-void ColoredVertexPropertyRenderer::clear()
+void ColoredVertexRenderer::clear()
 {
     destroy_buffer(property_buffer_);
     destroy_buffer(vertex_index_buffer_);
     destroy_buffer(uniform_buffer_);
 }
 
-void ColoredVertexPropertyRenderer::create_buffers(const std::vector<uint32_t> &_indices)
+void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -83,7 +83,7 @@ void ColoredVertexPropertyRenderer::create_buffers(const std::vector<uint32_t> &
     }
 }
 
-void ColoredVertexPropertyRenderer::create_bind_group_layout()
+void ColoredVertexRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -126,7 +126,7 @@ void ColoredVertexPropertyRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredVertexPropertyRenderer::create_bind_group()
+void ColoredVertexRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -169,7 +169,7 @@ void ColoredVertexPropertyRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void ColoredVertexPropertyRenderer::create_pipeline()
+void ColoredVertexRenderer::create_pipeline()
 {
     if (pipeline_state_.pipeline_ || n_vertices_==0) {return;}
 
@@ -236,7 +236,7 @@ void ColoredVertexPropertyRenderer::create_pipeline()
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredVertexPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredVertexRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -247,7 +247,7 @@ void ColoredVertexPropertyRenderer::update_property_data(const std::vector<Prope
     std::cout << "Update Vertex Property Data" << std::endl;
 }
 
-void ColoredVertexPropertyRenderer::render(
+void ColoredVertexRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

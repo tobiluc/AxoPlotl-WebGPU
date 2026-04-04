@@ -52,14 +52,14 @@ AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMe
 
 wgpu::Buffer AxoPlotl::create_position_buffer(
     wgpu::Device _device,
-    const std::vector<PropertyRendererBase::Position>& _positions)
+    const std::vector<RendererBase::Position>& _positions)
 {
     wgpu::BufferDescriptor desc{};
     desc.usage =
         wgpu::BufferUsage::Storage |
         wgpu::BufferUsage::CopyDst |
         wgpu::BufferUsage::Vertex;
-    desc.size = sizeof(PropertyRendererBase::Position) * std::max(_positions.size(), 1lu);
+    desc.size = sizeof(RendererBase::Position) * std::max(_positions.size(), 1lu);
     desc.mappedAtCreation = false;
     desc.label = "Position";
 

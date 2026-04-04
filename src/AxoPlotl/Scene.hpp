@@ -1,13 +1,15 @@
 #pragma once
 
-
-#include "AxoPlotl/Camera.hpp"
-#include "AxoPlotl/IO/file_access.h"
-#include "AxoPlotl/objects/BaseObject.hpp"
-#include "AxoPlotl/objects/OpenVolumeMeshObject.hpp"
-#include "AxoPlotl/rendering/detail/redraw.hpp"
+#include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
+#include <AxoPlotl/rendering/detail/redraw.hpp>
+#include <AxoPlotl/objects/BaseObject.hpp>
+#include <AxoPlotl/Camera.hpp>
+#include <AxoPlotl/rendering/MeshEdgeRenderer.hpp>
+#include <webgpu/webgpu.hpp>
+#include <AxoPlotl/typedefs/ovm.hpp>
+#include <AxoPlotl/objects/OpenVolumeMeshObject.hpp>
 #include <filesystem>
-#include <AxoPlotl/AxoPlotl_fwd.hpp>
+
 
 namespace AxoPlotl
 {
@@ -97,7 +99,7 @@ protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
-    ColoredEdgePropertyRenderer axis_renderer_;
+    ColoredEdgeRenderer axis_renderer_;
 
     PerspectiveCamera perspective_;
 };

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "AxoPlotl/typedefs/glm.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include <AxoPlotl/typedefs/glm.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 
 namespace AxoPlotl

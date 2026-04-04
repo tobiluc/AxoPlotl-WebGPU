@@ -7,14 +7,6 @@ namespace AxoPlotl
 
 class Application;
 
-inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
-    if (_buffer) {
-        _buffer.destroy();
-        _buffer.release();
-        _buffer = nullptr;
-    }
-}
-
 struct PipelineState
 {
     wgpu::Device device_;
@@ -30,7 +22,7 @@ struct PipelineState
     }
 };
 
-class PropertyRendererBase
+class RendererBase
 {
 public:
     using Position = Vec4f; // ensure 16 byte alignment with 4f vector

@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class ColoredVertexPropertyRenderer : public PropertyRendererBase
+class ColoredVertexRenderer : public RendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -47,9 +47,9 @@ public:
         return uniforms_.clip_box_;
     }
 
-    ColoredVertexPropertyRenderer() {}
+    ColoredVertexRenderer() {}
 
-    ~ColoredVertexPropertyRenderer()
+    ~ColoredVertexRenderer()
     {
         clear();
     }

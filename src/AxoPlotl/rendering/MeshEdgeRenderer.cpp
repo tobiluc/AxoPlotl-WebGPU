@@ -4,9 +4,9 @@
 
 namespace AxoPlotl
 {
-PipelineState ColoredEdgePropertyRenderer::pipeline_state_;
+PipelineState ColoredEdgeRenderer::pipeline_state_;
 
-void ColoredEdgePropertyRenderer::init(uint32_t _object_id, Application* _app,
+void ColoredEdgeRenderer::init(uint32_t _object_id, Application* _app,
                                        wgpu::Buffer _position_buffer,
                                        const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
@@ -25,14 +25,14 @@ void ColoredEdgePropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_pipeline();
 }
 
-void ColoredEdgePropertyRenderer::clear()
+void ColoredEdgeRenderer::clear()
 {
     destroy_buffer(property_buffer_);
     destroy_buffer(edge_index_buffer_);
     destroy_buffer(uniform_buffer_);
 }
 
-void ColoredEdgePropertyRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
+void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -93,7 +93,7 @@ void ColoredEdgePropertyRenderer::create_buffers(const std::vector<std::pair<uin
     }
 }
 
-void ColoredEdgePropertyRenderer::create_bind_group_layout()
+void ColoredEdgeRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -136,7 +136,7 @@ void ColoredEdgePropertyRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredEdgePropertyRenderer::create_bind_group()
+void ColoredEdgeRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -179,7 +179,7 @@ void ColoredEdgePropertyRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void ColoredEdgePropertyRenderer::create_pipeline()
+void ColoredEdgeRenderer::create_pipeline()
 {
     if (pipeline_state_.pipeline_ || n_edges_==0) {return;}
 
@@ -274,7 +274,7 @@ void ColoredEdgePropertyRenderer::create_pipeline()
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredEdgePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredEdgeRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -285,7 +285,7 @@ void ColoredEdgePropertyRenderer::update_property_data(const std::vector<Propert
     std::cout << "Update Edge Property Data" << std::endl;
 }
 
-void ColoredEdgePropertyRenderer::render(
+void ColoredEdgeRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

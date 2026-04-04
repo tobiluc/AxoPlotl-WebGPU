@@ -5,15 +5,15 @@
 namespace AxoPlotl
 {
 
-PipelineState ColoredCellPropertyRenderer::triangle_pipeline_state_;
-PipelineState ColoredCellPropertyRenderer::outline_pipeline_state_;
+PipelineState ColoredCellRenderer::triangle_pipeline_state_;
+PipelineState ColoredCellRenderer::outline_pipeline_state_;
 
 struct CellIndex {
     uint32_t vh_;
     uint32_t ch_;
 };
 
-void ColoredCellPropertyRenderer::init(uint32_t _object_id, Application* _app,
+void ColoredCellRenderer::init(uint32_t _object_id, Application* _app,
                                        wgpu::Buffer _vertices_position_buffer,
                                        const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
                                        wgpu::Buffer _cells_center_buffer)
@@ -36,7 +36,7 @@ void ColoredCellPropertyRenderer::init(uint32_t _object_id, Application* _app,
     create_line_pipeline();
 }
 
-void ColoredCellPropertyRenderer::clear()
+void ColoredCellRenderer::clear()
 {
     // We only delete the buffers that were created by this
     // renderer
@@ -46,7 +46,7 @@ void ColoredCellPropertyRenderer::clear()
     destroy_buffer(uniform_buffer_);
 }
 
-void ColoredCellPropertyRenderer::create_buffers(
+void ColoredCellRenderer::create_buffers(
     const std::vector<std::vector<std::vector<uint32_t>>>& _cells)
 {
     wgpu::Device device = app_->device_;
@@ -164,7 +164,7 @@ void ColoredCellPropertyRenderer::create_buffers(
     }
 }
 
-void ColoredCellPropertyRenderer::create_bind_group_layout()
+void ColoredCellRenderer::create_bind_group_layout()
 {
     if (triangle_pipeline_state_.bind_group_layout_) {return;}
 
@@ -214,7 +214,7 @@ void ColoredCellPropertyRenderer::create_bind_group_layout()
     outline_pipeline_state_.bind_group_layout_ = triangle_pipeline_state_.bind_group_layout_;
 }
 
-void ColoredCellPropertyRenderer::create_bind_group()
+void ColoredCellRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[6]{};
 
@@ -264,7 +264,7 @@ void ColoredCellPropertyRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void ColoredCellPropertyRenderer::create_triangle_pipeline()
+void ColoredCellRenderer::create_triangle_pipeline()
 {
     if (triangle_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
@@ -351,7 +351,7 @@ void ColoredCellPropertyRenderer::create_triangle_pipeline()
     triangle_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredCellPropertyRenderer::create_line_pipeline()
+void ColoredCellRenderer::create_line_pipeline()
 {
     if (outline_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
@@ -438,7 +438,7 @@ void ColoredCellPropertyRenderer::create_line_pipeline()
     outline_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredCellPropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredCellRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -449,7 +449,7 @@ void ColoredCellPropertyRenderer::update_property_data(const std::vector<Propert
     std::cout << "Update Cell Property Data" << std::endl;
 }
 
-void ColoredCellPropertyRenderer::render(
+void ColoredCellRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

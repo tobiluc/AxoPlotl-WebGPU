@@ -1,7 +1,7 @@
 #pragma once
 
-#include "imgui.h"
-#include "webgpu/webgpu.hpp"
+#include <imgui.h>
+#include <webgpu/webgpu.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <string>
 #include <vector>

@@ -4,14 +4,14 @@
 
 namespace AxoPlotl
 {
-PipelineState ColoredFacePropertyRenderer::pipeline_state_;
+PipelineState ColoredFaceRenderer::pipeline_state_;
 
 struct FaceIndex {
     uint32_t vh_;
     uint32_t fh_;
 };
 
-void ColoredFacePropertyRenderer::init(
+void ColoredFaceRenderer::init(
     uint32_t _object_id, Application* _app,
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
@@ -31,14 +31,14 @@ void ColoredFacePropertyRenderer::init(
     create_pipeline();
 }
 
-void ColoredFacePropertyRenderer::clear()
+void ColoredFaceRenderer::clear()
 {
     destroy_buffer(property_buffer_);
     destroy_buffer(face_index_buffer_);
     destroy_buffer(uniform_buffer_);
 }
 
-void ColoredFacePropertyRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
+void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
 {
     wgpu::Device device = app_->device_;
     wgpu::Queue queue = device.getQueue();
@@ -102,7 +102,7 @@ void ColoredFacePropertyRenderer::create_buffers(const std::vector<std::vector<u
     }
 }
 
-void ColoredFacePropertyRenderer::create_bind_group_layout()
+void ColoredFaceRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -145,7 +145,7 @@ void ColoredFacePropertyRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredFacePropertyRenderer::create_bind_group()
+void ColoredFaceRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -188,7 +188,7 @@ void ColoredFacePropertyRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void ColoredFacePropertyRenderer::create_pipeline()
+void ColoredFaceRenderer::create_pipeline()
 {
     if (pipeline_state_.pipeline_ || n_faces_==0) {return;}
 
@@ -275,7 +275,7 @@ void ColoredFacePropertyRenderer::create_pipeline()
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredFacePropertyRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredFaceRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
     app_->device_.getQueue().writeBuffer(
         property_buffer_,
@@ -286,7 +286,7 @@ void ColoredFacePropertyRenderer::update_property_data(const std::vector<Propert
     std::cout << "Update Face Property Data" << std::endl;
 }
 
-void ColoredFacePropertyRenderer::render(
+void ColoredFaceRenderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

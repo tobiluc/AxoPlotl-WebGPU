@@ -1,6 +1,5 @@
 #include "DebugTool.hpp"
 #include "AxoPlotl/Application.hpp"
-#include "AxoPlotl/utils/fps.hpp"
 #include <mach/task_info.h>
 #include <mach/mach.h>
 
@@ -20,7 +19,7 @@ void DebugTool::render_ui(Application& app)
 
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", memory_usage_mb());
-    ImGui::Text("%f FPS", Time::FRAMES_PER_SECOND);
+    ImGui::Text("%f FPS", app.fps());
     ImGui::Text("Draw Frames %d", n_draw_frames());
     ImGui::SeparatorText("Scene");
     ImGui::Text("#Objects: %zu", app.scene().get_objects().size());

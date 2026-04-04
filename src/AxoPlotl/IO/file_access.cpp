@@ -1,8 +1,7 @@
 #include "file_access.h"
 #include <ToLoG/utils/OVM_Traits.hpp>
 #include "AxoPlotl/IO/om_to_ovm.hpp"
-#include "AxoPlotl/IO/rapidobj_to_ovm.hpp"
-#include "AxoPlotl/typedefs/om.hpp"
+#include "AxoPlotl/IO/rapidobj_to_ovm.hpp"=
 #include "OpenVolumeMesh/FileManager/FileManager.hh"
 #include "OpenVolumeMesh/IO/ovmb_read.hh"
 #include <OpenVolumeMesh/FileManager/VtkColorReader.hh>
@@ -53,7 +52,7 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
             res.status_ = ReadMeshStatus::OK;
         }
     } else {
-        OMSurfaceMesh mesh;
+        OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits> mesh;
         mesh.request_vertex_colors();
         mesh.request_vertex_texcoords2D();
         mesh.request_face_normals();

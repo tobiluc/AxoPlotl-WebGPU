@@ -2,7 +2,6 @@
 #include "AxoPlotl/Application.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>
-#include <AxoPlotl/typedefs/om.hpp>
 
 namespace AxoPlotl
 {

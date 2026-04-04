@@ -1,9 +1,8 @@
 #pragma once
-#include "glm/fwd.hpp"
 #include <ToLoG/utils/glm_Traits.hpp>
 
-
-namespace AxoPlotl {
+namespace AxoPlotl
+{
     using Vec2i = glm::vec<2,int>;
     using Vec2f = glm::vec<2,float>;
     using Vec2d = glm::vec<2,double>;

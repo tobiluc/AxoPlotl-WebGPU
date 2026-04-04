@@ -4,9 +4,7 @@
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
-#include "AxoPlotl/utils/fps.hpp"
 #include "ImGuiFileDialog.h"
-#include "glm/ext/matrix_projection.hpp"
 #include <cassert>
 #include <imgui.h>
 #include <backends/imgui_impl_wgpu.h>
@@ -40,6 +38,19 @@ void wgpuPollEvents(
 
 namespace AxoPlotl
 {
+
+void Application::Time::update()
+{
+    // Compute frames per second
+    float time_of_current_frame = (float)glfwGetTime();
+    delta_time_ = time_of_current_frame - time_of_last_frame_;
+    time_of_last_frame_ = time_of_current_frame;
+    seconds_since_last_frame_ += delta_time_;
+    if (seconds_since_last_frame_ >= 1.0f) {
+        seconds_since_last_frame_ -= 1.0f;
+        frames_per_second_ = 1.0f / delta_time_;
+    }
+}
 
 Application::Application() :
     user_ui_callback_([](Application* _app) {}),
@@ -189,7 +200,7 @@ bool Application::init()
 void Application::frame_tick()
 {
     // Input and Time Update
-    Time::update();
+    time_.update();
     Input::Mouse::update(window_);
     glfwPollEvents();
 

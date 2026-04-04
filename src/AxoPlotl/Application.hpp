@@ -22,6 +22,14 @@ private:
     float font_scale_ = 1.0f;
     PickConfig picking_config_;
 
+    struct Time {
+        float delta_time_ = 0;
+        float frames_per_second_ = 0;
+        float seconds_since_last_frame_ = 0;
+        float time_of_last_frame_ = 0;
+        void update();
+    } time_;
+
 public:
     Application();
 
@@ -58,6 +66,10 @@ public:
     }
 
     PickResult request_pick_result(float _x, float _y);
+
+    inline constexpr float fps() const {
+        return time_.frames_per_second_;
+    }
 
 private:
     //float sidebar_width_ = 300.0f;

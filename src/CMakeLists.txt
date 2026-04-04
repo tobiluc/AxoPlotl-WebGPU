@@ -10,11 +10,9 @@ add_library(AxoPlotlCore
     AxoPlotl/Camera.cpp
     AxoPlotl/objects/BaseObject.cpp
     AxoPlotl/rendering/detail/create_static_render_data.cpp
-    AxoPlotl/utils/fps.cpp
     AxoPlotl/rendering/detail/redraw.cpp
     AxoPlotl/rendering/ColorMap.cpp
     AxoPlotl/properties/property_calculations.cpp
-    AxoPlotl/rendering/shaders/includes/shader_includes.cpp
     AxoPlotl/gui/themes.cpp
     AxoPlotl/rendering/MeshVertexRenderer.cpp
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
@@ -23,13 +21,12 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/VectorRenderer.cpp
     AxoPlotl/gui/fonts.cpp
 
-
-
     AxoPlotl/tools/DataControlTool.cpp
     AxoPlotl/tools/DebugTool.cpp
     AxoPlotl/IO/rapidobj_to_ovm.cpp
     AxoPlotl/IO/happly_to_ovm.cpp
     AxoPlotl/IO/om_to_ovm.cpp
+    AxoPlotl/IO/read_shader.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

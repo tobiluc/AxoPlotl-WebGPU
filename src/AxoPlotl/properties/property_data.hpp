@@ -3,7 +3,6 @@
 #include <AxoPlotl/rendering/RendererBase.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/properties/property_filters.hpp>
-#include <AxoPlotl/typedefs/ToLoG.hpp>
 
 namespace AxoPlotl
 {
@@ -44,9 +43,9 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-PropertyRendererBase::Property::Data get_buffer_property_data(const T& _val)
+RendererBase::Property::Data get_buffer_property_data(const T& _val)
 {
-    using D = PropertyRendererBase::Property::Data;
+    using D = RendererBase::Property::Data;
 
     if constexpr(std::is_floating_point_v<T>) {
         if (std::isnan(_val)) {
@@ -76,26 +75,26 @@ PropertyRendererBase::Property::Data get_buffer_property_data(const T& _val)
 }
 
 template<typename T>
-constexpr PropertyRendererBase::Property::Type get_buffer_property_type()
+constexpr RendererBase::Property::Type get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
-        return PropertyRendererBase::Property::Type::SCALAR;
+        return RendererBase::Property::Type::SCALAR;
     } else if constexpr(ToLoG::vector_type<T>) {
         if constexpr(ToLoG::Traits<T>::dim == 3) {
-            return PropertyRendererBase::Property::Type::VEC3;
+            return RendererBase::Property::Type::VEC3;
         }
     }
-    return PropertyRendererBase::Property::Type::COLOR;
+    return RendererBase::Property::Type::COLOR;
 }
 
 template<typename T, typename EntityTag>
-std::vector<PropertyRendererBase::Property::Data> get_buffer_property_data(
+std::vector<RendererBase::Property::Data> get_buffer_property_data(
     const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
 {
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
-    std::vector<PropertyRendererBase::Property::Data> data;
+    std::vector<RendererBase::Property::Data> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
         data.push_back(get_buffer_property_data(static_cast<T>(prop[h])));
