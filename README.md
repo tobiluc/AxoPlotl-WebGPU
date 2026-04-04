@@ -38,7 +38,7 @@ int main()
 For example, for property visualization, colors would be in RGBA to make cell
 more transparent, the larger/smaller a property value is.
 - [ ] Visualization of Halfedges and Halffaces and their properties.
-- [ ] Visualization of vector properties as lines (see VectorRenderer).
+- [x] Visualization of vector properties as lines (see VectorRenderer).
 - [ ] Visualization of matrix properties as frames/cubes
 - [ ] Warning Popup when input mesh contains no vertices or any position with NaN or INF.
 
