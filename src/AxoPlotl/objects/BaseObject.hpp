@@ -1,7 +1,7 @@
 #pragma once
 #include <AxoPlotl/picking.hpp>
+#include <AxoPlotl/geometry/BoundingBox.hpp>
 #include "AxoPlotl/typedefs/glm.hpp"
-#include "ToLoG/Core.hpp"
 #include "webgpu/webgpu.hpp"
 
 namespace AxoPlotl
@@ -41,7 +41,7 @@ public:
 
     virtual void render_ui_picking(PickResult _p, const PickConfig& _cfg) = 0;
 
-    inline const ToLoG::AABB<Vec3f>& bounding_box() const {
+    inline const BoundingBox& bounding_box() const {
         return bbox_;
     }
 
@@ -53,7 +53,7 @@ public:
         return deleted_;
     }
 
-    inline const std::string& name() const {
+    inline const std::string& name() {
         return name_;
     }
 
@@ -72,7 +72,7 @@ protected:
     //std::unique_ptr<RendererBase> renderer_;
     Mat4x4f transform_;
     static int id_counter_;
-    ToLoG::AABB<Vec3f> bbox_;
+    BoundingBox bbox_;
     bool deleted_ = false;
     bool target_ = false;
     bool visible_ = true;

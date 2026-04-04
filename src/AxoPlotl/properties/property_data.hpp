@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxoPlotl/geometry/geometry_traits.hpp"
 #include <AxoPlotl/rendering/RendererBase.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/properties/property_filters.hpp>
@@ -30,12 +31,12 @@ static std::string value_to_string(const T& _val)
 {
     if constexpr(std::is_same_v<T,bool>) {return _val? "True" : "False";}
     else if constexpr(std::is_scalar_v<T>) {return std::to_string(_val);}
-    else if constexpr (ToLoG::vector_type<T>) {
+    else if constexpr (is_vector<T>) {
         std::string s = "[";
-        for (int i = 0; i < ToLoG::Traits<T>::dim-1; ++i) {
+        for (int i = 0; i < vector_dim<T>-1; ++i) {
             s += std::to_string(_val[i]) + ", ";
         }
-        s += std::to_string(_val[ToLoG::Traits<T>::dim-1]) + "]";
+        s += std::to_string(_val[vector_dim<T>-1]) + "]";
         return s;
     }
     return "UNKNOWN";
@@ -59,10 +60,10 @@ RendererBase::Property::Data get_buffer_property_data(const T& _val)
         else {return D{_val,0,0,1};}
     } else if constexpr(std::is_integral_v<T>) {
         return D{_val,0,0,1};
-    } else if constexpr (ToLoG::vector_type<T>) {
-        if (ToLoG::Traits<T>::dim <= 4) {
+    } else if constexpr(is_vector<T>) {
+        if constexpr(vector_dim<T> <= 4) {
             D v;
-            for (int i = 0; i < ToLoG::Traits<T>::dim; ++i) {
+            for (int i = 0; i < vector_dim<T>; ++i) {
                 v[i] = _val[i];
             }
             return v;
@@ -79,8 +80,8 @@ constexpr RendererBase::Property::Type get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
         return RendererBase::Property::Type::SCALAR;
-    } else if constexpr(ToLoG::vector_type<T>) {
-        if constexpr(ToLoG::Traits<T>::dim == 3) {
+    } else if constexpr(is_vector<T>) {
+        if constexpr(vector_dim<T> == 3) {
             return RendererBase::Property::Type::VEC3;
         }
     }

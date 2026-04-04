@@ -69,9 +69,9 @@ void OpenVolumeMeshObject::render_ui_properties()
             ImGui::EndMenu();
         }
         if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
-            if (ImGui::MenuItem("Minimum Dihedral Angle")) {
-                calc_cell_min_dihedral_angle(mesh_);
-            }
+            // if (ImGui::MenuItem("Minimum Dihedral Angle")) {
+            //     calc_cell_min_dihedral_angle(mesh_);
+            // }
             if (ImGui::MenuItem("Boundary Distance")) {
                 calc_cell_boundary_distance(mesh_);
             }
@@ -388,8 +388,8 @@ void OpenVolumeMeshObject::visualize_property(
                 _pp->cast_to_StorageT<T>(), col_rend));
             prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterIntRange<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
-        } else if constexpr(ToLoG::vector_type<T>) {
-            if constexpr(ToLoG::Traits<T>::dim == 3) {
+        } else if constexpr(is_vector<T>) {
+            if constexpr(vector_dim<T> == 3) {
                 prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterVec3<T,EntityTag>>(
                     vec_rend));
             }
@@ -402,8 +402,8 @@ void OpenVolumeMeshObject::visualize_property(
         col_rend.property_type() = get_buffer_property_type<T>();
 
         // Upload Data to Vector Renderer
-        if constexpr(ToLoG::vector_type<T>) {
-            if constexpr(ToLoG::Traits<T>::dim==3) {
+        if constexpr(is_vector<T>) {
+            if constexpr(vector_dim<T> == 3) {
                 const auto& data = get_buffer_property_data<T,EntityTag>(
                     mesh_, _pp);
                 vec_rend.update_vector_data(data);
@@ -501,7 +501,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_faces());
     for (OVM::FH fh : mesh_.faces()) {
-        auto n = ToLoG::normalized(mesh_.normal(fh.halfface_handle(0)));
+        auto n = mesh_.normal(fh.halfface_handle(0));
         D sphere_color{std::abs(n[0]),std::abs(n[1]),std::abs(n[2]),1};
         props.push_back(sphere_color);
     }
@@ -513,7 +513,7 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_cells());
     for (OVM::CH ch : mesh_.cells()) {
-        auto p = ToLoG::normalized(mesh_.barycenter(ch));
+        auto p = mesh_.barycenter(ch).normalized();
         D sphere_color = Vec4f(
             0.5 * (p[0] + 1),
             0.5 * (p[1] + 1),
@@ -527,13 +527,10 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
 
 void OpenVolumeMeshObject::recompute_bounding_box()
 {
-    bbox_.make_empty();
+    bbox_.reset();
     for (const auto& p : mesh_.vertex_positions()) {
-        if (std::isfinite(p[0]) && std::isfinite(p[1]) && std::isfinite(p[2])) {
-            bbox_.expand(Vec3f(p[0],p[1],p[2]));
-        }
+        bbox_.expand_with_point(p);
     }
-    bbox_ = bbox_.scaled(1.01f);
 }
 
 }

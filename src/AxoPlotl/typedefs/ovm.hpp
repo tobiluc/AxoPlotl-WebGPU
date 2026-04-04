@@ -1,8 +1,10 @@
 #pragma once
-#include "ToLoG/mesh/polygon_mesh_concepts.hpp"
-#include <ToLoG/utils/OVM_Traits.hpp>
+// #include "ToLoG/mesh/polygon_mesh_concepts.hpp"
+// #include <ToLoG/utils/OVM_Traits.hpp>
 
 // These things should be in a future version of OVM
+#include <OpenVolumeMesh/Core/GeometryKernel.hh>
+
 namespace OpenVolumeMesh
 {
 // template<typename EntityTag>
@@ -125,32 +127,32 @@ using OVMVolumeMesh = OpenVolumeMesh::GeometryKernel<
 //     if constexpr(ET==OVM::EntityType::HalfEdge) {return _mesh.halfedges();}
 // }
 
-template<ToLoG::polygon_mesh_3 Mesh>
-OVMVolumeMesh volume_mesh(const Mesh& _mesh)
-{
-    using VI = typename ToLoG::Traits<Mesh>::vertex_index;
-    OVMVolumeMesh res;
+// template<ToLoG::polygon_mesh_3 Mesh>
+// OVMVolumeMesh volume_mesh(const Mesh& _mesh)
+// {
+//     using VI = typename ToLoG::Traits<Mesh>::vertex_index;
+//     OVMVolumeMesh res;
 
-    res.reserve_vertices(_mesh.n_vertices());
-    for (int i = 0; i < _mesh.n_vertices(); ++i) {
-        const auto& p = _mesh.point(VI(i));
-        res.add_vertex(OVM::Vec3f(p[0],p[1],p[2]));
-    }
-    res.reserve_edges(_mesh.n_edges());
-    for (const auto& e : _mesh.edges()) {
-        res.add_edge(OVM::VH(ToLoG::index(e.vertex(0))),
-                     OVM::VH(ToLoG::index(e.vertex(1))));
-    }
-    res.reserve_faces(_mesh.n_faces());
-    for (const auto& f : _mesh.faces()) {
-        std::vector<OVM::VH> vhs;
-        for (const auto& v : f.vertices()) {
-            vhs.push_back(OVM::VH(ToLoG::index(v)));
-        }
-        res.add_face(vhs);
-    }
+//     res.reserve_vertices(_mesh.n_vertices());
+//     for (int i = 0; i < _mesh.n_vertices(); ++i) {
+//         const auto& p = _mesh.point(VI(i));
+//         res.add_vertex(OVM::Vec3f(p[0],p[1],p[2]));
+//     }
+//     res.reserve_edges(_mesh.n_edges());
+//     for (const auto& e : _mesh.edges()) {
+//         res.add_edge(OVM::VH(ToLoG::index(e.vertex(0))),
+//                      OVM::VH(ToLoG::index(e.vertex(1))));
+//     }
+//     res.reserve_faces(_mesh.n_faces());
+//     for (const auto& f : _mesh.faces()) {
+//         std::vector<OVM::VH> vhs;
+//         for (const auto& v : f.vertices()) {
+//             vhs.push_back(OVM::VH(ToLoG::index(v)));
+//         }
+//         res.add_face(vhs);
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 }

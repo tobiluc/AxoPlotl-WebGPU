@@ -1,5 +1,6 @@
 #pragma once
-#include <ToLoG/utils/glm_Traits.hpp>
+#include <glm/common.hpp>
+#include <glm/glm.hpp>
 
 namespace AxoPlotl
 {

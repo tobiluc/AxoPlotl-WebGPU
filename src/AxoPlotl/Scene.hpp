@@ -82,7 +82,7 @@ public:
         std::sort(objects_.begin(), objects_.end(), _comp);
     }
 
-    inline void zoom_to_box(const ToLoG::AABB<Vec3f>& _bbox) {
+    inline void zoom_to_box(const BoundingBox& _bbox) {
         perspective_.zoom_to_box(_bbox.min(),_bbox.max());
         trigger_redraw();
     }

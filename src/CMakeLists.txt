@@ -40,7 +40,7 @@ target_link_libraries(AxoPlotlCore PUBLIC
     OpenMeshCore
     OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
-    ToLoG
+    rapidobj::rapidobj
 )
 
 add_executable(AxoPlotlApp

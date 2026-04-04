@@ -1,15 +1,11 @@
 #include "file_access.h"
-#include <ToLoG/utils/OVM_Traits.hpp>
 #include "AxoPlotl/IO/om_to_ovm.hpp"
-#include "AxoPlotl/IO/rapidobj_to_ovm.hpp"=
+#include "AxoPlotl/IO/rapidobj_to_ovm.hpp"
 #include "OpenVolumeMesh/FileManager/FileManager.hh"
 #include "OpenVolumeMesh/IO/ovmb_read.hh"
 #include <OpenVolumeMesh/FileManager/VtkColorReader.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <rapidobj/rapidobj.hpp>
-#include <ToLoG/io/obj_reader.hpp>
-#include <ToLoG/io/ply_reader.hpp>
-#include <ToLoG/io/medit_reader.hpp>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/IO/Options.hh>
 #include <AxoPlotl/IO/happly_to_ovm.hpp>

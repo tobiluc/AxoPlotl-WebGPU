@@ -16,7 +16,7 @@ int main()
     AxoPlotl::Application app;
     app.init();
   
-    auto obj = app.scene().add_openvolumemesh("coolmesh.ovmb");
+    auto obj = app.scene().add_mesh("coolmesh.ovmb");
     obj->visualize_property("v_weights");
 
     app.run(); // blocking

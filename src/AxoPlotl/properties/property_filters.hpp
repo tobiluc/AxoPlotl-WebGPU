@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxoPlotl/geometry/geometry_traits.hpp"
 #include "AxoPlotl/rendering/VectorRenderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include <AxoPlotl/typedefs/ovm.hpp>
@@ -196,7 +197,7 @@ private:
 };
 
 template<typename Vec3T, typename EntityTag>
-requires(ToLoG::vector_type<Vec3T> && ToLoG::Traits<Vec3T>::dim==3)
+requires(is_vector<Vec3T> && vector_dim<Vec3T> == 3)
 struct PropertyFilterVec3 : public PropertyFilterBase
 {
 public:
