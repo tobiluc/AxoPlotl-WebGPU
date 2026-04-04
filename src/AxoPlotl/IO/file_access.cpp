@@ -1,6 +1,8 @@
 #include "file_access.h"
 #include <ToLoG/utils/OVM_Traits.hpp>
+#include "AxoPlotl/IO/om_to_ovm.hpp"
 #include "AxoPlotl/IO/rapidobj_to_ovm.hpp"
+#include "AxoPlotl/typedefs/om.hpp"
 #include "OpenVolumeMesh/FileManager/FileManager.hh"
 #include "OpenVolumeMesh/IO/ovmb_read.hh"
 #include <OpenVolumeMesh/FileManager/VtkColorReader.hh>
@@ -24,36 +26,30 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
     if (_path.extension() == ".obj") {
         const auto& robj = rapidobj::ParseFile(_path);
         if (!robj.error) {
-            res.mesh_ = rapidobj_to_openvolumemesh(robj);
+            rapidobj_to_openvolumemesh(robj, res.mesh_);
             res.status_ = ReadMeshStatus::OK;
         }
     } else if (_path.extension() == ".ply") {
         try {
             happly::PLYData plyIn(_path);
-            res.mesh_ = happly_to_openvolumemesh(plyIn);
+            happly_to_openvolumemesh(plyIn, res.mesh_);
             res.status_ = ReadMeshStatus::OK;
         } catch (std::runtime_error& _err) {
             std::cerr << _err.what() << std::endl;
         }
     } else if (_path.extension() == ".ovmb") {
-        OVMVolumeMesh mesh;
-        if (OVM::IO::ovmb_read(_path.c_str(), mesh)
+        if (OVM::IO::ovmb_read(_path.c_str(), res.mesh_)
             ==OVM::IO::ReadResult::Ok) {
-            res.mesh_ = std::move(mesh);
             res.status_ = ReadMeshStatus::OK;
         }
     } else if (_path.extension() == ".ovm") {
-        OVMVolumeMesh mesh;
         OVM::IO::FileManager fm;
-        if (fm.readFile(_path, mesh)) {
-            res.mesh_ = std::move(mesh);
+        if (fm.readFile(_path, res.mesh_)) {
             res.status_ = ReadMeshStatus::OK;
         }
     } else if (_path.extension() == ".vtk") {
-        OVMVolumeMesh mesh;
         OVM::Reader::VtkColorReader fm;
-        if (fm.readFile(_path, mesh, true, true)) {
-            res.mesh_ = std::move(mesh);
+        if (fm.readFile(_path, res.mesh_, true, true)) {
             res.status_ = ReadMeshStatus::OK;
         }
     } else {
@@ -63,7 +59,7 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
         mesh.request_face_normals();
         OpenMesh::IO::Options opt(OpenMesh::IO::Options::VertexColor);
         if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
-            res.mesh_ = std::move(mesh);
+            openmesh_to_openvolumemesh(mesh, res.mesh_);
             res.status_ = ReadMeshStatus::OK;
         }
     }

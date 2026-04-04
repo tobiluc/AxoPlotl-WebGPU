@@ -1,9 +1,9 @@
 #pragma once
 
 #include <filesystem>
-#include "AxoPlotl/typedefs/ToLoG.hpp"
-#include "AxoPlotl/typedefs/om.hpp"
-#include "AxoPlotl/typedefs/ovm.hpp"
+//#include "AxoPlotl/typedefs/ToLoG.hpp"
+//#include "AxoPlotl/typedefs/om.hpp"
+#include <AxoPlotl/typedefs/ovm.hpp>
 
 namespace AxoPlotl::IO
 {
@@ -16,7 +16,7 @@ enum class ReadMeshStatus {
 
 struct ReadMeshResult
 {
-    std::optional<std::variant<SurfaceMesh,OVMVolumeMesh,OMSurfaceMesh>> mesh_ = std::nullopt;
+    OVMVolumeMesh mesh_;
     ReadMeshStatus status_;
 };
 

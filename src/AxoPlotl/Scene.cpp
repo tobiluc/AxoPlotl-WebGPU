@@ -25,6 +25,20 @@ void Scene::init(Application *_app)
     });
 }
 
+std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const OVMVolumeMesh &&_mesh)
+{
+    return add_object<OpenVolumeMeshObject>(std::move(_mesh));
+}
+
+std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::path& _path)
+{
+    auto rr = IO::read_mesh(_path);
+    if (rr.status_ != IO::ReadMeshStatus::OK) {
+        return nullptr;
+    }
+    return add_object<OpenVolumeMeshObject>(std::move(rr.mesh_), _path);
+}
+
 void Scene::render(wgpu::RenderPassEncoder _render_pass)
 {
     // Get Width and Height

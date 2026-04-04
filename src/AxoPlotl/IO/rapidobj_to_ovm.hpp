@@ -2,9 +2,9 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <rapidobj/rapidobj.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::IO
 {
 
-OVMVolumeMesh rapidobj_to_openvolumemesh(const rapidobj::Result& _robj);
+void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, OVMVolumeMesh &_ovm);
 
 }

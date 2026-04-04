@@ -1,85 +1,39 @@
-#include "create_static_render_data.hpp"
-
-
-// AxoPlotl::VolumeMeshRenderer::StaticData AxoPlotl::create_static_render_data(const SurfaceMesh& _mesh)
-// {
-//     AxoPlotl::VolumeMeshRenderer::StaticData data;
-
-//     for (uint32_t i = 0; i < _mesh.n_vertices(); ++i) {
-//         data.positions_.emplace_back(
-//             _mesh.point(i)[0],
-//             _mesh.point(i)[1],
-//             _mesh.point(i)[2],
-//             1
-//             );
-//         data.vertices_.push_back(i);
-//     }
-//     for (uint32_t i = 0; i < _mesh.n_edges(); ++i) {
-//         data.edges_.push_back({
-//             static_cast<uint32_t>(_mesh.edge(i).vertex(0)),
-//             static_cast<uint32_t>(_mesh.edge(i).vertex(1))
-//         });
-//     }
-//     for (uint32_t i = 0; i < _mesh.n_faces(); ++i) {
-//         data.faces_.emplace_back();
-//         for (const auto& vh : _mesh.face(i).vertices()) {
-//             data.faces_.back().push_back(vh);
-//         }
-//     }
-//     return data;
-// }
-
-AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OMSurfaceMesh& _mesh)
-{
-    AxoPlotl::StaticRenderData data;
-
-    for (const auto& v : _mesh.vertices()) {
-        const auto& p = _mesh.point(v);
-        data.positions_.emplace_back(
-            p[0],
-            p[1],
-            p[2],
-            1
-            );
-        data.vertices_.push_back(v.idx());
-    }
-    for (const auto& e : _mesh.edges()) {
-        data.edges_.push_back({
-            static_cast<uint32_t>(e.v0().idx()),
-            static_cast<uint32_t>(e.v1().idx())
-        });
-    }
-    for (const auto& f : _mesh.faces()) {
-        data.faces_.emplace_back();
-        for (const auto& v : f.vertices_ccw()) {
-            data.faces_.back().push_back(v.idx());
-        }
-    }
-    return data;
-}
+#include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
 AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMesh& _mesh)
 {
     AxoPlotl::StaticRenderData data;
+    data.positions_.reserve(_mesh.n_vertices());
+    data.vertices_.reserve(_mesh.n_vertices());
+    data.edges_.reserve(_mesh.n_edges());
+    data.edges_barycenters_.reserve(_mesh.n_edges());
+    data.faces_.reserve(_mesh.n_faces());
+    data.faces_barycenters_.reserve(_mesh.n_faces());
+    data.cells_.reserve(_mesh.n_cells());
+    data.cells_barycenters_.reserve(_mesh.n_cells());
 
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);
         data.positions_.emplace_back(p[0],p[1],p[2],1);
         data.vertices_.push_back(v_it->uidx());
     }
-    for (auto e_it = _mesh.e_iter(); e_it.is_valid(); ++e_it) {
-        const auto& e = _mesh.edge(*e_it);
+    for (auto eh : _mesh.edges()) {
+        const auto& e = _mesh.edge(eh);
         data.edges_.push_back({
             e.from_vertex().uidx(),
             e.to_vertex().uidx()
         });
+        const auto& p = _mesh.barycenter(eh);
+        data.edges_barycenters_.emplace_back(p[0],p[1],p[2],1);
     }
-    for (auto f_it = _mesh.f_iter(); f_it.is_valid(); ++f_it) {
-        const auto& vhs = _mesh.get_halfface_vertices(f_it->halfface_handle(0));
+    for (auto fh : _mesh.faces()) {
+        const auto& vhs = _mesh.get_halfface_vertices(fh.halfface_handle(0));
         data.faces_.emplace_back();
         for (const auto& vh : vhs) {
             data.faces_.back().push_back(vh.uidx());
         }
+        const auto& p = _mesh.barycenter(fh);
+        data.faces_barycenters_.emplace_back(p[0],p[1],p[2],1);
     }
     for (auto ch : _mesh.cells()) {
         data.cells_.emplace_back();
@@ -90,6 +44,8 @@ AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMe
                 data.cells_.back().back().push_back(vh.uidx());
             }
         }
+        const auto& p = _mesh.barycenter(ch);
+        data.cells_barycenters_.emplace_back(p[0],p[1],p[2],1);
     }
     return data;
 }
@@ -112,15 +68,4 @@ wgpu::Buffer AxoPlotl::create_position_buffer(
         _device.getQueue().writeBuffer(buffer, 0, _positions.data(), desc.size);
     }
     return buffer;
-}
-
-std::vector<AxoPlotl::Vec4f> AxoPlotl::get_cell_centers(const OVMVolumeMesh& _mesh)
-{
-    std::vector<Vec4f> cell_centers;
-    cell_centers.reserve(_mesh.n_cells());
-    for (OVM::CH ch : _mesh.cells()) {
-        const auto& p = _mesh.barycenter(ch);
-        cell_centers.emplace_back(p[0],p[1],p[2],1);
-    }
-    return cell_centers;
 }

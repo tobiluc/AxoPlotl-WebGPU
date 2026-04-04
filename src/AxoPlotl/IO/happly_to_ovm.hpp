@@ -2,9 +2,9 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <ToLoG/io/happly.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::IO
 {
 
-OVMVolumeMesh happly_to_openvolumemesh(happly::PLYData& _data);
+void happly_to_openvolumemesh(happly::PLYData& _data, OVMVolumeMesh& _ovm);
 
 }

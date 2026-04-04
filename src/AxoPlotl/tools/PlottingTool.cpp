@@ -2,6 +2,7 @@
 #include "AxoPlotl/Application.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>
+#include <AxoPlotl/typedefs/om.hpp>
 
 namespace AxoPlotl
 {
@@ -54,26 +55,34 @@ void PlottingTool::render_ui(Application& app)
                 };
             };
 
-            OMSurfaceMesh mesh;
+            OVMVolumeMesh mesh;
+            mesh.reserve_vertices((input_.resolution_+1)*(input_.resolution_+1));
+            mesh.reserve_edges(2*(input_.resolution_+1)*(input_.resolution_+1));
+            mesh.reserve_faces(input_.resolution_*input_.resolution_);
+            auto u_prop = mesh.create_persistent_vertex_property<float>("u").value();
+            auto v_prop = mesh.create_persistent_vertex_property<float>("v").value();
+            using PointT = OVMVolumeMesh::PointT;
             for (int i = 0; i <= input_.resolution_; ++i) {
                 float u = input_.u_.x + ((float)i/input_.resolution_)*(input_.u_.y-input_.u_.x);
                 for (int j = 0; j <= input_.resolution_; ++j) {
                     float v = input_.v_.x + ((float)j/input_.resolution_)*(input_.v_.y-input_.v_.x);
                     auto p = func(u,v);
-                    mesh.add_vertex(OMVec3(p[0],p[1],p[2]));
+                    OVM::VH vh = mesh.add_vertex(PointT(p[0],p[1],p[2]));
+                    u_prop[vh] = u;
+                    v_prop[vh] = v;
                 }
             }
             for (int i = 0; i < input_.resolution_; ++i) {
                 for (int j = 0; j < input_.resolution_; ++j) {
-                    OpenMesh::VertexHandle vh0(i*(input_.resolution_+1)+j);
-                    OpenMesh::VertexHandle vh1(i*(input_.resolution_+1)+j+1);
-                    OpenMesh::VertexHandle vh2((i+1)*(input_.resolution_+1)+j+1);
-                    OpenMesh::VertexHandle vh3((i+1)*(input_.resolution_+1)+j);
+                    OVM::VH vh0(i*(input_.resolution_+1)+j);
+                    OVM::VH vh1(i*(input_.resolution_+1)+j+1);
+                    OVM::VH vh2((i+1)*(input_.resolution_+1)+j+1);
+                    OVM::VH vh3((i+1)*(input_.resolution_+1)+j);
                     mesh.add_face({vh0,vh1,vh2,vh3});
                 }
             }
-            // objects_[app.scene().add_object<OpenMeshObject>(mesh)]
-            //     = input_;
+            auto obj = app.scene().add_mesh(std::move(mesh));
+            objects_[obj->id()] = input_;
         }
     }
 }

@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/rendering/renderer_types.hpp"
 #include "AxoPlotl/typedefs/ToLoG.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
@@ -21,19 +22,12 @@ private:
     std::optional<std::filesystem::path> filepath_;
 
 private:
-    template<typename EntityTag>
-    struct colored_renderer_for_entity;
-    template<> struct colored_renderer_for_entity<OVM::Entity::Vertex> {using type=ColoredVertexPropertyRenderer;};
-    template<> struct colored_renderer_for_entity<OVM::Entity::Edge> {using type=ColoredEdgePropertyRenderer;};
-    template<> struct colored_renderer_for_entity<OVM::Entity::Face> {using type=ColoredFacePropertyRenderer;};
-    template<> struct colored_renderer_for_entity<OVM::Entity::Cell> {using type=ColoredCellPropertyRenderer;};
-    template<typename EntityTag> using colored_entity_renderer_t = typename colored_renderer_for_entity<EntityTag>::type;
-    template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
+    //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
 
     template<typename EntityTag>
     struct Property {
         std::optional<OVM::PropertyStorageBase*> prop_;
-        std::vector<std::shared_ptr<filter_t<EntityTag>>> filters_;
+        std::vector<std::shared_ptr<PropertyFilterBase>> filters_;
         int filter_index_ = 0;
     };
 
@@ -114,15 +108,27 @@ public:
     template<> inline auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
     template<> inline auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
+    template<typename EntityTag>
+    inline auto& vector_on_entity_renderer();
+    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Cell>() {return vectors_on_cells_renderer_;}
+    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Face>() {return vectors_on_faces_renderer_;}
+    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Edge>() {return vectors_on_edges_renderer_;}
+    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Vertex>() {return vectors_on_vertices_renderer_;}
+
 private:
     size_t n_positions_;
     wgpu::Buffer vertices_position_buffer_;
+    wgpu::Buffer edges_center_buffer_;
+    wgpu::Buffer faces_center_buffer_;
     wgpu::Buffer cells_center_buffer_;
     ColoredVertexPropertyRenderer vertex_renderer_;
     ColoredEdgePropertyRenderer edge_renderer_;
     ColoredFacePropertyRenderer face_renderer_;
     ColoredCellPropertyRenderer cell_renderer_;
     VectorRenderer vectors_on_vertices_renderer_;
+    VectorRenderer vectors_on_edges_renderer_;
+    VectorRenderer vectors_on_faces_renderer_;
+    VectorRenderer vectors_on_cells_renderer_;
 };
 
 }
