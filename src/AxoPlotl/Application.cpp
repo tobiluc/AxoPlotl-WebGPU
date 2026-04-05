@@ -53,7 +53,7 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    inspector_callback_([](Application* _app) {}),
+    inspector_callback_([]() {}),
     error_callback_(nullptr)
 {
 }
@@ -634,7 +634,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                                  ImGuiWindowFlags_NoCollapse;
         ImGui::Begin("Inspector", nullptr, flags);
 
-        inspector_callback_(this);
+        inspector_callback_();
 
         ImGui::SetWindowFontScale(1.0f);
         ImGui::End();

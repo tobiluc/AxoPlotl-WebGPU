@@ -7,18 +7,18 @@ namespace AxoPlotl
 
 class DataControlTool
 {
+private:
+    DataControlTool() {};
 public:
-    DataControlTool() {}
+    static void render_ui();
 
-    void render_ui(Application& _app);
-
-    const char* name() {
+    static const char* name() {
         return "Data Control";
     }
 private:
-    int info_object_id_ = -1;
-    int settings_object_id_ = -1;
-    int properties_object_id_ = -1;
+    static int info_object_id_;
+    static int settings_object_id_;
+    static int properties_object_id_;
 };
 
 }

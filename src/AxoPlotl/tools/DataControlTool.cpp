@@ -1,43 +1,48 @@
 #include "DataControlTool.hpp"
-#include "AxoPlotl/Application.hpp"
+#include "AxoPlotl/AxoPlotl.hpp"
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/gui/fonts.hpp>
+#include <AxoPlotl/Scene.hpp>
 
 namespace AxoPlotl
 {
 
-void DataControlTool::render_ui(Application& _app)
+int DataControlTool::info_object_id_ = -1;
+int DataControlTool::settings_object_id_ = -1;
+int DataControlTool::properties_object_id_ = -1;
+
+void DataControlTool::render_ui()
 {
     if (!ImGui::CollapsingHeader("Data Control")) {return;}
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted
-    if (!_app.scene().get_object(info_object_id_)) {info_object_id_ = -1;}
-    if (!_app.scene().get_object(settings_object_id_)) {settings_object_id_ = -1;}
+    if (!AxoPlotl::scene().get_object(info_object_id_)) {info_object_id_ = -1;}
+    if (!AxoPlotl::scene().get_object(settings_object_id_)) {settings_object_id_ = -1;}
 
     // For Convenience, we can apply things to all objects at once
-    if (_app.scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
+    if (AxoPlotl::scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
         if (ImGui::MenuItem("Sort alphabetically")) {
-            _app.scene().sort_objects([](ConstObj _obj1, ConstObj _obj2) {
+            AxoPlotl::scene().sort_objects([](ConstObj _obj1, ConstObj _obj2) {
                 return _obj1->name() < _obj2->name();
             });
         }
         ImGui::SeparatorText("Visibility");
         if (ImGui::Button("Hide")) {
-            for (const auto& obj : _app.scene().get_objects()) {
+            for (const auto& obj : AxoPlotl::scene().get_objects()) {
                 obj->visible() = false;
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Show")) {
-            for (const auto& obj : _app.scene().get_objects()) {
+            for (const auto& obj : AxoPlotl::scene().get_objects()) {
                 obj->visible() = true;
             }
         }
         ImGui::SeparatorText("Danger Zone");
         if (ImGui::Button("Delete")) {
-            for (const auto& obj : _app.scene().get_objects()) {
+            for (const auto& obj : AxoPlotl::scene().get_objects()) {
                 obj->deleted() = true;
             }
             info_object_id_ = -1;
@@ -47,7 +52,7 @@ void DataControlTool::render_ui(Application& _app)
     ImGui::Separator();
 
     // Data Control per Object
-    for (const auto& obj : _app.scene().get_objects()) {
+    for (const auto& obj : AxoPlotl::scene().get_objects()) {
         ImGui::PushID(obj->id());
 
         ImGui::Checkbox("##V", &obj->target());
@@ -59,7 +64,7 @@ void DataControlTool::render_ui(Application& _app)
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
-            _app.scene().zoom_to_box(obj->bounding_box());
+            AxoPlotl::scene().zoom_to_box(obj->bounding_box());
             obj->visible() = true;
         }
         ImGui::SameLine();
@@ -79,7 +84,7 @@ void DataControlTool::render_ui(Application& _app)
 
         // Settings Popup
         if (settings_object_id_ >= 0 && ImGui::BeginPopup("popup_object_settings")) {
-            _app.scene().get_object(settings_object_id_)->render_ui_settings();
+            AxoPlotl::scene().get_object(settings_object_id_)->render_ui_settings();
             ImGui::EndPopup();
         }
 
@@ -98,7 +103,7 @@ void DataControlTool::render_ui(Application& _app)
     std::string title = "Properties";
     if (ImGui::CollapsingHeader(title.c_str())) {
         if (ImGui::BeginMenu("Object")) {
-            for (const auto& obj : _app.scene().get_objects()) {
+            for (const auto& obj : AxoPlotl::scene().get_objects()) {
                 ImGui::PushID(obj->id());
                 if (ImGui::MenuItem(obj->name().c_str())) {
                     if (properties_object_id_ == obj->id()) {
@@ -111,7 +116,7 @@ void DataControlTool::render_ui(Application& _app)
             }
             ImGui::EndMenu();
         }
-        if (auto obj = _app.scene().get_object(properties_object_id_)) {
+        if (auto obj = AxoPlotl::scene().get_object(properties_object_id_)) {
             ImGui::SeparatorText(obj->name().c_str());
             obj->render_ui_properties();
         } else {properties_object_id_ = -1;}

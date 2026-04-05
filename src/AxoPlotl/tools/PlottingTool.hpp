@@ -10,15 +10,11 @@ namespace AxoPlotl
 
 class PlottingTool
 {
+private:
+    PlottingTool() {}
 public:
-    PlottingTool() {
-        // strncpy(u_input_buffer_, "", sizeof(u_input_buffer_)-1);
-        // input_buffer_[sizeof(input_buffer_)-1] = '\0';
-        // for (int i = 0; i < sizeof(samples_); ++i) {samples_[i] = 0;}
 
-    }
-
-    void render_ui(Application& app);
+    static void render_ui();
 
 private:
     struct Input
@@ -29,9 +25,10 @@ private:
         Vec2f u_ = {-1,1};
         Vec2f v_ = {-1,1};
         int resolution_ = 16;
-    } input_;
-    std::unordered_map<int,Input> objects_;
-    int selected_id_ = -1;
+    };
+    static Input input_;
+    static std::unordered_map<int,Input> objects_;
+    static int selected_id_;
 };
 
 }

@@ -1,17 +1,22 @@
 #include "PlottingTool.hpp"
-#include "AxoPlotl/Application.hpp"
+#include <AxoPlotl/Scene.hpp>
+#include "AxoPlotl/AxoPlotl.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>
 
 namespace AxoPlotl
 {
 
-void PlottingTool::render_ui(Application& app)
+PlottingTool::Input PlottingTool::input_;
+std::unordered_map<int,PlottingTool::Input> PlottingTool::objects_;
+int PlottingTool::selected_id_ = -1;
+
+void PlottingTool::render_ui()
 {
     if (!ImGui::CollapsingHeader("Plotting")) {return;}
 
     if (ImGui::BeginMenu("Modify")) {
-        for (auto& obj : app.scene().get_objects()) {
+        for (auto& obj : AxoPlotl::scene().get_objects()) {
             if (objects_.contains(obj->id())) {
                 ImGui::PushID(obj->id());
                 if (ImGui::MenuItem(obj->name().c_str())) {
@@ -25,7 +30,7 @@ void PlottingTool::render_ui(Application& app)
     }
 
     if (selected_id_ >= 0 && objects_.contains(selected_id_)) {
-        ImGui::SeparatorText(app.scene().get_object(selected_id_)->name().c_str());
+        ImGui::SeparatorText(AxoPlotl::scene().get_object(selected_id_)->name().c_str());
     }
 
     ImGui::InputText("x(u,v)", input_.x_.data(), 1024);
@@ -80,7 +85,7 @@ void PlottingTool::render_ui(Application& app)
                     mesh.add_face({vh0,vh1,vh2,vh3});
                 }
             }
-            auto obj = app.scene().add_mesh(std::move(mesh));
+            auto obj = AxoPlotl::scene().add_mesh(std::move(mesh));
             objects_[obj->id()] = input_;
         }
     }

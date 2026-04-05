@@ -1,15 +1,14 @@
 #pragma once
-#include "AxoPlotl/AxoPlotl_fwd.hpp"
 
 namespace AxoPlotl
 {
 
 class DebugTool
 {
-public:
+private:
     DebugTool() {}
-
-    void render_ui(Application& app);
+public:
+    static void render_ui();
 };
 
 }

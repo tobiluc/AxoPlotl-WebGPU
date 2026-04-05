@@ -15,6 +15,8 @@
 namespace AxoPlotl
 {
 
+// DO NOT USE THIS CLASS DIRECTLY!
+// INSTEAD USE THE FREE FUNCTIONS IN THE AXOPLOTL NAMESPACE
 class Application
 {
 private:
@@ -33,7 +35,10 @@ private:
     float inspector_rel_width_ = 0.3f;
     bool inspector_right_aligned_ = false;
     bool inspector_enabled_ = true;
-    std::function<void(Application* _app)> inspector_callback_;
+    std::function<void()> inspector_callback_;
+
+    // Draw a frame and handle events
+    void frame_tick();
 
 public:
     Application();
@@ -42,9 +47,6 @@ public:
 
     // init everything and return true if it went all right
     bool init();
-
-    // Draw a frame and handle events
-    void frame_tick();
 
     void run();
 
@@ -66,7 +68,7 @@ public:
         deferred_calls_.push_back(_f);
     }
 
-    inline std::function<void(Application* _app)>& inspector_callback() {
+    inline std::function<void()>& inspector_callback() {
         return inspector_callback_;
     }
 
@@ -74,14 +76,14 @@ public:
         return inspector_enabled_;
     }
 
-    PickResult request_pick_result(float _x, float _y);
-
     inline constexpr float fps() const {
         return time_.frames_per_second_;
     }
 
 private:
     PickResult pick_result_;
+
+    PickResult request_pick_result(float _x, float _y);
 
     // Processed at the end of a frame and then removed
     std::vector<std::function<void()>> deferred_calls_;

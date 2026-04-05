@@ -27,6 +27,7 @@ add_library(AxoPlotlCore
     AxoPlotl/IO/happly_to_ovm.cpp
     AxoPlotl/IO/om_to_ovm.cpp
     AxoPlotl/IO/read_shader.cpp
+    AxoPlotl/AxoPlotl.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
