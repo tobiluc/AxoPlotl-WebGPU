@@ -13,7 +13,7 @@ void DebugTool::render_ui()
 
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", AxoPlotl::memory_usage_mb());
-    ImGui::Text("%f FPS", AxoPlotl::fps());
+    ImGui::Text("%f FPS", AxoPlotl::frames_per_second());
     ImGui::Text("Draw Frames %d", n_draw_frames());
     ImGui::SeparatorText("Scene");
     ImGui::Text("#Objects: %zu", AxoPlotl::scene().get_objects().size());

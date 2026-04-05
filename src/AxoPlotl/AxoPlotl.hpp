@@ -15,7 +15,7 @@ void set_inspector_callback(const std::function<void()>& _callback);
 
 void show_inspector(bool _show);
 
-float fps();
+float frames_per_second();
 
 float memory_usage_mb();
 

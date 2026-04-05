@@ -197,6 +197,9 @@ void OpenVolumeMeshObject::delete_buffers()
     face_renderer_.clear();
     cell_renderer_.clear();
     vectors_on_vertices_renderer_.clear();
+    vectors_on_edges_renderer_.clear();
+    vectors_on_faces_renderer_.clear();
+    vectors_on_cells_renderer_.clear();
 }
 
 void OpenVolumeMeshObject::render(

@@ -36,7 +36,7 @@ void show_inspector(bool _show)
     get_app().inspector_enabled() = _show;
 }
 
-float fps()
+float frames_per_second()
 {
     return get_app().fps();
 }
