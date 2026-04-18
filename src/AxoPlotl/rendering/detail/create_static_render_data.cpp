@@ -61,7 +61,7 @@ wgpu::Buffer AxoPlotl::create_position_buffer(
         wgpu::BufferUsage::Vertex;
     desc.size = sizeof(RendererBase::Position) * std::max(_positions.size(), 1lu);
     desc.mappedAtCreation = false;
-    desc.label = "Position";
+    desc.label = wgpu::StringView("Position");
 
     wgpu::Buffer buffer = _device.createBuffer(desc);
     if (!_positions.empty()) [[likely]] {

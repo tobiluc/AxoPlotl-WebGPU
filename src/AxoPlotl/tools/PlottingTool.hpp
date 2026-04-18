@@ -4,6 +4,7 @@
 #include <array>
 #include <cstring>
 #include <string>
+#include <unordered_map>
 
 namespace AxoPlotl
 {

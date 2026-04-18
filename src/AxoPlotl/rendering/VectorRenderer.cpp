@@ -41,11 +41,11 @@ void VectorRenderer::create_buffers()
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Vec4f) * std::max(n_positions_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Vector Buffer";
+        desc.label = wgpu::StringView("Vector Buffer");
 
         vector_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -54,11 +54,11 @@ void VectorRenderer::create_buffers()
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Vector Uniform Buffer";
+        desc.label = wgpu::StringView("Vector Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -89,7 +89,7 @@ void VectorRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 3;
     layoutDesc.entries = entries;
-    layoutDesc.label = "Vector Bind Group Layout";
+    layoutDesc.label = wgpu::StringView("Vector Bind Group Layout");
 
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
@@ -139,7 +139,7 @@ void VectorRenderer::create_pipeline()
     // Vertex state (no vertex buffer)
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 0;
     vertexState.buffers = nullptr;
 
@@ -161,7 +161,7 @@ void VectorRenderer::create_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -191,7 +191,7 @@ void VectorRenderer::create_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Vector Pipeline";
+    pipelineDesc.label = wgpu::StringView("Vector Pipeline");
 
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }

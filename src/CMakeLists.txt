@@ -38,8 +38,8 @@ target_link_libraries(AxoPlotlCore PUBLIC
     imgui
     ImGuiFileDialog
     nlohmann_json::nlohmann_json
-    OpenMeshCore
-    OpenMeshTools
+    # OpenMeshCore
+    # OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
     rapidobj::rapidobj
 )
@@ -56,6 +56,7 @@ target_link_libraries(AxoPlotlApp PUBLIC
 
 target_include_directories(AxoPlotlCore PUBLIC
     ${iconfontcppheaders_SOURCE_DIR}
+    # "${EXTERNAL_DIR}/webgpu-dawn/include"
 )
 target_compile_definitions(AxoPlotlCore PUBLIC
 AXOPLOTL_FONTS_DIR="${CMAKE_SOURCE_DIR}/assets/fonts/"
@@ -80,3 +81,7 @@ install(TARGETS AxoPlotlCore
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# target_include_directories(glfw3webgpu PUBLIC
+#     ${WEBGPU_INCLUDE_DIR}
+# )

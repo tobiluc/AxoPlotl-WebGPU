@@ -169,7 +169,7 @@ void ColorMap::create(wgpu::Device _device)
 {
     device_ = _device;
     wgpu::TextureDescriptor desc{};
-    desc.label = "Color Map";
+    desc.label = wgpu::StringView("Color Map");
     desc.size = extent();
     desc.dimension = wgpu::TextureDimension::_2D;
     desc.format = wgpu::TextureFormat::RGBA16Float;
@@ -203,13 +203,15 @@ void ColorMap::create(wgpu::Device _device)
 
 void ColorMap::update(const std::vector<f16>& _data)
 {
-    static wgpu::ImageCopyTexture destination;
+    static wgpu::TexelCopyTextureInfo destination;
+    //static wgpu::ImageCopyTexture destination;
     destination.texture = texture_;
     destination.mipLevel = 0;
     destination.origin = { 0, 0, 0 };
     destination.aspect = wgpu::TextureAspect::All;
 
-    static wgpu::TextureDataLayout layout_;
+    static wgpu::TexelCopyBufferLayout layout_;
+    // static wgpu::TextureDataLayout layout_;
     layout_.rowsPerImage = 1lu;
     layout_.bytesPerRow = 4 * sizeof(f16) * extent().width;
     layout_.offset = 0;

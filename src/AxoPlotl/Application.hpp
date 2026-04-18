@@ -100,7 +100,7 @@ private:
     wgpu::RenderPassEncoder gui_render_pass_;
     wgpu::RenderPassEncoder scene_render_pass_;
 
-    std::unique_ptr<wgpu::ErrorCallback> error_callback_;
+    //std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
     Scene scene_;
 

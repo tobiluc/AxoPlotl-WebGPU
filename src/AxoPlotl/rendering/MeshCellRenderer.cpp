@@ -107,7 +107,7 @@ void ColoredCellRenderer::create_buffers(
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(CellIndex) * triangle_indices.size();
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Cell Triangle Index Buffer";
+        desc.label = wgpu::StringView("Mesh Cell Triangle Index Buffer");
 
         triangle_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
@@ -116,7 +116,7 @@ void ColoredCellRenderer::create_buffers(
             triangle_indices.data(),
             desc.size
             );
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Cell Outline Index Buffer
@@ -125,7 +125,7 @@ void ColoredCellRenderer::create_buffers(
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(CellIndex) * line_indices.size();
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Cell Outline Index Buffer";
+        desc.label = wgpu::StringView("Mesh Cell Outline Index Buffer");
 
         line_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
@@ -134,7 +134,7 @@ void ColoredCellRenderer::create_buffers(
             line_indices.data(),
             desc.size
             );
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Cell Property Buffer
@@ -143,11 +143,11 @@ void ColoredCellRenderer::create_buffers(
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Property::Data) * std::max(n_cells_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Cell Property Buffer";
+        desc.label = wgpu::StringView("Mesh Cell Property Buffer");
 
         property_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -156,11 +156,11 @@ void ColoredCellRenderer::create_buffers(
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Cell Uniform Buffer";
+        desc.label = wgpu::StringView("Mesh Cell Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -208,7 +208,7 @@ void ColoredCellRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 6;
     layoutDesc.entries = entries;
-    layoutDesc.label = "Cell Bind Group Layout";
+    layoutDesc.label = wgpu::StringView("Cell Bind Group Layout");
 
     triangle_pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
     outline_pipeline_state_.bind_group_layout_ = triangle_pipeline_state_.bind_group_layout_;
@@ -293,7 +293,7 @@ void ColoredCellRenderer::create_triangle_pipeline()
     // // Vertex state
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 1;
     vertexState.buffers = &vertexBufferLayout;
 
@@ -315,7 +315,7 @@ void ColoredCellRenderer::create_triangle_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -346,7 +346,7 @@ void ColoredCellRenderer::create_triangle_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Cell Triangle Pipeline";
+    pipelineDesc.label = wgpu::StringView("Cell Triangle Pipeline");
 
     triangle_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
@@ -380,7 +380,7 @@ void ColoredCellRenderer::create_line_pipeline()
     // // Vertex state
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 1;
     vertexState.buffers = &vertexBufferLayout;
 
@@ -402,7 +402,7 @@ void ColoredCellRenderer::create_line_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -433,7 +433,7 @@ void ColoredCellRenderer::create_line_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Cell Outline Pipeline";
+    pipelineDesc.label = wgpu::StringView("Cell Outline Pipeline");
 
     outline_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }

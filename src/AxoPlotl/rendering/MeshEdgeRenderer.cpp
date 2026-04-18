@@ -53,7 +53,7 @@ void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,ui
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(EdgeInstance) * std::max(n_edges_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Edge Index Buffer";
+        desc.label = wgpu::StringView("Mesh Edge Index Buffer");
 
         edge_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
@@ -63,7 +63,7 @@ void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,ui
             sizeof(EdgeInstance) * instances.size()
             );
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Property Buffer
@@ -72,11 +72,11 @@ void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,ui
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Property::Data) * std::max(n_edges_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Edge Property Buffer";
+        desc.label = wgpu::StringView("Mesh Edge Property Buffer");
 
         property_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -85,11 +85,11 @@ void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,ui
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Edge Uniform Buffer";
+        desc.label = wgpu::StringView("Mesh Edge Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -131,7 +131,7 @@ void ColoredEdgeRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 5;
     layoutDesc.entries = entries;
-    layoutDesc.label = "Edge Bind Group Layout";
+    layoutDesc.label = wgpu::StringView("Edge Bind Group Layout");
 
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
@@ -213,7 +213,7 @@ void ColoredEdgeRenderer::create_pipeline()
     // Vertex state
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 1;
     vertexState.buffers = &vertexBufferLayout;
 
@@ -235,7 +235,7 @@ void ColoredEdgeRenderer::create_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -269,7 +269,7 @@ void ColoredEdgeRenderer::create_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Mesh Edge Pipeline";
+    pipelineDesc.label = wgpu::StringView("Mesh Edge Pipeline");
 
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }

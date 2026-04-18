@@ -4,10 +4,10 @@
 #include "OpenVolumeMesh/FileManager/FileManager.hh"
 #include "OpenVolumeMesh/IO/ovmb_read.hh"
 #include <OpenVolumeMesh/FileManager/VtkColorReader.hh>
-#include <OpenMesh/Core/IO/MeshIO.hh>
+// #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <rapidobj/rapidobj.hpp>
-#include <OpenMesh/Core/IO/MeshIO.hh>
-#include <OpenMesh/Core/IO/Options.hh>
+// #include <OpenMesh/Core/IO/MeshIO.hh>
+// #include <OpenMesh/Core/IO/Options.hh>
 #include <AxoPlotl/IO/happly_to_ovm.hpp>
 
 namespace AxoPlotl
@@ -48,15 +48,15 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
             res.status_ = ReadMeshStatus::OK;
         }
     } else {
-        OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits> mesh;
-        mesh.request_vertex_colors();
-        mesh.request_vertex_texcoords2D();
-        mesh.request_face_normals();
-        OpenMesh::IO::Options opt(OpenMesh::IO::Options::VertexColor);
-        if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
-            openmesh_to_openvolumemesh(mesh, res.mesh_);
-            res.status_ = ReadMeshStatus::OK;
-        }
+        // OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits> mesh;
+        // mesh.request_vertex_colors();
+        // mesh.request_vertex_texcoords2D();
+        // mesh.request_face_normals();
+        // OpenMesh::IO::Options opt(OpenMesh::IO::Options::VertexColor);
+        // if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
+        //     openmesh_to_openvolumemesh(mesh, res.mesh_);
+        //     res.status_ = ReadMeshStatus::OK;
+        // }
     }
     return res;
 }

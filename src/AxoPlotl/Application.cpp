@@ -28,7 +28,7 @@ void wgpuPollEvents(
 #if defined(WEBGPU_BACKEND_DAWN)
     _device.tick();
 #elif defined(WEBGPU_BACKEND_WGPU)
-    _device.poll(false);
+    _device.poll(false, nullptr);
 #elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
     if (_yield_to_browser) {
         emscripten_sleep(100);
@@ -53,8 +53,7 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    inspector_callback_([]() {}),
-    error_callback_(nullptr)
+    inspector_callback_([]() {})
 {
 }
 
@@ -134,32 +133,57 @@ bool Application::init()
 
     std::cout << "Requesting device..." << std::endl;
     wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.label = "My Device";
+    deviceDesc.label = wgpu::StringView("My Device");
     deviceDesc.requiredFeatureCount = 0;
     deviceDesc.requiredLimits = nullptr;
     deviceDesc.defaultQueue.nextInChain = nullptr;
-    deviceDesc.defaultQueue.label = "The default queue";
+    deviceDesc.defaultQueue.label = wgpu::StringView("The default queue");
+    // deviceDesc.deviceLostCallbackInfo.callback = [](
+    //     const WGPUDevice* _device,
+    //     WGPUDeviceLostReason _reason,
+    //     const char* _message, void* _userdata)
+    // {
+    //     std::cerr << "Device lost: " << _reason;
+    //     if (_message) {std::cerr << " (" << _message << ")";}
+    //     std::cerr << std::endl;
+    // };
     deviceDesc.deviceLostCallbackInfo.callback = [](
-        const WGPUDevice* _device,
-        WGPUDeviceLostReason _reason,
-        const char* _message, void* _userdata)
+         WGPUDevice const* _device,
+         WGPUDeviceLostReason _reason,
+         WGPUStringView _message,
+         void* _userdata1, void* _userdata2)
     {
-        std::cerr << "Device lost: " << _reason;
-        if (_message) {std::cerr << " (" << _message << ")";}
+        std::cerr << "Device lost: " << static_cast<uint32_t>(_reason);
+
+        if (_message.data) {
+            std::cerr << " (" << std::string_view(_message.data, _message.length) << ")";
+        }
         std::cerr << std::endl;
     };
+    deviceDesc.uncapturedErrorCallbackInfo.callback = [](
+         WGPUDevice const* _device,
+         WGPUErrorType _type,
+         WGPUStringView _message,
+         void* _userdata1, void* _userdata2)
+    {
+        std::cerr << "WebGPU Error (" << static_cast<uint32_t>(_type) << "): "
+                  << _message.data << std::endl;
+        std::exit(1);
+    };
+    deviceDesc.uncapturedErrorCallbackInfo.userdata1 = nullptr;
+    deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
 
     device_ = adapter_.requestDevice(deviceDesc);
     std::cout << "Got device: " << device_ << std::endl;
     //device.getLimits(&supportedLimits);
     //std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
 
-    error_callback_ = device_.setUncapturedErrorCallback([](wgpu::ErrorType type, char const* message) {
-        std::cerr << "Uncaptured device error: type " << type;
-        if (message) std::cout << " (" << message << ")";
-        std::cerr << std::endl;
-        std::exit(1);
-    });
+    // error_callback_ = device_.setUncapturedErrorCallback([](wgpu::ErrorType type, char const* message) {
+    //     std::cerr << "Uncaptured device error: type " << type;
+    //     if (message) std::cout << " (" << message << ")";
+    //     std::cerr << std::endl;
+    //     std::exit(1);
+    // });
 
     queue_ = device_.getQueue();
 
@@ -176,7 +200,7 @@ bool Application::init()
     create_picking_texture();
 
     wgpu::BufferDescriptor pickBuffDesc{};
-    pickBuffDesc.label = "Pixel Picking Buffer";
+    pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
     pickBuffDesc.size = sizeof(PickResult);
     pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
     pickBuffDesc.mappedAtCreation = false;
@@ -215,7 +239,7 @@ void Application::frame_tick()
     surface_.getCurrentTexture(&surfaceTexture);
 
     // Safety Check
-    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) [[unlikely]] {
+    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) [[unlikely]] {
 #ifndef WEBGPU_BACKEND_WGPU
         if (surfaceTexture.texture) {
             wgpuTextureRelease(surfaceTexture.texture);
@@ -226,7 +250,7 @@ void Application::frame_tick()
 
     wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
-    viewDescriptor.label = "Surface texture view";
+    viewDescriptor.label = wgpu::StringView("Surface texture view");
     viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
     viewDescriptor.dimension = WGPUTextureViewDimension_2D;
     viewDescriptor.baseMipLevel = 0;
@@ -263,7 +287,7 @@ void Application::frame_tick()
     wgpu::RenderPassDescriptor renderPassDesc{};
     renderPassDesc.colorAttachmentCount = 2;
     renderPassDesc.colorAttachments = color_attachments;
-    renderPassDesc.label = "Main Render Pass";
+    renderPassDesc.label = wgpu::StringView("Main Render Pass");
 
     // Depth Attachment
     wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
@@ -452,6 +476,7 @@ bool Application::init_imgui()
     imgui_init_info.Device = device_;
     imgui_init_info.NumFramesInFlight = 3;
     imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
+    //imgui_init_info.RenderTargetFormat = wgpu::TextureFormat::BGRA8Unorm;
     imgui_init_info.DepthStencilFormat = depth_texture_format_;
     imgui_init_info.PipelineMultisampleState.count = 1;
     ImGui_ImplWGPU_Init(&imgui_init_info);
@@ -646,17 +671,21 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
 PickResult Application::request_pick_result(float _x, float _y)
 {
+    return PickResult();
+    /*
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 
     // We copy FROM the picking texture
-    wgpu::ImageCopyTexture src{};
+    //wgpu::ImageCopyTexture src{};
+    wgpu::TexelCopyTextureInfo src{};
     src.texture = picking_texture_;
     src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
     src.mipLevel = 0;
     src.aspect = wgpu::TextureAspect::All;
 
     // We copy TO the picking buffer
-    wgpu::ImageCopyBuffer dst{};
+    wgpu::TexelCopyBufferInfo dst{};
+    //wgpu::ImageCopyBuffer dst{};
     dst.buffer = picking_buffer_;
     dst.layout.offset = 0;
     dst.layout.bytesPerRow = 256; // needs to be multiple of 256
@@ -731,6 +760,7 @@ PickResult Application::request_pick_result(float _x, float _y)
         wgpuPollEvents(device_, true);
     }
     return context.pick;
+*/
 }
 
 void Application::configure_surface()
@@ -818,7 +848,7 @@ void Application::create_picking_texture()
     auto viewport = total_viewport();
 
     wgpu::TextureDescriptor pickDesc{};
-    pickDesc.label = "Picking Texture";
+    pickDesc.label = wgpu::StringView("Picking Texture");
     pickDesc.dimension = wgpu::TextureDimension::_2D;
     pickDesc.size = {
         static_cast<uint32_t>(viewport[2]),

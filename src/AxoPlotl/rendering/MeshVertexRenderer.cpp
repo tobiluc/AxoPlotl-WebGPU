@@ -43,7 +43,7 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
         desc.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(uint32_t) * std::max(n_vertices_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Vertex Index Buffer";
+        desc.label = wgpu::StringView("Mesh Vertex Index Buffer");
 
         vertex_index_buffer_ = device.createBuffer(desc);
         queue.writeBuffer(
@@ -53,7 +53,7 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
             sizeof(uint32_t) * _indices.size()
             );
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Property Buffer
@@ -62,11 +62,11 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Vertex Property Buffer";
+        desc.label = wgpu::StringView("Mesh Vertex Property Buffer");
 
         property_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -75,11 +75,11 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Mesh Vertex Uniform Buffer";
+        desc.label = wgpu::StringView("Mesh Vertex Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
 
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
+        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -121,7 +121,7 @@ void ColoredVertexRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 5;
     layoutDesc.entries = entries;
-    layoutDesc.label = "Vertex Bind Group Layout";
+    layoutDesc.label = wgpu::StringView("Vertex Bind Group Layout");
 
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
@@ -179,7 +179,7 @@ void ColoredVertexRenderer::create_pipeline()
     // Vertex state (no vertex buffer)
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 0;
     vertexState.buffers = nullptr;
 
@@ -201,7 +201,7 @@ void ColoredVertexRenderer::create_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -231,7 +231,7 @@ void ColoredVertexRenderer::create_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Vertex Point Pipeline";
+    pipelineDesc.label = wgpu::StringView("Vertex Point Pipeline");
 
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
