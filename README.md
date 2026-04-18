@@ -84,7 +84,8 @@ lead to an error in the dawn distribution
 caused by some const pointer in std::allocator which is not allowed.
 To fix it I needed to update dawn (6536) to (7069). 
 Additionally, there are a few manual changes necessary
-in the fetched dependencies:
+in the fetched dependencies listed below.
+The original version of AxoPlotl for apple clang 15 is found under the clang15 tag.
 
 In glfw3webgpu.c
 ```
