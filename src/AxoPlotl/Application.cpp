@@ -671,12 +671,9 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
 PickResult Application::request_pick_result(float _x, float _y)
 {
-    return PickResult();
-    /*
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 
     // We copy FROM the picking texture
-    //wgpu::ImageCopyTexture src{};
     wgpu::TexelCopyTextureInfo src{};
     src.texture = picking_texture_;
     src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
@@ -685,7 +682,6 @@ PickResult Application::request_pick_result(float _x, float _y)
 
     // We copy TO the picking buffer
     wgpu::TexelCopyBufferInfo dst{};
-    //wgpu::ImageCopyBuffer dst{};
     dst.buffer = picking_buffer_;
     dst.layout.offset = 0;
     dst.layout.bytesPerRow = 256; // needs to be multiple of 256
@@ -711,13 +707,14 @@ PickResult Application::request_pick_result(float _x, float _y)
     };
 
     auto on_buffer_mapped = [](
-        WGPUBufferMapAsyncStatus status,
-        void* _user_data)
+        WGPUMapAsyncStatus status,
+        WGPUStringView message,
+        void* _user_data, void*)
     {
         Context* context = reinterpret_cast<Context*>(_user_data);
         context->ready = true;
         //std::cout << "Buffer mapped with status " << status << std::endl;
-        if (status != wgpu::BufferMapAsyncStatus::Success) {return;}
+        if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {return;}
 
         // Extract Info from Picking Result
         // and Map clicked position back to world space
@@ -741,8 +738,12 @@ PickResult Application::request_pick_result(float _x, float _y)
         context->buffer.unmap();
     };
 
-    // Create the Context instance
-    Context context = {false, picking_buffer_};
+    // The context contains everyhting that is required
+    // for our picking computation in on_buffer_mapped.
+    // Is it passed as userdata1
+    Context context;
+    context.ready = false;
+    context.buffer = picking_buffer_;
     context.scene = &scene_;
     context.aspect_ratio = scene_viewport()[2]/scene_viewport()[3];
 
@@ -755,12 +756,24 @@ PickResult Application::request_pick_result(float _x, float _y)
         0, 1
     };
 
-    wgpuBufferMapAsync(picking_buffer_, wgpu::MapMode::Read, 0, sizeof(PickResult), on_buffer_mapped, (void*)&context);
+    WGPUBufferMapCallbackInfo callback_info;
+    callback_info.callback = on_buffer_mapped;
+    callback_info.mode = WGPUCallbackMode_AllowSpontaneous;
+    callback_info.userdata1 = (void*)&context;
+    callback_info.userdata2 = nullptr;
+    callback_info.nextInChain = nullptr;
+
+    wgpuBufferMapAsync(
+        picking_buffer_,
+        wgpu::MapMode::Read,
+        0, sizeof(PickResult),
+        callback_info
+    );
     while (!context.ready) {
         wgpuPollEvents(device_, true);
     }
     return context.pick;
-*/
+
 }
 
 void Application::configure_surface()
