@@ -101,11 +101,11 @@ fn fs_main(in:V2F) -> FragmentOutput
     var out : FragmentOutput;
 
     // Round Edge Endpoints
-    let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
-    let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
-    let cy = in.quadCorner.y;
-    if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
-    {discard;}
+    // let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
+    // let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
+    // let cy = in.quadCorner.y;
+    // if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
+    // {discard;}
 
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
