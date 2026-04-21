@@ -88,7 +88,8 @@ public:
         const float visible_right = val_to_screen_x(_r);
         draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
         ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
-        ImGui::Image((ImTextureID)view_, ImVec2(visible_right-visible_left, total_size.y));
+        // TODO: Investigate why the follwing line crashes
+        //ImGui::Image((ImTextureID)view_, ImVec2(visible_right-visible_left, total_size.y));
         ImGui::SetCursorScreenPos(top_left);
 
         // Setup interaction
