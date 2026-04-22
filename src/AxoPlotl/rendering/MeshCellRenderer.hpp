@@ -16,6 +16,7 @@ protected:
         alignas(16) Property::Type type_ = Property::Type::COLOR;
         alignas(16) Property::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
+        alignas(16) Vec4f ambient_ = Vec4f(1,1,1,1);
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);
@@ -41,6 +42,10 @@ public:
 
     inline ClipBox& clip_box() {
         return uniforms_.clip_box_;
+    }
+
+    inline Vec4f& ambient() {
+        return uniforms_.ambient_;
     }
 
     inline ColorMap& color_map() {

@@ -6,7 +6,8 @@ struct Uniforms {
     @align(16) clipBox: ClipBox,
     @align(16) valueType:ValueType,
     @align(16) valueFilter: vec2<f32>,
-    @align(16) objectId:u32
+    @align(16) objectId:u32,
+    @align(16) ambient: vec4<f32>
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -50,7 +51,7 @@ fn fs_main(in:V2F) -> FragmentOutput
     var out: FragmentOutput;
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        );
+        ) * ubo.ambient;
     out.pick = vec4<u32>(ubo.objectId, 2, in.faceHandle, bitcast<u32>(in.position.z));
     return out;
 }

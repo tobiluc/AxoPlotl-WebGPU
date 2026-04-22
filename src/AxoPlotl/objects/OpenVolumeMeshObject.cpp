@@ -5,7 +5,6 @@
 #include "IconsFontAwesome7.h"
 #include "imgui.h"
 #include <AxoPlotl/Application.hpp>
-#include <random>
 
 namespace AxoPlotl
 {
@@ -23,6 +22,11 @@ void OpenVolumeMeshObject::render_ui_settings()
     ImGui::SliderFloat("Point Size", &vertex_renderer_.point_size(), 0.0f, 32.0f);
     ImGui::SliderFloat("Line Width", &edge_renderer_.line_width(), 0.0f, 32.0f);
     ImGui::SliderFloat("Cell Scale", &cell_renderer_.cell_scale(), 0.0f, 1.0f);
+
+    ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
 
     // Clip Box
     // Each entity technically has their own, but we
@@ -158,10 +162,6 @@ void OpenVolumeMeshObject::render_ui_properties()
 
 void OpenVolumeMeshObject::init_buffers()
 {
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
     const auto& data = create_static_render_data(mesh_);
     n_positions_ = data.positions_.size();
 
@@ -484,7 +484,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_vertices());
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
-        props.push_back(D(0,0,0,1));
+        props.push_back(D(1,1,1,1));
     }
     vertex_renderer_.update_property_data(props);
 }
@@ -494,7 +494,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_edges());
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
-        props.push_back(D(0,0,0,1));
+        props.push_back(D(1,1,1,1));
     }
     edge_renderer_.update_property_data(props);
 }
