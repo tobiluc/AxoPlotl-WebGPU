@@ -3,9 +3,10 @@
 add_library(AxoPlotlCore
     AxoPlotl/Application.cpp
     AxoPlotl/IO/file_access.cpp
-
+    AxoPlotl/geometry/spherical_harmonics.cpp
     AxoPlotl/Scene.cpp
     AxoPlotl/objects/OpenVolumeMeshObject.cpp
+    AxoPlotl/objects/SphericalHarmonicsObject.cpp
     AxoPlotl/input/Mouse.cpp
     AxoPlotl/Camera.cpp
     AxoPlotl/objects/BaseObject.cpp
@@ -19,8 +20,9 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/MeshFaceRenderer.cpp
     AxoPlotl/rendering/MeshCellRenderer.cpp
     AxoPlotl/rendering/VectorRenderer.cpp
+    AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
     AxoPlotl/gui/fonts.cpp
-
+    AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp
     AxoPlotl/tools/DebugTool.cpp
     AxoPlotl/IO/rapidobj_to_ovm.cpp
@@ -42,16 +44,15 @@ target_link_libraries(AxoPlotlCore PUBLIC
     # OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
     rapidobj::rapidobj
+    ibex
 )
 
 add_executable(AxoPlotlApp
     main.cpp
-    AxoPlotl/tools/PlottingTool.cpp
 )
 
 target_link_libraries(AxoPlotlApp PUBLIC
-    AxoPlotlCore
-    ibex
+    AxoPlotlCore   
 )
 
 target_include_directories(AxoPlotlCore PUBLIC

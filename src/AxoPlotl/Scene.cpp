@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "AxoPlotl/IO/file_access.h"
+#include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <AxoPlotl/Application.hpp>
 
@@ -25,6 +26,8 @@ void Scene::init(Application *_app)
             D(0,0,1,1)
     });
     axis_renderer_.ambient() = Vec4f(1,1,1,1);
+
+    add_object<SHObject>();
 }
 
 std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const OVMVolumeMesh &&_mesh)

@@ -720,8 +720,10 @@ PickResult Application::request_pick_result(float _x, float _y)
         // and Map clicked position back to world space
         uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
         context->pick.object_id_ = data[0];
-        context->pick.type_ = data[1];
-        context->pick.index_ = data[2];
+
+        context->pick.entity_type_ = data[1];
+        context->pick.entity_index_ = data[2];
+        context->pick.function_value_ = std::bit_cast<float32_t>(data[2]);
 
         float depth = std::bit_cast<float>(data[3]);
         context->ndc.z = depth;
@@ -730,9 +732,9 @@ PickResult Application::request_pick_result(float _x, float _y)
         const auto& p = context->scene->perspective().getProjectionMatrix(context->aspect_ratio);
         Vec4f pos = glm::inverse(p * v) * context->ndc;
         pos /= pos.w;
-        context->pick.position[0] = pos[0];
-        context->pick.position[1] = pos[1];
-        context->pick.position[2] = pos[2];
+        context->pick.position_[0] = pos[0];
+        context->pick.position_[1] = pos[1];
+        context->pick.position_[2] = pos[2];
 
         // unmap the memory
         context->buffer.unmap();

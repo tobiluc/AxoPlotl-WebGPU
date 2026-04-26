@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AxoPlotl/rendering/SphericalHarmonicsRenderer.hpp"
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
 #include <AxoPlotl/rendering/detail/redraw.hpp>
 #include <AxoPlotl/objects/BaseObject.hpp>
