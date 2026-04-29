@@ -12,8 +12,10 @@ add_library(AxoPlotlCore
     AxoPlotl/objects/BaseObject.cpp
     AxoPlotl/rendering/detail/create_static_render_data.cpp
     AxoPlotl/rendering/detail/redraw.cpp
+    AxoPlotl/rendering/draw_histogram.cpp
     AxoPlotl/rendering/ColorMap.cpp
     AxoPlotl/properties/property_calculations.cpp
+    AxoPlotl/properties/Histogram.cpp
     AxoPlotl/gui/themes.cpp
     AxoPlotl/rendering/MeshVertexRenderer.cpp
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
@@ -21,6 +23,7 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/MeshCellRenderer.cpp
     AxoPlotl/rendering/VectorRenderer.cpp
     AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
+    AxoPlotl/rendering/draw_range_sliders.cpp
     AxoPlotl/gui/fonts.cpp
     AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp

@@ -175,10 +175,10 @@ void OpenVolumeMeshObject::init_buffers()
     face_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.faces_);
     cell_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
 
-    vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
-    vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
-    vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
-    vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
+    // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
+    // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
+    // vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
+    // vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
 
     upload_default_property_data<OVM::Entity::Vertex>();
     upload_default_property_data<OVM::Entity::Edge>();
@@ -377,6 +377,19 @@ void OpenVolumeMeshObject::visualize_property(
         auto& vec_rend = vector_on_entity_renderer<EntityTag>();
 
         prop<EntityTag>().prop_ = _pp;
+
+        // If we want to visualize a vec3 property,
+        // intitialize the corresponding buffers
+        // This is to not waste a ton of time/memory
+        // for the vector renderers if we never actually
+        // visualize a vec3 property
+        if constexpr(is_vector<T>) {
+            if constexpr(vector_dim<T> == 3) {
+                if (!vec_rend.is_initialized()) {
+                    vec_rend.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+                }
+            }
+        }
 
         // Setup Property Filters
         prop<EntityTag>().filters_.clear();

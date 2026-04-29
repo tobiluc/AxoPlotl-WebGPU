@@ -50,9 +50,15 @@ public:
         const Vec4f& _viewport,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
+
+    inline bool is_initialized() const {
+        return initialized_;
+    }
+
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;
+    bool initialized_ = false;
 
     void create_buffers();
 

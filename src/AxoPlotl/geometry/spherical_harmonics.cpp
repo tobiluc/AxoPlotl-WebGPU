@@ -79,9 +79,9 @@ Vec<sh_real,9> canonical_octa_frame(sh_real _lx, sh_real _ly, sh_real _lz)
 
 Vec<sh_real,15> canonical_odeco_frame(sh_real _lx, sh_real _ly, sh_real _lz)
 {
-    return ((SH_BAND024_X * _lx*_lx)
-            + (SH_BAND024_Y * _ly*_ly)
-            + (SH_BAND024_Z * _lz*_lz)).normalized();
+    return ((SH_BAND024_X * _lx)
+            + (SH_BAND024_Y * _ly)
+            + (SH_BAND024_Z * _lz));
 }
 
 }

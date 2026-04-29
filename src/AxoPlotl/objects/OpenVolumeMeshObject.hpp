@@ -16,11 +16,10 @@ namespace AxoPlotl
 
 class OpenVolumeMeshObject : public ObjectBase
 {
-private:
+protected:
     OVMVolumeMesh mesh_;
     std::optional<std::filesystem::path> filepath_;
 
-private:
     //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
 
     template<typename EntityTag>
@@ -100,6 +99,7 @@ public:
         return mesh_;
     }
 
+protected:
     template<typename EntityTag>
     inline auto& colored_entity_renderer();
     template<> inline auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
@@ -114,7 +114,14 @@ public:
     template<> inline auto& vector_on_entity_renderer<OVM::Entity::Edge>() {return vectors_on_edges_renderer_;}
     template<> inline auto& vector_on_entity_renderer<OVM::Entity::Vertex>() {return vectors_on_vertices_renderer_;}
 
-private:
+    template<typename EntityTag>
+    inline wgpu::Buffer& entity_center_buffer();
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return edges_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return vertices_position_buffer_;}
+
+protected:
     size_t n_positions_;
     wgpu::Buffer vertices_position_buffer_;
     wgpu::Buffer edges_center_buffer_;

@@ -3,6 +3,7 @@
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
+#include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "ImGuiFileDialog.h"
 #include <cassert>
@@ -515,6 +516,9 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    //--------------------
+    // Top Menu Bar
+    //--------------------
     ImGui::SetNextWindowPos(ImVec2(-100,-100));
     ImGui::SetNextWindowSize(ImVec2(0,0));
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
@@ -559,6 +563,19 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
             }
             ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::BeginMenu("Add"))
+            {
+                if (ImGui::MenuItem("Spherical Harmonics"))
+                {
+                    scene_.add_object<SHObject>();
+                }
+                ImGui::EndMenu(); //!Add
+            }
+            ImGui::EndMenu(); //!Edit
         }
 
         if (ImGui::BeginMenu("Settings"))
@@ -643,9 +660,12 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
     ImGui::End(); // MenuBar
 
+    //--------------------
+    // Sidebar Inspector
+    //--------------------
     if (inspector_enabled_)
     {
-        // Set Viewport
+        // Set Viewport to left or right rectangle
         ImGuiViewport* vp = ImGui::GetMainViewport();
         float sidebar_width = inspector_enabled_? (inspector_rel_width_ * vp->WorkSize.x) : 0.0f;
         vp->WorkPos.x = inspector_right_aligned_?
@@ -659,6 +679,8 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                                  ImGuiWindowFlags_NoCollapse;
         ImGui::Begin("Inspector", nullptr, flags);
 
+        // Allow the user to insert custom
+        // UI Stuff here
         inspector_callback_();
 
         ImGui::SetWindowFontScale(1.0f);
@@ -684,7 +706,9 @@ PickResult Application::request_pick_result(float _x, float _y)
     wgpu::TexelCopyBufferInfo dst{};
     dst.buffer = picking_buffer_;
     dst.layout.offset = 0;
-    dst.layout.bytesPerRow = 256; // needs to be multiple of 256
+    // this needs to be a multiple of 256
+    // even if we care only about a 1x1x1x1 pixel
+    dst.layout.bytesPerRow = 256;
     dst.layout.rowsPerImage = 1;
 
     // Copy the single pixel we clicked on (1 pixel is 1x1x1)
@@ -718,13 +742,29 @@ PickResult Application::request_pick_result(float _x, float _y)
 
         // Extract Info from Picking Result
         // and Map clicked position back to world space
+
         uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
+
+        // Index 0 stores the Object ID, so we know which
+        // Objects we clicked. The corresponding object's
+        // render_picking_ui function is called.
         context->pick.object_id_ = data[0];
 
+        // For Meshes, we store the entity type and handle index
+        // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
         context->pick.entity_type_ = data[1];
         context->pick.entity_index_ = data[2];
+
+        // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
+        // are both stored at index 2 of the pixel
+        // TODO: Maybe we want different PickResult Objects instead?
         context->pick.function_value_ = std::bit_cast<float32_t>(data[2]);
 
+        // At Index 3 we store the fragment's depth value
+        // Based on this, we can reconstruct the 3d position
+        // in world space
+        // (normalized devie coords (ndc) x and y value, we already
+        // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
         context->ndc.z = depth;
         context->ndc.w = 1;

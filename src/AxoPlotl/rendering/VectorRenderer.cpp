@@ -22,12 +22,15 @@ void VectorRenderer::init(uint32_t _object_id, Application* _app,
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
+
+    initialized_ = true;
 }
 
 void VectorRenderer::clear()
 {
     destroy_buffer(vector_buffer_);
     destroy_buffer(uniform_buffer_);
+    initialized_ = false;
 }
 
 void VectorRenderer::create_buffers()

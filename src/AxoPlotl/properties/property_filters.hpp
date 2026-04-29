@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <imgui.h>
 #include <AxoPlotl/gui/fonts.hpp>
+#include <AxoPlotl/rendering/draw_range_sliders.hpp>
 
 namespace AxoPlotl
 {
@@ -112,7 +113,11 @@ public:
         }
         cm.render_menu();
         // std::cerr << rangef.x << "/"<< rangef.y<< "/"<< hist_.min()<< "/"<< hist_.max() << std::endl;
-        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
+        if (ImGui::InputFloat2("Range", &rangef.x)) {
+            rangef.x = std::clamp<float>(rangef.x, hist_.min(), hist_.max());
+            rangef.y = std::clamp<float>(rangef.y, rangef.x, hist_.max());
+        }
+        draw_range_sliders(rangef.x, rangef.y, hist_.min(), hist_.max());
     }
 
     inline std::string name() override {
@@ -149,7 +154,11 @@ public:
             rangef.y = hist_.bucket_max(b);
         }
         cm.render_menu();
-        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
+        if (ImGui::InputFloat2("Range", &rangef.x)) {
+            rangef.x = std::clamp<float>(rangef.x, hist_.min(), hist_.max());
+            rangef.y = std::clamp<float>(rangef.y, rangef.x, hist_.max());
+        }
+        draw_range_sliders(rangef.x, rangef.y, hist_.min(), hist_.max());
     }
 
     inline std::string name() override {

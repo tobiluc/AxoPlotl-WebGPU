@@ -17,5 +17,6 @@ class VectorRenderer;
 class ColorMap;
 class PickConfig;
 class PickResult;
+class HistogramBase;
 
 }
