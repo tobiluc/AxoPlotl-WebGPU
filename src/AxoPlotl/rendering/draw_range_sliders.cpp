@@ -2,13 +2,15 @@
 #include <algorithm>
 #include <imgui.h>
 #include <string>
+#include <AxoPlotl/rendering/ColorMap.hpp>
 
 namespace AxoPlotl
 {
 
 bool draw_range_sliders(
     float& _l, float& _r,
-    const float& _min, const float& _max)
+    const float& _min, const float& _max,
+    const ColorMap &_cm)
 {
     ImVec2 top_left = ImGui::GetCursorScreenPos();
     ImVec2 total_size = ImVec2(ImGui::GetContentRegionAvail().x, 20);
@@ -35,7 +37,7 @@ bool draw_range_sliders(
     draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
     ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
     // TODO: Investigate why the follwing line crashes
-    //ImGui::Image((ImTextureID)view_, ImVec2(visible_right-visible_left, total_size.y));
+    //ImGui::Image((ImTextureID)(_cm.view_), ImVec2(visible_right-visible_left, total_size.y));
     ImGui::SetCursorScreenPos(top_left);
 
     // Setup interaction

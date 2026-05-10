@@ -149,6 +149,7 @@ void OpenVolumeMeshObject::render_ui_properties()
             if (ImGui::BeginMenu("Change Filter")) {
                 for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
                     if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
+                        prop<EntityTag>().filters_[i]->set_default_settings();
                         prop<EntityTag>().filter_index_ = i;
                     }
                 }
