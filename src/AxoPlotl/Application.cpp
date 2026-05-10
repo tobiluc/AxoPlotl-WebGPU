@@ -599,15 +599,15 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             ImGui::ColorEdit3("Background", clear_color_);
             ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
 
-            ImGui::SeparatorText("Picking");
-            ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
-            ImGui::SameLine();
+            // ImGui::SeparatorText("Picking");
+            // ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
+            // ImGui::SameLine();
 
             ImGui::EndMenu(); // !Settings
         }

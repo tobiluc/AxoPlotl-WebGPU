@@ -64,7 +64,7 @@ public:
 
     glm::vec<4,float> scene_viewport();
 
-    inline void add_deferred_call(std::function<void()> _f) {
+    inline void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
     }
 

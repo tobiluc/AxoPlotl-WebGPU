@@ -225,6 +225,7 @@ void ColoredVertexRenderer::create_pipeline()
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
     wgpu::DepthStencilState depth = create_default_depth_state();
+    depth.depthCompare = wgpu::CompareFunction::LessEqual; // allow vertices exactly on faces
     pipelineDesc.depthStencil = &depth;
     pipelineDesc.layout = app_->device_.createPipelineLayout(layoutDesc);
     pipelineDesc.vertex = vertexState;

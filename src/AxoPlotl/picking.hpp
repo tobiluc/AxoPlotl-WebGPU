@@ -10,10 +10,6 @@ namespace AxoPlotl
 
 struct PickConfig
 {
-    bool enable_vertex_picking_ = true;
-    bool enable_edge_picking_ = true;
-    bool enable_face_picking_ = true;
-    bool enable_cell_picking_ = true;
 };
 
 struct PickResult

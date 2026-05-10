@@ -5,7 +5,7 @@
 #include "AxoPlotl/rendering/MeshEdgeRenderer.hpp"
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
-#include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
@@ -108,13 +108,6 @@ protected:
     template<> inline auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
     template<typename EntityTag>
-    inline auto& vector_on_entity_renderer();
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Cell>() {return vectors_on_cells_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Face>() {return vectors_on_faces_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Edge>() {return vectors_on_edges_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Vertex>() {return vectors_on_vertices_renderer_;}
-
-    template<typename EntityTag>
     inline wgpu::Buffer& entity_center_buffer();
     template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
     template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
@@ -131,10 +124,8 @@ protected:
     ColoredEdgeRenderer edge_renderer_;
     ColoredFaceRenderer face_renderer_;
     ColoredCellRenderer cell_renderer_;
-    VectorRenderer vectors_on_vertices_renderer_;
-    VectorRenderer vectors_on_edges_renderer_;
-    VectorRenderer vectors_on_faces_renderer_;
-    VectorRenderer vectors_on_cells_renderer_;
+
+    Vector3Renderer vector3_renderer_;
 };
 
 }

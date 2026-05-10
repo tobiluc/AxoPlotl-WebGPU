@@ -1,4 +1,4 @@
-#include "VectorRenderer.hpp"
+#include "Vector3Renderer.hpp"
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
@@ -6,9 +6,9 @@
 namespace AxoPlotl
 {
 
-PipelineState VectorRenderer::pipeline_state_;
+PipelineState Vector3Renderer::pipeline_state_;
 
-void VectorRenderer::init(uint32_t _object_id, Application* _app,
+void Vector3Renderer::init(uint32_t _object_id, Application* _app,
                           wgpu::Buffer _position_buffer)
 {
     pipeline_state_.set_device(_app->device_);
@@ -26,14 +26,14 @@ void VectorRenderer::init(uint32_t _object_id, Application* _app,
     initialized_ = true;
 }
 
-void VectorRenderer::clear()
+void Vector3Renderer::clear()
 {
     destroy_buffer(vector_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
 
-void VectorRenderer::create_buffers()
+void Vector3Renderer::create_buffers()
 {
     wgpu::Device device = app_->device_;
     // wgpu::Queue queue = device.getQueue();
@@ -65,7 +65,7 @@ void VectorRenderer::create_buffers()
     }
 }
 
-void VectorRenderer::create_bind_group_layout()
+void Vector3Renderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -97,7 +97,7 @@ void VectorRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void VectorRenderer::create_bind_group()
+void Vector3Renderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[3]{};
 
@@ -130,7 +130,7 @@ void VectorRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void VectorRenderer::create_pipeline()
+void Vector3Renderer::create_pipeline()
 {
     if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
@@ -199,7 +199,7 @@ void VectorRenderer::create_pipeline()
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void VectorRenderer::update_vector_data(const std::vector<Vec4f> &_data)
+void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
 {
     app_->device_.getQueue().writeBuffer(
         vector_buffer_,
@@ -210,7 +210,7 @@ void VectorRenderer::update_vector_data(const std::vector<Vec4f> &_data)
     std::cout << "Update Vector Data" << std::endl;
 }
 
-void VectorRenderer::render(
+void Vector3Renderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

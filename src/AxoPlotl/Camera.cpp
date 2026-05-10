@@ -102,11 +102,4 @@ void PerspectiveCamera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
     orbit_distance_ = glm::distance(max, min);
 }
 
-// void OrthographicCamera::zoomToBox(const glm::vec3& min, const glm::vec3& max)
-// {
-//     position = 0.5f*(min+max);
-//     position[2] = 1;
-//     height = 1.5f*(max[1] - min[1]);
-// }
-
 }

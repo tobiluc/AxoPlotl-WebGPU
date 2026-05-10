@@ -260,9 +260,10 @@ void ColoredEdgeRenderer::create_pipeline()
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
     wgpu::DepthStencilState depth = create_default_depth_state();
-    depth.depthBias = 4; // These help with z-fighting between edges & faces
-    depth.depthBiasSlopeScale = -1.5f;
+    depth.depthBias = -2.0f; // These help with z-fighting between edges & faces
+    depth.depthBiasSlopeScale = -1.0f;
     depth.depthBiasClamp = 0.0f;
+    depth.depthCompare = wgpu::CompareFunction::LessEqual; // allow edges exactly on faces
     pipelineDesc.depthStencil = &depth;
     pipelineDesc.layout = pipelineLayout;
     pipelineDesc.vertex = vertexState;

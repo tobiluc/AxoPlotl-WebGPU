@@ -4,7 +4,7 @@
 namespace AxoPlotl
 {
 
-class VectorRenderer : public RendererBase
+class Vector3Renderer : public RendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -36,9 +36,9 @@ public:
         return uniforms_.clip_box_;
     }
 
-    VectorRenderer() {}
+    Vector3Renderer() {}
 
-    ~VectorRenderer() {clear();}
+    ~Vector3Renderer() {clear();}
 
     void clear() override;
 

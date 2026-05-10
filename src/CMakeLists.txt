@@ -21,7 +21,7 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
     AxoPlotl/rendering/MeshFaceRenderer.cpp
     AxoPlotl/rendering/MeshCellRenderer.cpp
-    AxoPlotl/rendering/VectorRenderer.cpp
+    AxoPlotl/rendering/Vector3Renderer.cpp
     AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
     AxoPlotl/rendering/draw_range_sliders.cpp
     AxoPlotl/gui/fonts.cpp

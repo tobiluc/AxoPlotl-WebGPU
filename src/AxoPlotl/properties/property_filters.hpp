@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
-#include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
@@ -210,7 +210,7 @@ requires(is_vector<Vec3T> && vector_dim<Vec3T> == 3)
 struct PropertyFilterVec3 : public PropertyFilterBase
 {
 public:
-    PropertyFilterVec3(VectorRenderer& _renderer) :
+    PropertyFilterVec3(Vector3Renderer& _renderer) :
         renderer_(_renderer)
     {}
 
@@ -223,7 +223,7 @@ public:
         return "Vec3";
     }
 private:
-    VectorRenderer& renderer_;
+    Vector3Renderer& renderer_;
 };
 
 }
