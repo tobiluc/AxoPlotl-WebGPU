@@ -47,6 +47,9 @@ public:
 
     void recompute_bounding_box() override;
 
+    inline float* point(int i) {
+        return input_[i].data();
+    }
 };
 
 }
