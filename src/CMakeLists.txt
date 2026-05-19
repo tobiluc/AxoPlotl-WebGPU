@@ -7,6 +7,8 @@ add_library(AxoPlotlCore
     AxoPlotl/Scene.cpp
     AxoPlotl/objects/OpenVolumeMeshObject.cpp
     AxoPlotl/objects/SphericalHarmonicsObject.cpp
+    AxoPlotl/objects/TetrahedronObject.cpp
+    AxoPlotl/objects/SegmentObject.cpp
     AxoPlotl/input/Mouse.cpp
     AxoPlotl/Camera.cpp
     AxoPlotl/objects/BaseObject.cpp

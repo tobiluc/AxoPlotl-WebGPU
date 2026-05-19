@@ -3,7 +3,9 @@
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
+#include "AxoPlotl/objects/SegmentObject.hpp"
 #include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
+#include "AxoPlotl/objects/TetrahedronObject.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "ImGuiFileDialog.h"
 #include <cassert>
@@ -569,9 +571,14 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         {
             if (ImGui::BeginMenu("Add"))
             {
-                if (ImGui::MenuItem("Spherical Harmonics"))
-                {
+                if (ImGui::MenuItem("Spherical Harmonics")) {
                     scene_.add_object<SHObject>();
+                }
+                if (ImGui::MenuItem("Tetrahedron")) {
+                    scene_.add_object<TetObject>();
+                }
+                if (ImGui::MenuItem("Segment")) {
+                    scene_.add_object<SegmentObject>();
                 }
                 ImGui::EndMenu(); //!Add
             }
