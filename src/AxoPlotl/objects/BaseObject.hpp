@@ -53,7 +53,7 @@ public:
         return deleted_;
     }
 
-    inline const std::string& name() {
+    inline std::string& name() {
         return name_;
     }
 
@@ -64,6 +64,8 @@ public:
     inline bool& visible() {
         return visible_;
     }
+
+    bool input_name();
 
 protected:
     Scene* scene_;

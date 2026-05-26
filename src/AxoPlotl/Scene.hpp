@@ -52,8 +52,20 @@ public:
         return std::static_pointer_cast<Object>(objects_.back());
     }
 
-    inline const std::vector<std::shared_ptr<ObjectBase>>& get_objects() const {
-        return objects_;
+    inline size_t num_objects() const {
+        size_t n(0);
+        for (const auto& obj : objects_) {
+            n += !obj->deleted();
+        }
+        return n;
+    }
+
+    inline auto get_objects() const {
+        return objects_ | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return !_obj->deleted();});;
+    }
+
+    inline auto get_target_objects() const {
+        return get_objects() | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return _obj->target();});
     }
 
     inline std::shared_ptr<ObjectBase> get_object(int _id) const {

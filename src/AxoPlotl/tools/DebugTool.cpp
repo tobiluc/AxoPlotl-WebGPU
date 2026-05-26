@@ -16,6 +16,6 @@ void DebugTool::render_ui()
     ImGui::Text("%f FPS", AxoPlotl::frames_per_second());
     ImGui::Text("Draw Frames %d", n_draw_frames());
     ImGui::SeparatorText("Scene");
-    ImGui::Text("#Objects: %zu", AxoPlotl::scene().get_objects().size());
+    ImGui::Text("#Objects: %zu", AxoPlotl::scene().num_objects());
 }
 }

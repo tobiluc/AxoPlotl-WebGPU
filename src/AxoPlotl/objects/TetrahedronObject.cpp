@@ -25,6 +25,8 @@ void TetObject::render_ui_info()
 
 void TetObject::render_ui_settings()
 {
+    input_name();
+
     ImGui::ColorEdit3("Color", &renderer_.ambient()[0]);
 }
 

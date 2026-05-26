@@ -22,27 +22,45 @@ void DataControlTool::render_ui()
     if (!AxoPlotl::scene().get_object(settings_object_id_)) {settings_object_id_ = -1;}
 
     // For Convenience, we can apply things to all objects at once
-    if (AxoPlotl::scene().get_objects().size() > 0 && ImGui::BeginMenu("Apply to all")) {
-        if (ImGui::MenuItem("Sort alphabetically")) {
-            AxoPlotl::scene().sort_objects([](ConstObj _obj1, ConstObj _obj2) {
-                return _obj1->name() < _obj2->name();
-            });
-        }
-        ImGui::SeparatorText("Visibility");
-        if (ImGui::Button("Hide")) {
+    if (AxoPlotl::scene().num_objects() > 0 && ImGui::BeginMenu("Selection"))
+    {
+        ImGui::SeparatorText("Select");
+        if (ImGui::Button("Select All")) {
             for (const auto& obj : AxoPlotl::scene().get_objects()) {
-                obj->visible() = false;
+                obj->target() = true;
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Show")) {
+        if (ImGui::Button("Deselect All")) {
             for (const auto& obj : AxoPlotl::scene().get_objects()) {
+                obj->target() = false;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Invert Selection")) {
+            for (const auto& obj : AxoPlotl::scene().get_objects()) {
+                obj->target() = !obj->target();
+            }
+        }
+
+        ImGui::SeparatorText("Visibility");
+        if (ImGui::Button(ICON_FA_EYE)) {
+            for (const auto& obj : AxoPlotl::scene().get_target_objects()) {
                 obj->visible() = true;
             }
         }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_EYE_SLASH)) {
+            for (const auto& obj : AxoPlotl::scene().get_target_objects()) {
+                if (obj->target()) {
+                    obj->visible() = false;
+                }
+            }
+        }
+
         ImGui::SeparatorText("Danger Zone");
-        if (ImGui::Button("Delete")) {
-            for (const auto& obj : AxoPlotl::scene().get_objects()) {
+        if (ImGui::Button(ICON_FA_TRASH)) {
+            for (const auto& obj : AxoPlotl::scene().get_target_objects()) {
                 obj->deleted() = true;
             }
             info_object_id_ = -1;
@@ -83,7 +101,8 @@ void DataControlTool::render_ui()
         }
 
         // Settings Popup
-        if (settings_object_id_ >= 0 && ImGui::BeginPopup("popup_object_settings")) {
+        if (settings_object_id_ >= 0 && ImGui::BeginPopup("popup_object_settings"))
+        {
             AxoPlotl::scene().get_object(settings_object_id_)->render_ui_settings();
             ImGui::EndPopup();
         }

@@ -11,6 +11,8 @@ namespace AxoPlotl
 
 void OpenVolumeMeshObject::render_ui_settings()
 {
+    input_name();
+
     ImGui::Checkbox("V", &vertex_renderer_.enabled());
     ImGui::SameLine();
     ImGui::Checkbox("E", &edge_renderer_.enabled());

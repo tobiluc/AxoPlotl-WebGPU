@@ -26,6 +26,8 @@ void SHObject::render_ui_info()
 
 void SHObject::render_ui_settings()
 {
+    input_name();
+
     std::string str = "Type (";
     switch (type_) {
     case Type::OCTA: str += "Octahedral)"; break;
