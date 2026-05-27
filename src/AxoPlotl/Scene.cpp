@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "AxoPlotl/IO/file_access.h"
+#include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <AxoPlotl/Application.hpp>
 
@@ -24,6 +25,9 @@ void Scene::init(Application *_app)
             D(0,1,0,1),
             D(0,0,1,1)
     });
+    axis_renderer_.ambient() = Vec4f(1,1,1,1);
+
+    //add_object<SHObject>();
 }
 
 std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const OVMVolumeMesh &&_mesh)
@@ -45,19 +49,25 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     // Get Width and Height
     auto viewport = app_->scene_viewport();
     perspective_.update(app_->window());
-    const Mat4x4f view_projection =
-        perspective_.getProjectionMatrix(viewport[2]/viewport[3]) * perspective_.getViewMatrix();
+    const Mat4x4f& view = perspective_.getViewMatrix();
+    const Mat4x4f& proj = perspective_.getProjectionMatrix(viewport[2]/viewport[3]);
 
-    axis_renderer_.render(app_->scene_viewport(), _render_pass, view_projection);
+    const Mat4x4f view_proj = proj * view;
 
+    // Render Coordinate Axis Cross at Origin
+    axis_renderer_.render(app_->scene_viewport(),
+        _render_pass,
+        view_proj);
+
+    // Render Scene Objects
     for (const auto& obj : objects_) {
-        obj->render(_render_pass, view_projection);
+        obj->render(_render_pass, view_proj);
     }
 
     // Remove deleted objects
     // This is deferred to avoid buffers being destroyed
     // before the command buffer is submitted
-    app_->add_deferred_call([this]() {
+    app_->call_deferred([this]() {
         objects_.erase(
             std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
                 return _obj->deleted();

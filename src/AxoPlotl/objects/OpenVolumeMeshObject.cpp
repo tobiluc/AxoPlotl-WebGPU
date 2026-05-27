@@ -5,13 +5,15 @@
 #include "IconsFontAwesome7.h"
 #include "imgui.h"
 #include <AxoPlotl/Application.hpp>
-#include <random>
+#include <OpenVolumeMesh/IO/ovmb_write.hh>
 
 namespace AxoPlotl
 {
 
 void OpenVolumeMeshObject::render_ui_settings()
 {
+    input_name();
+
     ImGui::Checkbox("V", &vertex_renderer_.enabled());
     ImGui::SameLine();
     ImGui::Checkbox("E", &edge_renderer_.enabled());
@@ -23,6 +25,11 @@ void OpenVolumeMeshObject::render_ui_settings()
     ImGui::SliderFloat("Point Size", &vertex_renderer_.point_size(), 0.0f, 32.0f);
     ImGui::SliderFloat("Line Width", &edge_renderer_.line_width(), 0.0f, 32.0f);
     ImGui::SliderFloat("Cell Scale", &cell_renderer_.cell_scale(), 0.0f, 1.0f);
+
+    ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
+    ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
 
     // Clip Box
     // Each entity technically has their own, but we
@@ -56,11 +63,31 @@ void OpenVolumeMeshObject::render_ui_info()
     ImGui::Text("V/E/F/C = %zu/%zu/%zu/%zu",
         mesh_.n_vertices(), mesh_.n_edges(),
         mesh_.n_faces(), mesh_.n_cells());
+    ImGui::Text("BBox Min (%f, %f, %f)",
+        bbox_.min()[0], bbox_.min()[1], bbox_.min()[2]);
+    ImGui::Text("BBox Max (%f, %f, %f)",
+        bbox_.max()[0], bbox_.max()[1], bbox_.max()[2]);
 }
 
 void OpenVolumeMeshObject::render_ui_properties()
 {
-    if (ImGui::BeginMenu("Calculate"))
+    if (ImGui::BeginMenu("Mesh Properties")) {
+        static constexpr OVM::MeshHandle mh(0);
+        for (auto p  = mesh_.persistent_props_begin<OVM::Entity::Mesh>();
+             p != mesh_.persistent_props_end<OVM::Entity::Mesh>(); ++p)
+        {
+            if ((*p)->typeNameWrapper() == "double") {
+                auto prop = mesh_.get_property<double,OVM::Entity::Mesh>((*p)->name()).value();
+                ImGui::Text("%s = %f", (*p)->name().c_str(), static_cast<float>(prop[mh]));
+            } else if ((*p)->typeNameWrapper() == "float") {
+                auto prop = mesh_.get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
+                ImGui::Text("%s = %f", (*p)->name().c_str(), prop[mh]);
+            }
+        }
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Calculate Property"))
     {
         if (mesh_.n_vertices()>0 && ImGui::BeginMenu("Vertices")){
             if (ImGui::MenuItem("Normalized Position")) {
@@ -125,6 +152,7 @@ void OpenVolumeMeshObject::render_ui_properties()
             if (ImGui::BeginMenu("Change Filter")) {
                 for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
                     if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
+                        prop<EntityTag>().filters_[i]->set_default_settings();
                         prop<EntityTag>().filter_index_ = i;
                     }
                 }
@@ -134,16 +162,20 @@ void OpenVolumeMeshObject::render_ui_properties()
         }
 
         // Clear
-        if (ImGui::Button("Clear Property")) {
+        if (ImGui::Button("Unselect Property")) {
             upload_default_property_data<EntityTag>();
             colored_entity_renderer<EntityTag>().property_type()
                 = RendererBase::Property::Type::COLOR;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().filters_.clear();
+            scene_->app()->call_deferred([&]() {
+                vector3_renderer_.clear();
+                vector3_renderer_.enabled() = false;
+            });
         }
     };
 
-    if (ImGui::BeginMenu("Select")) {
+    if (ImGui::BeginMenu("Select Property")) {
         render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
         render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
         render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
@@ -158,10 +190,6 @@ void OpenVolumeMeshObject::render_ui_properties()
 
 void OpenVolumeMeshObject::init_buffers()
 {
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
     const auto& data = create_static_render_data(mesh_);
     n_positions_ = data.positions_.size();
 
@@ -175,10 +203,10 @@ void OpenVolumeMeshObject::init_buffers()
     face_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.faces_);
     cell_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
 
-    vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
-    vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
-    vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
-    vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
+    // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
+    // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
+    // vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
+    // vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
 
     upload_default_property_data<OVM::Entity::Vertex>();
     upload_default_property_data<OVM::Entity::Edge>();
@@ -196,10 +224,7 @@ void OpenVolumeMeshObject::delete_buffers()
     edge_renderer_.clear();
     face_renderer_.clear();
     cell_renderer_.clear();
-    vectors_on_vertices_renderer_.clear();
-    vectors_on_edges_renderer_.clear();
-    vectors_on_faces_renderer_.clear();
-    vectors_on_cells_renderer_.clear();
+    vector3_renderer_.clear();
 }
 
 void OpenVolumeMeshObject::render(
@@ -216,15 +241,12 @@ void OpenVolumeMeshObject::render(
     edge_renderer_.render(vp, _render_pass, mvp);
     vertex_renderer_.render(vp, _render_pass, mvp);
 
-    vectors_on_vertices_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3;
-    vectors_on_edges_renderer_.enabled() = edge_renderer_.property_type() == RendererBase::Property::Type::VEC3;
-    vectors_on_faces_renderer_.enabled() = face_renderer_.property_type() == RendererBase::Property::Type::VEC3;
-    vectors_on_cells_renderer_.enabled() = cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
+    vector3_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3
+    || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
+    || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
+    || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
 
-    vectors_on_vertices_renderer_.render(vp, _render_pass, mvp);
-    vectors_on_edges_renderer_.render(vp, _render_pass, mvp);
-    vectors_on_faces_renderer_.render(vp, _render_pass, mvp);
-    vectors_on_cells_renderer_.render(vp, _render_pass, mvp);
+    vector3_renderer_.render(vp, _render_pass, mvp);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),
@@ -234,7 +256,7 @@ void OpenVolumeMeshObject::render(
 
 void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_cfg)
 {
-    if (_p.object_id_ != id()) [[unlikely]] {return;}
+    if (_p.object_id_ != id()) [[unlikely]] {return;} // error
 
     auto squared_distance = [](const Vec3f _p0, const OVM::Vec3f& _p1) -> float {
         float dx = _p0[0] - _p1[0];
@@ -249,7 +271,7 @@ void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_c
         {
             auto show_item = [&]<typename T>() {
                 auto prop = mesh_.get_property<T,EntityTag>((*pp)->name()).value();
-                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.index_)];
+                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.entity_index_)];
                 ImGui::Text("%s: %s",
                     (*pp)->name().c_str(),
                     value_to_string(val).c_str()
@@ -294,46 +316,7 @@ void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_c
 
     // Better Picking. We might only want vertex picking in which
     // case we find the closest incident vertex to the actually
-    // clicked entity
-    if (_p.type_==3 && !_cfg.enable_cell_picking_) {
-        float min_dist_sq = std::numeric_limits<float>::infinity();
-        for (auto fh : mesh_.cell_faces(OVM::CH(_p.index_))) {
-            float dist_sq = squared_distance(_p.position,mesh_.barycenter(fh));
-            if (dist_sq < min_dist_sq) {
-                _p.type_ = 2;
-                _p.index_ = fh.idx();
-                min_dist_sq = dist_sq;
-            }
-        }
-    }
-    if (_p.type_==2 && !_cfg.enable_face_picking_) {
-        float min_dist_sq = std::numeric_limits<float>::infinity();
-        for (auto eh : mesh_.face_edges(OVM::FH(_p.index_))) {
-            float dist_sq = squared_distance(_p.position,mesh_.barycenter(eh));
-            if (dist_sq < min_dist_sq) {
-                _p.type_ = 1;
-                _p.index_ = eh.idx();
-                min_dist_sq = dist_sq;
-            }
-        }
-    }
-    if (_p.type_==1 && !_cfg.enable_edge_picking_) {
-        OVM::HEH heh = OVM::EH(_p.index_).halfedge_handle(0);
-        OVM::VH vh0 = mesh_.from_vertex_handle(heh);
-        OVM::VH vh1 = mesh_.to_vertex_handle(heh);
-        const auto& p0 = mesh_.vertex(vh0);
-        const auto& p1 = mesh_.vertex(vh1);
-        if (squared_distance(_p.position,p0) < squared_distance(_p.position,p1)) {
-            _p.type_ = 0;
-            _p.index_ = vh0.idx();
-        } else {
-            _p.type_ = 0;
-            _p.index_ = vh1.idx();
-        }
-    }
-    if (_p.type_==0 && !_cfg.enable_vertex_picking_) {
-        return;
-    }
+    // clicked entity (TODO)
 
     ImGui::SeparatorText(name().c_str());
     if (ImGui::BeginMenu("Settings")) {
@@ -342,25 +325,35 @@ void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_c
     }
 
     ImGui::Text("Position = (%f, %f, %f)",
-        _p.position[0], _p.position[1], _p.position[2]);
-    switch (_p.type_) {
+        _p.position_[0], _p.position_[1], _p.position_[2]);
+    switch (_p.entity_type_)
+    {
     case 0:
-        ImGui::Text("Vertex(%u)", _p.index_);
+        ImGui::Text("Vertex(%u)", _p.entity_index_);
         show_prop_list.operator()<OVM::Entity::Vertex>();
         break;
     case 1:
-        ImGui::Text("Edge(%u)", _p.index_);
+        ImGui::Text("Edge(%u)", _p.entity_index_);
         show_prop_list.operator()<OVM::Entity::Edge>();
         break;
     case 2:
-        ImGui::Text("Face(%u)", _p.index_);
+        ImGui::Text("Face(%u)", _p.entity_index_);
         show_prop_list.operator()<OVM::Entity::Face>();
         break;
     case 3:
-        ImGui::Text("Cell(%u)", _p.index_);
+        ImGui::Text("Cell(%u)", _p.entity_index_);
         show_prop_list.operator()<OVM::Entity::Cell>();
         break;
     default: break;
+    }
+
+    // Zoom to the picked entity
+    if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
+        const float s = std::max<float>(bbox_.diagonal()*0.01f, 0.01f);
+        BoundingBox bbox;
+        bbox.expand_with_point(_p.position_-Vec3f(s,s,s));
+        bbox.expand_with_point(_p.position_+Vec3f(s,s,s));
+        scene_->zoom_to_box(bbox);
     }
 }
 
@@ -374,9 +367,21 @@ void OpenVolumeMeshObject::visualize_property(
     auto select_property = [&]<typename EntityTag,typename T>(OVM::PropertyStorageBase* _pp)
     {
         auto& col_rend = colored_entity_renderer<EntityTag>();
-        auto& vec_rend = vector_on_entity_renderer<EntityTag>();
 
         prop<EntityTag>().prop_ = _pp;
+
+        // If we want to visualize a vec3 property,
+        // intitialize the corresponding buffers here
+        // and delete them again after unselecting.
+        // This is to not waste a ton of time/memory
+        // for the vector renderers if we never actually
+        // visualize a vec3 property. Also, we use
+        // a single vector renderer for all entities.
+        if constexpr(is_vector<T>) {
+            if constexpr(vector_dim<T> == 3) {
+                vector3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+            }
+        }
 
         // Setup Property Filters
         prop<EntityTag>().filters_.clear();
@@ -394,7 +399,7 @@ void OpenVolumeMeshObject::visualize_property(
         } else if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
                 prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterVec3<T,EntityTag>>(
-                    vec_rend));
+                    vector3_renderer_));
             }
         }
 
@@ -409,7 +414,7 @@ void OpenVolumeMeshObject::visualize_property(
             if constexpr(vector_dim<T> == 3) {
                 const auto& data = get_buffer_property_data<T,EntityTag>(
                     mesh_, _pp);
-                vec_rend.update_vector_data(data);
+                vector3_renderer_.update_vector_data(data);
             }
         }
 
@@ -484,7 +489,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_vertices());
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
-        props.push_back(D(0,0,0,1));
+        props.push_back(D(1,1,1,1));
     }
     vertex_renderer_.update_property_data(props);
 }
@@ -494,7 +499,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_edges());
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
-        props.push_back(D(0,0,0,1));
+        props.push_back(D(1,1,1,1));
     }
     edge_renderer_.update_property_data(props);
 }
@@ -534,6 +539,12 @@ void OpenVolumeMeshObject::recompute_bounding_box()
     for (const auto& p : mesh_.vertex_positions()) {
         bbox_.expand_with_point(p);
     }
+}
+
+bool OpenVolumeMeshObject::save_file(const std::filesystem::path& _path) const
+{
+    return OVM::IO::ovmb_write(_path, mesh_)
+           == OVM::IO::WriteResult::Ok;
 }
 
 }

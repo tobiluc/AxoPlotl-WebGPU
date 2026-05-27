@@ -4,6 +4,7 @@
 #include <array>
 #include <cstring>
 #include <string>
+#include <unordered_map>
 
 namespace AxoPlotl
 {
@@ -19,9 +20,9 @@ public:
 private:
     struct Input
     {
-        std::string x_;
-        std::string y_;
-        std::string z_;
+        char x_[1024];
+        char y_[1024];
+        char z_[1024];
         Vec2f u_ = {-1,1};
         Vec2f v_ = {-1,1};
         int resolution_ = 16;

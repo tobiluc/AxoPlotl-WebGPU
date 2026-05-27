@@ -7,7 +7,8 @@ struct Uniforms {
     @align(16) clipBox: ClipBox,
     @align(16) valueType: ValueType,
     @align(16) valueFilter: vec2<f32>,
-    @align(16) objectId:u32
+    @align(16) objectId:u32,
+    @align(16) ambient: vec4<f32>
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -101,15 +102,15 @@ fn fs_main(in:V2F) -> FragmentOutput
     var out : FragmentOutput;
 
     // Round Edge Endpoints
-    let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
-    let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
-    let cy = in.quadCorner.y;
-    if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
-    {discard;}
+    // let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
+    // let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
+    // let cy = in.quadCorner.y;
+    // if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
+    // {discard;}
 
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        );
+        ) * ubo.ambient;
     out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z));
     return out;
 }

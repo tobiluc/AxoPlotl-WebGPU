@@ -3,24 +3,31 @@
 add_library(AxoPlotlCore
     AxoPlotl/Application.cpp
     AxoPlotl/IO/file_access.cpp
-
+    AxoPlotl/geometry/spherical_harmonics.cpp
     AxoPlotl/Scene.cpp
     AxoPlotl/objects/OpenVolumeMeshObject.cpp
+    AxoPlotl/objects/SphericalHarmonicsObject.cpp
+    AxoPlotl/objects/TetrahedronObject.cpp
+    AxoPlotl/objects/SegmentObject.cpp
     AxoPlotl/input/Mouse.cpp
     AxoPlotl/Camera.cpp
     AxoPlotl/objects/BaseObject.cpp
     AxoPlotl/rendering/detail/create_static_render_data.cpp
     AxoPlotl/rendering/detail/redraw.cpp
+    AxoPlotl/rendering/draw_histogram.cpp
     AxoPlotl/rendering/ColorMap.cpp
     AxoPlotl/properties/property_calculations.cpp
+    AxoPlotl/properties/Histogram.cpp
     AxoPlotl/gui/themes.cpp
     AxoPlotl/rendering/MeshVertexRenderer.cpp
     AxoPlotl/rendering/MeshEdgeRenderer.cpp
     AxoPlotl/rendering/MeshFaceRenderer.cpp
     AxoPlotl/rendering/MeshCellRenderer.cpp
-    AxoPlotl/rendering/VectorRenderer.cpp
+    AxoPlotl/rendering/Vector3Renderer.cpp
+    AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
+    AxoPlotl/rendering/draw_range_sliders.cpp
     AxoPlotl/gui/fonts.cpp
-
+    AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp
     AxoPlotl/tools/DebugTool.cpp
     AxoPlotl/IO/rapidobj_to_ovm.cpp
@@ -38,24 +45,24 @@ target_link_libraries(AxoPlotlCore PUBLIC
     imgui
     ImGuiFileDialog
     nlohmann_json::nlohmann_json
-    OpenMeshCore
-    OpenMeshTools
+    # OpenMeshCore
+    # OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
     rapidobj::rapidobj
+    ibex
 )
 
 add_executable(AxoPlotlApp
     main.cpp
-    AxoPlotl/tools/PlottingTool.cpp
 )
 
 target_link_libraries(AxoPlotlApp PUBLIC
-    AxoPlotlCore
-    ibex
+    AxoPlotlCore   
 )
 
 target_include_directories(AxoPlotlCore PUBLIC
     ${iconfontcppheaders_SOURCE_DIR}
+    # "${EXTERNAL_DIR}/webgpu-dawn/include"
 )
 target_compile_definitions(AxoPlotlCore PUBLIC
 AXOPLOTL_FONTS_DIR="${CMAKE_SOURCE_DIR}/assets/fonts/"
@@ -80,3 +87,7 @@ install(TARGETS AxoPlotlCore
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# target_include_directories(glfw3webgpu PUBLIC
+#     ${WEBGPU_INCLUDE_DIR}
+# )

@@ -1,4 +1,4 @@
-#include "VectorRenderer.hpp"
+#include "Vector3Renderer.hpp"
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
@@ -6,9 +6,9 @@
 namespace AxoPlotl
 {
 
-PipelineState VectorRenderer::pipeline_state_;
+PipelineState Vector3Renderer::pipeline_state_;
 
-void VectorRenderer::init(uint32_t _object_id, Application* _app,
+void Vector3Renderer::init(uint32_t _object_id, Application* _app,
                           wgpu::Buffer _position_buffer)
 {
     pipeline_state_.set_device(_app->device_);
@@ -22,15 +22,18 @@ void VectorRenderer::init(uint32_t _object_id, Application* _app,
     create_bind_group_layout();
     create_bind_group();
     create_pipeline();
+
+    initialized_ = true;
 }
 
-void VectorRenderer::clear()
+void Vector3Renderer::clear()
 {
     destroy_buffer(vector_buffer_);
     destroy_buffer(uniform_buffer_);
+    initialized_ = false;
 }
 
-void VectorRenderer::create_buffers()
+void Vector3Renderer::create_buffers()
 {
     wgpu::Device device = app_->device_;
     // wgpu::Queue queue = device.getQueue();
@@ -41,11 +44,9 @@ void VectorRenderer::create_buffers()
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Vec4f) * std::max(n_positions_,1lu);
         desc.mappedAtCreation = false;
-        desc.label = "Vector Buffer";
+        desc.label = wgpu::StringView("Vector Buffer");
 
         vector_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -54,15 +55,13 @@ void VectorRenderer::create_buffers()
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
         desc.mappedAtCreation = false;
-        desc.label = "Vector Uniform Buffer";
+        desc.label = wgpu::StringView("Vector Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label << " Size: " << desc.size << std::endl;
     }
 }
 
-void VectorRenderer::create_bind_group_layout()
+void Vector3Renderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -89,12 +88,12 @@ void VectorRenderer::create_bind_group_layout()
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 3;
     layoutDesc.entries = entries;
-    layoutDesc.label = "Vector Bind Group Layout";
+    layoutDesc.label = wgpu::StringView("Vector Bind Group Layout");
 
     pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
 }
 
-void VectorRenderer::create_bind_group()
+void Vector3Renderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[3]{};
 
@@ -103,21 +102,18 @@ void VectorRenderer::create_bind_group()
     groupEntries[0].buffer = uniform_buffer_;
     groupEntries[0].offset = 0;
     groupEntries[0].size = sizeof(Uniforms);
-    std::cout << "0: Vector Uniforms #" << groupEntries[0].size << std::endl;
 
     // 1 - Positions
     groupEntries[1].binding = 1;
     groupEntries[1].buffer = position_buffer_;
     groupEntries[1].offset = 0;
     groupEntries[1].size = sizeof(Position) * std::max(n_positions_,1lu);
-    std::cout << "1: Vector Positions #" << groupEntries[1].size << std::endl;
 
     // 2 - Vectors
     groupEntries[2].binding = 2;
     groupEntries[2].buffer = vector_buffer_;
     groupEntries[2].offset = 0;
     groupEntries[2].size = sizeof(Vec4f) * std::max(n_positions_,1lu);
-    std::cout << "2: Vectors #" << groupEntries[2].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -127,7 +123,7 @@ void VectorRenderer::create_bind_group()
     bind_group_ = app_->device_.createBindGroup(bgDesc);
 }
 
-void VectorRenderer::create_pipeline()
+void Vector3Renderer::create_pipeline()
 {
     if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
@@ -139,7 +135,7 @@ void VectorRenderer::create_pipeline()
     // Vertex state (no vertex buffer)
     wgpu::VertexState vertexState{};
     vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
+    vertexState.entryPoint = wgpu::StringView("vs_main");
     vertexState.bufferCount = 0;
     vertexState.buffers = nullptr;
 
@@ -161,7 +157,7 @@ void VectorRenderer::create_pipeline()
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -191,12 +187,12 @@ void VectorRenderer::create_pipeline()
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
-    pipelineDesc.label = "Vector Pipeline";
+    pipelineDesc.label = wgpu::StringView("Vector Pipeline");
 
     pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
 }
 
-void VectorRenderer::update_vector_data(const std::vector<Vec4f> &_data)
+void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
 {
     app_->device_.getQueue().writeBuffer(
         vector_buffer_,
@@ -204,10 +200,9 @@ void VectorRenderer::update_vector_data(const std::vector<Vec4f> &_data)
         _data.data(),
         sizeof(Vec4f) * _data.size()
         );
-    std::cout << "Update Vector Data" << std::endl;
 }
 
-void VectorRenderer::render(
+void Vector3Renderer::render(
     const Vec4f& _viewport,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)

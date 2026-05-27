@@ -1,4 +1,5 @@
 #include "ColorMap.hpp"
+#include "IconsFontAwesome7.h"
 #include "imgui.h"
 
 namespace AxoPlotl
@@ -38,6 +39,12 @@ uint32_t ColorMap::sample_color_packed(float _t) const
         static_cast<int>(rgb[2] * 255.0f),
         255
     );
+}
+
+void ColorMap::reverse()
+{
+    std::reverse(colors_.begin(), colors_.end());
+    set_gradient(colors_);
 }
 
 void ColorMap::set_gradient(const std::vector<f16x3> &_colors)
@@ -169,7 +176,7 @@ void ColorMap::create(wgpu::Device _device)
 {
     device_ = _device;
     wgpu::TextureDescriptor desc{};
-    desc.label = "Color Map";
+    desc.label = wgpu::StringView("Color Map");
     desc.size = extent();
     desc.dimension = wgpu::TextureDimension::_2D;
     desc.format = wgpu::TextureFormat::RGBA16Float;
@@ -203,13 +210,15 @@ void ColorMap::create(wgpu::Device _device)
 
 void ColorMap::update(const std::vector<f16>& _data)
 {
-    static wgpu::ImageCopyTexture destination;
+    static wgpu::TexelCopyTextureInfo destination;
+    //static wgpu::ImageCopyTexture destination;
     destination.texture = texture_;
     destination.mipLevel = 0;
     destination.origin = { 0, 0, 0 };
     destination.aspect = wgpu::TextureAspect::All;
 
-    static wgpu::TextureDataLayout layout_;
+    static wgpu::TexelCopyBufferLayout layout_;
+    // static wgpu::TextureDataLayout layout_;
     layout_.rowsPerImage = 1lu;
     layout_.bytesPerRow = 4 * sizeof(f16) * extent().width;
     layout_.offset = 0;
@@ -221,8 +230,6 @@ void ColorMap::update(const std::vector<f16>& _data)
         layout_,
         extent()
     );
-
-    std::cout << "Update Color Map" << std::endl;
 }
 
 void ColorMap::render_menu()
@@ -245,6 +252,41 @@ void ColorMap::render_menu()
         }
         if (ImGui::MenuItem("Rainbow")) {
             set_rainbow();
+        }
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Custom")) {
+            int deleted_color_i_ = -1;
+            for (int i = 0; i < custom_colors_.size(); ++i)
+            {
+                ImGui::PushID(i);
+                Vec3f col(custom_colors_[i][0],
+                          custom_colors_[i][1],
+                          custom_colors_[i][2]);
+                if (ImGui::ColorEdit3("Color", &col[0])) {
+                    custom_colors_[i] = {col[0],col[1],col[2]};
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button(ICON_FA_TRASH)) {
+                    deleted_color_i_ = i;
+                }
+                ImGui::PopID();
+            }
+            if (deleted_color_i_ >= 0) {
+                custom_colors_.erase(custom_colors_.begin()+deleted_color_i_);
+            }
+            if (custom_colors_.size()<32 && ImGui::Button(ICON_FA_PLUS)) {
+                custom_colors_.emplace_back();
+            }
+            if (!custom_colors_.empty() && ImGui::Button("Confirm")) {
+                set_gradient(custom_colors_);
+                custom_colors_.clear();
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Reverse")) {
+            reverse();
         }
         ImGui::EndMenu();
     }

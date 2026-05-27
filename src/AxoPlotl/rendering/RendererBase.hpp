@@ -59,6 +59,7 @@ public:
             COLOR = 0u,
             SCALAR = 1u,
             VEC3 = 2u,
+            MAT3x3 = 3u
         };
         using Data = Vec4f;
         struct Filter {

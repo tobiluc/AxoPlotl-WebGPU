@@ -10,12 +10,14 @@ namespace AxoPlotl
 
 class PerspectiveCamera
 {
+
 private:
     static constexpr glm::vec3 world_up = glm::vec3(0,1,0);
-    static constexpr float near = 0.01f;
-    static constexpr float far = 4096.0f;
     float sensitivity_ = 0.001f;
     float pan_speed_ = 2.0f;
+
+    float near = 1.0f/64.0f;
+    float far = (1<<11);
 
     Vec3f orbit_target_ = glm::vec3(0.0f);
     float orbit_distance_ = 1.0f;
@@ -32,6 +34,10 @@ public:
 
     inline glm::mat4 getProjectionMatrix(float width_over_height) const {
         return glm::perspective(fov_, width_over_height, near, far);
+    }
+
+    inline const Vec3f& orbit_target() const {
+        return orbit_target_;
     }
 
     void update(GLFWwindow* window);

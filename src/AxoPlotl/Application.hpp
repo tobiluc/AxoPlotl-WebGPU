@@ -31,7 +31,7 @@ private:
         void update();
     } time_;
 
-    float font_scale_ = 1.0f;
+    //float font_scale_ = 1.0f;
     float inspector_rel_width_ = 0.3f;
     bool inspector_right_aligned_ = false;
     bool inspector_enabled_ = true;
@@ -64,7 +64,7 @@ public:
 
     glm::vec<4,float> scene_viewport();
 
-    inline void add_deferred_call(std::function<void()> _f) {
+    inline void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
     }
 
@@ -100,7 +100,7 @@ private:
     wgpu::RenderPassEncoder gui_render_pass_;
     wgpu::RenderPassEncoder scene_render_pass_;
 
-    std::unique_ptr<wgpu::ErrorCallback> error_callback_;
+    //std::unique_ptr<wgpu::ErrorCallback> error_callback_;
 
     Scene scene_;
 

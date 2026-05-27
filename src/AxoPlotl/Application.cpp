@@ -3,6 +3,9 @@
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
+#include "AxoPlotl/objects/SegmentObject.hpp"
+#include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
+#include "AxoPlotl/objects/TetrahedronObject.hpp"
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "ImGuiFileDialog.h"
 #include <cassert>
@@ -28,7 +31,7 @@ void wgpuPollEvents(
 #if defined(WEBGPU_BACKEND_DAWN)
     _device.tick();
 #elif defined(WEBGPU_BACKEND_WGPU)
-    _device.poll(false);
+    _device.poll(false, nullptr);
 #elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
     if (_yield_to_browser) {
         emscripten_sleep(100);
@@ -53,8 +56,7 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    inspector_callback_([]() {}),
-    error_callback_(nullptr)
+    inspector_callback_([]() {})
 {
 }
 
@@ -119,12 +121,10 @@ bool Application::init()
 
     surface_ = glfwGetWGPUSurface(instance, window_);
 
-    std::cout << "Requesting adapter..." << std::endl;
     //surface_ = glfwGetWGPUSurface(instance, _window);
     wgpu::RequestAdapterOptions adapterOpts = {};
     adapterOpts.compatibleSurface = surface_;
     adapter_ = instance.requestAdapter(adapterOpts);
-    std::cout << "Got adapter: " << adapter_ << std::endl;
 
     instance.release();
 
@@ -132,34 +132,57 @@ bool Application::init()
     // Device
     //------------------
 
-    std::cout << "Requesting device..." << std::endl;
     wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.label = "My Device";
+    deviceDesc.label = wgpu::StringView("My Device");
     deviceDesc.requiredFeatureCount = 0;
     deviceDesc.requiredLimits = nullptr;
     deviceDesc.defaultQueue.nextInChain = nullptr;
-    deviceDesc.defaultQueue.label = "The default queue";
+    deviceDesc.defaultQueue.label = wgpu::StringView("The default queue");
+    // deviceDesc.deviceLostCallbackInfo.callback = [](
+    //     const WGPUDevice* _device,
+    //     WGPUDeviceLostReason _reason,
+    //     const char* _message, void* _userdata)
+    // {
+    //     std::cerr << "Device lost: " << _reason;
+    //     if (_message) {std::cerr << " (" << _message << ")";}
+    //     std::cerr << std::endl;
+    // };
     deviceDesc.deviceLostCallbackInfo.callback = [](
-        const WGPUDevice* _device,
-        WGPUDeviceLostReason _reason,
-        const char* _message, void* _userdata)
+         WGPUDevice const* _device,
+         WGPUDeviceLostReason _reason,
+         WGPUStringView _message,
+         void* _userdata1, void* _userdata2)
     {
-        std::cerr << "Device lost: " << _reason;
-        if (_message) {std::cerr << " (" << _message << ")";}
+        std::cerr << "Device lost: " << static_cast<uint32_t>(_reason);
+
+        if (_message.data) {
+            std::cerr << " (" << std::string_view(_message.data, _message.length) << ")";
+        }
         std::cerr << std::endl;
     };
+    deviceDesc.uncapturedErrorCallbackInfo.callback = [](
+         WGPUDevice const* _device,
+         WGPUErrorType _type,
+         WGPUStringView _message,
+         void* _userdata1, void* _userdata2)
+    {
+        std::cerr << "WebGPU Error (" << static_cast<uint32_t>(_type) << "): "
+                  << _message.data << std::endl;
+        std::exit(1);
+    };
+    deviceDesc.uncapturedErrorCallbackInfo.userdata1 = nullptr;
+    deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
 
     device_ = adapter_.requestDevice(deviceDesc);
-    std::cout << "Got device: " << device_ << std::endl;
     //device.getLimits(&supportedLimits);
     //std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
 
-    error_callback_ = device_.setUncapturedErrorCallback([](wgpu::ErrorType type, char const* message) {
-        std::cerr << "Uncaptured device error: type " << type;
-        if (message) std::cout << " (" << message << ")";
-        std::cerr << std::endl;
-        std::exit(1);
-    });
+    // error_callback_ = device_.setUncapturedErrorCallback([](wgpu::ErrorType type, char const* message) {
+    //     std::cerr << "Uncaptured device error: type " << type;
+    //     if (message) std::cout << " (" << message << ")";
+    //     std::cerr << std::endl;
+    //     std::exit(1);
+    // });
 
     queue_ = device_.getQueue();
 
@@ -176,7 +199,7 @@ bool Application::init()
     create_picking_texture();
 
     wgpu::BufferDescriptor pickBuffDesc{};
-    pickBuffDesc.label = "Pixel Picking Buffer";
+    pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
     pickBuffDesc.size = sizeof(PickResult);
     pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
     pickBuffDesc.mappedAtCreation = false;
@@ -215,7 +238,7 @@ void Application::frame_tick()
     surface_.getCurrentTexture(&surfaceTexture);
 
     // Safety Check
-    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) [[unlikely]] {
+    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) [[unlikely]] {
 #ifndef WEBGPU_BACKEND_WGPU
         if (surfaceTexture.texture) {
             wgpuTextureRelease(surfaceTexture.texture);
@@ -226,7 +249,7 @@ void Application::frame_tick()
 
     wgpu::TextureViewDescriptor viewDescriptor;
     viewDescriptor.nextInChain = nullptr;
-    viewDescriptor.label = "Surface texture view";
+    viewDescriptor.label = wgpu::StringView("Surface texture view");
     viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
     viewDescriptor.dimension = WGPUTextureViewDimension_2D;
     viewDescriptor.baseMipLevel = 0;
@@ -263,7 +286,7 @@ void Application::frame_tick()
     wgpu::RenderPassDescriptor renderPassDesc{};
     renderPassDesc.colorAttachmentCount = 2;
     renderPassDesc.colorAttachments = color_attachments;
-    renderPassDesc.label = "Main Render Pass";
+    renderPassDesc.label = wgpu::StringView("Main Render Pass");
 
     // Depth Attachment
     wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
@@ -452,6 +475,7 @@ bool Application::init_imgui()
     imgui_init_info.Device = device_;
     imgui_init_info.NumFramesInFlight = 3;
     imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
+    //imgui_init_info.RenderTargetFormat = wgpu::TextureFormat::BGRA8Unorm;
     imgui_init_info.DepthStencilFormat = depth_texture_format_;
     imgui_init_info.PipelineMultisampleState.count = 1;
     ImGui_ImplWGPU_Init(&imgui_init_info);
@@ -490,6 +514,9 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    //--------------------
+    // Top Menu Bar
+    //--------------------
     ImGui::SetNextWindowPos(ImVec2(-100,-100));
     ImGui::SetNextWindowSize(ImVec2(0,0));
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
@@ -497,7 +524,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                              ImGuiWindowFlags_NoInputs |
                              ImGuiWindowFlags_MenuBar;
     ImGui::Begin("MenuBar", nullptr, flags);
-    ImGui::SetWindowFontScale(font_scale_);
+    //ImGui::SetWindowFontScale(font_scale_);
 
     //ImGui::Text("Render Settings");
     //ImGui::ColorEdit3("Background", clear_color_);
@@ -536,6 +563,24 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::BeginMenu("Add"))
+            {
+                if (ImGui::MenuItem("Spherical Harmonics")) {
+                    scene_.add_object<SHObject>();
+                }
+                if (ImGui::MenuItem("Tetrahedron")) {
+                    scene_.add_object<TetObject>();
+                }
+                if (ImGui::MenuItem("Segment")) {
+                    scene_.add_object<SegmentObject>();
+                }
+                ImGui::EndMenu(); //!Add
+            }
+            ImGui::EndMenu(); //!Edit
+        }
+
         if (ImGui::BeginMenu("Settings"))
         {
             ImGui::SeparatorText("UI");
@@ -551,21 +596,21 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                 if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
                 ImGui::EndMenu(); //!Theme
             }
-            ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
+            //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
 
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
             ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
 
-            ImGui::SeparatorText("Picking");
-            ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
-            ImGui::SameLine();
+            // ImGui::SeparatorText("Picking");
+            // ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
+            // ImGui::SameLine();
+            // ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
+            // ImGui::SameLine();
 
             ImGui::EndMenu(); // !Settings
         }
@@ -601,8 +646,8 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
             std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             intptr_t id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
-            if (auto ovm_obj = scene().get_object<OpenVolumeMeshObject>(id)) {
-                OVM::IO::ovmb_write(filepath, ovm_obj->mesh());
+            if (!scene().get_object(id)->save_file(filepath)) {
+                //std::cerr << "failed to save mesh" << std::endl;
             }
         }
         ImGuiFileDialog::Instance()->Close();
@@ -618,9 +663,12 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
     ImGui::End(); // MenuBar
 
+    //--------------------
+    // Sidebar Inspector
+    //--------------------
     if (inspector_enabled_)
     {
-        // Set Viewport
+        // Set Viewport to left or right rectangle
         ImGuiViewport* vp = ImGui::GetMainViewport();
         float sidebar_width = inspector_enabled_? (inspector_rel_width_ * vp->WorkSize.x) : 0.0f;
         vp->WorkPos.x = inspector_right_aligned_?
@@ -634,6 +682,8 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                                  ImGuiWindowFlags_NoCollapse;
         ImGui::Begin("Inspector", nullptr, flags);
 
+        // Allow the user to insert custom
+        // UI Stuff here
         inspector_callback_();
 
         ImGui::SetWindowFontScale(1.0f);
@@ -649,17 +699,19 @@ PickResult Application::request_pick_result(float _x, float _y)
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 
     // We copy FROM the picking texture
-    wgpu::ImageCopyTexture src{};
+    wgpu::TexelCopyTextureInfo src{};
     src.texture = picking_texture_;
     src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
     src.mipLevel = 0;
     src.aspect = wgpu::TextureAspect::All;
 
     // We copy TO the picking buffer
-    wgpu::ImageCopyBuffer dst{};
+    wgpu::TexelCopyBufferInfo dst{};
     dst.buffer = picking_buffer_;
     dst.layout.offset = 0;
-    dst.layout.bytesPerRow = 256; // needs to be multiple of 256
+    // this needs to be a multiple of 256
+    // even if we care only about a 1x1x1x1 pixel
+    dst.layout.bytesPerRow = 256;
     dst.layout.rowsPerImage = 1;
 
     // Copy the single pixel we clicked on (1 pixel is 1x1x1)
@@ -682,21 +734,40 @@ PickResult Application::request_pick_result(float _x, float _y)
     };
 
     auto on_buffer_mapped = [](
-        WGPUBufferMapAsyncStatus status,
-        void* _user_data)
+        WGPUMapAsyncStatus status,
+        WGPUStringView message,
+        void* _user_data, void*)
     {
         Context* context = reinterpret_cast<Context*>(_user_data);
         context->ready = true;
         //std::cout << "Buffer mapped with status " << status << std::endl;
-        if (status != wgpu::BufferMapAsyncStatus::Success) {return;}
+        if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {return;}
 
         // Extract Info from Picking Result
         // and Map clicked position back to world space
-        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
-        context->pick.object_id_ = data[0];
-        context->pick.type_ = data[1];
-        context->pick.index_ = data[2];
 
+        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
+
+        // Index 0 stores the Object ID, so we know which
+        // Objects we clicked. The corresponding object's
+        // render_picking_ui function is called.
+        context->pick.object_id_ = data[0];
+
+        // For Meshes, we store the entity type and handle index
+        // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
+        context->pick.entity_type_ = data[1];
+        context->pick.entity_index_ = data[2];
+
+        // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
+        // are both stored at index 2 of the pixel
+        // TODO: Maybe we want different PickResult Objects instead?
+        context->pick.function_value_ = std::bit_cast<float32_t>(data[2]);
+
+        // At Index 3 we store the fragment's depth value
+        // Based on this, we can reconstruct the 3d position
+        // in world space
+        // (normalized devie coords (ndc) x and y value, we already
+        // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
         context->ndc.z = depth;
         context->ndc.w = 1;
@@ -704,16 +775,20 @@ PickResult Application::request_pick_result(float _x, float _y)
         const auto& p = context->scene->perspective().getProjectionMatrix(context->aspect_ratio);
         Vec4f pos = glm::inverse(p * v) * context->ndc;
         pos /= pos.w;
-        context->pick.position[0] = pos[0];
-        context->pick.position[1] = pos[1];
-        context->pick.position[2] = pos[2];
+        context->pick.position_[0] = pos[0];
+        context->pick.position_[1] = pos[1];
+        context->pick.position_[2] = pos[2];
 
         // unmap the memory
         context->buffer.unmap();
     };
 
-    // Create the Context instance
-    Context context = {false, picking_buffer_};
+    // The context contains everyhting that is required
+    // for our picking computation in on_buffer_mapped.
+    // Is it passed as userdata1
+    Context context;
+    context.ready = false;
+    context.buffer = picking_buffer_;
     context.scene = &scene_;
     context.aspect_ratio = scene_viewport()[2]/scene_viewport()[3];
 
@@ -726,11 +801,24 @@ PickResult Application::request_pick_result(float _x, float _y)
         0, 1
     };
 
-    wgpuBufferMapAsync(picking_buffer_, wgpu::MapMode::Read, 0, sizeof(PickResult), on_buffer_mapped, (void*)&context);
+    WGPUBufferMapCallbackInfo callback_info;
+    callback_info.callback = on_buffer_mapped;
+    callback_info.mode = WGPUCallbackMode_AllowSpontaneous;
+    callback_info.userdata1 = (void*)&context;
+    callback_info.userdata2 = nullptr;
+    callback_info.nextInChain = nullptr;
+
+    wgpuBufferMapAsync(
+        picking_buffer_,
+        wgpu::MapMode::Read,
+        0, sizeof(PickResult),
+        callback_info
+    );
     while (!context.ready) {
         wgpuPollEvents(device_, true);
     }
     return context.pick;
+
 }
 
 void Application::configure_surface()
@@ -818,7 +906,7 @@ void Application::create_picking_texture()
     auto viewport = total_viewport();
 
     wgpu::TextureDescriptor pickDesc{};
-    pickDesc.label = "Picking Texture";
+    pickDesc.label = wgpu::StringView("Picking Texture");
     pickDesc.dimension = wgpu::TextureDimension::_2D;
     pickDesc.size = {
         static_cast<uint32_t>(viewport[2]),

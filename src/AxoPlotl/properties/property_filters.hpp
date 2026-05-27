@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
-#include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
@@ -9,14 +9,16 @@
 #include <type_traits>
 #include <imgui.h>
 #include <AxoPlotl/gui/fonts.hpp>
+#include <AxoPlotl/rendering/draw_range_sliders.hpp>
 
 namespace AxoPlotl
 {
 
 struct PropertyFilterBase
 {
-    virtual std::string name() = 0;
+    virtual std::string name() const = 0;
     virtual void render_ui() = 0;
+    virtual void set_default_settings() = 0;
 };
 
 // template<class Renderer>
@@ -32,15 +34,24 @@ struct PropertyFilterBool : public PropertyFilterBase
 public:
     PropertyFilterBool(OVM::PropertyStorageT<bool>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
-    {}
+    {
+        set_default_settings();
+    }
 
     inline void render_ui() override
     {
         auto& cm = renderer_.color_map();
 
         int b = hist_.render_ui(cm);
-        if (b==0) {show_false_ = true; show_true_ = false;}
-        else if (b==1) {show_false_ = false; show_true_ = true;}
+        if (b==0) {
+            show_false_ = true;
+            show_true_ = false;
+            changed_ = true;
+        } else if (b==1) {
+            show_false_ = false;
+            show_true_ = true;
+            changed_ = true;
+        }
 
         changed_ |= ImGui::Checkbox("False", &show_false_);
         ImGui::SameLine();
@@ -68,8 +79,16 @@ public:
         changed_ = false;
     }
 
-    inline std::string name() override {
+    inline std::string name() const override {
         return "Bool Filter";
+    }
+
+    inline void set_default_settings() override {
+        color_true_ = {0,1,0};
+        color_false_ = {1,0,0};
+        show_true_ = true;
+        show_false_ = true;
+        changed_ = true;
     }
 
 private:
@@ -91,10 +110,7 @@ public:
     PropertyFilterFloatRange(OVM::PropertyStorageT<FT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
-        renderer_.color_map().set_coolwarm();
-        renderer_.property_filter().range_ = {
-            hist_.min(), hist_.max()
-        };
+        set_default_settings();
     }
 
     inline void render_ui() override
@@ -112,11 +128,22 @@ public:
         }
         cm.render_menu();
         // std::cerr << rangef.x << "/"<< rangef.y<< "/"<< hist_.min()<< "/"<< hist_.max() << std::endl;
-        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
+        if (ImGui::InputFloat2("Range", &rangef.x)) {
+            rangef.x = std::clamp<float>(rangef.x, hist_.min(), hist_.max());
+            rangef.y = std::clamp<float>(rangef.y, rangef.x, hist_.max());
+        }
+        draw_range_sliders(rangef.x, rangef.y, hist_.min(), hist_.max(), cm);
     }
 
-    inline std::string name() override {
+    inline std::string name() const override {
         return "Float Range";
+    }
+
+    inline void set_default_settings() override {
+        renderer_.color_map().set_coolwarm();
+        renderer_.property_filter().range_ = {
+            hist_.min(), hist_.max()
+        };
     }
 
 private:
@@ -133,10 +160,7 @@ public:
     PropertyFilterIntRange(OVM::PropertyStorageT<IT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
-        renderer_.color_map().set_coolwarm();
-        renderer_.property_filter().range_ = {
-            hist_.min(), hist_.max()
-        };
+        set_default_settings();
     }
 
     inline void render_ui() override
@@ -149,12 +173,23 @@ public:
             rangef.y = hist_.bucket_max(b);
         }
         cm.render_menu();
-        cm.render_with_sliders<float>(rangef.x, rangef.y, hist_.min(), hist_.max());
+        if (ImGui::InputFloat2("Range", &rangef.x)) {
+            rangef.x = std::clamp<float>(rangef.x, hist_.min(), hist_.max());
+            rangef.y = std::clamp<float>(rangef.y, rangef.x, hist_.max());
+        }
+        draw_range_sliders(rangef.x, rangef.y, hist_.min(), hist_.max(), cm);
     }
 
-    inline std::string name() override {
+    inline std::string name() const override {
         return "Int Range";
     }
+
+    inline void set_default_settings() override {
+        renderer_.color_map().set_coolwarm();
+        renderer_.property_filter().range_ = {
+            hist_.min(), hist_.max()
+    };
+}
 
 private:
     HistogramIT<IT> hist_;
@@ -170,11 +205,7 @@ public:
                            colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
-        vali_ = hist_.min();
-        renderer_.color_map().set_coolwarm();
-        renderer_.property_filter().range_ = {
-            vali_, vali_
-        };
+        set_default_settings();
     }
 
     inline void render_ui() override
@@ -186,8 +217,16 @@ public:
         renderer_.property_filter().range_ = {vali_,vali_};
     }
 
-    inline std::string name() override {
+    inline std::string name() const override {
         return "Int Value";
+    }
+
+    inline void set_default_settings() override {
+        vali_ = hist_.min();
+        renderer_.property_filter().range_ = {
+            vali_, vali_
+        };
+        renderer_.color_map().set_coolwarm();
     }
 
 private:
@@ -201,20 +240,26 @@ requires(is_vector<Vec3T> && vector_dim<Vec3T> == 3)
 struct PropertyFilterVec3 : public PropertyFilterBase
 {
 public:
-    PropertyFilterVec3(VectorRenderer& _renderer) :
+    PropertyFilterVec3(Vector3Renderer& _renderer) :
         renderer_(_renderer)
-    {}
+    {
+        set_default_settings();
+    }
 
     inline void render_ui() override
     {
         ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
     }
 
-    inline std::string name() override {
+    inline std::string name() const override {
         return "Vec3";
     }
+
+    inline void set_default_settings() override {
+        renderer_.vector_scale() = 1.0f;
+    }
 private:
-    VectorRenderer& renderer_;
+    Vector3Renderer& renderer_;
 };
 
 }

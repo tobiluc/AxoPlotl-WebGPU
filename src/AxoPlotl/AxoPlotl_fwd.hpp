@@ -13,9 +13,10 @@ class ColoredCellRenderer;
 class ColoredFaceRenderer;
 class ColoredEdgeRenderer;
 class ColoredVertexRenderer;
-class VectorRenderer;
+class Vector3Renderer;
 class ColorMap;
 class PickConfig;
 class PickResult;
+class HistogramBase;
 
 }

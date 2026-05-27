@@ -33,9 +33,9 @@ void PlottingTool::render_ui()
         ImGui::SeparatorText(AxoPlotl::scene().get_object(selected_id_)->name().c_str());
     }
 
-    ImGui::InputText("x(u,v)", input_.x_.data(), 1024);
-    ImGui::InputText("y(u.v)", input_.y_.data(), 1024);
-    ImGui::InputText("z(u,v)", input_.z_.data(), 1024);
+    ImGui::InputText("x(u,v)", input_.x_, sizeof(input_.x_));
+    ImGui::InputText("y(u.v)", input_.y_, sizeof(input_.y_));
+    ImGui::InputText("z(u,v)", input_.z_, sizeof(input_.z_));
     ImGui::InputFloat2("u", &input_.u_[0]);
     ImGui::InputFloat2("v", &input_.v_[0]);
     ImGui::InputInt("Resolution", &input_.resolution_);
@@ -44,9 +44,9 @@ void PlottingTool::render_ui()
         // Parse Input Text
         ibex::Functions funcs = ibex::common_functions();
         ibex::Variables vars = ibex::common_variables();
-        auto rpn_x = ibex::generate_postfix(ibex::tokenize(input_.x_.c_str()));
-        auto rpn_y = ibex::generate_postfix(ibex::tokenize(input_.y_.c_str()));
-        auto rpn_z = ibex::generate_postfix(ibex::tokenize(input_.z_.c_str()));
+        auto rpn_x = ibex::generate_postfix(ibex::tokenize(input_.x_));
+        auto rpn_y = ibex::generate_postfix(ibex::tokenize(input_.y_));
+        auto rpn_z = ibex::generate_postfix(ibex::tokenize(input_.z_));
         if (!rpn_x.empty() && !rpn_y.empty() && !rpn_z.empty())
         {
             auto func = [&](const float& u, const float& v) -> Vec3f {

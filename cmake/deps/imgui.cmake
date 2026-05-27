@@ -5,7 +5,7 @@ if (NOT TARGET imgui)
     message(STATUS "Fetching ImGui")
     FetchContent_Declare(imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG v1.90.4-docking
+        GIT_TAG docking
         SOURCE_DIR "${EXTERNAL_DIR}/imgui"
     )
     FetchContent_MakeAvailable(imgui)
@@ -27,12 +27,17 @@ if (NOT TARGET imgui)
     target_include_directories(imgui PUBLIC
         ${IMGUI_DIR}
         ${IMGUI_DIR}/backends
+        # ${WEBGPU_INCLUDE_DIR}
     )
-
-
     target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WEBGPU_BACKEND_DAWN)
     #target_compile_definitions(imgui PUBLIC IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
     target_link_libraries(imgui PUBLIC webgpu webgpu_dawn glfw)
+
+    set_source_files_properties(
+        "${EXTERNAL_DIR}/imgui/backends/imgui_impl_wgpu.cpp"
+        PROPERTIES COMPILE_FLAGS "-x objective-c++"
+    )
+
 endif()
 
 if (NOT TARGET ImGuiFileDialog)

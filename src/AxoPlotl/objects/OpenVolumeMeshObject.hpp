@@ -5,7 +5,7 @@
 #include "AxoPlotl/rendering/MeshEdgeRenderer.hpp"
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
-#include "AxoPlotl/rendering/VectorRenderer.hpp"
+#include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
@@ -16,11 +16,10 @@ namespace AxoPlotl
 
 class OpenVolumeMeshObject : public ObjectBase
 {
-private:
+protected:
     OVMVolumeMesh mesh_;
     std::optional<std::filesystem::path> filepath_;
 
-private:
     //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
 
     template<typename EntityTag>
@@ -91,6 +90,8 @@ public:
 
     void recompute_bounding_box() override;
 
+    bool save_file(const std::filesystem::path& _path) const override;
+
     void visualize_property(
         const std::string& _property_name,
         std::optional<OVM::EntityType> _entity_type = std::nullopt,
@@ -100,6 +101,7 @@ public:
         return mesh_;
     }
 
+protected:
     template<typename EntityTag>
     inline auto& colored_entity_renderer();
     template<> inline auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
@@ -108,13 +110,13 @@ public:
     template<> inline auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
     template<typename EntityTag>
-    inline auto& vector_on_entity_renderer();
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Cell>() {return vectors_on_cells_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Face>() {return vectors_on_faces_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Edge>() {return vectors_on_edges_renderer_;}
-    template<> inline auto& vector_on_entity_renderer<OVM::Entity::Vertex>() {return vectors_on_vertices_renderer_;}
+    inline wgpu::Buffer& entity_center_buffer();
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return edges_center_buffer_;}
+    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return vertices_position_buffer_;}
 
-private:
+protected:
     size_t n_positions_;
     wgpu::Buffer vertices_position_buffer_;
     wgpu::Buffer edges_center_buffer_;
@@ -124,10 +126,8 @@ private:
     ColoredEdgeRenderer edge_renderer_;
     ColoredFaceRenderer face_renderer_;
     ColoredCellRenderer cell_renderer_;
-    VectorRenderer vectors_on_vertices_renderer_;
-    VectorRenderer vectors_on_edges_renderer_;
-    VectorRenderer vectors_on_faces_renderer_;
-    VectorRenderer vectors_on_cells_renderer_;
+
+    Vector3Renderer vector3_renderer_;
 };
 
 }

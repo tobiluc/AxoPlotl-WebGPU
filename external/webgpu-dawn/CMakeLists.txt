@@ -1,38 +1,61 @@
+# This file is part of the "Learn WebGPU for C++" book.
+#   https://eliemichel.github.io/LearnWebGPU
+# 
+# MIT License
+# Copyright (c) 2022-2025 Elie Michel and the wgpu-native authors
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 cmake_minimum_required(VERSION 3.0.0...3.24 FATAL_ERROR)
-project(webgpu-backend-dawn VERSION 1.0.0)
+project(webgpu VERSION 1.0.0)
 
-message(STATUS "Using Dawn backend for WebGPU")
+set(WEBGPU_BACKEND "WGPU" CACHE STRING "Backend implementation of WebGPU. Possible values are EMSCRIPTEN, WGPU and DAWN (it does not matter when using emcmake)")
+option(WEBGPU_BUILD_FROM_SOURCE "When ON, fetch the source code of the backend and build it. When OFF, fetch a precompiled version of the backend." OFF)
+set_property(CACHE WEBGPU_BACKEND PROPERTY STRINGS EMSCRIPTEN WGPU DAWN)
 
-add_library(webgpu INTERFACE)
+# NB: There are also backend-specific options in <backend>/CMakeLists.txt
 
-if (EMSCRIPTEN)
+if (TARGET webgpu)
+	message(STATUS "Target 'webgpu' already exists.")
+	return()
+endif()
 
-	target_include_directories(webgpu INTERFACE
-		"${CMAKE_CURRENT_SOURCE_DIR}/include-emscripten"
-	)
+# A couple of utility functions
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/utils.cmake")
 
-	# This is used to advertise the flavor of WebGPU that this zip provides
-	target_compile_definitions(webgpu INTERFACE WEBGPU_BACKEND_EMSCRIPTEN)
+# Convert to uppercase, so that users can provide value with any case they like
+string(TOUPPER ${WEBGPU_BACKEND} WEBGPU_BACKEND_U)
 
-	target_link_options(webgpu INTERFACE
-		-sUSE_WEBGPU # Handle WebGPU symbols
-	)
+if (EMSCRIPTEN OR WEBGPU_BACKEND_U STREQUAL "EMSCRIPTEN")
 
-else (EMSCRIPTEN)
+	add_subdirectory(emscripten)
 
-	include(cmake/FetchDawn.cmake)
+elseif (WEBGPU_BACKEND_U STREQUAL "WGPU")
 
-	target_link_libraries(webgpu INTERFACE webgpu_dawn)
-	target_include_directories(webgpu INTERFACE
-		"${CMAKE_CURRENT_SOURCE_DIR}/include"
-		"${CMAKE_BINARY_DIR}/_deps/dawn-src/include"
-	)
+	add_subdirectory(wgpu-native)
 
-	# This is used to advertise the flavor of WebGPU that this zip provides
-	target_compile_definitions(webgpu INTERFACE WEBGPU_BACKEND_DAWN)
+elseif (WEBGPU_BACKEND_U STREQUAL "DAWN")
 
-endif (EMSCRIPTEN)
+	add_subdirectory(dawn)
 
-# Does nothing, as this dawn-based distribution of WebGPU is statically linked
-function(target_copy_webgpu_binaries Target)
-endfunction()
+else()
+
+	message(FATAL_ERROR "Invalid value for WEBGPU_BACKEND: possible values are EMSCRIPTEN, WGPU, end DAWN, but '${WEBGPU_BACKEND_U}' was provided.")
+
+endif()

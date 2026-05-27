@@ -1,7 +1,8 @@
 #pragma once
 
 #include <AxoPlotl/IO/read_shader.hpp>
-#include "webgpu/webgpu.hpp"
+#include <webgpu/webgpu.h>
+#include <webgpu/webgpu.hpp>
 
 namespace AxoPlotl
 {
@@ -11,7 +12,7 @@ inline wgpu::DepthStencilState create_default_depth_state()
     wgpu::DepthStencilState depthStencilState;
     depthStencilState = wgpu::Default;
     depthStencilState.depthCompare = wgpu::CompareFunction::Less;
-    depthStencilState.depthWriteEnabled = true;
+    depthStencilState.depthWriteEnabled = wgpu::OptionalBool::True;
     wgpu::TextureFormat depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
     depthStencilState.format = depthTextureFormat;
 
@@ -38,7 +39,7 @@ inline wgpu::FragmentState create_fragment_state(
 
     wgpu::FragmentState fragmentState{};
     fragmentState.module = _shader_module;
-    fragmentState.entryPoint = "fs_main";
+    fragmentState.entryPoint = wgpu::StringView("fs_main");
     fragmentState.targetCount = 2;
     fragmentState.targets = color_targets;
 
@@ -76,21 +77,21 @@ inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     const char* _name = "Unlabeled Shader Module")
 {
     // Specify the WGSL part of the shader module descriptor
-    wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
-    wgslDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
+    wgpu::ShaderSourceWGSL wgslDesc = {};
+    wgslDesc.chain.sType = wgpu::SType::ShaderSourceWGSL;
     std::string parsed_shader_code = IO::parse_shader_file_with_includes(_path);
-    wgslDesc.code = parsed_shader_code.c_str();
+    wgslDesc.code = wgpu::StringView(parsed_shader_code.c_str());
 
     wgpu::ShaderModuleDescriptor desc = {};
-#ifdef WEBGPU_BACKEND_WGPU
-    desc.hintCount = 0;
-    desc.hints = nullptr;
-#endif
+// #ifdef WEBGPU_BACKEND_WGPU
+//     desc.hintCount = 0;
+//     desc.hints = nullptr;
+// #endif
 
     // Connect the chain
     desc.nextInChain = &wgslDesc.chain;
     desc.nextInChain = reinterpret_cast<const WGPUChainedStruct*>(&wgslDesc);
-    desc.label = _name;
+    desc.label = wgpu::StringView(_name);
 
     return _device.createShaderModule(desc);
 }
