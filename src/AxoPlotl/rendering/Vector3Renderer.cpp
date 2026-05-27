@@ -47,8 +47,6 @@ void Vector3Renderer::create_buffers()
         desc.label = wgpu::StringView("Vector Buffer");
 
         vector_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -60,8 +58,6 @@ void Vector3Renderer::create_buffers()
         desc.label = wgpu::StringView("Vector Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -106,21 +102,18 @@ void Vector3Renderer::create_bind_group()
     groupEntries[0].buffer = uniform_buffer_;
     groupEntries[0].offset = 0;
     groupEntries[0].size = sizeof(Uniforms);
-    std::cout << "0: Vector Uniforms #" << groupEntries[0].size << std::endl;
 
     // 1 - Positions
     groupEntries[1].binding = 1;
     groupEntries[1].buffer = position_buffer_;
     groupEntries[1].offset = 0;
     groupEntries[1].size = sizeof(Position) * std::max(n_positions_,1lu);
-    std::cout << "1: Vector Positions #" << groupEntries[1].size << std::endl;
 
     // 2 - Vectors
     groupEntries[2].binding = 2;
     groupEntries[2].buffer = vector_buffer_;
     groupEntries[2].offset = 0;
     groupEntries[2].size = sizeof(Vec4f) * std::max(n_positions_,1lu);
-    std::cout << "2: Vectors #" << groupEntries[2].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -207,7 +200,6 @@ void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
         _data.data(),
         sizeof(Vec4f) * _data.size()
         );
-    std::cout << "Update Vector Data" << std::endl;
 }
 
 void Vector3Renderer::render(

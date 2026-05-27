@@ -114,8 +114,6 @@ void SHRenderer::create_buffers()
             indices.data(),
             sizeof(uint32_t) * indices.size()
             );
-
-        //std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -127,8 +125,6 @@ void SHRenderer::create_buffers()
         desc.label = wgpu::StringView("SH Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
-
-        //std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -172,17 +168,14 @@ void SHRenderer::create_bind_group()
     groupEntries[0].buffer = uniform_buffer_;
     groupEntries[0].offset = 0;
     groupEntries[0].size = sizeof(Uniforms);
-    std::cout << "0: SH Uniforms #" << groupEntries[0].size << std::endl;
 
     // 2 - Property Color Map
     groupEntries[1].binding = 1;
     groupEntries[1].textureView = color_map_.view_;
-    //std::cout << "2: Mesh Vertex Color Map #" << groupEntries[2].size << std::endl;
 
     // 3 - Color Map Sampler
     groupEntries[2].binding = 2;
     groupEntries[2].sampler = color_map_.sampler_;
-    //std::cout << "3: Mesh Vertex Color Sampler #" << groupEntries[3].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -296,7 +289,6 @@ void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
         vertices_.data(),
         sizeof(Vertex) * vertices_.size()
         );
-    //std::cout << "Update SH Vertex Data" << std::endl;
 }
 
 void SHRenderer::render(

@@ -31,7 +31,7 @@ private:
         void update();
     } time_;
 
-    float font_scale_ = 1.0f;
+    //float font_scale_ = 1.0f;
     float inspector_rel_width_ = 0.3f;
     bool inspector_right_aligned_ = false;
     bool inspector_enabled_ = true;

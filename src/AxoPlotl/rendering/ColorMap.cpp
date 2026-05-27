@@ -230,8 +230,6 @@ void ColorMap::update(const std::vector<f16>& _data)
         layout_,
         extent()
     );
-
-    std::cout << "Update Color Map" << std::endl;
 }
 
 void ColorMap::render_menu()

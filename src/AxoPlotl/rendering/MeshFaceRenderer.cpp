@@ -71,8 +71,6 @@ void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>
             inds.data(),
             sizeof(FaceIndex) * inds.size()
             );
-
-        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Property Buffer
@@ -84,8 +82,6 @@ void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>
         desc.label = wgpu::StringView("Mesh Face Property Buffer");
 
         property_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 
     // Uniform Buffer
@@ -97,8 +93,6 @@ void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>
         desc.label = wgpu::StringView("Mesh Face Uniform Buffer");
 
         uniform_buffer_ = device.createBuffer(desc);
-
-        std::cout << desc.label.data << " Size: " << desc.size << std::endl;
     }
 }
 
@@ -154,31 +148,26 @@ void ColoredFaceRenderer::create_bind_group()
     groupEntries[0].buffer = uniform_buffer_;
     groupEntries[0].offset = 0;
     groupEntries[0].size = sizeof(Uniforms);
-    std::cout << "0: Mesh Face Uniforms #" << groupEntries[0].size << std::endl;
 
     // 1 - Positions
     groupEntries[1].binding = 1;
     groupEntries[1].buffer = position_buffer_;
     groupEntries[1].offset = 0;
     groupEntries[1].size = sizeof(Position) * n_positions_;
-    std::cout << "1: Mesh Face Positions #" << groupEntries[1].size << std::endl;
 
     // 2 - Property Color Map
     groupEntries[2].binding = 2;
     groupEntries[2].textureView = property_color_map_.view_;
-    std::cout << "2: Mesh Face Color Map #" << groupEntries[2].size << std::endl;
 
     // 3 - Color Map Sampler
     groupEntries[3].binding = 3;
     groupEntries[3].sampler = property_color_map_.sampler_;
-    std::cout << "3: Mesh Face Color Sampler #" << groupEntries[3].size << std::endl;
 
     // 4 - Properties
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
     groupEntries[4].size = sizeof(Property::Data) * std::max(n_faces_,1lu);
-    std::cout << "4: Mesh Face Properties #" << groupEntries[4].size << std::endl;
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -283,7 +272,6 @@ void ColoredFaceRenderer::update_property_data(const std::vector<Property::Data>
         _data.data(),
         sizeof(Property::Data) * _data.size()
         );
-    std::cout << "Update Face Property Data" << std::endl;
 }
 
 void ColoredFaceRenderer::render(

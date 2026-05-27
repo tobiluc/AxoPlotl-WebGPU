@@ -5,6 +5,7 @@
 #include "IconsFontAwesome7.h"
 #include "imgui.h"
 #include <AxoPlotl/Application.hpp>
+#include <OpenVolumeMesh/IO/ovmb_write.hh>
 
 namespace AxoPlotl
 {
@@ -538,6 +539,12 @@ void OpenVolumeMeshObject::recompute_bounding_box()
     for (const auto& p : mesh_.vertex_positions()) {
         bbox_.expand_with_point(p);
     }
+}
+
+bool OpenVolumeMeshObject::save_file(const std::filesystem::path& _path) const
+{
+    return OVM::IO::ovmb_write(_path, mesh_)
+           == OVM::IO::WriteResult::Ok;
 }
 
 }

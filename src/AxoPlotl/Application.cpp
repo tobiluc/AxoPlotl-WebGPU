@@ -121,12 +121,10 @@ bool Application::init()
 
     surface_ = glfwGetWGPUSurface(instance, window_);
 
-    std::cout << "Requesting adapter..." << std::endl;
     //surface_ = glfwGetWGPUSurface(instance, _window);
     wgpu::RequestAdapterOptions adapterOpts = {};
     adapterOpts.compatibleSurface = surface_;
     adapter_ = instance.requestAdapter(adapterOpts);
-    std::cout << "Got adapter: " << adapter_ << std::endl;
 
     instance.release();
 
@@ -134,7 +132,6 @@ bool Application::init()
     // Device
     //------------------
 
-    std::cout << "Requesting device..." << std::endl;
     wgpu::DeviceDescriptor deviceDesc = {};
     deviceDesc.label = wgpu::StringView("My Device");
     deviceDesc.requiredFeatureCount = 0;
@@ -177,7 +174,6 @@ bool Application::init()
     deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
 
     device_ = adapter_.requestDevice(deviceDesc);
-    std::cout << "Got device: " << device_ << std::endl;
     //device.getLimits(&supportedLimits);
     //std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
 
@@ -528,7 +524,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                              ImGuiWindowFlags_NoInputs |
                              ImGuiWindowFlags_MenuBar;
     ImGui::Begin("MenuBar", nullptr, flags);
-    ImGui::SetWindowFontScale(font_scale_);
+    //ImGui::SetWindowFontScale(font_scale_);
 
     //ImGui::Text("Render Settings");
     //ImGui::ColorEdit3("Background", clear_color_);
@@ -600,7 +596,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                 if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
                 ImGui::EndMenu(); //!Theme
             }
-            ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
+            //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
 
             ImGui::SeparatorText("Scene");
             ImGui::ColorEdit3("Background", clear_color_);
@@ -650,8 +646,8 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
             std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             intptr_t id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
-            if (auto ovm_obj = scene().get_object<OpenVolumeMeshObject>(id)) {
-                OVM::IO::ovmb_write(filepath, ovm_obj->mesh());
+            if (!scene().get_object(id)->save_file(filepath)) {
+                //std::cerr << "failed to save mesh" << std::endl;
             }
         }
         ImGuiFileDialog::Instance()->Close();

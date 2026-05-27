@@ -90,6 +90,8 @@ public:
 
     void recompute_bounding_box() override;
 
+    bool save_file(const std::filesystem::path& _path) const override;
+
     void visualize_property(
         const std::string& _property_name,
         std::optional<OVM::EntityType> _entity_type = std::nullopt,
