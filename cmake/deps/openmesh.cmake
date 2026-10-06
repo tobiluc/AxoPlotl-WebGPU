@@ -6,5 +6,5 @@ if (NOT TARGET OpenMeshCore)
        SOURCE_DIR "${EXTERNAL_DIR}/OpenMesh"
        )
    FetchContent_MakeAvailable(openmesh)
-   #find_package(OpenMesh REQUIRED)
+   target_compile_features(OpenMeshCore PRIVATE cxx_std_20)
 endif()

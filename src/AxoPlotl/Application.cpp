@@ -541,22 +541,6 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                     "Mesh files (*.obj *.ovm *.ovmb *ply){.obj,.ovm,.ovmb,.ply}",
                     config);
             }
-            if (ImGui::BeginMenu("Save Mesh")) {
-                for (auto& obj : scene().get_objects()) {
-                    ImGui::PushID(obj->id());
-                    if (ImGui::MenuItem(obj->name().c_str())) {
-                        IGFD::FileDialogConfig config;
-                        config.path = "..";
-                        config.userDatas = (void*)(intptr_t)obj->id();
-                        ImGuiFileDialog::Instance()->OpenDialog(
-                            "SaveMeshDialogKey", "Choose File",
-                            "Mesh files (*.ovmb){.ovmb}",
-                            config);
-                    }
-                    ImGui::PopID();
-                }
-                ImGui::EndMenu();
-            }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
             }
@@ -637,18 +621,6 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
             std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
             scene().add_mesh(filepath);
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
-
-    // Save Mesh File Dialog
-    if (ImGuiFileDialog::Instance()->Display("SaveMeshDialogKey")) {
-        if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            intptr_t id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
-            if (!scene().get_object(id)->save_file(filepath)) {
-                //std::cerr << "failed to save mesh" << std::endl;
-            }
         }
         ImGuiFileDialog::Instance()->Close();
     }

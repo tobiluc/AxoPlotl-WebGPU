@@ -42,7 +42,7 @@ public:
 
     virtual void render_ui_picking(PickResult _p, const PickConfig& _cfg) = 0;
 
-    virtual bool save_file(const std::filesystem::path& _path) const;
+    virtual bool export_file(const std::filesystem::path& _path) const;
 
     inline const BoundingBox& bounding_box() const {
         return bbox_;
