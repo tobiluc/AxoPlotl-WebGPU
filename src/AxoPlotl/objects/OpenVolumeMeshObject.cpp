@@ -541,7 +541,7 @@ void OpenVolumeMeshObject::recompute_bounding_box()
     }
 }
 
-bool OpenVolumeMeshObject::save_file(const std::filesystem::path& _path) const
+bool OpenVolumeMeshObject::export_file(const std::filesystem::path& _path) const
 {
     return OVM::IO::ovmb_write(_path, mesh_)
            == OVM::IO::WriteResult::Ok;

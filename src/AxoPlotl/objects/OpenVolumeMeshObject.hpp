@@ -90,7 +90,7 @@ public:
 
     void recompute_bounding_box() override;
 
-    bool save_file(const std::filesystem::path& _path) const override;
+    bool export_file(const std::filesystem::path& _path) const override;
 
     void visualize_property(
         const std::string& _property_name,

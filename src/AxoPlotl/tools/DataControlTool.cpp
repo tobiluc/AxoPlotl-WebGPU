@@ -1,5 +1,6 @@
 #include "DataControlTool.hpp"
 #include "AxoPlotl/AxoPlotl.hpp"
+#include "ImGuiFileDialog.h"
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/gui/fonts.hpp>
@@ -70,28 +71,16 @@ void DataControlTool::render_ui()
     ImGui::Separator();
 
     // Data Control per Object
-    for (const auto& obj : AxoPlotl::scene().get_objects()) {
+    for (const auto& obj : AxoPlotl::scene().get_objects())
+    {
         ImGui::PushID(obj->id());
 
+        // Target Toggle
         ImGui::Checkbox("##V", &obj->target());
 
         ImGui::SameLine();
-        // Visible Checkbox
-        if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-            obj->visible() = !obj->visible();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
-            AxoPlotl::scene().zoom_to_box(obj->bounding_box());
-            obj->visible() = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_GEAR)) {
-            ImGui::OpenPopup("popup_object_settings");
-            settings_object_id_ = obj->id();
-        }
-        ImGui::SameLine();
-        // Toggle Selected
+
+        // Selectable Name
         if (ImGui::Selectable((obj->name()).c_str())) {
             if (info_object_id_ == obj->id()) {
                 info_object_id_ = -1;
@@ -100,11 +89,38 @@ void DataControlTool::render_ui()
             }
         }
 
-        // Settings Popup
-        if (settings_object_id_ >= 0 && ImGui::BeginPopup("popup_object_settings"))
-        {
-            AxoPlotl::scene().get_object(settings_object_id_)->render_ui_settings();
-            ImGui::EndPopup();
+        // Visible Toggle
+        if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+            obj->visible() = !obj->visible();
+        }
+
+        ImGui::SameLine();
+
+        // Zoom Button
+        if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
+            AxoPlotl::scene().zoom_to_box(obj->bounding_box());
+            obj->visible() = true;
+        }
+
+        ImGui::SameLine();
+
+        // Settings Button
+        if (ImGui::Button(ICON_FA_GEAR)) {
+            ImGui::OpenPopup("popup_object_settings");
+            settings_object_id_ = obj->id();
+        }
+
+        ImGui::SameLine();
+
+        // Export Button
+        if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
+            IGFD::FileDialogConfig cfg;
+            cfg.path = "..";
+            cfg.userDatas = (void*)(intptr_t)obj->id();
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "SaveMeshDialogKey", "Choose File",
+                "",
+                cfg);
         }
 
         // Expand Menu
@@ -114,8 +130,36 @@ void DataControlTool::render_ui()
                 obj->deleted() = true;
             }
         }
+
+        // Settings Popup
+        if (settings_object_id_ >= 0
+            && ImGui::BeginPopup("popup_object_settings"))
+        {
+            AxoPlotl::scene().get_object(settings_object_id_)->render_ui_settings();
+            ImGui::EndPopup();
+        }
+
         ImGui::PopID();
         ImGui::Separator();
+    }
+
+    // Export File Dialog
+    if (ImGuiFileDialog::Instance()->Display("SaveMeshDialogKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            intptr_t export_obj_id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
+            if (!scene().get_object(export_obj_id)->export_file(filepath)) {
+                ImGui::OpenPopup("popup_export_error");
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Export Error Popup
+    if (ImGui::BeginPopup("popup_export_error"))
+    {
+        ImGui::Text("Failed to export object. Maybe exporting is not supported?");
+        ImGui::EndPopup();
     }
 
     // Property Visualization

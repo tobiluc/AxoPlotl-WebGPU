@@ -45,11 +45,12 @@ target_link_libraries(AxoPlotlCore PUBLIC
     imgui
     ImGuiFileDialog
     nlohmann_json::nlohmann_json
-    # OpenMeshCore
+    OpenMeshCore
     # OpenMeshTools
     OpenVolumeMesh::OpenVolumeMesh
     rapidobj::rapidobj
     ibex
+    ToLoG
 )
 
 add_executable(AxoPlotlApp
