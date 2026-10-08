@@ -53,7 +53,12 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
         mesh.request_vertex_colors();
         mesh.request_vertex_texcoords2D();
         mesh.request_face_normals();
-        OpenMesh::IO::Options opt(OpenMesh::IO::Options::VertexColor);
+
+        OpenMesh::IO::Options opt;
+        opt += OpenMesh::IO::Options::VertexColor;
+        opt += OpenMesh::IO::Options::FaceNormal;
+        opt += OpenMesh::IO::Options::VertexTexCoord;
+        opt += OpenMesh::IO::Options::Custom;
         if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
             openmesh_to_openvolumemesh(mesh, res.mesh_);
             res.status_ = ReadMeshStatus::OK;
