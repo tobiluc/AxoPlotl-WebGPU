@@ -75,6 +75,7 @@ is MODE_COLOR (Somehow wrong mode in buffer?). In some cases, only
 the vertices are rendered instead of both entitites.
 - [x] Z-Fighting between Edges/Faces (correct quad vertex order seems to have fixed this too)
 - [x] Edges are thinner in the middle (wrong vertex order in quad?)
+- [ ] Z-Fighting between Faces/Cells for large scale meshes - precision error?
 
 
 ### Backend Version Update
