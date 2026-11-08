@@ -108,6 +108,10 @@ public:
         return axis_renderer_.enabled();
     }
 
+    PerspectiveCamera& camera() {
+        return perspective_;
+    }
+
 protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;

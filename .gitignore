@@ -1,5 +1,6 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
+imgui.ini
 external/*
 *~
 *.autosave

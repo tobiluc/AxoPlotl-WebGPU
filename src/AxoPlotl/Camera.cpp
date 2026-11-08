@@ -9,66 +9,51 @@ namespace AxoPlotl
 
 void PerspectiveCamera::update(GLFWwindow* window)
 {
-    // Compute Pitch/Yaw based on Input
+    float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
     if (!ImGui::GetIO().WantCaptureMouse)
     {
         // Zoom
-        float dy = Input::Mouse::SCROLL_DELTA[1];
-        if (dy) {
-            dy *= sensitivity_;
-            orbit_distance_ = glm::clamp(orbit_distance_ * (1.0f-dy), near, far);
+        float scroll = Input::Mouse::SCROLL_DELTA[1];
+        if (scroll) {
+            scroll *= sensitivity_;
+            orbit_distance = glm::clamp(orbit_distance * (1.0f-scroll), near_plane_, far_plane_);
         }
 
         // Pan
         if (Input::Mouse::LEFT_PRESSED)
         {
-            float dx = Input::Mouse::POSITION_DELTA[0];
-            float dy = Input::Mouse::POSITION_DELTA[1];
+            float dx = Input::Mouse::POSITION_DELTA[0] * sensitivity_;
+            float dy = Input::Mouse::POSITION_DELTA[1] * sensitivity_;
 
-            dx *= sensitivity_;
-            dy *= sensitivity_;
+            bool shift_pressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                                glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 
-            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+            if (shift_pressed) {
                 // Shift Move orbit target
+                float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f);
 
-                glm::vec3 forward = glm::normalize(orbit_target_ - position_);
-                glm::vec3 right   = glm::normalize(glm::cross(forward, world_up));
-                up_ = glm::normalize(glm::cross(right, forward));
-
-                float pan_speed = pan_speed_ * orbit_distance_ * tan(fov_ * 0.5f);
-
-                orbit_target_ -= right * dx * pan_speed;
-                orbit_target_ += up_ * dy * pan_speed;
+                orbit_target_ -= (orientation_ * RIGHT) * dx * pan_speed;
+                orbit_target_ += (orientation_ * UP) * dy * pan_speed;
             }
-            else
-            {
-                // Rotate
-                yaw_ -= dx;
-                pitch_ = glm::clamp(pitch_ - dy, -1.5f, 1.5f); // between -89 and 89 degrees
+            else {
+                // Orbit
+                glm::quat rot_pitch = glm::angleAxis(dy, RIGHT);
+                glm::quat rot_yaw = glm::angleAxis(-dx, UP);
+                orientation_ = glm::normalize(orientation_ * rot_yaw * rot_pitch);
             }
         }
     }
 
-    // Update Vectors
-    glm::vec3 offset;
-    offset.x = orbit_distance_ * cos(pitch_) * sin(yaw_);
-    offset.y = orbit_distance_ * sin(pitch_);
-    offset.z = orbit_distance_ * cos(pitch_) * cos(yaw_);
-
-    position_ = orbit_target_ + offset;
-
-    glm::vec3 forward = glm::normalize(-offset);
-    glm::vec3 right = glm::normalize(glm::cross(forward, world_up));
-    up_ = glm::normalize(glm::cross(right, forward));
+    eye_position_ = orbit_target_ +
+        orientation_ * (-FORWARD * orbit_distance);
 }
 
 void PerspectiveCamera::reset(GLFWwindow *window) {
-    orbit_target_ = glm::vec3(0.0f);
-    orbit_distance_ = 10.0f;
+    orbit_target_ = {0,0,0};
+    eye_position_ = {0,0,1};
+    orientation_ = {1,0,0,0};
     fov_ = 0.25*M_PI;
-    pitch_ = yaw_ = 0;
 }
 
 // void OrthographicCamera::update(GLFWwindow* window) {
@@ -98,8 +83,44 @@ void PerspectiveCamera::reset(GLFWwindow *window) {
 
 void PerspectiveCamera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
 {
-    orbit_target_ = 0.5f*(min+max);
-    orbit_distance_ = glm::distance(max, min);
+    float required_distance = 0.0f;
+    orbit_target_ = (min + max) * 0.5f;
+
+    float aspect_ratio = 1; // todo - use actual ratio
+    float half_fov_y = fov_ * 0.5f;
+    float half_fov_x = std::atan(std::tan(half_fov_y) * aspect_ratio);
+
+    for (int x = 0; x < 2; ++x) {
+        for (int y = 0; y < 2; ++y) {
+            for (int z = 0; z < 2; ++z)
+            {
+                glm::vec3 corner(
+                    x? max.x : min.x,
+                    y? max.y : min.y,
+                    z? max.z : min.z
+                );
+
+                glm::vec3 local = glm::inverse(orientation_) *
+                    (corner - orbit_target_);
+
+                float required_x =
+                    std::abs(local.x) / std::tan(half_fov_x) + local.z;
+
+                float required_y =
+                    std::abs(local.y) / std::tan(half_fov_y) + local.z;
+
+                required_distance = std::max(
+                    required_distance,
+                    std::max(required_x, required_y)
+                );
+            }
+        }
+    }
+
+    required_distance *= 1.2f; // padding
+
+    eye_position_ = orbit_target_ +
+        orientation_ * (-FORWARD * required_distance);
 }
 
 }

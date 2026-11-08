@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/common.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace AxoPlotl
 {
@@ -12,4 +13,5 @@ namespace AxoPlotl
     using Mat3x3f = glm::mat<3,3,float>;
     using Mat4x4f = glm::mat<4,4,float>;
     using Vec4ui = glm::vec<4,uint32_t>;
+    using Quat = glm::quat;
 }

@@ -567,24 +567,46 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
         if (ImGui::BeginMenu("Settings"))
         {
-            ImGui::SeparatorText("UI");
-            ImGui::Checkbox("Inspector", &inspector_enabled_);
-            ImGui::SameLine();
-            ImGui::Checkbox("Right", &inspector_right_aligned_);
-            ImGui::SliderFloat("Width", &inspector_rel_width_, 0.1f, 0.9f);
+            if (ImGui::BeginMenu("Inspector")) {
+                ImGui::Checkbox("Right", &inspector_right_aligned_);
+                ImGui::SliderFloat("Width", &inspector_rel_width_, 0.1f, 0.9f);
+
+                ImGui::EndMenu(); //!Inspector Settings
+            }
+
+            //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
+
+            if (ImGui::BeginMenu("Scene")) {
+
+                if (ImGui::BeginMenu("Camera")) {
+                    ImGui::SliderFloat("Sensitivity", &scene().camera().sensitivity(), 0.001f, 0.02f);
+                    ImGui::SliderFloat("Pan Speed", &scene().camera().pan_speed(), 0.5f, 4.0f);
+                    ImGui::InputFloat3("Orbit Center", &scene().camera().orbit_target()[0]);
+                    ImGui::SliderFloat("FOV", &scene().camera().fov(), 0.1*M_PI, 0.9*M_PI);
+                    ImGui::SliderFloat("Near Plane", &scene().camera().near_plane(), 1.0f/256.0f, 1.0/16.0f);
+                    ImGui::SliderFloat("Far Plane", &scene().camera().far_plane(), (1<<6), (1<<12));
+                    if (ImGui::Button("Reset")) {
+                        scene().camera().reset(window_);
+                    }
+
+                    ImGui::EndMenu(); //!Camera Settings
+                }
+
+                ImGui::ColorEdit3("Background", clear_color_);
+                ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
+
+                ImGui::EndMenu(); //!Scene Settings
+            }
+
             if (ImGui::BeginMenu("Theme")) {
                 if (ImGui::MenuItem("Dark")) {GUI::apply_theme(GUI::Theme::Dark);}
                 if (ImGui::MenuItem("Light")) {GUI::apply_theme(GUI::Theme::Light);}
                 if (ImGui::MenuItem("Classic")) {GUI::apply_theme(GUI::Theme::Classic);}
                 if (ImGui::MenuItem("Modern Dark")) {GUI::apply_theme(GUI::Theme::ModernDark);}
                 if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
-                ImGui::EndMenu(); //!Theme
-            }
-            //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
 
-            ImGui::SeparatorText("Scene");
-            ImGui::ColorEdit3("Background", clear_color_);
-            ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
+                ImGui::EndMenu(); //!Theme Settings
+            }
 
             // ImGui::SeparatorText("Picking");
             // ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
@@ -699,7 +721,6 @@ PickResult Application::request_pick_result(float _x, float _y)
         bool ready;
         wgpu::Buffer buffer;
         PickResult pick;
-        Vec4f ndc;
         Scene* scene;
         Vec4f scene_viewport;
         float aspect_ratio;
@@ -741,11 +762,10 @@ PickResult Application::request_pick_result(float _x, float _y)
         // (normalized devie coords (ndc) x and y value, we already
         // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
-        context->ndc.z = depth;
-        context->ndc.w = 1;
+        context->pick.ndc_.z = depth;
         const auto& v = context->scene->perspective().getViewMatrix();
         const auto& p = context->scene->perspective().getProjectionMatrix(context->aspect_ratio);
-        Vec4f pos = glm::inverse(p * v) * context->ndc;
+        Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
         pos /= pos.w;
         context->pick.position_[0] = pos[0];
         context->pick.position_[1] = pos[1];
@@ -764,13 +784,13 @@ PickResult Application::request_pick_result(float _x, float _y)
     context.scene = &scene_;
     context.aspect_ratio = scene_viewport()[2]/scene_viewport()[3];
 
-    // Get x and y components of Noramlzied Device Coordinates
+    // Get x and y components of Normalized Device Coordinates
     _x -= scene_viewport()[0];
     _y -= scene_viewport()[1];
-    context.ndc = {
-        (2.0*_x)/scene_viewport()[2] - 1.0,
-        1.0-(2.0*_y)/scene_viewport()[3],
-        0, 1
+    context.pick.ndc_ = {
+        std::clamp((2.0*_x)/scene_viewport()[2] - 1.0, -1.0, 1.0),
+        std::clamp(1.0-(2.0*_y)/scene_viewport()[3], -1.0, 1.0),
+        0
     };
 
     WGPUBufferMapCallbackInfo callback_info;

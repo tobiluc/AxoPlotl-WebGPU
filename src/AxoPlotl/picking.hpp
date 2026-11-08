@@ -22,6 +22,7 @@ struct PickResult
     float function_value_ = 0;
 
     Vec3f position_;
+    Vec3f ndc_;
 
     friend inline std::ostream& operator<<(std::ostream& _os, const PickResult& _p) {
         return _os << _p.object_id_ << "/"<< _p.entity_type_ << "/"<< _p.entity_index_ << "/"
