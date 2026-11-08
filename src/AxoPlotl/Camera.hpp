@@ -33,7 +33,8 @@ public:
         return lookAt(eye_position_, orbit_target_, orientation_ * UP);
     }
 
-    glm::mat4 getProjectionMatrix(float width_over_height) const {
+    glm::mat4 getProjectionMatrix(const Vec4f& _viewport) const {
+        float width_over_height = _viewport[2]/_viewport[3];
         return glm::perspective(fov_, width_over_height, near_plane_, far_plane_);
     }
 
@@ -43,17 +44,7 @@ public:
 
     void zoom_to_box(const glm::vec3& min, const glm::vec3& max);
 
-    float& sensitivity() {return sensitivity_;}
-
-    float& pan_speed() {return pan_speed_;}
-
-    float& near_plane() {return near_plane_;}
-
-    float& far_plane() {return far_plane_;}
-
-    float& fov() {return fov_;}
-
-    Vec3f& orbit_target() {return orbit_target_;}
+    bool render_settings_ui(GLFWwindow* _window);
 };
 
 }

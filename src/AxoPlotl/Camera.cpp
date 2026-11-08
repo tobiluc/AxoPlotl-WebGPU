@@ -123,4 +123,40 @@ void PerspectiveCamera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
         orientation_ * (-FORWARD * required_distance);
 }
 
+bool PerspectiveCamera::render_settings_ui(GLFWwindow* _window)
+{
+    bool changed = false;
+
+    if (ImGui::InputFloat("Sensitivity", &sensitivity_)) {
+        sensitivity_ = std::clamp(sensitivity_, 0.001f, 0.02f);
+        changed = true;
+    }
+
+    if (ImGui::InputFloat("Pan Speed", &pan_speed_)) {
+        pan_speed_ = std::clamp(pan_speed_, .5f, 4.f);
+        changed = true;
+    }
+
+    changed |= ImGui::InputFloat3("Orbit Center", &orbit_target_[0]);
+    changed |= ImGui::InputFloat3("Eye Position", &eye_position_[0]);
+
+    if (ImGui::InputFloat("FOV", &fov_)) {
+        fov_ = std::clamp<float>(fov_, 0.1*M_PI, 0.9*M_PI);
+        changed = true;
+    }
+
+    if (ImGui::InputFloat2("Near/Far Plane", &near_plane_)) {
+        near_plane_ = std::clamp<float>(near_plane_, 1.f/256.0f, 1.f/16.0f);
+        far_plane_ = std::clamp<float>(far_plane_, (1<<6), (1<<12));
+        changed = true;
+    }
+
+    if (ImGui::Button("Reset")) {
+        reset(_window);
+        changed = true;
+    }
+
+    return changed;
+}
+
 }

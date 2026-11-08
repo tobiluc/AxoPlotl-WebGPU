@@ -50,7 +50,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     auto viewport = app_->scene_viewport();
     perspective_.update(app_->window());
     const Mat4x4f& view = perspective_.getViewMatrix();
-    const Mat4x4f& proj = perspective_.getProjectionMatrix(viewport[2]/viewport[3]);
+    const Mat4x4f& proj = perspective_.getProjectionMatrix(viewport);
 
     const Mat4x4f view_proj = proj * view;
 

@@ -579,16 +579,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             if (ImGui::BeginMenu("Scene")) {
 
                 if (ImGui::BeginMenu("Camera")) {
-                    ImGui::SliderFloat("Sensitivity", &scene().camera().sensitivity(), 0.001f, 0.02f);
-                    ImGui::SliderFloat("Pan Speed", &scene().camera().pan_speed(), 0.5f, 4.0f);
-                    ImGui::InputFloat3("Orbit Center", &scene().camera().orbit_target()[0]);
-                    ImGui::SliderFloat("FOV", &scene().camera().fov(), 0.1*M_PI, 0.9*M_PI);
-                    ImGui::SliderFloat("Near Plane", &scene().camera().near_plane(), 1.0f/256.0f, 1.0/16.0f);
-                    ImGui::SliderFloat("Far Plane", &scene().camera().far_plane(), (1<<6), (1<<12));
-                    if (ImGui::Button("Reset")) {
-                        scene().camera().reset(window_);
-                    }
-
+                    scene().camera().render_settings_ui(window_);
                     ImGui::EndMenu(); //!Camera Settings
                 }
 
@@ -723,7 +714,6 @@ PickResult Application::request_pick_result(float _x, float _y)
         PickResult pick;
         Scene* scene;
         Vec4f scene_viewport;
-        float aspect_ratio;
     };
 
     auto on_buffer_mapped = [](
@@ -764,7 +754,7 @@ PickResult Application::request_pick_result(float _x, float _y)
         float depth = std::bit_cast<float>(data[3]);
         context->pick.ndc_.z = depth;
         const auto& v = context->scene->perspective().getViewMatrix();
-        const auto& p = context->scene->perspective().getProjectionMatrix(context->aspect_ratio);
+        const auto& p = context->scene->perspective().getProjectionMatrix(context->scene_viewport);
         Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
         pos /= pos.w;
         context->pick.position_[0] = pos[0];
@@ -782,7 +772,7 @@ PickResult Application::request_pick_result(float _x, float _y)
     context.ready = false;
     context.buffer = picking_buffer_;
     context.scene = &scene_;
-    context.aspect_ratio = scene_viewport()[2]/scene_viewport()[3];
+    context.scene_viewport = scene_viewport();
 
     // Get x and y components of Normalized Device Coordinates
     _x -= scene_viewport()[0];
