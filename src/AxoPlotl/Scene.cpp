@@ -49,8 +49,8 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     // Get Width and Height
     auto viewport = app_->scene_viewport();
     perspective_.update(app_->window());
-    const Mat4x4f& view = perspective_.getViewMatrix();
-    const Mat4x4f& proj = perspective_.getProjectionMatrix(viewport);
+    const Mat4x4f& view = perspective_.get_view_matrix();
+    const Mat4x4f& proj = perspective_.get_projection_matrix(viewport);
 
     const Mat4x4f view_proj = proj * view;
 

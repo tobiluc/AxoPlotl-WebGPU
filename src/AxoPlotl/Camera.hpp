@@ -8,7 +8,7 @@
 namespace AxoPlotl
 {
 
-class PerspectiveCamera
+class Camera
 {
 
 private:
@@ -28,15 +28,16 @@ private:
 
     float fov_ = 0.25*M_PI; // field of view in radians
 
-public:
-    glm::mat4 getViewMatrix() const {
-        return lookAt(eye_position_, orbit_target_, orientation_ * UP);
-    }
+    bool use_ortho_ = false;
 
-    glm::mat4 getProjectionMatrix(const Vec4f& _viewport) const {
-        float width_over_height = _viewport[2]/_viewport[3];
-        return glm::perspective(fov_, width_over_height, near_plane_, far_plane_);
-    }
+public:
+    glm::mat4 get_view_matrix() const;
+
+    glm::mat4 get_perspective_projection_matrix(const Vec4f& _viewport) const;
+
+    glm::mat4 get_orthographic_projection_matrix(const Vec4f& _viewport) const;
+
+    glm::mat4 get_projection_matrix(const Vec4f& _viewport) const;
 
     void update(GLFWwindow* window);
 

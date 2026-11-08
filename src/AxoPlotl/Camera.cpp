@@ -7,7 +7,40 @@
 namespace AxoPlotl
 {
 
-void PerspectiveCamera::update(GLFWwindow* window)
+glm::mat4 Camera::get_view_matrix() const {
+    return lookAt(eye_position_, orbit_target_, orientation_ * UP);
+}
+
+glm::mat4 Camera::get_perspective_projection_matrix(const Vec4f& _viewport) const {
+    float width_over_height = _viewport[2]/_viewport[3];
+    return glm::perspectiveRH_ZO(fov_, width_over_height, near_plane_, far_plane_);
+}
+
+glm::mat4 Camera::get_orthographic_projection_matrix(const Vec4f& _viewport) const
+{
+    const float width_over_height = _viewport[2]/_viewport[3];
+    const float distance = glm::length(eye_position_ - orbit_target_);
+    const float half_height = distance * std::tan(fov_ * 0.5f);
+    const float half_width = half_height * width_over_height;
+
+    // We need to use orthoRH_ZO (zero to one)
+    // as that is the webgpu clipping space (compared to OpenGL -1 to 1)
+    return glm::orthoRH_ZO(
+        -half_width,
+        half_width,
+        -half_height,
+        half_height,
+        near_plane_,
+        far_plane_
+    );
+}
+
+glm::mat4 Camera::get_projection_matrix(const Vec4f& _viewport) const {
+    return use_ortho_? get_orthographic_projection_matrix(_viewport)
+                      : get_perspective_projection_matrix(_viewport);
+}
+
+void Camera::update(GLFWwindow* window)
 {
     float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
@@ -49,39 +82,15 @@ void PerspectiveCamera::update(GLFWwindow* window)
         orientation_ * (-FORWARD * orbit_distance);
 }
 
-void PerspectiveCamera::reset(GLFWwindow *window) {
+void Camera::reset(GLFWwindow *window) {
     orbit_target_ = {0,0,0};
     eye_position_ = {0,0,1};
     orientation_ = {1,0,0,0};
     fov_ = 0.25*M_PI;
+    use_ortho_ = false;
 }
 
-// void OrthographicCamera::update(GLFWwindow* window) {
-//     if (GL::IMGUI_FOCUS) return;
-
-//     // Move around
-//     auto direction = glm::vec3(0,0,0);
-//     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) direction.x += 1;
-//     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) direction.x -= 1;
-//     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) direction.y += 1;
-//     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) direction.y -= 1;
-//     if (!direction.x && !direction.y) return;
-//     position += normalize(direction) * pan_speed_ * Time::DELTA_TIME;
-
-//     // Zoom
-//     float dy = MouseHandler::SCROLL_DELTA[1];
-//     if (dy) {
-//         dy *= sensitivity_;
-//         height = std::clamp(height * (1.0f-dy), near, far);
-//     }
-// }
-
-// void OrthographicCamera::reset(GLFWwindow *window) {
-//     position = glm::vec3(0,0,1);
-//     height = 10;
-// }
-
-void PerspectiveCamera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
+void Camera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
 {
     float required_distance = 0.0f;
     orbit_target_ = (min + max) * 0.5f;
@@ -123,9 +132,11 @@ void PerspectiveCamera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
         orientation_ * (-FORWARD * required_distance);
 }
 
-bool PerspectiveCamera::render_settings_ui(GLFWwindow* _window)
+bool Camera::render_settings_ui(GLFWwindow* _window)
 {
     bool changed = false;
+
+    changed |= ImGui::Checkbox("Orthographic", &use_ortho_);
 
     if (ImGui::InputFloat("Sensitivity", &sensitivity_)) {
         sensitivity_ = std::clamp(sensitivity_, 0.001f, 0.02f);

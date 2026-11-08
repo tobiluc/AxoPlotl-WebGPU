@@ -34,7 +34,7 @@ public:
         objects_.clear();
     }
 
-    inline const PerspectiveCamera& perspective() const {
+    inline const Camera& perspective() const {
         return perspective_;
     }
 
@@ -108,7 +108,7 @@ public:
         return axis_renderer_.enabled();
     }
 
-    PerspectiveCamera& camera() {
+    Camera& camera() {
         return perspective_;
     }
 
@@ -118,7 +118,7 @@ protected:
     wgpu::Buffer axis_position_buffer_;
     ColoredEdgeRenderer axis_renderer_;
 
-    PerspectiveCamera perspective_;
+    Camera perspective_;
 };
 
 }

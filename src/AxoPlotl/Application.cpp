@@ -753,8 +753,8 @@ PickResult Application::request_pick_result(float _x, float _y)
         // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
         context->pick.ndc_.z = depth;
-        const auto& v = context->scene->perspective().getViewMatrix();
-        const auto& p = context->scene->perspective().getProjectionMatrix(context->scene_viewport);
+        const auto& v = context->scene->perspective().get_view_matrix();
+        const auto& p = context->scene->perspective().get_projection_matrix(context->scene_viewport);
         Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
         pos /= pos.w;
         context->pick.position_[0] = pos[0];
