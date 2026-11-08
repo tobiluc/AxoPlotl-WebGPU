@@ -44,7 +44,7 @@ void Camera::update(GLFWwindow* window)
 {
     float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
-    if (!ImGui::GetIO().WantCaptureMouse)
+    if (true || !ImGui::GetIO().WantCaptureMouse)
     {
         // Zoom
         float scroll = Input::Mouse::SCROLL_DELTA[1];

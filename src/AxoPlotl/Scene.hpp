@@ -34,10 +34,6 @@ public:
         objects_.clear();
     }
 
-    inline const Camera& perspective() const {
-        return perspective_;
-    }
-
     std::shared_ptr<OpenVolumeMeshObject> add_mesh(const std::filesystem::path& _path);
 
     std::shared_ptr<OpenVolumeMeshObject> add_mesh(const OVMVolumeMesh&& _mesh);
@@ -96,7 +92,7 @@ public:
     }
 
     inline void zoom_to_box(const BoundingBox& _bbox) {
-        perspective_.zoom_to_box(_bbox.min(),_bbox.max());
+        camera_.zoom_to_box(_bbox.min(),_bbox.max());
         trigger_redraw();
     }
 
@@ -109,7 +105,7 @@ public:
     }
 
     Camera& camera() {
-        return perspective_;
+        return camera_;
     }
 
 protected:
@@ -118,7 +114,7 @@ protected:
     wgpu::Buffer axis_position_buffer_;
     ColoredEdgeRenderer axis_renderer_;
 
-    Camera perspective_;
+    Camera camera_;
 };
 
 }

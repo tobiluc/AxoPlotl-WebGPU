@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/Scene.hpp"
+#include "AxoPlotl/Viewport.hpp"
 #include "AxoPlotl/picking.hpp"
 #include <webgpu/webgpu.hpp>
 
@@ -32,10 +33,10 @@ private:
     } time_;
 
     //float font_scale_ = 1.0f;
-    float inspector_rel_width_ = 0.3f;
-    bool inspector_right_aligned_ = false;
     bool inspector_enabled_ = true;
     std::function<void()> inspector_callback_;
+
+    bool reset_layout_requested_ = false;
 
     // Draw a frame and handle events
     void frame_tick();
@@ -52,9 +53,11 @@ public:
 
     void on_window_resize(float width, float height);
 
-    inline Scene& scene() {return scene_;}
+    Scene& scene() {return scenes_.at(current_scene_index_);}
 
-    inline GLFWwindow* window() {return window_;}
+    Scene& add_scene();
+
+    GLFWwindow* window() {return window_;}
 
     wgpu::Device device_;
     wgpu::Adapter adapter_;
@@ -64,19 +67,19 @@ public:
 
     glm::vec<4,float> scene_viewport();
 
-    inline void call_deferred(std::function<void()> _f) {
+    void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
     }
 
-    inline std::function<void()>& inspector_callback() {
+    std::function<void()>& inspector_callback() {
         return inspector_callback_;
     }
 
-    inline bool& inspector_enabled() {
+    bool& inspector_enabled() {
         return inspector_enabled_;
     }
 
-    inline constexpr float fps() const {
+    constexpr float fps() const {
         return time_.frames_per_second_;
     }
 
@@ -90,19 +93,18 @@ private:
 
     GLFWwindow* window_;
     wgpu::Queue queue_;
-    //wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
-    wgpu::Texture depth_texture_;
-    wgpu::TextureView depth_texture_view_;
+
+    Viewport viewport_;
+    wgpu::TextureFormat surface_format_ = wgpu::TextureFormat::Undefined;
+
     wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;
-    wgpu::Texture picking_texture_;
-    wgpu::TextureView picking_view_;
+
     wgpu::Buffer picking_buffer_;
     wgpu::RenderPassEncoder gui_render_pass_;
     wgpu::RenderPassEncoder scene_render_pass_;
 
-    //std::unique_ptr<wgpu::ErrorCallback> error_callback_;
-
-    Scene scene_;
+    std::vector<Scene> scenes_;
+    uint32_t current_scene_index_ = 0;
 
     void clear();
 
@@ -110,14 +112,31 @@ private:
 
     bool init_imgui();
 
-    void render_imgui(
-        wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
+    void render_viewport_ui();
+
+    void render_editor_ui(bool _just_clicked_on_object);
+
+    void render_scene(wgpu::CommandEncoder& _encoder);
+
+    void render_gui(wgpu::CommandEncoder& _encoder,
+                    wgpu::TextureView& _target_view);
+
+    // void render_imgui(
+    //     wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
+
+    void render_main_menu_bar_ui(bool _just_clicked_on_object);
+
+    void render_scenes_tab_bar_ui();
+
+    void render_inspector_ui();
 
     void configure_surface();
 
-    void create_depth_texture();
+    void build_default_layout(ImGuiID dockspace_id);
 
-    void create_picking_texture();
+    constexpr bool has_scene() const {
+        return current_scene_index_ < scenes_.size();
+    }
 };
 
 }

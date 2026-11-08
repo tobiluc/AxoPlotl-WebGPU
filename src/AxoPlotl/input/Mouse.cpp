@@ -31,7 +31,7 @@ void Mouse::update(GLFWwindow* window)
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
     trigger_redraw();
-    if (ImGui::GetIO().WantCaptureMouse) {return;}
+    //if (ImGui::GetIO().WantCaptureMouse) {return;}
 
     Mouse::POSITION_DELTA[0] = (float)(mouse_x - Mouse::POSITION[0]);
     Mouse::POSITION_DELTA[1] = (float)(Mouse::POSITION[1] - mouse_y); // reversed since y-coordinates range from bottom to top
@@ -44,7 +44,7 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 void scroll_callback(GLFWwindow* window, double dx, double dy)
 {
     trigger_redraw();
-    if (ImGui::GetIO().WantCaptureMouse) {return;}
+    //if (ImGui::GetIO().WantCaptureMouse) {return;}
 
     Mouse::SCROLL_DELTA[0] = dx;
     Mouse::SCROLL_DELTA[1] = dy;

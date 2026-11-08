@@ -1,3 +1,5 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "Application.hpp"
 #include "AxoPlotl/debug/meshes.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
@@ -17,6 +19,7 @@
 #include <AxoPlotl/rendering/detail/wgpu_commons.hpp>
 #include <AxoPlotl/tools/DataControlTool.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
+#include <imgui_internal.h>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -42,6 +45,14 @@ void wgpuPollEvents(
 namespace AxoPlotl
 {
 
+Scene& Application::add_scene()
+{
+    current_scene_index_ = scenes_.size();
+    scenes_.emplace_back();
+    scenes_.back().init(this);
+    return scenes_.back();
+}
+
 void Application::Time::update()
 {
     // Compute frames per second
@@ -56,8 +67,10 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    inspector_callback_([]() {})
+    inspector_callback_([]() {}),
+    current_scene_index_(0)
 {
+    scenes_.emplace_back();
 }
 
 Application::~Application()
@@ -195,8 +208,11 @@ bool Application::init()
     //-------------------
     // Special Textures
     //-------------------
-    create_depth_texture();
-    create_picking_texture();
+    wgpu::DepthStencilState depthStencilState = create_default_depth_state();
+    depth_texture_format_ = depthStencilState.format;
+    viewport_.resize(device_, total_viewport()[2], total_viewport()[3], surface_format_, depth_texture_format_);
+    // create_depth_texture();
+    // create_picking_texture();
 
     wgpu::BufferDescriptor pickBuffDesc{};
     pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
@@ -206,185 +222,260 @@ bool Application::init()
     picking_buffer_ = device_.createBuffer(pickBuffDesc);
 
     //----------
-    // Scene
-    //----------
-    scene_.init(this);
-
-    //----------
     // Gui
     //----------
     if (!init_imgui()) {
         return false;
     }
 
+    //----------
+    // Scenes
+    //----------
+    for (auto& scene : scenes_) {
+        scene.init(this);
+    }
+
     return true;
 }
 
+// void Application::frame_tick()
+// {
+//     // Input and Time Update
+//     time_.update();
+//     Input::Mouse::update(window_);
+//     glfwPollEvents();
+
+//     // Only render a certain number of frames
+//     // before redrawing
+//     if (!on_draw()) [[likely]] {return;}
+
+//     wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
+
+//     // Acquire next frame texture
+//     wgpu::SurfaceTexture surfaceTexture;
+//     surface_.getCurrentTexture(&surfaceTexture);
+
+//     // Safety Check
+//     if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) [[unlikely]] {
+// #ifndef WEBGPU_BACKEND_WGPU
+//         if (surfaceTexture.texture) {
+//             wgpuTextureRelease(surfaceTexture.texture);
+//         }
+// #endif //! WEBGPU_BACKEND_WGPU
+//         return;
+//     }
+
+//     wgpu::TextureViewDescriptor viewDescriptor;
+//     viewDescriptor.nextInChain = nullptr;
+//     viewDescriptor.label = wgpu::StringView("Surface texture view");
+//     viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
+//     viewDescriptor.dimension = WGPUTextureViewDimension_2D;
+//     viewDescriptor.baseMipLevel = 0;
+//     viewDescriptor.mipLevelCount = 1;
+//     viewDescriptor.baseArrayLayer = 0;
+//     viewDescriptor.arrayLayerCount = 1;
+//     viewDescriptor.aspect = WGPUTextureAspect_All;
+//     wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+
+//     wgpu::RenderPassColorAttachment color_attachments[2];
+
+//     // Color Attachment
+//     color_attachments[0].view = targetView;
+//     color_attachments[0].loadOp = wgpu::LoadOp::Clear;
+//     color_attachments[0].storeOp = wgpu::StoreOp::Store;
+//     color_attachments[0].clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
+//     color_attachments[0].resolveTarget = nullptr;
+//     color_attachments[0].nextInChain = nullptr;
+// #ifndef WEBGPU_BACKEND_WGPU
+//     color_attachments[0].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+// #endif //!WEBGPU_BACKEND_WGPU
+
+//     // Picking Attachment
+//     color_attachments[1].view = picking_view_;
+//     color_attachments[1].loadOp = wgpu::LoadOp::Clear;
+//     color_attachments[1].storeOp = wgpu::StoreOp::Store;
+//     color_attachments[1].clearValue = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
+//     color_attachments[1].resolveTarget = nullptr;
+//     color_attachments[1].nextInChain = nullptr;
+// #ifndef WEBGPU_BACKEND_WGPU
+//     color_attachments[1].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+// #endif //!WEBGPU_BACKEND_WGPU
+
+//     wgpu::RenderPassDescriptor renderPassDesc{};
+//     renderPassDesc.colorAttachmentCount = 2;
+//     renderPassDesc.colorAttachments = color_attachments;
+//     renderPassDesc.label = wgpu::StringView("Main Render Pass");
+
+//     // Depth Attachment
+//     wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
+//     depthStencilAttachment.view = depth_texture_view_;
+//     depthStencilAttachment.depthClearValue = 1.0f; // "far"
+//     depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
+//     depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
+//     depthStencilAttachment.depthReadOnly = false; // could turn off writing to depth buffer
+//     depthStencilAttachment.stencilClearValue = 0;
+// #ifdef WEBGPU_BACKEND_WGPU
+//     depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Clear;
+//     depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Store;
+// #endif
+// #ifdef WEBGPU_BACKEND_DAWN
+//     depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Undefined;
+//     depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Undefined;
+//     //depthStencilAttachment.depthClearValue = std::numeric_limits<float>::quiet_NaN();
+// #endif
+//     depthStencilAttachment.stencilReadOnly = true;
+//     renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
+
+//     // Begin render pass
+//     scene_render_pass_ =
+//         cmd_encoder.beginRenderPass(renderPassDesc);
+
+//     // Set the Scene Viewport
+//     auto viewport = scene_viewport();
+//     scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+//     scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+//     // Render the Scene with its objects
+//     scene().render(scene_render_pass_);
+
+//     // For the picking to work correctly, we resize the
+//     // scene viewprt to the full rectangle after rendering
+//     // viewport = total_viewport();
+//     // scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
+//     // scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+//     scene_render_pass_.end();
+
+//     //------------------
+//     // Click to Pick
+//     //------------------
+//     bool just_clicked_on_object(false);
+//     if (Input::Mouse::RIGHT_JUST_PRESSED) {
+//         int width, height;
+//         glfwGetWindowSize(window(), &width, &height);
+//         float x_scale = (float)total_viewport()[2] / (float)width;
+//         float y_scale = (float)total_viewport()[3] / (float)height;
+//         float x = x_scale*Input::Mouse::POSITION[0] - total_viewport()[0];
+//         float y = y_scale*Input::Mouse::POSITION[1] - total_viewport()[1];
+//         pick_result_ = request_pick_result(x, y);
+//         //std::cerr << pick_result_ << std::endl;
+//         if (pick_result_.object_id_ < UINT32_MAX) {
+//             just_clicked_on_object = true;
+//         }
+//     }
+
+//     //------------------
+//     // GUI Render Pass
+//     //------------------
+//     // only expects pixel color attachment (no picking texture)
+//     // wgpu::RenderPassColorAttachment guiColorAttachment{};
+//     // guiColorAttachment.view = targetView;
+//     color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
+//     wgpu::RenderPassDescriptor guiPassDesc{};
+//     guiPassDesc.colorAttachmentCount = 1;
+//     guiPassDesc.colorAttachments = &color_attachments[0];
+//     guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
+//     gui_render_pass_ = cmd_encoder.beginRenderPass(guiPassDesc);
+//     render_imgui(gui_render_pass_, just_clicked_on_object);
+
+//     gui_render_pass_.end();
+
+//     // Submit
+//     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
+//     queue_.submit(1, &cmdBuffer);
+
+// #ifndef __EMSCRIPTEN__
+//     surface_.present();
+// #endif
+
+// // Cleanup
+// #ifndef WEBGPU_BACKEND_WGPU
+//     wgpuTextureRelease(surfaceTexture.texture);
+// #endif //! WEBGPU_BACKEND_WGPU
+//     targetView.release();
+//     scene_render_pass_.release();
+//     gui_render_pass_.release();
+//     cmdBuffer.release();
+//     cmd_encoder.release();
+
+//     wgpuPollEvents(device_, false);
+
+//     // Functions to execute after the command buffer submit
+//     // For example deletion of scene objects.
+//     for (auto& fn : deferred_calls_) {fn();}
+//     deferred_calls_.clear();
+// }
+
 void Application::frame_tick()
 {
-    // Input and Time Update
     time_.update();
     Input::Mouse::update(window_);
     glfwPollEvents();
 
-    // Only render a certain number of frames
-    // before redrawing
-    if (!on_draw()) [[likely]] {return;}
-
-    wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
-
-    // Acquire next frame texture
-    wgpu::SurfaceTexture surfaceTexture;
-    surface_.getCurrentTexture(&surfaceTexture);
-
-    // Safety Check
-    if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) [[unlikely]] {
-#ifndef WEBGPU_BACKEND_WGPU
-        if (surfaceTexture.texture) {
-            wgpuTextureRelease(surfaceTexture.texture);
-        }
-#endif //! WEBGPU_BACKEND_WGPU
+    if (!on_draw()) {
         return;
     }
 
-    wgpu::TextureViewDescriptor viewDescriptor;
-    viewDescriptor.nextInChain = nullptr;
-    viewDescriptor.label = wgpu::StringView("Surface texture view");
-    viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
-    viewDescriptor.dimension = WGPUTextureViewDimension_2D;
-    viewDescriptor.baseMipLevel = 0;
-    viewDescriptor.mipLevelCount = 1;
-    viewDescriptor.baseArrayLayer = 0;
-    viewDescriptor.arrayLayerCount = 1;
-    viewDescriptor.aspect = WGPUTextureAspect_All;
-    wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+    // Acquire surface texture.
+    wgpu::SurfaceTexture surface_texture;
+    surface_.getCurrentTexture(&surface_texture);
 
-    wgpu::RenderPassColorAttachment color_attachments[2];
-
-    // Color Attachment
-    color_attachments[0].view = targetView;
-    color_attachments[0].loadOp = wgpu::LoadOp::Clear;
-    color_attachments[0].storeOp = wgpu::StoreOp::Store;
-    color_attachments[0].clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
-    color_attachments[0].resolveTarget = nullptr;
-    color_attachments[0].nextInChain = nullptr;
-#ifndef WEBGPU_BACKEND_WGPU
-    color_attachments[0].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-#endif //!WEBGPU_BACKEND_WGPU
-
-    // Picking Attachment
-    color_attachments[1].view = picking_view_;
-    color_attachments[1].loadOp = wgpu::LoadOp::Clear;
-    color_attachments[1].storeOp = wgpu::StoreOp::Store;
-    color_attachments[1].clearValue = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
-    color_attachments[1].resolveTarget = nullptr;
-    color_attachments[1].nextInChain = nullptr;
-#ifndef WEBGPU_BACKEND_WGPU
-    color_attachments[1].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-#endif //!WEBGPU_BACKEND_WGPU
-
-    wgpu::RenderPassDescriptor renderPassDesc{};
-    renderPassDesc.colorAttachmentCount = 2;
-    renderPassDesc.colorAttachments = color_attachments;
-    renderPassDesc.label = wgpu::StringView("Main Render Pass");
-
-    // Depth Attachment
-    wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
-    depthStencilAttachment.view = depth_texture_view_;
-    depthStencilAttachment.depthClearValue = 1.0f; // "far"
-    depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
-    depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
-    depthStencilAttachment.depthReadOnly = false; // could turn off writing to depth buffer
-    depthStencilAttachment.stencilClearValue = 0;
-#ifdef WEBGPU_BACKEND_WGPU
-    depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Clear;
-    depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Store;
-#endif
-#ifdef WEBGPU_BACKEND_DAWN
-    depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Undefined;
-    depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Undefined;
-    //depthStencilAttachment.depthClearValue = std::numeric_limits<float>::quiet_NaN();
-#endif
-    depthStencilAttachment.stencilReadOnly = true;
-    renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
-
-    // Begin render pass
-    scene_render_pass_ =
-        cmd_encoder.beginRenderPass(renderPassDesc);
-
-    // Set the Scene Viewport
-    auto viewport = scene_viewport();
-    scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-    // Render the Scene with its objects
-    scene_.render(scene_render_pass_);
-
-    // For the picking to work correctly, we resize the
-    // scene viewprt to the full rectangle after rendering
-    // viewport = total_viewport();
-    // scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-    // scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-    scene_render_pass_.end();
-
-    //------------------
-    // Click to Pick
-    //------------------
-    bool just_clicked_on_object(false);
-    if (Input::Mouse::RIGHT_JUST_PRESSED) {
-        int width, height;
-        glfwGetWindowSize(window(), &width, &height);
-        float x_scale = (float)total_viewport()[2] / (float)width;
-        float y_scale = (float)total_viewport()[3] / (float)height;
-        float x = x_scale*Input::Mouse::POSITION[0] - total_viewport()[0];
-        float y = y_scale*Input::Mouse::POSITION[1] - total_viewport()[1];
-        pick_result_ = request_pick_result(x, y);
-        //std::cerr << pick_result_ << std::endl;
-        if (pick_result_.object_id_ < UINT32_MAX) {
-            just_clicked_on_object = true;
-        }
+    if (surface_texture.status !=
+        wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) {
+        return;
     }
 
-    //------------------
-    // GUI Render Pass
-    //------------------
-    // only expects pixel color attachment (no picking texture)
-    // wgpu::RenderPassColorAttachment guiColorAttachment{};
-    // guiColorAttachment.view = targetView;
-    color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
-    wgpu::RenderPassDescriptor guiPassDesc{};
-    guiPassDesc.colorAttachmentCount = 1;
-    guiPassDesc.colorAttachments = &color_attachments[0];
-    guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
-    gui_render_pass_ = cmd_encoder.beginRenderPass(guiPassDesc);
-    render_imgui(gui_render_pass_, just_clicked_on_object);
+    // Build the ImGui interface FIRST.
+    render_editor_ui(false);
 
-    gui_render_pass_.end();
+    // Create surface view.
+    wgpu::TextureViewDescriptor view_desc{};
+    view_desc.format = surface_format_;
+    view_desc.dimension = wgpu::TextureViewDimension::_2D;
+    view_desc.baseMipLevel = 0;
+    view_desc.mipLevelCount = 1;
+    view_desc.baseArrayLayer = 0;
+    view_desc.arrayLayerCount = 1;
+    view_desc.aspect = wgpu::TextureAspect::All;
 
-    // Submit
-    wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
-    queue_.submit(1, &cmdBuffer);
+    auto target_view =
+        static_cast<wgpu::TextureView>(
+            wgpuTextureCreateView(surface_texture.texture, &view_desc));
+
+    // Create command encoder.
+    auto encoder = device_.createCommandEncoder();
+
+    // Render scene only if viewport is visible.
+    if (viewport_.visible() && viewport_.valid()) {
+        render_scene(encoder);
+    }
+
+    // Render editor UI onto surface.
+    render_gui(encoder, target_view);
+
+    // Submit.
+    auto cmd_buffer = encoder.finish();
+    queue_.submit(1, &cmd_buffer);
 
 #ifndef __EMSCRIPTEN__
     surface_.present();
 #endif
 
-// Cleanup
+    // Release resources as in your original implementation.
+    target_view.release();
+    cmd_buffer.release();
+    encoder.release();
+
 #ifndef WEBGPU_BACKEND_WGPU
-    wgpuTextureRelease(surfaceTexture.texture);
-#endif //! WEBGPU_BACKEND_WGPU
-    targetView.release();
-    scene_render_pass_.release();
-    gui_render_pass_.release();
-    cmdBuffer.release();
-    cmd_encoder.release();
+    wgpuTextureRelease(surface_texture.texture);
+#endif
 
     wgpuPollEvents(device_, false);
 
-    // Functions to execute after the command buffer submit
-    // For example deletion of scene objects.
-    for (auto& fn : deferred_calls_) {fn();}
+    for (auto& fn : deferred_calls_) {
+        fn();
+    }
+
     deferred_calls_.clear();
 }
 
@@ -410,8 +501,9 @@ void Application::on_window_resize(float width, float height)
     if (width == 0|| height == 0) {return;} // window minimized
 
     configure_surface();
-    create_depth_texture();
-    create_picking_texture();
+    viewport_.resize(device_, width, height, surface_format_, depth_texture_format_);
+    // create_depth_texture();
+    // create_picking_texture();
 
     wgpuPollEvents(device_, true);
 }
@@ -421,7 +513,9 @@ void Application::clear()
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
 
-    scene().destroy();
+    for (auto& scene : scenes_) {
+        scene.destroy();
+    }
 
     if (queue_) {
         queue_.release();
@@ -432,15 +526,17 @@ void Application::clear()
         surface_.release();
         surface_ = nullptr;
     }
-    if (depth_texture_view_) {
-        depth_texture_view_.release();
-        depth_texture_view_ = nullptr;
-    }
-    if (depth_texture_) {
-        depth_texture_.destroy();
-        depth_texture_.release();
-        depth_texture_ = nullptr;
-    }
+
+    viewport_.release();
+    // if (depth_texture_view_) {
+    //     depth_texture_view_.release();
+    //     depth_texture_view_ = nullptr;
+    // }
+    // if (depth_texture_) {
+    //     depth_texture_.destroy();
+    //     depth_texture_.release();
+    //     depth_texture_ = nullptr;
+    // }
 
     if (adapter_) {
         adapter_.release();
@@ -463,7 +559,7 @@ bool Application::init_imgui()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     auto& io = ImGui::GetIO();
-
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOther(window_, true);
@@ -471,14 +567,18 @@ bool Application::init_imgui()
     surface_.getCapabilities(adapter_, &surf_caps);
 
     // new imgui init
-    ImGui_ImplWGPU_InitInfo imgui_init_info;
+    ImGui_ImplWGPU_InitInfo imgui_init_info{};
     imgui_init_info.Device = device_;
     imgui_init_info.NumFramesInFlight = 3;
-    imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
+    imgui_init_info.RenderTargetFormat = surface_format_;
     //imgui_init_info.RenderTargetFormat = wgpu::TextureFormat::BGRA8Unorm;
-    imgui_init_info.DepthStencilFormat = depth_texture_format_;
+    // imgui_init_info.DepthStencilFormat = depth_texture_format_;
+    imgui_init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
     imgui_init_info.PipelineMultisampleState.count = 1;
-    ImGui_ImplWGPU_Init(&imgui_init_info);
+    if (!ImGui_ImplWGPU_Init(&imgui_init_info)) {
+        std::cerr << "Failed to initialize ImGui WebGPU backend\n";
+        return false;
+    }
 
     // This is with the older imgui version from Learn WebGPU
     //ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
@@ -491,14 +591,15 @@ bool Application::init_imgui()
 
 glm::vec<4,float> Application::scene_viewport()
 {
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
-    if (inspector_right_aligned_) {
-        return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
-    } else {
-        return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
-    }
+    return {0, 0, viewport_.width(), viewport_.height()};
+    // int fbWidth, fbHeight;
+    // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+    // float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
+    // if (inspector_right_aligned_) {
+    //     return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
+    // } else {
+    //     return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
+    // }
 }
 
 glm::vec<4,float> Application::total_viewport()
@@ -508,12 +609,16 @@ glm::vec<4,float> Application::total_viewport()
     return {0.0f, 0.0f, fbWidth, fbHeight};
 }
 
-void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
-{
-    ImGui_ImplWGPU_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+void Application::render_viewport_ui() {
+    viewport_.render_ui(
+        device_,
+        surface_format_,
+        depth_texture_format_
+        );
+}
 
+void Application::render_main_menu_bar_ui(bool _just_clicked_on_object)
+{
     //--------------------
     // Top Menu Bar
     //--------------------
@@ -552,13 +657,13 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             if (ImGui::BeginMenu("Add"))
             {
                 if (ImGui::MenuItem("Spherical Harmonics")) {
-                    scene_.add_object<SHObject>();
+                    scene().add_object<SHObject>();
                 }
                 if (ImGui::MenuItem("Tetrahedron")) {
-                    scene_.add_object<TetObject>();
+                    scene().add_object<TetObject>();
                 }
                 if (ImGui::MenuItem("Segment")) {
-                    scene_.add_object<SegmentObject>();
+                    scene().add_object<SegmentObject>();
                 }
                 ImGui::EndMenu(); //!Add
             }
@@ -567,9 +672,9 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
 
         if (ImGui::BeginMenu("Settings"))
         {
-            if (ImGui::BeginMenu("Inspector")) {
-                ImGui::Checkbox("Right", &inspector_right_aligned_);
-                ImGui::SliderFloat("Width", &inspector_rel_width_, 0.1f, 0.9f);
+            if (ImGui::BeginMenu("Layout")) {
+                ImGui::Checkbox("Enable Inspector", &inspector_enabled_);
+                reset_layout_requested_ |= ImGui::Button("Reset Layout");
 
                 ImGui::EndMenu(); //!Inspector Settings
             }
@@ -584,7 +689,7 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
                 }
 
                 ImGui::ColorEdit3("Background", clear_color_);
-                ImGui::Checkbox("Axis Cross", &scene_.axis_cross_enabled());
+                ImGui::Checkbox("Axis Cross", &scene().axis_cross_enabled());
 
                 ImGui::EndMenu(); //!Scene Settings
             }
@@ -612,20 +717,19 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
             ImGui::EndMenu(); // !Settings
         }
 
-    #if 1
+#if 1
         if (ImGui::BeginMenu("Debug"))
         {
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
-                scene_.add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
+                scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
             }
             if (ImGui::MenuItem("Add empty Mesh")) {
-                scene_.add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
+                scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
             }
 
             ImGui::EndMenu(); // !Debug
         }
-    #endif
-
+#endif
         ImGui::EndMainMenuBar();
     }
 
@@ -646,38 +750,238 @@ void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_
         ImGui::EndPopup();
     }
 
-    ImGui::End(); // MenuBar
+    ImGui::End(); //!MenuBar
+}
 
-    //--------------------
-    // Sidebar Inspector
-    //--------------------
-    if (inspector_enabled_)
-    {
-        // Set Viewport to left or right rectangle
-        ImGuiViewport* vp = ImGui::GetMainViewport();
-        float sidebar_width = inspector_enabled_? (inspector_rel_width_ * vp->WorkSize.x) : 0.0f;
-        vp->WorkPos.x = inspector_right_aligned_?
-                            vp->WorkSize.x - sidebar_width : 0.0f;
-        ImGui::SetNextWindowPos(vp->WorkPos);
-        ImGui::SetNextWindowSize(ImVec2(sidebar_width, vp->WorkSize.y));
+void Application::render_scenes_tab_bar_ui()
+{
+    ImGui::Begin("Scenes");
 
-        // Lock the window so it can't be moved or closed
-        ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove |
-                                 ImGuiWindowFlags_NoResize |
-                                 ImGuiWindowFlags_NoCollapse;
-        ImGui::Begin("Inspector", nullptr, flags);
+    if (ImGui::BeginTabBar("Scenes")) {
+        for (uint32_t i = 0; i < scenes_.size(); ++i) {
+            ImGui::PushID(i);
 
-        // Allow the user to insert custom
-        // UI Stuff here
-        inspector_callback_();
+            std::string name = "Scene " + std::to_string(i);
 
-        ImGui::SetWindowFontScale(1.0f);
+            if (ImGui::BeginTabItem(name.c_str())) {
+                current_scene_index_ = i;
+                ImGui::EndTabItem();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}
+
+void Application::render_inspector_ui()
+{
+    if (!ImGui::Begin("Inspector")) {
         ImGui::End();
+        return;
+    }
+
+    inspector_callback_();
+
+    ImGui::End();
+}
+
+void Application::build_default_layout(ImGuiID dockspace_id)
+{
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Remove the existing layout.
+    ImGui::DockBuilderRemoveNode(dockspace_id);
+
+    // Create a new dockspace.
+    ImGui::DockBuilderAddNode(
+        dockspace_id,
+        ImGuiDockNodeFlags_DockSpace
+        );
+
+    ImGui::DockBuilderSetNodeSize(
+        dockspace_id,
+        viewport->WorkSize
+        );
+
+    // Inspector on the right (25%).
+    ImGuiID inspector_id;
+    ImGuiID center_id;
+
+    ImGui::DockBuilderSplitNode(
+        dockspace_id,
+        ImGuiDir_Right,
+        0.25f,
+        &inspector_id,
+        &center_id
+        );
+
+    // Scenes tab to the bottom of the central area (20%).
+    ImGuiID scenes_id;
+
+    ImGui::DockBuilderSplitNode(
+        center_id,
+        ImGuiDir_Down,
+        0.20f,
+        &scenes_id,
+        &center_id
+        );
+
+    // Dock the windows.
+    ImGui::DockBuilderDockWindow("Inspector", inspector_id);
+    ImGui::DockBuilderDockWindow("Scenes", scenes_id);
+
+    ImGui::DockBuilderDockWindow("Viewport", center_id);
+
+    ImGui::DockBuilderFinish(dockspace_id);
+}
+
+void Application::render_editor_ui(bool just_clicked_on_object)
+{
+    ImGui_ImplWGPU_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    render_main_menu_bar_ui(just_clicked_on_object);
+
+    ImGuiID dockspace_id = ImHashStr("AxoPlotlDockSpace");
+
+    ImGui::DockSpaceOverViewport(
+        dockspace_id,
+        ImGui::GetMainViewport()
+        );
+
+    // Rebuild the layout when requested.
+    if (reset_layout_requested_) {
+        build_default_layout(dockspace_id);
+        reset_layout_requested_ = false;
+    }
+
+    render_scenes_tab_bar_ui();
+
+    render_viewport_ui();
+
+    if (inspector_enabled_) {
+        render_inspector_ui();
     }
 
     ImGui::Render();
-    ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
 }
+
+void Application::render_gui(
+    wgpu::CommandEncoder& encoder,
+    wgpu::TextureView& target_view)
+{
+    wgpu::RenderPassColorAttachment attachment{};
+
+    attachment.view = target_view;
+    attachment.loadOp = wgpu::LoadOp::Clear;
+    attachment.storeOp = wgpu::StoreOp::Store;
+    attachment.clearValue = {
+        clear_color_[0],
+        clear_color_[1],
+        clear_color_[2],
+        1.0f
+    };
+
+    wgpu::RenderPassDescriptor desc{};
+    desc.colorAttachmentCount = 1;
+    desc.colorAttachments = &attachment;
+
+    auto pass = encoder.beginRenderPass(desc);
+
+    ImGui_ImplWGPU_RenderDrawData(
+        ImGui::GetDrawData(),
+        pass
+        );
+
+    pass.end();
+}
+
+void Application::render_scene(wgpu::CommandEncoder& encoder)
+{
+    wgpu::RenderPassColorAttachment attachments[2]{};
+
+    attachments[0].view = viewport_.color_view();
+    attachments[0].loadOp = wgpu::LoadOp::Clear;
+    attachments[0].storeOp = wgpu::StoreOp::Store;
+    attachments[0].clearValue = {
+        clear_color_[0],
+        clear_color_[1],
+        clear_color_[2],
+        1.0f
+    };
+
+    attachments[1].view = viewport_.picking_view();
+    attachments[1].loadOp = wgpu::LoadOp::Clear;
+    attachments[1].storeOp = wgpu::StoreOp::Store;
+    attachments[1].clearValue = {
+        0xFFFFFFFF,
+        0xFFFFFFFF,
+        0xFFFFFFFF,
+        0xFFFFFFFF
+    };
+
+    wgpu::RenderPassDepthStencilAttachment depth{};
+    depth.view = viewport_.depth_view();
+    depth.depthClearValue = 1.0f;
+    depth.depthLoadOp = wgpu::LoadOp::Clear;
+    depth.depthStoreOp = wgpu::StoreOp::Store;
+    depth.depthReadOnly = false;
+    depth.stencilClearValue = 0;
+    depth.stencilReadOnly = true;
+
+// Match the stencil operations to your existing depth format.
+#ifdef WEBGPU_BACKEND_DAWN
+    depth.stencilLoadOp = wgpu::LoadOp::Undefined;
+    depth.stencilStoreOp = wgpu::StoreOp::Undefined;
+#endif
+
+    wgpu::RenderPassDescriptor desc{};
+    desc.colorAttachmentCount = 2;
+    desc.colorAttachments = attachments;
+    desc.depthStencilAttachment = &depth;
+
+    auto pass = encoder.beginRenderPass(desc);
+
+    pass.setViewport(
+        0, 0,
+        static_cast<float>(viewport_.width()),
+        static_cast<float>(viewport_.height()),
+        0, 1
+        );
+
+    pass.setScissorRect(
+        0, 0,
+        viewport_.width(),
+        viewport_.height()
+        );
+
+    scene().render(pass);
+
+    pass.end();
+}
+
+// void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
+// {
+//     ImGui_ImplWGPU_NewFrame();
+//     ImGui_ImplGlfw_NewFrame();
+//     ImGui::NewFrame();
+
+//     render_main_menu_bar_ui(_just_clicked_on_object);
+
+//     render_scenes_tab_bar_ui();
+
+//     if (inspector_enabled_) {
+//         render_inspector_ui();
+//     }
+
+//     ImGui::Render();
+//     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
+// }
 
 PickResult Application::request_pick_result(float _x, float _y)
 {
@@ -685,7 +989,7 @@ PickResult Application::request_pick_result(float _x, float _y)
 
     // We copy FROM the picking texture
     wgpu::TexelCopyTextureInfo src{};
-    src.texture = picking_texture_;
+    src.texture = viewport_.picking_texture();// picking_texture_;
     src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
     src.mipLevel = 0;
     src.aspect = wgpu::TextureAspect::All;
@@ -753,8 +1057,8 @@ PickResult Application::request_pick_result(float _x, float _y)
         // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
         context->pick.ndc_.z = depth;
-        const auto& v = context->scene->perspective().get_view_matrix();
-        const auto& p = context->scene->perspective().get_projection_matrix(context->scene_viewport);
+        const auto& v = context->scene->camera().get_view_matrix();
+        const auto& p = context->scene->camera().get_projection_matrix(context->scene_viewport);
         Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
         pos /= pos.w;
         context->pick.position_[0] = pos[0];
@@ -771,7 +1075,7 @@ PickResult Application::request_pick_result(float _x, float _y)
     Context context;
     context.ready = false;
     context.buffer = picking_buffer_;
-    context.scene = &scene_;
+    context.scene = &scene();
     context.scene_viewport = scene_viewport();
 
     // Get x and y components of Normalized Device Coordinates
@@ -818,6 +1122,7 @@ void Application::configure_surface()
     wgpu::SurfaceCapabilities capabilities = {};
     surface_.getCapabilities(adapter_, &capabilities);
     config.format = capabilities.formats[0];
+    surface_format_ = config.format;
 
     // And we do not need any particular view format:
     config.viewFormatCount = 0;
@@ -830,78 +1135,78 @@ void Application::configure_surface()
     surface_.configure(config);
 }
 
-void Application::create_depth_texture()
-{
-    if (depth_texture_view_) {
-        depth_texture_view_.release();
-    }
-    if (depth_texture_) {
-        depth_texture_.destroy();
-        depth_texture_.release();
-    }
+// void Application::create_depth_texture()
+// {
+//     if (depth_texture_view_) {
+//         depth_texture_view_.release();
+//     }
+//     if (depth_texture_) {
+//         depth_texture_.destroy();
+//         depth_texture_.release();
+//     }
 
-    // int fbWidth, fbHeight;
-    // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    // std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
-    auto viewport = total_viewport();
+//     // int fbWidth, fbHeight;
+//     // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+//     // std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
+//     auto viewport = total_viewport();
 
-    wgpu::DepthStencilState depthStencilState = create_default_depth_state();
-    depth_texture_format_ = depthStencilState.format;
+//     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
+//     depth_texture_format_ = depthStencilState.format;
 
-    // Create the depth texture
-    wgpu::TextureDescriptor depthTextureDesc;
-    depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
-    depthTextureDesc.format = depth_texture_format_;
-    depthTextureDesc.mipLevelCount = 1;
-    depthTextureDesc.sampleCount = 1;
-    depthTextureDesc.size = {
-        static_cast<uint32_t>(viewport[2]),
-        static_cast<uint32_t>(viewport[3]),
-        1};
-    depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
-    depthTextureDesc.viewFormatCount = 1;
-    depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depth_texture_format_;
-    depth_texture_ = device_.createTexture(depthTextureDesc);
+//     // Create the depth texture
+//     wgpu::TextureDescriptor depthTextureDesc;
+//     depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
+//     depthTextureDesc.format = depth_texture_format_;
+//     depthTextureDesc.mipLevelCount = 1;
+//     depthTextureDesc.sampleCount = 1;
+//     depthTextureDesc.size = {
+//         static_cast<uint32_t>(viewport[2]),
+//         static_cast<uint32_t>(viewport[3]),
+//         1};
+//     depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
+//     depthTextureDesc.viewFormatCount = 1;
+//     depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depth_texture_format_;
+//     depth_texture_ = device_.createTexture(depthTextureDesc);
 
-    // Create the view of the depth texture manipulated by the rasterizer
-    wgpu::TextureViewDescriptor depthTextureViewDesc;
-    depthTextureViewDesc.aspect = wgpu::TextureAspect::DepthOnly;
-    depthTextureViewDesc.baseArrayLayer = 0;
-    depthTextureViewDesc.arrayLayerCount = 1;
-    depthTextureViewDesc.baseMipLevel = 0;
-    depthTextureViewDesc.mipLevelCount = 1;
-    depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
-    depthTextureViewDesc.format = depth_texture_format_;
-    depth_texture_view_ = depth_texture_.createView(depthTextureViewDesc);
+//     // Create the view of the depth texture manipulated by the rasterizer
+//     wgpu::TextureViewDescriptor depthTextureViewDesc;
+//     depthTextureViewDesc.aspect = wgpu::TextureAspect::DepthOnly;
+//     depthTextureViewDesc.baseArrayLayer = 0;
+//     depthTextureViewDesc.arrayLayerCount = 1;
+//     depthTextureViewDesc.baseMipLevel = 0;
+//     depthTextureViewDesc.mipLevelCount = 1;
+//     depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
+//     depthTextureViewDesc.format = depth_texture_format_;
+//     depth_texture_view_ = depth_texture_.createView(depthTextureViewDesc);
 
-    depthStencilState.stencilReadMask = 0;
-    depthStencilState.stencilWriteMask = 0;
-}
+//     depthStencilState.stencilReadMask = 0;
+//     depthStencilState.stencilWriteMask = 0;
+// }
 
-void Application::create_picking_texture()
-{
-    if (picking_view_) {picking_view_.release();}
-    if (picking_texture_) {
-        picking_texture_.destroy();
-        picking_texture_.release();
-    }
-    auto viewport = total_viewport();
+// void Application::create_picking_texture()
+// {
+//     if (picking_view_) {picking_view_.release();}
+//     if (picking_texture_) {
+//         picking_texture_.destroy();
+//         picking_texture_.release();
+//     }
+//     auto viewport = total_viewport();
 
-    wgpu::TextureDescriptor pickDesc{};
-    pickDesc.label = wgpu::StringView("Picking Texture");
-    pickDesc.dimension = wgpu::TextureDimension::_2D;
-    pickDesc.size = {
-        static_cast<uint32_t>(viewport[2]),
-        static_cast<uint32_t>(viewport[3]),
-        1
-    };
-    pickDesc.format = wgpu::TextureFormat::RGBA32Uint;
-    pickDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
-    pickDesc.sampleCount = 1;
-    pickDesc.mipLevelCount = 1;
+//     wgpu::TextureDescriptor pickDesc{};
+//     pickDesc.label = wgpu::StringView("Picking Texture");
+//     pickDesc.dimension = wgpu::TextureDimension::_2D;
+//     pickDesc.size = {
+//         static_cast<uint32_t>(viewport[2]),
+//         static_cast<uint32_t>(viewport[3]),
+//         1
+//     };
+//     pickDesc.format = wgpu::TextureFormat::RGBA32Uint;
+//     pickDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
+//     pickDesc.sampleCount = 1;
+//     pickDesc.mipLevelCount = 1;
 
-    picking_texture_ = device_.createTexture(pickDesc);
-    picking_view_ = picking_texture_.createView();
-}
+//     picking_texture_ = device_.createTexture(pickDesc);
+//     picking_view_ = picking_texture_.createView();
+// }
 
 }
