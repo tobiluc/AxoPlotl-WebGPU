@@ -61,6 +61,7 @@ more transparent, the larger/smaller a property value is.
 - [x] Visualization of vector properties as lines (see VectorRenderer).
 - [ ] Visualization of matrix properties as frames/cubes
 - [ ] Warning Popup when input mesh contains no vertices or any position with NaN or INF.
+- [ ] Handle BIIIGGG Meshes where normally we exceed the webgpu buffer limit.
 
 ### Bugs
 - [x] When enabling fullscreen, the screen starts flickering before turning pink. (No visible error messages) => Solved by updating dawn (see below)
@@ -87,7 +88,7 @@ Additionally, there are a few manual changes necessary
 in the fetched dependencies listed below.
 The original version of AxoPlotl for apple clang 15 is found under the clang15 tag.
 
-In glfw3webgpu.c
+In glfw3webgpu.c - This works now (16.11.2026)?
 ```
 WGPUSurfaceDescriptorFromMetalLayer ->	WGPUSurfaceSourceMetalLayer
 WGPUSType_SurfaceDescriptorFromMetalLayer -> WGPUSType_SurfaceSourceMetalLayer
@@ -100,7 +101,7 @@ using WGPUProgrammableStageDescriptor = WGPUComputeState;
 -> 
 #ifndef WGPUComputeState
 typedef WGPUProgrammableStageDescriptor WGPUComputeState;
-#endif
+#endif //  - This works now (16.11.2026)?
 
 { nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, pos), 0 },
 { nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, uv),  1 },

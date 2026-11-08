@@ -8,7 +8,7 @@ namespace AxoPlotl
 {
 
 glm::mat4 Camera::get_view_matrix() const {
-    return lookAt(eye_position_, orbit_target_, orientation_ * UP);
+    return glm::lookAtRH(eye_position_, orbit_target_, orientation_ * UP);
 }
 
 glm::mat4 Camera::get_perspective_projection_matrix(const Vec4f& _viewport) const {
