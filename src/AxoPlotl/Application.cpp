@@ -235,6 +235,7 @@ bool Application::init()
     for (auto& scene : scenes_) {
         scene.init(this);
     }
+    // picking_visualizer_.initialize(device_, framebuffer_size().x, framebuffer_size().y);
 
     return true;
 }

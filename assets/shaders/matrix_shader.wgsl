@@ -7,7 +7,8 @@ struct Uniforms {
     @align(16) clipBox: ClipBox,
     @align(16) vecScale:f32,
     @align(16) objectId:u32,
-    @align(16) drawSymmetric:u32
+    @align(16) drawSymmetric:u32,
+    @align(16) normalize:u32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -28,14 +29,20 @@ fn vs_main(
 
     var pos:vec3<f32> = positions[iid];
 
-    let m = matrices[iid];
+    var m = matrices[iid];
+    if (ubo.normalize != 0u) {
+        for (var i = 0u; i < 3u; i += 1u) {
+            m[i] = normalize(m[i]);
+        }
+    }
+    m *= ubo.vecScale;
 
     // A Point Instance is rendered as a Line in some direction
     for (var i = 0u; i < 3u; i += 1u) {
         if (vid == 2u*i+0u && ubo.drawSymmetric != 0u) {
-            pos -= ubo.vecScale * m[i];
+            pos -= m[i];
         } else if (vid == 2u*i+1u) {
-            pos += ubo.vecScale * m[i];
+            pos += m[i];
         }
     }
 

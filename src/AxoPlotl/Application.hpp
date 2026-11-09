@@ -3,6 +3,7 @@
 #include "AxoPlotl/Scene.hpp"
 #include "AxoPlotl/Viewport.hpp"
 #include "AxoPlotl/picking.hpp"
+#include "AxoPlotl/rendering/draw_texture.hpp"
 #include <webgpu/webgpu.hpp>
 
 #include <GLFW/glfw3.h>
@@ -23,6 +24,7 @@ class Application
 private:
     float clear_color_[3] = {1,1,1};
     PickConfig picking_config_;
+    // PickingTextureRenderer picking_visualizer_;
 
     struct Time {
         float delta_time_ = 0;

@@ -16,6 +16,7 @@ protected:
         alignas(16) float vec_scale_ = 1.0f;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) uint32_t draw_symmetric_ = 1;
+        alignas(16) uint32_t normalize = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);
@@ -35,6 +36,10 @@ public:
 
     uint32_t& draw_symmetric() {
         return uniforms_.draw_symmetric_;
+    };
+
+    uint32_t& normalize() {
+        return uniforms_.normalize;
     };
 
     ClipBox& clip_box() {

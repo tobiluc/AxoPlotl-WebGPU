@@ -423,7 +423,7 @@ void OpenVolumeMeshObject::visualize_property(
         // Upload Data to Color Renderer
         // (except if matrix...)
         if constexpr(!is_matrix<T>) {
-            const auto& data = get_buffer_property_data<T,EntityTag>(
+            const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
                 mesh_, _pp);
             col_rend.update_property_data(data);
             col_rend.property_type() = get_buffer_property_type<T>();
@@ -432,7 +432,7 @@ void OpenVolumeMeshObject::visualize_property(
         // Upload Data to Vector Renderer
         if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
-                const auto& data = get_buffer_property_data<T,EntityTag>(
+                const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
                     mesh_, _pp);
                 vector3_renderer_.update_vector_data(data);
             }
@@ -441,19 +441,7 @@ void OpenVolumeMeshObject::visualize_property(
         // Upload Data to Matrix Renderer
         if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
-                auto mat3x3_prop = mesh_.get_property<glm::mat<3,3,double>,EntityTag>((_pp)->name()).value();
-                std::vector<glm::mat3x4> data;
-                data.reserve(mesh_.n<EntityTag>());
-                for (auto h : mesh_.entities<EntityTag>()) {
-                    const auto& m3x3 = mat3x3_prop[h];
-                    data.emplace_back();
-                    for (int c = 0; c < 3; ++c) {
-                        for (int r = 0; r < 3; ++r) {
-                            data.back()[c][r] = static_cast<float>(m3x3[c][r]);
-                        }
-                        data.back()[c][3] = 1.0f;
-                    }
-                }
+                const auto& data = get_buffer_property_data_mat3x4<T,EntityTag>(mesh_, _pp);
                 mat3x3_renderer_.update_matrix_data(data);
             }
         }

@@ -18,10 +18,10 @@ void Scene::init(Application *_app)
     axis_renderer_.init(UINT32_MAX, app_, axis_position_buffer_);
     glm::mat3x4 m;
     m[0] = {1,0,0,1};
-    m[1] = {0,2,0,1};
-    m[2] = {0,0,3,1};
+    m[1] = {0,1,0,1};
+    m[2] = {0,0,1,1};
     axis_renderer_.update_matrix_data({m});
-    // axis_renderer_.ambient() = Vec4f(1,1,1,1);
+    axis_renderer_.draw_symmetric() = false;
 
     //add_object<SHObject>();
 }

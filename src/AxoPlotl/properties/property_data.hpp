@@ -38,13 +38,26 @@ static std::string value_to_string(const T& _val)
         }
         s += std::to_string(_val[vector_dim<T>-1]) + "]";
         return s;
+    } else if constexpr(is_matrix<T>) {
+        std::string s = "[";
+        for (int c = 0; c < matrix_traits<T>::cols; ++c) {
+            s += "[";
+            for (int r = 0; r < matrix_traits<T>::rows; ++r) {
+                s += std::to_string(_val[c][r]);
+                if (r < matrix_traits<T>::rows-1) {s += ", ";}
+            }
+            s += "]";
+            if (c < matrix_traits<T>::cols-1) {s += ", ";}
+        }
+        s += "]";
+        return s;
     }
     return "UNKNOWN";
 }
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-std::optional<RendererBase::Property::Data> get_buffer_property_data(const T& _val)
+std::optional<RendererBase::Property::Data> get_buffer_property_data_vec4(const T& _val)
 {
     using D = RendererBase::Property::Data;
 
@@ -72,7 +85,7 @@ std::optional<RendererBase::Property::Data> get_buffer_property_data(const T& _v
         }
     }
 
-    std::cerr << "UNKNOWN PROPERTY DATA TYPE: "
+    std::cerr << "UNKNOWN PROPERTY DATA TYPE FOR VEC4 CONVERSION: "
               << std::string(typeid(T).name()) << std::endl;
     return std::nullopt;
 }
@@ -91,7 +104,7 @@ constexpr RendererBase::Property::Type get_buffer_property_type()
 }
 
 template<typename T, typename EntityTag>
-std::vector<RendererBase::Property::Data> get_buffer_property_data(
+std::vector<RendererBase::Property::Data> get_buffer_property_data_vec4(
     const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
@@ -100,9 +113,30 @@ std::vector<RendererBase::Property::Data> get_buffer_property_data(
     std::vector<RendererBase::Property::Data> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
-        auto d = get_buffer_property_data(static_cast<T>(prop[h]));
+        auto d = get_buffer_property_data_vec4(static_cast<T>(prop[h]));
         if (d.has_value()) {data.push_back(*d);
         } else {data.emplace_back(0,0,0,0);}
+    }
+    return data;
+}
+
+template<typename T, typename EntityTag>
+std::vector<glm::mat3x4> get_buffer_property_data_mat3x4(
+    const OVMVolumeMesh& _mesh,
+    OpenVolumeMesh::PropertyStorageBase* _prop)
+{
+    auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
+    std::vector<glm::mat3x4> data;
+    data.reserve(_mesh.n<EntityTag>());
+    for (auto h : _mesh.entities<EntityTag>()) {
+        const auto& m3x3 = prop[h];
+        data.emplace_back();
+        for (int c = 0; c < 3; ++c) {
+            for (int r = 0; r < 3; ++r) {
+                data.back()[c][r] = static_cast<float>(m3x3[c][r]);
+            }
+            data.back()[c][3] = 1.0f;
+        }
     }
     return data;
 }

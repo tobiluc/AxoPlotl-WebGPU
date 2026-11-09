@@ -276,11 +276,15 @@ public:
 
     inline void render_ui() override
     {
-        ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
+        bool b = renderer_.normalize();
+        ImGui::Checkbox("Normalize", &b);
+        renderer_.normalize() = b;
 
-        bool ds = renderer_.draw_symmetric();
-        ImGui::Checkbox("Symmetric", &ds);
-        renderer_.draw_symmetric() = ds;
+        b = renderer_.draw_symmetric();
+        ImGui::Checkbox("Symmetric", &b);
+        renderer_.draw_symmetric() = b;
+
+        ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
     }
 
     inline std::string name() const override {
