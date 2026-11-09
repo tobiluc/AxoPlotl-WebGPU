@@ -71,6 +71,7 @@ RendererBase::Property::Data get_buffer_property_data(const T& _val)
             std::cerr << "Vector Properties of Dimension > 4 are not supported" << std::endl;
         }
     }
+
     throw std::runtime_error("UNKNOWN PROPERTY DATA TYPE: "+std::string(typeid(T).name()));
     return D(0,0,0,0);
 }

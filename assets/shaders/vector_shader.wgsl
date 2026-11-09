@@ -4,7 +4,7 @@
 struct Uniforms {
     @align(16) mvp : mat4x4<f32>,
     @align(16) viewportSize: vec2<f32>,
-    @align(16) pointSize: f32,
+    @align(16) lineWidth: f32,
     @align(16) clipBox: ClipBox,
     @align(16) vecScale:f32,
     @align(16) objectId:u32

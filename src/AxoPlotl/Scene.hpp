@@ -6,6 +6,7 @@
 #include <AxoPlotl/objects/BaseObject.hpp>
 #include <AxoPlotl/Camera.hpp>
 #include <AxoPlotl/rendering/MeshEdgeRenderer.hpp>
+#include <AxoPlotl/rendering/Matrix3x3Renderer.hpp>
 #include <webgpu/webgpu.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/objects/OpenVolumeMeshObject.hpp>
@@ -112,7 +113,8 @@ protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
-    ColoredEdgeRenderer axis_renderer_;
+    // ColoredEdgeRenderer axis_renderer_;
+    Matrix3x3Renderer axis_renderer_;
 
     Camera camera_;
 };

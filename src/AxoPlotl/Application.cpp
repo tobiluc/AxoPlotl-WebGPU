@@ -802,32 +802,39 @@ void Application::build_default_layout(ImGuiID dockspace_id)
 
     // Inspector on the right (25%).
     ImGuiID inspector_id;
-    ImGuiID center_id;
+    ImGuiID viewport_id;
 
     ImGui::DockBuilderSplitNode(
         dockspace_id,
         ImGuiDir_Right,
         0.25f,
         &inspector_id,
-        &center_id
+        &viewport_id
         );
 
     // Scenes tab to the bottom of the central area (20%).
     ImGuiID scenes_id;
 
     ImGui::DockBuilderSplitNode(
-        center_id,
+        viewport_id,
         ImGuiDir_Down,
         0.20f,
         &scenes_id,
-        &center_id
+        &viewport_id
         );
 
     // Dock the windows.
     ImGui::DockBuilderDockWindow("Inspector", inspector_id);
     ImGui::DockBuilderDockWindow("Scenes", scenes_id);
+    ImGui::DockBuilderDockWindow("Viewport", viewport_id);
 
-    ImGui::DockBuilderDockWindow("Viewport", center_id);
+    // Hide Tab Bar (with node title) as Default
+    ImGui::DockBuilderGetNode(scenes_id)->LocalFlags |=
+        ImGuiDockNodeFlags_HiddenTabBar;
+    ImGui::DockBuilderGetNode(inspector_id)->LocalFlags |=
+        ImGuiDockNodeFlags_HiddenTabBar;
+    ImGui::DockBuilderGetNode(viewport_id)->LocalFlags |=
+        ImGuiDockNodeFlags_HiddenTabBar;
 
     ImGui::DockBuilderFinish(dockspace_id);
 }

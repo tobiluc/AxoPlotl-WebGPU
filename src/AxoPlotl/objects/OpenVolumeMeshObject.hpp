@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
 #include "AxoPlotl/rendering/MeshVertexRenderer.hpp"
 #include "AxoPlotl/rendering/Vector3Renderer.hpp"
+#include <AxoPlotl/rendering/Matrix3x3Renderer.hpp>
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
@@ -128,6 +129,7 @@ protected:
     ColoredCellRenderer cell_renderer_;
 
     Vector3Renderer vector3_renderer_;
+    Matrix3x3Renderer mat3x3_renderer_;
 };
 
 }

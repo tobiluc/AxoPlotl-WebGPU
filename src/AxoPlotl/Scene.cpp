@@ -14,18 +14,14 @@ void Scene::init(Application *_app)
     // Initialize the Coordinate Axes Cross
     using D = ColoredEdgeRenderer::Property::Data;
     axis_position_buffer_ = create_position_buffer(
-    app_->device_, {
-        Vec4f(0,0,0,1),Vec4f(1,0,0,1),Vec4f(0,1,0,1),Vec4f(0,0,1,1)
-    });
-    axis_renderer_.init(UINT32_MAX, app_, axis_position_buffer_,
-        {{0,1},{0,2},{0,3}});
-    axis_renderer_.update_property_data(
-        std::vector<D>{
-            D(1,0,0,1),
-            D(0,1,0,1),
-            D(0,0,1,1)
-    });
-    axis_renderer_.ambient() = Vec4f(1,1,1,1);
+        app_->device_, {Vec4f(0,0,0,1)});
+    axis_renderer_.init(UINT32_MAX, app_, axis_position_buffer_);
+    glm::mat3x4 m;
+    m[0] = {1,0,0,1};
+    m[1] = {0,2,0,1};
+    m[2] = {0,0,3,1};
+    axis_renderer_.update_matrix_data({m});
+    // axis_renderer_.ambient() = Vec4f(1,1,1,1);
 
     //add_object<SHObject>();
 }

@@ -10,6 +10,7 @@
 #include <OpenMesh/Core/IO/Options.hh>
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 #include <AxoPlotl/IO/happly_to_ovm.hpp>
+#include <AxoPlotl/properties/OVMPropertyCodecsGLM.hpp>
 
 namespace AxoPlotl
 {
@@ -34,7 +35,9 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
             std::cerr << _err.what() << std::endl;
         }
     } else if (_path.extension() == ".ovmb") {
-        if (OVM::IO::ovmb_read(_path.c_str(), res.mesh_)
+        auto codecs = OVM::IO::g_default_property_codecs;
+        OVM::IO::register_glm_codecs(codecs);
+        if (OVM::IO::ovmb_read(_path.c_str(), res.mesh_, OVM::IO::ReadOptions(), codecs)
             ==OVM::IO::ReadResult::Ok) {
             res.status_ = ReadMeshStatus::OK;
         }

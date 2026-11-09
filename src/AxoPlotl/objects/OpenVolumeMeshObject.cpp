@@ -128,7 +128,9 @@ void OpenVolumeMeshObject::render_ui_properties()
                  pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
             {
                 ImGui::PushID((*pp)->name().c_str());
+                std::cerr << "FOO A" << std::endl;
                 std::string s = (*pp)->name() + " [" + (*pp)->typeNameWrapper() + "]";
+                std::cerr << "FOO B" << std::endl;
                 if (ImGui::MenuItem(s.c_str())) {
                     visualize_property((*pp)->name(), EntityTag::type(), (*pp)->typeNameWrapper());
                 }
@@ -171,6 +173,8 @@ void OpenVolumeMeshObject::render_ui_properties()
             scene_->app()->call_deferred([&]() {
                 vector3_renderer_.clear();
                 vector3_renderer_.enabled() = false;
+                mat3x3_renderer_.clear();
+                mat3x3_renderer_.enabled() = false;
             });
         }
     };
@@ -225,6 +229,7 @@ void OpenVolumeMeshObject::delete_buffers()
     face_renderer_.clear();
     cell_renderer_.clear();
     vector3_renderer_.clear();
+    mat3x3_renderer_.clear();
 }
 
 void OpenVolumeMeshObject::render(
@@ -242,11 +247,13 @@ void OpenVolumeMeshObject::render(
     vertex_renderer_.render(vp_size, _render_pass, mvp);
 
     vector3_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3
-    || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
-    || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
-    || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
+        || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
+        || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
+        || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
 
     vector3_renderer_.render(vp_size, _render_pass, mvp);
+
+    mat3x3_renderer_.render(vp_size, _render_pass, mvp);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),
@@ -309,6 +316,8 @@ void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_c
                 show_item.template operator()<OVM::Vec4d>();
             } else if ((*pp)->typeNameWrapper()=="vec4f") {
                 show_item.template operator()<OVM::Vec4f>();
+            } else if ((*pp)->typeNameWrapper()=="3x3d") {
+                show_item.template operator()<glm::mat<3,3,double>>();
             }
             ImGui::PopID();
         }
@@ -370,7 +379,7 @@ void OpenVolumeMeshObject::visualize_property(
 
         prop<EntityTag>().prop_ = _pp;
 
-        // If we want to visualize a vec3 property,
+        // If we want to visualize a vec3/mat3 property,
         // intitialize the corresponding buffers here
         // and delete them again after unselecting.
         // This is to not waste a ton of time/memory
@@ -381,6 +390,9 @@ void OpenVolumeMeshObject::visualize_property(
             if constexpr(vector_dim<T> == 3) {
                 vector3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
             }
+        }
+        if constexpr(std::is_same_v<T, glm::mat<3,3,double>>) {
+            mat3x3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
         }
 
         // Setup Property Filters
@@ -404,10 +416,13 @@ void OpenVolumeMeshObject::visualize_property(
         }
 
         // Upload Data to Color Renderer
-        const auto& data = get_buffer_property_data<T,EntityTag>(
-            mesh_, _pp);
-        col_rend.update_property_data(data);
-        col_rend.property_type() = get_buffer_property_type<T>();
+        // (except if matrix...)
+        if constexpr(!std::is_same_v<T, glm::mat<3,3,double>>) {
+            const auto& data = get_buffer_property_data<T,EntityTag>(
+                mesh_, _pp);
+            col_rend.update_property_data(data);
+            col_rend.property_type() = get_buffer_property_type<T>();
+        }
 
         // Upload Data to Vector Renderer
         if constexpr(is_vector<T>) {
@@ -416,6 +431,21 @@ void OpenVolumeMeshObject::visualize_property(
                     mesh_, _pp);
                 vector3_renderer_.update_vector_data(data);
             }
+        }
+
+        // Upload Data to Matrix Renderer
+        if constexpr(std::is_same_v<T, glm::mat<3,3,double>>) {
+            auto mat3x3_prop = mesh_.get_property<glm::mat<3,3,double>,EntityTag>((_pp)->name()).value();
+            std::vector<glm::mat3x4> data;
+            data.reserve(mesh_.n<EntityTag>());
+            for (auto h : mesh_.entities<EntityTag>()) {
+                const auto& m3x3 = mat3x3_prop[h];
+                data.emplace_back();
+                for (int col = 0; col < 3; ++col) {
+                    data.back()[col] = {m3x3[col][0],m3x3[col][1],m3x3[col][2],1};
+                }
+            }
+            mat3x3_renderer_.update_matrix_data(data);
         }
 
         // Visibility Settings
@@ -470,6 +500,8 @@ void OpenVolumeMeshObject::visualize_property(
                 select_property.template operator()<EntityTag,OVM::Vec4d>(*pp);
             } else if ((*pp)->typeNameWrapper()=="vec4f") {
                 select_property.template operator()<EntityTag,OVM::Vec4f>(*pp);
+            } else if ((*pp)->typeNameWrapper()=="3x3d") {
+                select_property.template operator()<EntityTag,glm::mat<3,3,double>>(*pp);
             }
             if (uploaded_property) {
                 break;
