@@ -64,11 +64,19 @@ fn vs_main(
 @fragment
 fn fs_main(in : VSOut) -> FragmentOutput
 {
+    let dist = length(in.corner);
+
+    if (dist > 1.0) {discard;} //round
+
     var out: FragmentOutput;
+
+    // brighter center, darker edges
+    let shading = 0.85 + 0.15 * cos(dist * 3.14159265 / 2.0);
+
     out.color = getFragmentColorFromPropertyValue(
-        in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        ) * ubo.ambient;
-    if (length(in.corner) > 1.0) {discard;} //round
+                    in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
+                    ) * ubo.ambient * shading;
+
     out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(in.position.z));
     return out;
 }
