@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AxoPlotl/properties/property_filters.hpp"
+#include "AxoPlotl/properties/property_settings.hpp"
 #include "AxoPlotl/rendering/MeshCellRenderer.hpp"
 #include "AxoPlotl/rendering/MeshEdgeRenderer.hpp"
 #include "AxoPlotl/rendering/MeshFaceRenderer.hpp"
@@ -26,7 +26,7 @@ protected:
     template<typename EntityTag>
     struct Property {
         std::optional<OVM::PropertyStorageBase*> prop_;
-        std::vector<std::shared_ptr<PropertyFilterBase>> filters_;
+        std::vector<std::shared_ptr<PropertySettingsBase>> settings_;
         int filter_index_ = 0;
     };
 
@@ -41,6 +41,7 @@ protected:
     template<> Property<OVM::Entity::Edge>& prop<OVM::Entity::Edge>() {return e_prop_;}
     template<> Property<OVM::Entity::Face>& prop<OVM::Entity::Face>() {return f_prop_;}
     template<> Property<OVM::Entity::Cell>& prop<OVM::Entity::Cell>() {return c_prop_;}
+    std::optional<OVM::PropertyStorageBase*> selected_prop() const;
 
     void upload_default_vertex_property_data();
     void upload_default_edge_property_data();
@@ -97,6 +98,16 @@ public:
         const std::string& _property_name,
         std::optional<OVM::EntityType> _entity_type = std::nullopt,
         std::optional<std::string> _type_name = std::nullopt);
+
+    std::optional<std::string> selected_property_name() const;
+
+    std::optional<std::string> selected_property_typename() const;
+
+    std::optional<OVM::EntityType> selected_property_entity_type() const {
+        return selected_prop_entity_type_;
+    }
+
+    void visualize_like(const OpenVolumeMeshObject& _obj);
 
     inline OVMVolumeMesh& mesh() {
         return mesh_;

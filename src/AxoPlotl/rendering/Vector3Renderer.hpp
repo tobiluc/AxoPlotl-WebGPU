@@ -55,6 +55,11 @@ public:
         return initialized_;
     }
 
+    void configure_like(const Vector3Renderer& _r) {
+        uniforms_ = _r.uniforms_;
+        enabled_ = _r.enabled_;
+    }
+
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;

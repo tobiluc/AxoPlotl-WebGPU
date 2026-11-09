@@ -66,6 +66,11 @@ public:
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
+
+    void configure_like(const ColoredFaceRenderer& _r) {
+        uniforms_ = _r.uniforms_;
+        enabled_ = _r.enabled_;
+    }
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_;

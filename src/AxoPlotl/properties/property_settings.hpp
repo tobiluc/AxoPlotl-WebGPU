@@ -15,7 +15,7 @@
 namespace AxoPlotl
 {
 
-struct PropertyFilterBase
+struct PropertySettingsBase
 {
     virtual std::string name() const = 0;
     virtual void render_ui() = 0;
@@ -23,17 +23,17 @@ struct PropertyFilterBase
 };
 
 // template<class Renderer>
-// struct PropertyFilterForRenderer : public PropertyFilterBase
+// struct PropertySettingsForRenderer : public PropertySettingsBase
 // {
 //     //virtual void init(Renderer& _r) = 0;
 //     virtual void render_ui(Renderer& _r) = 0;
 // };
 
 template<typename EntityTag>
-struct PropertyFilterBool : public PropertyFilterBase
+struct PropertySettingsBool : public PropertySettingsBase
 {
 public:
-    PropertyFilterBool(OVM::PropertyStorageT<bool>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
+    PropertySettingsBool(OVM::PropertyStorageT<bool>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
         set_default_settings();
@@ -105,10 +105,10 @@ private:
 
 template<typename FT, typename EntityTag>
 requires(std::is_floating_point_v<FT>)
-struct PropertyFilterFloatRange : public PropertyFilterBase
+struct PropertySettingsFloatRange : public PropertySettingsBase
 {
 public:
-    PropertyFilterFloatRange(OVM::PropertyStorageT<FT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
+    PropertySettingsFloatRange(OVM::PropertyStorageT<FT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
         set_default_settings();
@@ -155,10 +155,10 @@ private:
 
 template<typename IT, typename EntityTag>
 requires(std::is_integral_v<IT>)
-struct PropertyFilterIntRange : public PropertyFilterBase
+struct PropertySettingsIntRange : public PropertySettingsBase
 {
 public:
-    PropertyFilterIntRange(OVM::PropertyStorageT<IT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
+    PropertySettingsIntRange(OVM::PropertyStorageT<IT>* _prop, colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
         set_default_settings();
@@ -199,10 +199,10 @@ private:
 
 template<typename IT, typename EntityTag>
 requires(std::is_integral_v<IT>)
-struct PropertyFilterIntValue : public PropertyFilterBase
+struct PropertySettingsIntValue : public PropertySettingsBase
 {
 public:
-    PropertyFilterIntValue(OVM::PropertyStorageT<IT>* _prop,
+    PropertySettingsIntValue(OVM::PropertyStorageT<IT>* _prop,
                            colored_renderer_for_entity_t<EntityTag>& _renderer)
         : hist_(_prop), renderer_(_renderer)
     {
@@ -238,10 +238,10 @@ private:
 
 template<typename Vec3T, typename EntityTag>
 requires(is_vector<Vec3T> && vector_dim<Vec3T> == 3)
-struct PropertyFilterVec3 : public PropertyFilterBase
+struct PropertySettingsVec3 : public PropertySettingsBase
 {
 public:
-    PropertyFilterVec3(Vector3Renderer& _renderer) :
+    PropertySettingsVec3(Vector3Renderer& _renderer) :
         renderer_(_renderer)
     {
         set_default_settings();
@@ -265,10 +265,10 @@ private:
 
 template<typename Mat3x3T, typename EntityTag>
     requires(is_matrix<Mat3x3T> && has_rows_and_cols<Mat3x3T,3,3>)
-struct PropertyFilterMat3x3 : public PropertyFilterBase
+struct PropertySettingsMat3x3 : public PropertySettingsBase
 {
 public:
-    PropertyFilterMat3x3(Matrix3x3Renderer& _renderer) :
+    PropertySettingsMat3x3(Matrix3x3Renderer& _renderer) :
         renderer_(_renderer)
     {
         set_default_settings();

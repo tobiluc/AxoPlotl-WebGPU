@@ -147,18 +147,18 @@ void OpenVolumeMeshObject::render_ui_properties()
         {return;}
 
         // Render Property Filter Settings
-        if (!prop<EntityTag>().filters_.empty()) {
+        if (!prop<EntityTag>().settings_.empty()) {
 
-            if (ImGui::BeginMenu("Change Filter")) {
-                for (int i = 0; i < prop<EntityTag>().filters_.size(); ++i) {
-                    if (ImGui::MenuItem(prop<EntityTag>().filters_[i]->name().c_str())) {
-                        prop<EntityTag>().filters_[i]->set_default_settings();
+            if (ImGui::BeginMenu("Change Settings")) {
+                for (int i = 0; i < prop<EntityTag>().settings_.size(); ++i) {
+                    if (ImGui::MenuItem(prop<EntityTag>().settings_[i]->name().c_str())) {
+                        prop<EntityTag>().settings_[i]->set_default_settings();
                         prop<EntityTag>().filter_index_ = i;
                     }
                 }
                 ImGui::EndMenu();
             }
-            prop<EntityTag>().filters_[prop<EntityTag>().filter_index_]->render_ui();
+            prop<EntityTag>().settings_[prop<EntityTag>().filter_index_]->render_ui();
         }
 
         // Clear
@@ -166,8 +166,9 @@ void OpenVolumeMeshObject::render_ui_properties()
             upload_default_property_data<EntityTag>();
             colored_entity_renderer<EntityTag>().property_type()
                 = RendererBase::Property::Type::COLOR;
+            selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
-            prop<EntityTag>().filters_.clear();
+            prop<EntityTag>().settings_.clear();
             scene_->app()->call_deferred([&]() {
                 vector3_renderer_.clear();
                 vector3_renderer_.enabled() = false;
@@ -396,26 +397,26 @@ void OpenVolumeMeshObject::visualize_property(
         }
 
         // Setup Property Filters
-        prop<EntityTag>().filters_.clear();
+        prop<EntityTag>().settings_.clear();
         if constexpr(std::is_same_v<bool,T>) {
-            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterBool<EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsBool<EntityTag>>(
                 _pp->cast_to_StorageT<bool>(), col_rend));
         } else if constexpr(std::is_floating_point_v<T>) {
-            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterFloatRange<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsFloatRange<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
         } else if constexpr(std::is_integral_v<T>) {
-            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterIntValue<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsIntValue<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
-            prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterIntRange<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsIntRange<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
         } else if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
-                prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterVec3<T,EntityTag>>(
+                prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsVec3<T,EntityTag>>(
                     vector3_renderer_));
             }
         } else if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
-                prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterMat3x3<T,EntityTag>>(
+                prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsMat3x3<T,EntityTag>>(
                     mat3x3_renderer_));
             }
         }
@@ -511,6 +512,55 @@ void OpenVolumeMeshObject::visualize_property(
     search_and_select_property.template operator()<OVM::Entity::Edge>();
     search_and_select_property.template operator()<OVM::Entity::Face>();
     search_and_select_property.template operator()<OVM::Entity::Cell>();
+}
+
+void OpenVolumeMeshObject::visualize_like(const OpenVolumeMeshObject& _obj)
+{
+    if (_obj.selected_property_name().has_value()) {
+        visualize_property(
+            *_obj.selected_property_name(),
+            _obj.selected_property_entity_type(),
+            _obj.selected_property_typename());
+    }
+    vertex_renderer_.configure_like(_obj.vertex_renderer_);
+    edge_renderer_.configure_like(_obj.edge_renderer_);
+    face_renderer_.configure_like(_obj.face_renderer_);
+    cell_renderer_.configure_like(_obj.cell_renderer_);
+    vector3_renderer_.configure_like(_obj.vector3_renderer_);
+    mat3x3_renderer_.configure_like(_obj.mat3x3_renderer_);
+}
+
+std::optional<OVM::PropertyStorageBase*> OpenVolumeMeshObject::selected_prop() const
+{
+    if (!selected_prop_entity_type_.has_value()) {
+        return std::nullopt;
+    }
+    switch(*selected_prop_entity_type_) {
+        case OpenVolumeMesh::EntityType::Vertex:
+            return (*v_prop_.prop_);
+        case OpenVolumeMesh::EntityType::Edge:
+            return (*e_prop_.prop_);
+        case OpenVolumeMesh::EntityType::Face:
+            return (*f_prop_.prop_);
+        case OpenVolumeMesh::EntityType::Cell:
+            return (*c_prop_.prop_);
+        default:
+            return std::nullopt;
+    }
+}
+
+std::optional<std::string> OpenVolumeMeshObject::selected_property_name() const
+{
+    const auto& p = selected_prop();
+    if (!p.has_value()) {return std::nullopt;}
+    return (*p)->name();
+}
+
+std::optional<std::string> OpenVolumeMeshObject::selected_property_typename() const
+{
+    const auto& p = selected_prop();
+    if (!p.has_value()) {return std::nullopt;}
+    return (*p)->typeNameWrapper();
 }
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()

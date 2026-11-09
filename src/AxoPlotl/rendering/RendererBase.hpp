@@ -72,8 +72,6 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) = 0;
 
-    inline bool& enabled() {
-        return enabled_;
-    }
+    bool& enabled() {return enabled_;}
 };
 }

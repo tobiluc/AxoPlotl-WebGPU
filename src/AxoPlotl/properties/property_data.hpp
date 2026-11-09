@@ -3,7 +3,7 @@
 #include "AxoPlotl/geometry/geometry_traits.hpp"
 #include <AxoPlotl/rendering/RendererBase.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
-#include <AxoPlotl/properties/property_filters.hpp>
+#include <AxoPlotl/properties/property_settings.hpp>
 
 namespace AxoPlotl
 {
@@ -121,6 +121,7 @@ std::vector<RendererBase::Property::Data> get_buffer_property_data_vec4(
 }
 
 template<typename T, typename EntityTag>
+    requires(is_matrix<T> && has_rows_and_cols<T,3,3>)
 std::vector<glm::mat3x4> get_buffer_property_data_mat3x4(
     const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop)
