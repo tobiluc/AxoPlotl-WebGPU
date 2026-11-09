@@ -60,15 +60,7 @@ protected:
 
 public:
     OpenVolumeMeshObject(Scene* _scene, OVMVolumeMesh& _mesh,
-        const std::optional<std::filesystem::path>& _filepath = std::nullopt) :
-        ObjectBase(_scene, ""),
-        mesh_(std::move(_mesh)),
-        filepath_(_filepath)
-    {
-        this->name_ = _filepath.has_value()?
-            _filepath.value().stem().string() :
-            "New Volume Mesh Object " + std::to_string(id_);
-    }
+                         const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
     ~OpenVolumeMeshObject() {
         delete_buffers();

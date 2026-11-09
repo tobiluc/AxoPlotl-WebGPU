@@ -10,6 +10,26 @@
 namespace AxoPlotl
 {
 
+OpenVolumeMeshObject::OpenVolumeMeshObject(
+    Scene* _scene,
+    OVMVolumeMesh& _mesh,
+    const std::optional<std::filesystem::path>& _filepath)
+    :
+    ObjectBase(_scene, ""),
+    mesh_(std::move(_mesh)),
+    filepath_(_filepath)
+{
+    this->name_ = _filepath.has_value()?
+                      _filepath.value().stem().string() :
+                      "New Volume Mesh Object " + std::to_string(id_);
+
+    if (_filepath.has_value()) {
+        auto filename_prop = _mesh.request_mesh_property<std::string>("AxoPlotl::filepath");
+        _mesh.set_persistent(filename_prop);
+        filename_prop[OVM::MeshHandle(0)] = *_filepath;
+    }
+}
+
 void OpenVolumeMeshObject::render_ui_settings()
 {
     input_name();
@@ -82,6 +102,9 @@ void OpenVolumeMeshObject::render_ui_properties()
             } else if ((*p)->typeNameWrapper() == "float") {
                 auto prop = mesh_.get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
                 ImGui::Text("%s = %f", (*p)->name().c_str(), prop[mh]);
+            } else if ((*p)->typeNameWrapper() == "string") {
+                auto prop = mesh_.get_property<std::string,OVM::Entity::Mesh>((*p)->name()).value();
+                ImGui::Text("%s = %s", (*p)->name().c_str(), prop[mh].c_str());
             }
         }
         ImGui::EndMenu();
@@ -92,6 +115,12 @@ void OpenVolumeMeshObject::render_ui_properties()
         if (mesh_.n_vertices()>0 && ImGui::BeginMenu("Vertices")){
             if (ImGui::MenuItem("Normalized Position")) {
                 calc_vertex_normalized_position(mesh_);
+            }
+            ImGui::EndMenu();
+        }
+        if (mesh_.n_faces()>0 && ImGui::BeginMenu("Faces")){
+            if (ImGui::MenuItem("Normal")) {
+                calc_face_normal(mesh_);
             }
             ImGui::EndMenu();
         }
@@ -591,9 +620,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_faces());
     for (OVM::FH fh : mesh_.faces()) {
-        auto n = mesh_.normal(fh.halfface_handle(0));
-        D sphere_color{std::abs(n[0]),std::abs(n[1]),std::abs(n[2]),1};
-        props.push_back(sphere_color);
+        props.emplace_back(1,1,1,1);
     }
     face_renderer_.update_property_data(props);
 }
@@ -603,14 +630,7 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
     std::vector<D> props;
     props.reserve(mesh_.n_cells());
     for (OVM::CH ch : mesh_.cells()) {
-        auto p = mesh_.barycenter(ch).normalized();
-        D sphere_color = Vec4f(
-            0.5 * (p[0] + 1),
-            0.5 * (p[1] + 1),
-            0.5 * (p[2] + 1),
-            1
-            );
-        props.push_back(sphere_color);
+        props.emplace_back(1,1,1,1);
     }
     cell_renderer_.update_property_data(props);
 }
