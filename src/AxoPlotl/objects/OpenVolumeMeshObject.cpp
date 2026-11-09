@@ -365,7 +365,7 @@ void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_c
     }
 }
 
-void OpenVolumeMeshObject::visualize_property(
+bool OpenVolumeMeshObject::visualize_property(
     const std::string& _property_name,
     std::optional<OVM::EntityType> _entity_type,
     std::optional<std::string> _type_name)
@@ -512,6 +512,8 @@ void OpenVolumeMeshObject::visualize_property(
     search_and_select_property.template operator()<OVM::Entity::Edge>();
     search_and_select_property.template operator()<OVM::Entity::Face>();
     search_and_select_property.template operator()<OVM::Entity::Cell>();
+
+    return uploaded_property;
 }
 
 void OpenVolumeMeshObject::visualize_like(const OpenVolumeMeshObject& _obj)

@@ -94,7 +94,7 @@ public:
 
     bool export_file(const std::filesystem::path& _path) const override;
 
-    void visualize_property(
+    bool visualize_property(
         const std::string& _property_name,
         std::optional<OVM::EntityType> _entity_type = std::nullopt,
         std::optional<std::string> _type_name = std::nullopt);
