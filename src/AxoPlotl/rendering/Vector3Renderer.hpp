@@ -47,7 +47,7 @@ public:
     void update_vector_data(const std::vector<Vec4f>& _data);
 
     void render(
-        const Vec4f& _viewport,
+        const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 

@@ -14,9 +14,9 @@ void SegmentObject::render(
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
-    const auto& vp = scene_->app()->scene_viewport();
+    const auto& vp_size = scene_->app()->viewport().size();
 
-    renderer_.render(vp, _render_pass, mvp);
+    renderer_.render(vp_size, _render_pass, mvp);
 }
 
 void SegmentObject::render_ui_info()

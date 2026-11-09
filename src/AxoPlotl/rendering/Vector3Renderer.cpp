@@ -203,7 +203,7 @@ void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
 }
 
 void Vector3Renderer::render(
-    const Vec4f& _viewport,
+    const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {
@@ -211,7 +211,7 @@ void Vector3Renderer::render(
 
     // Update uniforms
     uniforms_.mvp_ = _mvp;
-    uniforms_.viewport_size_ = {_viewport[2],_viewport[3]};
+    uniforms_.viewport_size_ = {_size.width,_size.height};
     uniforms_.object_id_ = object_id_;
     app_->device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));

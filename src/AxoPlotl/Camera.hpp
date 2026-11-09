@@ -33,13 +33,13 @@ private:
 public:
     glm::mat4 get_view_matrix() const;
 
-    glm::mat4 get_perspective_projection_matrix(const Vec4f& _viewport) const;
+    glm::mat4 get_perspective_projection_matrix(const ViewSize& _viewport_size) const;
 
-    glm::mat4 get_orthographic_projection_matrix(const Vec4f& _viewport) const;
+    glm::mat4 get_orthographic_projection_matrix(const ViewSize& _viewport_size) const;
 
-    glm::mat4 get_projection_matrix(const Vec4f& _viewport) const;
+    glm::mat4 get_projection_matrix(const ViewSize& _viewport_size) const;
 
-    void update(GLFWwindow* window);
+    void update(GLFWwindow* window, bool _allow_input = true);
 
     void reset(GLFWwindow* window);
 

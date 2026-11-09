@@ -234,19 +234,19 @@ void OpenVolumeMeshObject::render(
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
-    const auto& vp = scene_->app()->scene_viewport();
+    const auto& vp_size = scene_->app()->viewport().size();
 
-    cell_renderer_.render(vp, _render_pass, mvp);
-    face_renderer_.render(vp, _render_pass, mvp);
-    edge_renderer_.render(vp, _render_pass, mvp);
-    vertex_renderer_.render(vp, _render_pass, mvp);
+    cell_renderer_.render(vp_size, _render_pass, mvp);
+    face_renderer_.render(vp_size, _render_pass, mvp);
+    edge_renderer_.render(vp_size, _render_pass, mvp);
+    vertex_renderer_.render(vp_size, _render_pass, mvp);
 
     vector3_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3
     || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
     || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
     || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
 
-    vector3_renderer_.render(vp, _render_pass, mvp);
+    vector3_renderer_.render(vp_size, _render_pass, mvp);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),

@@ -210,7 +210,7 @@ bool Application::init()
     //-------------------
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
     depth_texture_format_ = depthStencilState.format;
-    viewport_.resize(device_, total_viewport()[2], total_viewport()[3], surface_format_, depth_texture_format_);
+    viewport_.resize(device_, framebuffer_size().x, framebuffer_size().y, surface_format_, depth_texture_format_);
     // create_depth_texture();
     // create_picking_texture();
 
@@ -589,25 +589,18 @@ bool Application::init_imgui()
     return true;
 }
 
-glm::vec<4,float> Application::scene_viewport()
-{
-    return {0, 0, viewport_.width(), viewport_.height()};
-    // int fbWidth, fbHeight;
-    // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    // float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
-    // if (inspector_right_aligned_) {
-    //     return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
-    // } else {
-    //     return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
-    // }
-}
-
-glm::vec<4,float> Application::total_viewport()
-{
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-    return {0.0f, 0.0f, fbWidth, fbHeight};
-}
+// glm::vec<4,float> Application::scene_viewport()
+// {
+//     return {0, 0, viewport_.width(), viewport_.height()};
+//     // int fbWidth, fbHeight;
+//     // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+//     // float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
+//     // if (inspector_right_aligned_) {
+//     //     return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
+//     // } else {
+//     //     return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
+//     // }
+// }
 
 void Application::render_viewport_ui() {
     viewport_.render_ui(
@@ -1017,7 +1010,7 @@ PickResult Application::request_pick_result(float _x, float _y)
         wgpu::Buffer buffer;
         PickResult pick;
         Scene* scene;
-        Vec4f scene_viewport;
+        ViewSize scene_size;
     };
 
     auto on_buffer_mapped = [](
@@ -1058,7 +1051,7 @@ PickResult Application::request_pick_result(float _x, float _y)
         float depth = std::bit_cast<float>(data[3]);
         context->pick.ndc_.z = depth;
         const auto& v = context->scene->camera().get_view_matrix();
-        const auto& p = context->scene->camera().get_projection_matrix(context->scene_viewport);
+        const auto& p = context->scene->camera().get_projection_matrix(context->scene_size);
         Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
         pos /= pos.w;
         context->pick.position_[0] = pos[0];
@@ -1076,14 +1069,14 @@ PickResult Application::request_pick_result(float _x, float _y)
     context.ready = false;
     context.buffer = picking_buffer_;
     context.scene = &scene();
-    context.scene_viewport = scene_viewport();
+    context.scene_size = viewport().size();
 
     // Get x and y components of Normalized Device Coordinates
-    _x -= scene_viewport()[0];
-    _y -= scene_viewport()[1];
+    _x -= 0; // topleft of vieport is origin since docking rework
+    _y -= 0;
     context.pick.ndc_ = {
-        std::clamp((2.0*_x)/scene_viewport()[2] - 1.0, -1.0, 1.0),
-        std::clamp(1.0-(2.0*_y)/scene_viewport()[3], -1.0, 1.0),
+        std::clamp((2.0*_x)/context.scene_size.width - 1.0, -1.0, 1.0),
+        std::clamp(1.0-(2.0*_y)/context.scene_size.height, -1.0, 1.0),
         0
     };
 
@@ -1109,15 +1102,15 @@ PickResult Application::request_pick_result(float _x, float _y)
 
 void Application::configure_surface()
 {
-    auto viewport = total_viewport();
+    auto fb_size = framebuffer_size();
     //std::cerr << viewport[2] << "/" << viewport[3] << std::endl;
 
     // Configure the surface
     wgpu::SurfaceConfiguration config = {};
 
     // Configuration of the textures created for the underlying swap chain
-    config.width = static_cast<uint32_t>(viewport[2]);
-    config.height = static_cast<uint32_t>(viewport[3]);
+    config.width = static_cast<uint32_t>(fb_size.x);
+    config.height = static_cast<uint32_t>(fb_size.y);
     config.usage = wgpu::TextureUsage::RenderAttachment;
     wgpu::SurfaceCapabilities capabilities = {};
     surface_.getCapabilities(adapter_, &capabilities);

@@ -11,14 +11,14 @@ glm::mat4 Camera::get_view_matrix() const {
     return glm::lookAtRH(eye_position_, orbit_target_, orientation_ * UP);
 }
 
-glm::mat4 Camera::get_perspective_projection_matrix(const Vec4f& _viewport) const {
-    float width_over_height = _viewport[2]/_viewport[3];
+glm::mat4 Camera::get_perspective_projection_matrix(const ViewSize &_viewport_size) const {
+    float width_over_height = _viewport_size.aspect_ratio();
     return glm::perspectiveRH_ZO(fov_, width_over_height, near_plane_, far_plane_);
 }
 
-glm::mat4 Camera::get_orthographic_projection_matrix(const Vec4f& _viewport) const
+glm::mat4 Camera::get_orthographic_projection_matrix(const ViewSize& _viewport_size) const
 {
-    const float width_over_height = _viewport[2]/_viewport[3];
+    const float width_over_height = _viewport_size.aspect_ratio();
     const float distance = glm::length(eye_position_ - orbit_target_);
     const float half_height = distance * std::tan(fov_ * 0.5f);
     const float half_width = half_height * width_over_height;
@@ -35,16 +35,16 @@ glm::mat4 Camera::get_orthographic_projection_matrix(const Vec4f& _viewport) con
     );
 }
 
-glm::mat4 Camera::get_projection_matrix(const Vec4f& _viewport) const {
-    return use_ortho_? get_orthographic_projection_matrix(_viewport)
-                      : get_perspective_projection_matrix(_viewport);
+glm::mat4 Camera::get_projection_matrix(const ViewSize& _viewport_size) const {
+    return use_ortho_? get_orthographic_projection_matrix(_viewport_size)
+                      : get_perspective_projection_matrix(_viewport_size);
 }
 
-void Camera::update(GLFWwindow* window)
+void Camera::update(GLFWwindow* window, bool _allow_input)
 {
     float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
-    if (true || !ImGui::GetIO().WantCaptureMouse)
+    if (_allow_input)
     {
         // Zoom
         float scroll = Input::Mouse::SCROLL_DELTA[1];

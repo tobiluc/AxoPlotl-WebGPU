@@ -14,4 +14,10 @@ namespace AxoPlotl
     using Mat4x4f = glm::mat<4,4,float>;
     using Vec4ui = glm::vec<4,uint32_t>;
     using Quat = glm::quat;
+
+    struct ViewSize {
+        float width = 1;
+        float height = 1;
+        float aspect_ratio() const {return width/height;}
+    };
 }

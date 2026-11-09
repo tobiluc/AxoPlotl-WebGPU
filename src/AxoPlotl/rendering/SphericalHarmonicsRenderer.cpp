@@ -292,7 +292,7 @@ void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
 }
 
 void SHRenderer::render(
-    const Vec4f& _viewport,
+    const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {

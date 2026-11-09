@@ -63,9 +63,13 @@ public:
     wgpu::Adapter adapter_;
     wgpu::Surface surface_;
 
-    glm::vec<4,float> total_viewport();
+    glm::vec<2,int> framebuffer_size() const {
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+        return {fbWidth, fbHeight};
+    }
 
-    glm::vec<4,float> scene_viewport();
+    const Viewport& viewport() const {return viewport_;}
 
     void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);

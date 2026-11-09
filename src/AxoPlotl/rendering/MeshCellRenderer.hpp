@@ -69,7 +69,7 @@ public:
     void update_property_data(const std::vector<Property::Data>& _data);
 
     void render(
-        const Vec4f& _viewport,
+        const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
 private:

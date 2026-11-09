@@ -3,8 +3,8 @@
 
 #include <webgpu/webgpu.hpp>
 #include <imgui.h>
-
 #include <cstdint>
+#include <AxoPlotl/typedefs/glm.hpp>
 
 namespace AxoPlotl
 {
@@ -43,8 +43,11 @@ public:
     uint32_t width() const { return width_; }
     uint32_t height() const { return height_; }
 
-    bool valid() const
-    {
+    ViewSize size() const {
+        return {.width = static_cast<float>(width_),
+                .height = static_cast<float>(height_)};}
+
+    bool valid() const {
         return width_ > 0 && height_ > 0 &&
                color_view_ && depth_view_ && picking_view_;
     }
@@ -60,6 +63,8 @@ public:
     float mouse_y() const { return mouse_y_; }
 
     ImVec2 image_min() const { return image_min_; }
+
+    // Not the same as width/height as it might be scaled
     ImVec2 image_size() const { return image_size_; }
 
 private:
