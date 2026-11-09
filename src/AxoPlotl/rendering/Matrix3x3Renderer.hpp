@@ -15,6 +15,7 @@ protected:
         alignas(16) ClipBox clip_box_;
         alignas(16) float vec_scale_ = 1.0f;
         alignas(16) uint32_t object_id_ = 0;
+        alignas(16) uint32_t draw_symmetric_ = 1;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);
@@ -30,6 +31,10 @@ public:
 
     float& vector_scale() {
         return uniforms_.vec_scale_;
+    };
+
+    uint32_t& draw_symmetric() {
+        return uniforms_.draw_symmetric_;
     };
 
     ClipBox& clip_box() {

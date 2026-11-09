@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
+#include "AxoPlotl/rendering/Matrix3x3Renderer.hpp"
 #include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
 #include <AxoPlotl/typedefs/ovm.hpp>
@@ -260,6 +261,38 @@ public:
     }
 private:
     Vector3Renderer& renderer_;
+};
+
+template<typename Mat3x3T, typename EntityTag>
+    requires(is_matrix<Mat3x3T> && has_rows_and_cols<Mat3x3T,3,3>)
+struct PropertyFilterMat3x3 : public PropertyFilterBase
+{
+public:
+    PropertyFilterMat3x3(Matrix3x3Renderer& _renderer) :
+        renderer_(_renderer)
+    {
+        set_default_settings();
+    }
+
+    inline void render_ui() override
+    {
+        ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
+
+        bool ds = renderer_.draw_symmetric();
+        ImGui::Checkbox("Symmetric", &ds);
+        renderer_.draw_symmetric() = ds;
+    }
+
+    inline std::string name() const override {
+        return "Mat3x3";
+    }
+
+    inline void set_default_settings() override {
+        renderer_.vector_scale() = 1.0f;
+        renderer_.draw_symmetric() = true;
+    }
+private:
+    Matrix3x3Renderer& renderer_;
 };
 
 }

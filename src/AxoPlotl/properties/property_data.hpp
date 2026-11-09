@@ -44,7 +44,7 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-RendererBase::Property::Data get_buffer_property_data(const T& _val)
+std::optional<RendererBase::Property::Data> get_buffer_property_data(const T& _val)
 {
     using D = RendererBase::Property::Data;
 
@@ -72,8 +72,9 @@ RendererBase::Property::Data get_buffer_property_data(const T& _val)
         }
     }
 
-    throw std::runtime_error("UNKNOWN PROPERTY DATA TYPE: "+std::string(typeid(T).name()));
-    return D(0,0,0,0);
+    std::cerr << "UNKNOWN PROPERTY DATA TYPE: "
+              << std::string(typeid(T).name()) << std::endl;
+    return std::nullopt;
 }
 
 template<typename T>
@@ -99,7 +100,9 @@ std::vector<RendererBase::Property::Data> get_buffer_property_data(
     std::vector<RendererBase::Property::Data> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
-        data.push_back(get_buffer_property_data(static_cast<T>(prop[h])));
+        auto d = get_buffer_property_data(static_cast<T>(prop[h]));
+        if (d.has_value()) {data.push_back(*d);
+        } else {data.emplace_back(0,0,0,0);}
     }
     return data;
 }

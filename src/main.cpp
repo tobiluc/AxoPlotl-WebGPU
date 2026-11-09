@@ -9,7 +9,7 @@
 int main()
 {
     if (!AxoPlotl::init()) {
-      std::cerr << "Failed to initialice AxoPlotl" << std::endl;
+      std::cerr << "Failed to initialize AxoPlotl" << std::endl;
       return 1;
     }
 

@@ -128,9 +128,7 @@ void OpenVolumeMeshObject::render_ui_properties()
                  pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
             {
                 ImGui::PushID((*pp)->name().c_str());
-                std::cerr << "FOO A" << std::endl;
                 std::string s = (*pp)->name() + " [" + (*pp)->typeNameWrapper() + "]";
-                std::cerr << "FOO B" << std::endl;
                 if (ImGui::MenuItem(s.c_str())) {
                     visualize_property((*pp)->name(), EntityTag::type(), (*pp)->typeNameWrapper());
                 }
@@ -391,8 +389,10 @@ void OpenVolumeMeshObject::visualize_property(
                 vector3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
             }
         }
-        if constexpr(std::is_same_v<T, glm::mat<3,3,double>>) {
-            mat3x3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+        if constexpr(is_matrix<T>) {
+            if constexpr(has_rows_and_cols<T,3,3>) {
+                mat3x3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+            }
         }
 
         // Setup Property Filters
@@ -413,11 +413,16 @@ void OpenVolumeMeshObject::visualize_property(
                 prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterVec3<T,EntityTag>>(
                     vector3_renderer_));
             }
+        } else if constexpr(is_matrix<T>) {
+            if constexpr(has_rows_and_cols<T,3,3>) {
+                prop<EntityTag>().filters_.push_back(std::make_shared<PropertyFilterMat3x3<T,EntityTag>>(
+                    mat3x3_renderer_));
+            }
         }
 
         // Upload Data to Color Renderer
         // (except if matrix...)
-        if constexpr(!std::is_same_v<T, glm::mat<3,3,double>>) {
+        if constexpr(!is_matrix<T>) {
             const auto& data = get_buffer_property_data<T,EntityTag>(
                 mesh_, _pp);
             col_rend.update_property_data(data);
@@ -434,18 +439,23 @@ void OpenVolumeMeshObject::visualize_property(
         }
 
         // Upload Data to Matrix Renderer
-        if constexpr(std::is_same_v<T, glm::mat<3,3,double>>) {
-            auto mat3x3_prop = mesh_.get_property<glm::mat<3,3,double>,EntityTag>((_pp)->name()).value();
-            std::vector<glm::mat3x4> data;
-            data.reserve(mesh_.n<EntityTag>());
-            for (auto h : mesh_.entities<EntityTag>()) {
-                const auto& m3x3 = mat3x3_prop[h];
-                data.emplace_back();
-                for (int col = 0; col < 3; ++col) {
-                    data.back()[col] = {m3x3[col][0],m3x3[col][1],m3x3[col][2],1};
+        if constexpr(is_matrix<T>) {
+            if constexpr(has_rows_and_cols<T,3,3>) {
+                auto mat3x3_prop = mesh_.get_property<glm::mat<3,3,double>,EntityTag>((_pp)->name()).value();
+                std::vector<glm::mat3x4> data;
+                data.reserve(mesh_.n<EntityTag>());
+                for (auto h : mesh_.entities<EntityTag>()) {
+                    const auto& m3x3 = mat3x3_prop[h];
+                    data.emplace_back();
+                    for (int c = 0; c < 3; ++c) {
+                        for (int r = 0; r < 3; ++r) {
+                            data.back()[c][r] = static_cast<float>(m3x3[c][r]);
+                        }
+                        data.back()[c][3] = 1.0f;
+                    }
                 }
+                mat3x3_renderer_.update_matrix_data(data);
             }
-            mat3x3_renderer_.update_matrix_data(data);
         }
 
         // Visibility Settings
