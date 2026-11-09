@@ -37,6 +37,7 @@ private:
     std::function<void()> inspector_callback_;
 
     bool reset_layout_requested_ = false;
+    bool pick_result_requested_ = false;
 
     // Draw a frame and handle events
     void frame_tick();
@@ -118,7 +119,7 @@ private:
 
     void render_viewport_ui();
 
-    void render_editor_ui(bool _just_clicked_on_object);
+    void render_editor_ui();
 
     void render_scene(wgpu::CommandEncoder& _encoder);
 
@@ -128,7 +129,7 @@ private:
     // void render_imgui(
     //     wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
 
-    void render_main_menu_bar_ui(bool _just_clicked_on_object);
+    void render_main_menu_bar_ui();
 
     void render_scenes_tab_bar_ui();
 

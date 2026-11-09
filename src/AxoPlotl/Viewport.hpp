@@ -47,6 +47,8 @@ public:
         return {.width = static_cast<float>(width_),
                 .height = static_cast<float>(height_)};}
 
+    std::optional<glm::vec2> mouse_to_local() const;
+
     bool valid() const {
         return width_ > 0 && height_ > 0 &&
                color_view_ && depth_view_ && picking_view_;

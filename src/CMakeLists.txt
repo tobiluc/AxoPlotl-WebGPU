@@ -27,6 +27,7 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/Matrix3x3Renderer.cpp
     AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
     AxoPlotl/rendering/draw_range_sliders.cpp
+    AxoPlotl/rendering/draw_texture.cpp
     AxoPlotl/gui/fonts.cpp
     AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp

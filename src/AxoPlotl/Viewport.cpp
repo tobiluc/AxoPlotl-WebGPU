@@ -44,6 +44,30 @@ void Viewport::release()
     height_ = 0;
 }
 
+std::optional<glm::vec2> Viewport::mouse_to_local() const
+{
+    const ImVec2 mouse = ImGui::GetMousePos();
+
+    if (image_size_.x > 0.0f && image_size_.y > 0.0f) {
+        // Mouse position relative to the displayed viewport image.
+        const float local_x = mouse.x - image_min_.x;
+        const float local_y = mouse.y - image_min_.y;
+
+        // Convert from ImGui coordinates to texture pixel coordinates.
+        const float scale_x = width() / image_size_.x;
+        const float scale_y = height() / image_size_.y;
+
+        const float x = local_x * scale_x;
+        const float y = local_y * scale_y;
+
+        // Check bounds
+        if (x >= 0.0f && y >= 0.0f && x < width() && y < height()) {
+            return glm::vec2(x, y);
+        }
+    }
+    return std::nullopt;
+}
+
 void Viewport::resize(
     wgpu::Device& device,
     uint32_t width,

@@ -1,3 +1,4 @@
+#include "AxoPlotl/rendering/draw_texture.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "Application.hpp"
@@ -426,7 +427,7 @@ void Application::frame_tick()
     }
 
     // Build the ImGui interface FIRST.
-    render_editor_ui(false);
+    render_editor_ui();
 
     // Create surface view.
     wgpu::TextureViewDescriptor view_desc{};
@@ -446,8 +447,22 @@ void Application::frame_tick()
     auto encoder = device_.createCommandEncoder();
 
     // Render scene only if viewport is visible.
-    if (viewport_.visible() && viewport_.valid()) {
+    if (viewport_.visible() && viewport_.valid())
+    {
         render_scene(encoder);
+
+        //------------------
+        // Click to Pick
+        //------------------
+        if (Input::Mouse::RIGHT_JUST_PRESSED) {
+            const auto pos = viewport().mouse_to_local();
+            if (pos.has_value()) {
+                pick_result_ = request_pick_result(pos->x, pos->y);
+                if (pick_result_.object_id_ < UINT32_MAX) {
+                    pick_result_requested_ = true;
+                }
+            }
+        }
     }
 
     // Render editor UI onto surface.
@@ -608,9 +623,20 @@ void Application::render_viewport_ui() {
         surface_format_,
         depth_texture_format_
         );
+
+    // Clicking on an Object
+    if (pick_result_requested_) [[unlikely]] {
+        ImGui::OpenPopup("PickingPopup");
+        pick_result_requested_ = false;
+    }
+    if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+        auto obj = scene().get_object(pick_result_.object_id_);
+        if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
+        ImGui::EndPopup();
+    }
 }
 
-void Application::render_main_menu_bar_ui(bool _just_clicked_on_object)
+void Application::render_main_menu_bar_ui()
 {
     //--------------------
     // Top Menu Bar
@@ -720,6 +746,10 @@ void Application::render_main_menu_bar_ui(bool _just_clicked_on_object)
                 scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
             }
 
+            // if (ImGui::MenuItem("Picking Texture")) {
+            //     draw_texture("PickingTexture", viewport_.picking_view());
+            // }
+
             ImGui::EndMenu(); // !Debug
         }
 #endif
@@ -733,14 +763,6 @@ void Application::render_main_menu_bar_ui(bool _just_clicked_on_object)
             scene().add_mesh(filepath);
         }
         ImGuiFileDialog::Instance()->Close();
-    }
-
-    // Clicking on an Object
-    if (_just_clicked_on_object) [[unlikely]] {ImGui::OpenPopup("PickingPopup");}
-    if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
-        auto obj = scene().get_object(pick_result_.object_id_);
-        if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
-        ImGui::EndPopup();
     }
 
     ImGui::End(); //!MenuBar
@@ -839,13 +861,13 @@ void Application::build_default_layout(ImGuiID dockspace_id)
     ImGui::DockBuilderFinish(dockspace_id);
 }
 
-void Application::render_editor_ui(bool just_clicked_on_object)
+void Application::render_editor_ui()
 {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    render_main_menu_bar_ui(just_clicked_on_object);
+    render_main_menu_bar_ui();
 
     ImGuiID dockspace_id = ImHashStr("AxoPlotlDockSpace");
 
@@ -1103,6 +1125,7 @@ PickResult Application::request_pick_result(float _x, float _y)
     while (!context.ready) {
         wgpuPollEvents(device_, true);
     }
+
     return context.pick;
 
 }
