@@ -17,7 +17,7 @@ int main()
       return 1;
     }
 
-    AxoPlotl::VisualizationSettings settings;
+    AxoPlotl::internal::VisualizationSettings settings;
     // AxoPlotl::PickingTextureRenderer r;
     // r.init(AxoPlotl::scene().app()->device_, 256, 256);
 

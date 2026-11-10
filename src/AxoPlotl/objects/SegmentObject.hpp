@@ -4,7 +4,7 @@
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/objects/BaseObject.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class SegmentObject : public ObjectBase
@@ -17,7 +17,7 @@ private:
 
 public:
     SegmentObject(
-        Scene* _scene) :
+        internal::Scene* _scene) :
         ObjectBase(_scene, "")
     {
         this->name_ = "Segment " + std::to_string(id_);
@@ -39,7 +39,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
+    void render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg) override;
 
     void init_buffers() override;
 

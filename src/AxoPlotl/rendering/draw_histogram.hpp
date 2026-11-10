@@ -2,7 +2,7 @@
 
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 int draw_histogram(const HistogramBase* _hist,

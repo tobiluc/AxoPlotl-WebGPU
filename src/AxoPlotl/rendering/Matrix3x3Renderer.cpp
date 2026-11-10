@@ -3,12 +3,12 @@
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 PipelineState Matrix3x3Renderer::pipeline_state_;
 
-void Matrix3x3Renderer::init(uint32_t _object_id, Application* _app,
+void Matrix3x3Renderer::init(uint32_t _object_id, internal::Application* _app,
                            wgpu::Buffer _position_buffer)
 {
     pipeline_state_.set_device(_app->device_);

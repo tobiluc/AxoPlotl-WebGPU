@@ -1,7 +1,7 @@
 #include "BaseObject.hpp"
 #include <imgui.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 int ObjectBase::id_counter_ = 0;

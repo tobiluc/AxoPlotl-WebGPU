@@ -3,7 +3,7 @@
 #include "AxoPlotl/rendering/draw_texture.hpp"
 #include <imgui.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 PipelineState DebugVis_PickingTextureRenderer::pipeline_state_;

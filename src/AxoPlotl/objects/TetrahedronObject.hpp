@@ -4,7 +4,7 @@
 #include <AxoPlotl/objects/BaseObject.hpp>
 #include <AxoPlotl/rendering/MeshCellRenderer.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class TetObject : public ObjectBase
@@ -18,7 +18,7 @@ private:
 
 public:
     TetObject(
-        Scene* _scene) :
+        internal::Scene* _scene) :
         ObjectBase(_scene, "")
     {
         this->name_ = "Tet " + std::to_string(id_);
@@ -42,7 +42,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
+    void render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg) override;
 
     void init_buffers() override;
 

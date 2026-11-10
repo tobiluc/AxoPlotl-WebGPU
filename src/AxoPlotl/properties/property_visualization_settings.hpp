@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 struct IntervalSet {

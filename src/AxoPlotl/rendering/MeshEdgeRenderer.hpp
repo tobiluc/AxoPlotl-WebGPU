@@ -1,7 +1,9 @@
 #pragma once
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
+#include "AxoPlotl/rendering/ColorMap.hpp"
 #include "AxoPlotl/rendering/RendererBase.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class ColoredEdgeRenderer : public RendererBase
@@ -67,7 +69,7 @@ public:
         uint32_t eh_; // points to EdgePropertyData
     };
 
-    void init(uint32_t _object_id, Application* _app,
+    void init(uint32_t _object_id, internal::Application* _app,
               wgpu::Buffer _position_buffer,
               const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 

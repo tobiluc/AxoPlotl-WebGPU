@@ -3,7 +3,7 @@
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/rendering/SphericalHarmonicsRenderer.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class SHObject : public ObjectBase
@@ -24,7 +24,7 @@ private:
 
 public:
     SHObject(
-        Scene* _scene) :
+        internal::Scene* _scene) :
         ObjectBase(_scene, "")
     {
         this->name_ = "SH " + std::to_string(id_);
@@ -44,7 +44,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
+    void render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg) override;
 
     void init_buffers() override;
 

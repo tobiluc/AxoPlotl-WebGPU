@@ -5,7 +5,7 @@
 #include <iostream>
 #include <ostream>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 glm::mat4 Camera::get_view_matrix() const {
@@ -48,17 +48,17 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
     if (_allow_input)
     {
         // Zoom
-        float scroll = Input::Mouse::SCROLL_DELTA[1];
+        float scroll = Mouse::SCROLL_DELTA[1];
         if (scroll) {
             scroll *= sensitivity_;
             orbit_distance = glm::clamp(orbit_distance * (1.0f-scroll), near_plane_, far_plane_);
         }
 
         // Pan
-        if (Input::Mouse::LEFT_PRESSED)
+        if (Mouse::LEFT_PRESSED)
         {
-            float dx = Input::Mouse::POSITION_DELTA[0] * sensitivity_;
-            float dy = Input::Mouse::POSITION_DELTA[1] * sensitivity_;
+            float dx = Mouse::POSITION_DELTA[0] * sensitivity_;
+            float dy = Mouse::POSITION_DELTA[1] * sensitivity_;
 
             bool shift_pressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                                 glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void trigger_redraw(uint32_t _n_frames = 8);

@@ -6,7 +6,7 @@
 #include <vector>
 #include <arm_neon.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class ColorMap

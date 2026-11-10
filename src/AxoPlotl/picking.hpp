@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 struct PickConfig

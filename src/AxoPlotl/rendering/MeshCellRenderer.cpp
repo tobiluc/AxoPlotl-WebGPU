@@ -2,7 +2,7 @@
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 PipelineState ColoredCellRenderer::triangle_pipeline_state_;
@@ -13,10 +13,10 @@ struct CellIndex {
     uint32_t ch_;
 };
 
-void ColoredCellRenderer::init(uint32_t _object_id, Application* _app,
-                                       wgpu::Buffer _vertices_position_buffer,
-                                       const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
-                                       wgpu::Buffer _cells_center_buffer)
+void ColoredCellRenderer::init(uint32_t _object_id, internal::Application *_app,
+                               wgpu::Buffer _vertices_position_buffer,
+                               const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+                               wgpu::Buffer _cells_center_buffer)
 {
     triangle_pipeline_state_.set_device(_app->device_);
     outline_pipeline_state_.set_device(_app->device_);

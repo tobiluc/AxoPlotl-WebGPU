@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace AxoPlotl::Input
+namespace AxoPlotl::internal
 {
 
 class Mouse

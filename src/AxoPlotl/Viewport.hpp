@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <AxoPlotl/typedefs/glm.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class Viewport

@@ -1,8 +1,11 @@
 #pragma once
 
-#include "AxoPlotl/rendering/ColorMap.hpp"
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
+#include <webgpu/webgpu.hpp>
+#include "AxoPlotl/typedefs/glm.hpp"
+#include <AxoPlotl/rendering/ColorMap.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class Application;
@@ -48,7 +51,7 @@ protected:
     using Pad12 = uint32_t[3];
 
     bool enabled_ = true;
-    Application* app_;
+    internal::Application* app_;
 
     static_assert(sizeof(ClipBox)%16==0);
 

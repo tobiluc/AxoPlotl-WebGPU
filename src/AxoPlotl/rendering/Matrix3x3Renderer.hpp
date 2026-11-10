@@ -1,7 +1,7 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class Matrix3x3Renderer : public RendererBase
@@ -52,7 +52,7 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, Application* _app, wgpu::Buffer _position_buffer);
+    void init(uint32_t _object_id, internal::Application *_app, wgpu::Buffer _position_buffer);
 
     void update_matrix_data(const std::vector<glm::mat3x4> &_data);
 

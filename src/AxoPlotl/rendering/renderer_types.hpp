@@ -2,7 +2,7 @@
 #include <OpenVolumeMesh/Core/Handles.hh>
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 template<typename EntityTag>

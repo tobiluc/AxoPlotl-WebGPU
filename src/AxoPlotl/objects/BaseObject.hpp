@@ -1,21 +1,20 @@
 #pragma once
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/picking.hpp>
 #include <AxoPlotl/geometry/BoundingBox.hpp>
 #include <filesystem>
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "webgpu/webgpu.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
-
-class Scene;
 
 class ObjectBase
 {
 friend class DebugPlugin;
 
 public:
-    ObjectBase(Scene* _scene, std::string _name) :
+    ObjectBase(internal::Scene* _scene, std::string _name) :
         id_(++id_counter_),
         scene_(_scene),
         name_(_name),
@@ -40,7 +39,8 @@ public:
 
     virtual void render_ui_properties() = 0;
 
-    virtual void render_ui_picking(PickResult _p, const PickConfig& _cfg) = 0;
+    virtual void render_ui_picking(internal::PickResult _p,
+                                const internal::PickConfig& _cfg) = 0;
 
     virtual bool export_file(const std::filesystem::path& _path) const;
 
@@ -71,7 +71,7 @@ public:
     bool input_name();
 
 protected:
-    Scene* scene_;
+    internal::Scene* scene_;
     int id_;
     std::string name_;
     //std::unique_ptr<RendererBase> renderer_;

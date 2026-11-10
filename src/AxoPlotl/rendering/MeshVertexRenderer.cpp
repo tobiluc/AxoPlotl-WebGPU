@@ -2,11 +2,12 @@
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
+
 PipelineState ColoredVertexRenderer::pipeline_state_;
 
-void ColoredVertexRenderer::init(uint32_t _object_id, Application* _app,
+void ColoredVertexRenderer::init(uint32_t _object_id, internal::Application* _app,
                                          wgpu::Buffer _position_buffer,
                                          const std::vector<uint32_t>& _indices)
 {

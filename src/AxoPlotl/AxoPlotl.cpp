@@ -6,8 +6,8 @@
 namespace AxoPlotl
 {
 
-static Application& get_app() {
-    static Application app_instance;
+static internal::Application& get_app() {
+    static internal::Application app_instance;
     return app_instance;
 }
 
@@ -21,7 +21,7 @@ void run()
     get_app().run();
 }
 
-Scene& scene()
+internal::Scene& scene()
 {
     return get_app().scene();
 }

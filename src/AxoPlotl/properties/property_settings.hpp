@@ -13,7 +13,7 @@
 #include <AxoPlotl/gui/fonts.hpp>
 #include <AxoPlotl/rendering/draw_range_sliders.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 struct PropertySettingsBase

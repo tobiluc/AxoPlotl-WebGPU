@@ -12,7 +12,7 @@
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class OpenVolumeMeshObject : public ObjectBase
@@ -26,7 +26,7 @@ protected:
     template<typename EntityTag>
     struct Property {
         std::optional<OVM::PropertyStorageBase*> prop_;
-        std::vector<std::shared_ptr<PropertySettingsBase>> settings_;
+        std::vector<std::shared_ptr<internal::PropertySettingsBase>> settings_;
         int filter_index_ = 0;
     };
 
@@ -60,7 +60,7 @@ protected:
         upload_default_cell_property_data();}
 
 public:
-    OpenVolumeMeshObject(Scene* _scene, OVMVolumeMesh& _mesh,
+    OpenVolumeMeshObject(internal::Scene* _scene, OVMVolumeMesh& _mesh,
                          const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
     ~OpenVolumeMeshObject() {
@@ -77,7 +77,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(PickResult _p, const PickConfig& _cfg) override;
+    void render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg) override;
 
     void init_buffers() override;
 

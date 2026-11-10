@@ -4,7 +4,7 @@
 #include <webgpu/webgpu.h>
 #include <webgpu/webgpu.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 inline wgpu::DepthStencilState create_default_depth_state()

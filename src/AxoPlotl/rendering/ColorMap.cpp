@@ -2,7 +2,7 @@
 #include "IconsFontAwesome7.h"
 #include "imgui.h"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 static wgpu::Extent3D extent()

@@ -2,7 +2,7 @@
 
 #include <AxoPlotl/typedefs/ovm.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 OVM::CellPropertyT<int> calc_cell_boundary_distance(

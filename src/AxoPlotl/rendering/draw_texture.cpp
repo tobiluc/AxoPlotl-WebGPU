@@ -1,7 +1,7 @@
 #include "draw_texture.hpp"
 #include <imgui.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void draw_texture(wgpu::TextureView& _view, float _width, float _height)

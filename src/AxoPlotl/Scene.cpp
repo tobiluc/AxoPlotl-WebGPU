@@ -4,7 +4,7 @@
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <AxoPlotl/Application.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void Scene::init(Application *_app)

@@ -3,7 +3,7 @@
 #include <AxoPlotl/rendering/RendererBase.hpp>
 #include <webgpu/webgpu.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class DebugVis_PickingTextureRenderer

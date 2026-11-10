@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <AxoPlotl/properties/Histogram.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 int draw_histogram(const HistogramBase* _hist,

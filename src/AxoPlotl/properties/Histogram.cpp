@@ -1,7 +1,7 @@
 #include <AxoPlotl/properties/Histogram.hpp>
 #include <AxoPlotl/rendering/draw_histogram.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 int HistogramBase::render_ui(

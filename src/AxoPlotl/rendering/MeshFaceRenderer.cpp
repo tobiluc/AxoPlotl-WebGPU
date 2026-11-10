@@ -2,7 +2,7 @@
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 PipelineState ColoredFaceRenderer::pipeline_state_;
 
@@ -12,7 +12,7 @@ struct FaceIndex {
 };
 
 void ColoredFaceRenderer::init(
-    uint32_t _object_id, Application* _app,
+    uint32_t _object_id, internal::Application* _app,
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
 {

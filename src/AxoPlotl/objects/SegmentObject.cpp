@@ -3,7 +3,7 @@
 #include <AxoPlotl/Scene.hpp>
 #include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void SegmentObject::render(
@@ -44,7 +44,7 @@ void SegmentObject::render_ui_properties()
     }
 }
 
-void SegmentObject::render_ui_picking(PickResult _p, const PickConfig& _cfg)
+void SegmentObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;}
     ImGui::SeparatorText(name_.c_str());
@@ -57,7 +57,7 @@ void SegmentObject::init_buffers()
     std::vector<ColoredCellRenderer::Position> positions = {
         {0,0,0,1}, {1,1,1,1}
     };
-    vertex_position_buffer_ = create_position_buffer(scene_->app()->device_, positions);
+    vertex_position_buffer_ = internal::create_position_buffer(scene_->app()->device_, positions);
     renderer_.init(id_, scene_->app(), vertex_position_buffer_, {{0,1}});
     renderer_.update_property_data({{1,1,1,1}}); // white
 }

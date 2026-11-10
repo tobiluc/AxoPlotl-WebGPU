@@ -5,7 +5,7 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/properties/property_settings.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 template<typename T, typename EntityTag>

@@ -10,7 +10,7 @@ namespace AxoPlotl
 bool draw_range_sliders(
     float& _l, float& _r,
     const float& _min, const float& _max,
-    const ColorMap &_cm)
+    const internal::ColorMap &_cm)
 {
     ImVec2 top_left = ImGui::GetCursorScreenPos();
     ImVec2 total_size = ImVec2(ImGui::GetContentRegionAvail().x, 20);

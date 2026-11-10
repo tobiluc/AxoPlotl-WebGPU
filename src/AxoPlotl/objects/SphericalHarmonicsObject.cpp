@@ -4,7 +4,7 @@
 #include "ibex/ibex.hpp"
 #include <AxoPlotl/Scene.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void SHObject::render(
@@ -115,7 +115,7 @@ void SHObject::render_ui_properties()
     }
 }
 
-void SHObject::render_ui_picking(PickResult _p, const PickConfig& _cfg)
+void SHObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;}
 

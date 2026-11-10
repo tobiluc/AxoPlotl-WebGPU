@@ -7,11 +7,11 @@
 #include <AxoPlotl/Application.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 OpenVolumeMeshObject::OpenVolumeMeshObject(
-    Scene* _scene,
+    internal::Scene* _scene,
     OVMVolumeMesh& _mesh,
     const std::optional<std::filesystem::path>& _filepath)
     :
@@ -114,13 +114,13 @@ void OpenVolumeMeshObject::render_ui_properties()
     {
         if (mesh_.n_vertices()>0 && ImGui::BeginMenu("Vertices")){
             if (ImGui::MenuItem("Normalized Position")) {
-                calc_vertex_normalized_position(mesh_);
+                internal::calc_vertex_normalized_position(mesh_);
             }
             ImGui::EndMenu();
         }
         if (mesh_.n_faces()>0 && ImGui::BeginMenu("Faces")){
             if (ImGui::MenuItem("Normal")) {
-                calc_face_normal(mesh_);
+                internal::calc_face_normal(mesh_);
             }
             ImGui::EndMenu();
         }
@@ -129,7 +129,7 @@ void OpenVolumeMeshObject::render_ui_properties()
             //     calc_cell_min_dihedral_angle(mesh_);
             // }
             if (ImGui::MenuItem("Boundary Distance")) {
-                calc_cell_boundary_distance(mesh_);
+                internal::calc_cell_boundary_distance(mesh_);
             }
             ImGui::EndMenu();
         }
@@ -289,7 +289,7 @@ void OpenVolumeMeshObject::render(
     //     mvp);
 }
 
-void OpenVolumeMeshObject::render_ui_picking(PickResult _p, const PickConfig &_cfg)
+void OpenVolumeMeshObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig &_cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;} // error
 
@@ -428,24 +428,24 @@ bool OpenVolumeMeshObject::visualize_property(
         // Setup Property Filters
         prop<EntityTag>().settings_.clear();
         if constexpr(std::is_same_v<bool,T>) {
-            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsBool<EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsBool<EntityTag>>(
                 _pp->cast_to_StorageT<bool>(), col_rend));
         } else if constexpr(std::is_floating_point_v<T>) {
-            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsFloatRange<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsFloatRange<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
         } else if constexpr(std::is_integral_v<T>) {
-            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsIntValue<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsIntValue<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
-            prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsIntRange<T,EntityTag>>(
+            prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsIntRange<T,EntityTag>>(
                 _pp->cast_to_StorageT<T>(), col_rend));
         } else if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
-                prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsVec3<T,EntityTag>>(
+                prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsVec3<T,EntityTag>>(
                     vector3_renderer_));
             }
         } else if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
-                prop<EntityTag>().settings_.push_back(std::make_shared<PropertySettingsMat3x3<T,EntityTag>>(
+                prop<EntityTag>().settings_.push_back(std::make_shared<internal::PropertySettingsMat3x3<T,EntityTag>>(
                     mat3x3_renderer_));
             }
         }

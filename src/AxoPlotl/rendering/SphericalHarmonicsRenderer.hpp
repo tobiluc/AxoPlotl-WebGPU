@@ -1,7 +1,8 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include <AxoPlotl/AxoPlotl_fwd.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class SHRenderer : public RendererBase
@@ -35,7 +36,7 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, Application* _app, size_t _resolution);
+    void init(uint32_t _object_id, internal::Application *_app, size_t _resolution);
 
     void update(const std::function<float32_t(const Vec3f&)>& _f);
 

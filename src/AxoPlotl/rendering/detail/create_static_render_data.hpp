@@ -3,7 +3,7 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/rendering/RendererBase.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 struct StaticRenderData

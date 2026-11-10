@@ -1,8 +1,8 @@
 #include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
-AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMesh& _mesh)
+AxoPlotl::internal::StaticRenderData AxoPlotl::internal::create_static_render_data(const OVMVolumeMesh& _mesh)
 {
-    AxoPlotl::StaticRenderData data;
+    AxoPlotl::internal::StaticRenderData data;
     data.positions_.reserve(_mesh.n_vertices());
     data.vertices_.reserve(_mesh.n_vertices());
     data.edges_.reserve(_mesh.n_edges());
@@ -55,7 +55,7 @@ AxoPlotl::StaticRenderData AxoPlotl::create_static_render_data(const OVMVolumeMe
     return data;
 }
 
-wgpu::Buffer AxoPlotl::create_position_buffer(
+wgpu::Buffer AxoPlotl::internal::create_position_buffer(
     wgpu::Device _device,
     const std::vector<RendererBase::Position>& _positions)
 {

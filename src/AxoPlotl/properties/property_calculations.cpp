@@ -1,7 +1,7 @@
 #include <AxoPlotl/properties/property_calculations.hpp>
 #include <queue>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 OVM::CellPropertyT<int> calc_cell_boundary_distance(OVMVolumeMesh& _mesh, std::string _name)

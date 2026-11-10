@@ -2,14 +2,14 @@
 #include <AxoPlotl/Application.hpp>
 #include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 PipelineState SHRenderer::pipeline_state_;
 
 void SHRenderer::init(
     uint32_t _object_id,
-    Application* _app,
+    internal::Application* _app,
     size_t _resolution)
 {
     resolution_ = _resolution;

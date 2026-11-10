@@ -2,7 +2,7 @@
 #include "AxoPlotl/rendering/detail/redraw.hpp"
 #include "imgui.h"
 
-namespace AxoPlotl::Input
+namespace AxoPlotl::internal
 {
 
 float Mouse::POSITION[2] = {0,0};

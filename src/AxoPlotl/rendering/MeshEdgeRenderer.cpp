@@ -2,11 +2,11 @@
 #include "AxoPlotl/Application.hpp"
 #include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 PipelineState ColoredEdgeRenderer::pipeline_state_;
 
-void ColoredEdgeRenderer::init(uint32_t _object_id, Application* _app,
+void ColoredEdgeRenderer::init(uint32_t _object_id, internal::Application* _app,
                                        wgpu::Buffer _position_buffer,
                                        const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
 {

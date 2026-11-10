@@ -44,7 +44,7 @@ void wgpuPollEvents(
 #endif
 }
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 Scene& Application::add_scene()
@@ -106,21 +106,21 @@ bool Application::init()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwSetWindowUserPointer(window_, this);
     glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* window, int width, int height) {
-        auto app_ptr = reinterpret_cast<AxoPlotl::Application*>(glfwGetWindowUserPointer(window));
+        auto app_ptr = reinterpret_cast<AxoPlotl::internal::Application*>(glfwGetWindowUserPointer(window));
         if (app_ptr) {
             app_ptr->on_window_resize(width, height);
         }
     });
 
-    glfwSetCursorPosCallback(window_, AxoPlotl::Input::mouse_callback);
-    glfwSetScrollCallback(window_, AxoPlotl::Input::scroll_callback);
+    glfwSetCursorPosCallback(window_, AxoPlotl::internal::mouse_callback);
+    glfwSetScrollCallback(window_, AxoPlotl::internal::scroll_callback);
     glfwSetMouseButtonCallback(window_, [](GLFWwindow*,int,int,int) {trigger_redraw();});
     glfwSetKeyCallback(window_, [](GLFWwindow*,int,int,int,int) {trigger_redraw();});
 
     // Drop Callback -> Drag in Files to load them
     glfwSetDropCallback(window_, [](GLFWwindow* window, int count, const char** paths) {
 
-        auto app_ptr = static_cast<AxoPlotl::Application*>(glfwGetWindowUserPointer(window));
+        auto app_ptr = static_cast<AxoPlotl::internal::Application*>(glfwGetWindowUserPointer(window));
         if (!app_ptr) {return;}
 
         for (int i = 0; i < count; ++i) {
@@ -220,7 +220,7 @@ bool Application::init()
 void Application::frame_tick()
 {
     time_.update();
-    Input::Mouse::update(window_);
+    Mouse::update(window_);
     glfwPollEvents();
 
     if (!on_draw()) {
@@ -266,7 +266,7 @@ void Application::frame_tick()
         //------------------
         // Click to Pick
         //------------------
-        if (Input::Mouse::RIGHT_JUST_PRESSED) {
+        if (Mouse::RIGHT_JUST_PRESSED) {
             const auto pos = viewport().mouse_to_local();
             if (pos.has_value()) {
                 pick_result_ = request_pick_result(pos->x, pos->y);

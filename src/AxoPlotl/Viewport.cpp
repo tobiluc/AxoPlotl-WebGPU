@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstdint>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 Viewport::~Viewport()

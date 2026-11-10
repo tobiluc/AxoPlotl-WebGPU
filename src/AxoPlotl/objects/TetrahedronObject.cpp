@@ -3,7 +3,7 @@
 #include <AxoPlotl/Scene.hpp>
 #include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void TetObject::render(
@@ -47,7 +47,7 @@ void TetObject::render_ui_properties()
     }
 }
 
-void TetObject::render_ui_picking(PickResult _p, const PickConfig& _cfg)
+void TetObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg)
 {
     if (_p.object_id_ != id()) [[unlikely]] {return;}
     ImGui::SeparatorText(name_.c_str());
@@ -60,9 +60,9 @@ void TetObject::init_buffers()
     std::vector<ColoredCellRenderer::Position> positions = {
         {0,0,0,1}, {0,0,1,1}, {1,0,0,1}, {0,1,0,1}
     };
-    vertex_position_buffer_ = create_position_buffer(scene_->app()->device_, positions);
+    vertex_position_buffer_ = internal::create_position_buffer(scene_->app()->device_, positions);
     std::vector<ColoredCellRenderer::Position> center(1);
-    cell_center_buffer_ = create_position_buffer(scene_->app()->device_, center);
+    cell_center_buffer_ = internal::create_position_buffer(scene_->app()->device_, center);
     std::vector<std::vector<std::vector<uint32_t>>> cells = {
         {{0,1,2},{0,3,1},{0,2,3},{1,3,2}}
     };

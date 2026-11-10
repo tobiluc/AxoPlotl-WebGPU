@@ -15,7 +15,7 @@
 #endif // __EMSCRIPTEN__
 
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 // DO NOT USE THIS CLASS DIRECTLY!

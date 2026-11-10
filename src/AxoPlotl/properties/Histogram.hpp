@@ -6,7 +6,7 @@
 #include <array>
 #include <iostream>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 struct HistogramBase

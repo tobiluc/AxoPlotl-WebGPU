@@ -5,7 +5,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class Camera

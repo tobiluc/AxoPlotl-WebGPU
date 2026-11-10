@@ -2,7 +2,7 @@
 
 #include <webgpu/webgpu.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void draw_texture(wgpu::TextureView& _view,

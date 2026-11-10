@@ -1,7 +1,7 @@
 #include "property_visualization_settings.hpp"
 #include <imgui.h>
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 void VisualizationSettings::render_ui()

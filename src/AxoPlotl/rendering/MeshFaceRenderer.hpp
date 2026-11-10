@@ -1,7 +1,7 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
 
-namespace AxoPlotl
+namespace AxoPlotl::internal
 {
 
 class ColoredFaceRenderer : public RendererBase
@@ -56,7 +56,7 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, Application* _app,
+    void init(uint32_t _object_id, internal::Application *_app,
               wgpu::Buffer _position_buffer,
               const std::vector<std::vector<uint32_t>>& _faces);
 
