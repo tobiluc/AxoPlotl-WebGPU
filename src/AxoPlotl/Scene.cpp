@@ -1,5 +1,5 @@
 #include "Scene.hpp"
-#include "AxoPlotl/IO/file_access.h"
+#include "AxoPlotl/IO/file_access.hpp"
 #include "AxoPlotl/objects/SphericalHarmonicsObject.hpp"
 #include "AxoPlotl/rendering/detail/create_static_render_data.hpp"
 #include <AxoPlotl/Application.hpp>

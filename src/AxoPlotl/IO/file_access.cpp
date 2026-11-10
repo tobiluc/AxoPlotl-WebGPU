@@ -1,4 +1,4 @@
-#include "file_access.h"
+#include "file_access.hpp"
 #include "AxoPlotl/IO/om_to_ovm.hpp"
 #include "AxoPlotl/IO/rapidobj_to_ovm.hpp"
 #include "OpenVolumeMesh/FileManager/FileManager.hh"

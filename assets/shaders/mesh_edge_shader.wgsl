@@ -101,16 +101,17 @@ fn fs_main(in:V2F) -> FragmentOutput
 {
     var out : FragmentOutput;
 
-    // Round Edge Endpoints
-    // let d = abs(0.5*(in.quadSize.x-in.quadSize.y));
-    // let cx = min(max(in.quadCorner.x-d,0.0),in.quadCorner.x+d);
-    // let cy = in.quadCorner.y;
-    // if (cx*cx+cy*cy > 0.25*in.quadSize.y*in.quadSize.y)
-    // {discard;}
+    // Normalized position across the edge width
+    let y = abs(in.quadCorner.y) / (in.quadSize.y * 0.5);
+    // Bright center, darker edges
+    let shading = 0.75 + 0.25 * sqrt(max(0.0, 1.0 - y * y));
+    // Slight highlight on one side
+    let highlight = 0.08 * smoothstep(0.5, 0.0, in.quadCorner.y / in.quadSize.y);
+    let finalShading = shading + highlight;
 
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        ) * ubo.ambient;
+        ) * ubo.ambient * finalShading;
     out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z));
     return out;
 }
