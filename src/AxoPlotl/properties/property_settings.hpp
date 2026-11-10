@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
+#include "AxoPlotl/gui/input_slider.hpp"
 #include "AxoPlotl/rendering/Matrix3x3Renderer.hpp"
 #include "AxoPlotl/rendering/Vector3Renderer.hpp"
 #include "AxoPlotl/rendering/renderer_types.hpp"
@@ -249,7 +250,7 @@ public:
 
     inline void render_ui() override
     {
-        ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
+        InputSlider("Vector Scale", &renderer_.vector_scale());
     }
 
     inline std::string name() const override {
@@ -284,7 +285,7 @@ public:
         ImGui::Checkbox("Symmetric", &b);
         renderer_.draw_symmetric() = b;
 
-        ImGui::InputFloat("Vector Scale", &renderer_.vector_scale());
+        InputSlider("Vector Scale", &renderer_.vector_scale());
     }
 
     inline std::string name() const override {
