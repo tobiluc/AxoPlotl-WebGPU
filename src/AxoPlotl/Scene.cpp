@@ -40,19 +40,18 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::pat
     return add_object<OpenVolumeMeshObject>(std::move(rr.mesh_), _path);
 }
 
-void Scene::render(wgpu::RenderPassEncoder _render_pass)
+void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
 {
     // Get Width and Height
-    const auto& viewport = app_->viewport();
-    camera_.update(app_->window(), viewport.hovered());
+    camera_.update(app_->window(), _allow_input);
     const Mat4x4f& view = camera_.get_view_matrix();
-    const Mat4x4f& proj = camera_.get_projection_matrix(viewport.size());
+    const Mat4x4f& proj = camera_.get_projection_matrix(_view_size);
 
     const Mat4x4f view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
     axis_renderer_.enabled() = settings.show_axis_cross;
-    axis_renderer_.render(viewport.size(),
+    axis_renderer_.render(_view_size,
         _render_pass,
         view_proj);
 

@@ -78,6 +78,8 @@ public:
     const Viewport& viewport() const {return viewport_;}
     Viewport& viewport() {return viewport_;}
 
+    bool save_viewport_screenshot(const std::filesystem::path& _path, const ViewSize _size);
+
     void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
     }
@@ -134,7 +136,9 @@ private:
 
     void render_editor_ui();
 
-    void render_scene(wgpu::CommandEncoder& _encoder);
+    void render_scene(
+        wgpu::CommandEncoder& _encoder,
+        Viewport& _viewport);
 
     void render_gui(wgpu::CommandEncoder& _encoder,
                     wgpu::TextureView& _target_view);

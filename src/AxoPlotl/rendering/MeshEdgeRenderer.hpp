@@ -85,8 +85,8 @@ public:
 
 private:
     uint32_t object_id_ = UINT32_MAX;
-    size_t n_positions_;
-    size_t n_edges_;
+    size_t n_positions_ = 0;
+    size_t n_edges_ = 0;
 
     void create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 

@@ -72,7 +72,7 @@ public:
 
 private:
     uint32_t object_id_ = UINT32_MAX;
-    size_t n_positions_;
+    size_t n_positions_ = 0;
     bool initialized_ = false;
 
     void create_buffers();

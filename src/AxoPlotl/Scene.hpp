@@ -28,7 +28,9 @@ public:
 
     void init(Application* _app);
 
-    void render(wgpu::RenderPassEncoder _render_pass);
+    void render(wgpu::RenderPassEncoder _render_pass,
+                const ViewSize _view_size,
+                bool _allow_input = true);
 
     void render_settings_ui();
 

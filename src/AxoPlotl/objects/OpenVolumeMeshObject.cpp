@@ -267,7 +267,7 @@ void OpenVolumeMeshObject::render(
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
-    const auto& vp_size = scene_->app()->viewport().size();
+    const auto& vp_size = scene_->app()->viewport().size(); // TODO - transfer size
 
     cell_renderer_.render(vp_size, _render_pass, mvp);
     face_renderer_.render(vp_size, _render_pass, mvp);

@@ -80,10 +80,10 @@ public:
 
 private:
     uint32_t object_id_ = UINT32_MAX;
-    size_t n_positions_;
-    size_t n_cells_;
-    size_t n_triangle_indices_;
-    size_t n_line_indices_;
+    size_t n_positions_ = 0;
+    size_t n_cells_ = 0;
+    size_t n_triangle_indices_ = 0;
+    size_t n_line_indices_ = 0;
 
     void create_buffers(
         const std::vector<std::vector<std::vector<uint32_t>>>& _cells);

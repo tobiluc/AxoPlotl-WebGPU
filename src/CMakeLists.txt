@@ -28,6 +28,7 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
     AxoPlotl/rendering/draw_range_sliders.cpp
     AxoPlotl/rendering/draw_texture.cpp
+    AxoPlotl/rendering/save_texture_to_file.cpp
     AxoPlotl/properties/property_visualization_settings.cpp
     AxoPlotl/rendering/debug/PickingTextureVis.cpp
     AxoPlotl/gui/input_slider.cpp

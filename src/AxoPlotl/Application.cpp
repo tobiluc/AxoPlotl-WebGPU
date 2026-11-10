@@ -1,4 +1,3 @@
-#include "AxoPlotl/rendering/draw_texture.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "Application.hpp"
@@ -21,6 +20,8 @@
 #include <AxoPlotl/tools/DataControlTool.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 #include <imgui_internal.h>
+#include "AxoPlotl/rendering/save_texture_to_file.hpp"
+#include "AxoPlotl/rendering/draw_texture.hpp"
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -450,7 +451,9 @@ void Application::frame_tick()
     // Render scene only if viewport is visible.
     if (viewport_.visible() && viewport_.valid())
     {
-        render_scene(encoder);
+        render_scene(
+            encoder,
+            viewport_);
 
         //------------------
         // Click to Pick
@@ -753,6 +756,11 @@ void Application::render_main_menu_bar_ui()
                 scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
             }
 
+            if (ImGui::Button("Save Screenshot")) {
+                bool success = save_viewport_screenshot("AxoPlotl_Screenshot.png", ViewSize{.width=2048,.height=2048});
+                std::cerr << "Screenshot Status " << success << std::endl;
+            }
+
             // if (ImGui::MenuItem("Picking Texture")) {
             //     draw_texture("PickingTexture", viewport_.picking_view());
             // }
@@ -930,11 +938,11 @@ void Application::render_gui(
     pass.end();
 }
 
-void Application::render_scene(wgpu::CommandEncoder& encoder)
+void Application::render_scene(wgpu::CommandEncoder& encoder, Viewport& _viewport)
 {
     wgpu::RenderPassColorAttachment attachments[2]{};
 
-    attachments[0].view = viewport_.color_view();
+    attachments[0].view = _viewport.color_view();
     attachments[0].loadOp = wgpu::LoadOp::Clear;
     attachments[0].storeOp = wgpu::StoreOp::Store;
     attachments[0].clearValue = {
@@ -944,7 +952,7 @@ void Application::render_scene(wgpu::CommandEncoder& encoder)
         1.0f
     };
 
-    attachments[1].view = viewport_.picking_view();
+    attachments[1].view = _viewport.picking_view();
     attachments[1].loadOp = wgpu::LoadOp::Clear;
     attachments[1].storeOp = wgpu::StoreOp::Store;
     attachments[1].clearValue = {
@@ -955,7 +963,7 @@ void Application::render_scene(wgpu::CommandEncoder& encoder)
     };
 
     wgpu::RenderPassDepthStencilAttachment depth{};
-    depth.view = viewport_.depth_view();
+    depth.view = _viewport.depth_view();
     depth.depthClearValue = 1.0f;
     depth.depthLoadOp = wgpu::LoadOp::Clear;
     depth.depthStoreOp = wgpu::StoreOp::Store;
@@ -978,18 +986,16 @@ void Application::render_scene(wgpu::CommandEncoder& encoder)
 
     pass.setViewport(
         0, 0,
-        static_cast<float>(viewport_.width()),
-        static_cast<float>(viewport_.height()),
+        _viewport.width(), _viewport.height(),
         0, 1
         );
 
-    pass.setScissorRect(
-        0, 0,
-        viewport_.width(),
-        viewport_.height()
-        );
+    pass.setScissorRect(0, 0, _viewport.width(), _viewport.height());
 
-    scene().render(pass);
+    scene().render(pass, ViewSize{
+        .width=static_cast<float>(_viewport.width()),
+        .height=static_cast<float>(_viewport.height())},
+        viewport().hovered());
 
     pass.end();
 }
@@ -1163,6 +1169,22 @@ void Application::configure_surface()
 
     surface_.unconfigure();
     surface_.configure(config);
+}
+
+bool Application::save_viewport_screenshot(
+    const std::filesystem::path& _path, const ViewSize _size)
+{
+    wgpu::CommandEncoder encoder = device_.createCommandEncoder();
+    Viewport newViewport;
+    newViewport.resize(device_, _size.width, _size.height,
+        surface_format_, depth_texture_format_);
+    render_scene(encoder, newViewport);
+    wgpu::CommandBuffer cb = encoder.finish();
+    queue_.submit(1, &cb);
+    cb.release();
+    encoder.release();
+    return save_texture_to_file(_path, device_,
+        newViewport.color_texture(), _size.width, _size.height);
 }
 
 // void Application::create_depth_texture()

@@ -100,7 +100,9 @@ void Viewport::resize(
     color_desc.mipLevelCount = 1;
     color_desc.sampleCount = 1;
 
+    // We need CopySrc for screenshots
     color_desc.usage =
+        wgpu::TextureUsage::CopySrc |
         wgpu::TextureUsage::RenderAttachment |
         wgpu::TextureUsage::TextureBinding;
 
