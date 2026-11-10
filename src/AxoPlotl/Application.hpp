@@ -3,6 +3,7 @@
 #include "AxoPlotl/Scene.hpp"
 #include "AxoPlotl/Viewport.hpp"
 #include "AxoPlotl/picking.hpp"
+#include "AxoPlotl/rendering/debug/PickingTextureVis.hpp"
 #include "AxoPlotl/rendering/draw_texture.hpp"
 #include <webgpu/webgpu.hpp>
 
@@ -22,7 +23,6 @@ namespace AxoPlotl
 class Application
 {
 private:
-    float clear_color_[3] = {1,1,1};
     PickConfig picking_config_;
     // PickingTextureRenderer picking_visualizer_;
 
@@ -34,12 +34,15 @@ private:
         void update();
     } time_;
 
-    //float font_scale_ = 1.0f;
-    bool inspector_enabled_ = true;
-    std::function<void()> inspector_callback_;
+    struct Inspector {
+        bool enabled = true;
+        std::function<void()> callback = [](){}; // cursed stuff...
+    } inspector_;
 
-    bool reset_layout_requested_ = false;
-    bool pick_result_requested_ = false;
+    struct Requests {
+        bool reset_layout = false;
+        bool pick_result = false;
+    } requests_;
 
     // Draw a frame and handle events
     void frame_tick();
@@ -73,17 +76,18 @@ public:
     }
 
     const Viewport& viewport() const {return viewport_;}
+    Viewport& viewport() {return viewport_;}
 
     void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
     }
 
     std::function<void()>& inspector_callback() {
-        return inspector_callback_;
+        return inspector_.callback;
     }
 
     bool& inspector_enabled() {
-        return inspector_enabled_;
+        return inspector_.enabled;
     }
 
     constexpr float fps() const {
@@ -91,6 +95,12 @@ public:
     }
 
 private:
+    struct Debugging
+    {
+        DebugVis_PickingTextureRenderer picking_renderer_;
+        bool display_picking_texture = false;
+    } debug;
+
     PickResult pick_result_;
 
     PickResult request_pick_result(float _x, float _y);
@@ -102,6 +112,7 @@ private:
     wgpu::Queue queue_;
 
     Viewport viewport_;
+
     wgpu::TextureFormat surface_format_ = wgpu::TextureFormat::Undefined;
 
     wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;

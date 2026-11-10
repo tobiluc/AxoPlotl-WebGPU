@@ -59,37 +59,27 @@ fn fs_main(
 
     switch uniforms.mode
     {
-        case 0u:
-        {
+        case 0u: {
+            // Object Id
             color = hash_color(data.r);
         }
 
-        case 1u:
-        {
+        case 1u: {
+            // Entity Type
             color = hash_color(data.g);
         }
 
-        case 2u:
-        {
+        case 2u: {
+            // Entity Index
             color = hash_color(data.b);
         }
 
-        case 3u:
-        {
-            color = vec3<f32>(f32(data.a) / 255.0);
+        case 3u: {
+            // Depth
+            color = vec3<f32>(bitcast<f32>(data.a));
         }
 
-        case 4u:
-        {
-            color = vec3<f32>(
-                f32(data.r & 255u),
-                f32(data.g & 255u),
-                f32(data.b & 255u)
-            ) / 255.0;
-        }
-
-        default:
-        {
+        default: {
             color = vec3<f32>(1.0, 0.0, 1.0);
         }
     }

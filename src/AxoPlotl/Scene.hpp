@@ -30,6 +30,8 @@ public:
 
     void render(wgpu::RenderPassEncoder _render_pass);
 
+    void render_settings_ui();
+
     inline void destroy() {
         destroy_buffer(axis_position_buffer_);
         objects_.clear();
@@ -45,7 +47,7 @@ public:
         objects_.push_back(std::make_shared<Object>(this, _args...));
         objects_.back()->init_buffers();
         objects_.back()->recompute_bounding_box();
-        if (zoom_to_new_object_) {
+        if (settings.zoom_to_new_object) {
             zoom_to_box(objects_.back()->bounding_box());
         }
         return std::static_pointer_cast<Object>(objects_.back());
@@ -103,20 +105,18 @@ public:
         return app_;
     }
 
-    inline bool& axis_cross_enabled() {
-        return axis_renderer_.enabled();
-    }
-
     Camera& camera() {
         return camera_;
     }
 
-    bool& zoom_to_new_object() {
-        return zoom_to_new_object_;
-    }
+    struct Settings
+    {
+        bool zoom_to_new_object = true;
+        float clear_color[3] = {1,1,1};
+        bool show_axis_cross = true;
+    } settings;
 
 protected:
-    bool zoom_to_new_object_ = true;
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;

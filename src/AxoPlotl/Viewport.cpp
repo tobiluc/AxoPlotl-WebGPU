@@ -159,9 +159,12 @@ void Viewport::resize(
     picking_desc.mipLevelCount = 1;
     picking_desc.sampleCount = 1;
 
+    // TextureBinding is used if we want to render the texture
+    // using draw_texture
     picking_desc.usage =
         wgpu::TextureUsage::RenderAttachment |
-        wgpu::TextureUsage::CopySrc;
+        wgpu::TextureUsage::CopySrc |
+        wgpu::TextureUsage::TextureBinding;
 
     picking_texture_ = device.createTexture(picking_desc);
     picking_view_ = picking_texture_.createView();

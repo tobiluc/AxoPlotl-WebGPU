@@ -68,7 +68,6 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    inspector_callback_([]() {}),
     current_scene_index_(0)
 {
     scenes_.emplace_back();
@@ -235,6 +234,7 @@ bool Application::init()
     for (auto& scene : scenes_) {
         scene.init(this);
     }
+    debug.picking_renderer_.init(device_, 256, 256);
     // picking_visualizer_.initialize(device_, framebuffer_size().x, framebuffer_size().y);
 
     return true;
@@ -460,10 +460,14 @@ void Application::frame_tick()
             if (pos.has_value()) {
                 pick_result_ = request_pick_result(pos->x, pos->y);
                 if (pick_result_.object_id_ < UINT32_MAX) {
-                    pick_result_requested_ = true;
+                    requests_.pick_result = true;
                 }
             }
         }
+
+        // Render to Debug Picking Visualization
+        debug.picking_renderer_.render(
+            encoder, viewport_.picking_view());
     }
 
     // Render editor UI onto surface.
@@ -518,6 +522,7 @@ void Application::on_window_resize(float width, float height)
 
     configure_surface();
     viewport_.resize(device_, width, height, surface_format_, depth_texture_format_);
+    debug.picking_renderer_.resize(viewport_.width(), viewport_.height());
     // create_depth_texture();
     // create_picking_texture();
 
@@ -626,14 +631,18 @@ void Application::render_viewport_ui() {
         );
 
     // Clicking on an Object
-    if (pick_result_requested_) [[unlikely]] {
+    if (requests_.pick_result) [[unlikely]] {
         ImGui::OpenPopup("PickingPopup");
-        pick_result_requested_ = false;
+        requests_.pick_result = false;
     }
     if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
         auto obj = scene().get_object(pick_result_.object_id_);
         if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
         ImGui::EndPopup();
+    }
+
+    if (debug.display_picking_texture) {
+        debug.picking_renderer_.render_ui();
     }
 }
 
@@ -668,6 +677,7 @@ void Application::render_main_menu_bar_ui()
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
+
             }
             ImGui::EndMenu();
         }
@@ -693,24 +703,15 @@ void Application::render_main_menu_bar_ui()
         if (ImGui::BeginMenu("Settings"))
         {
             if (ImGui::BeginMenu("Layout")) {
-                ImGui::Checkbox("Enable Inspector", &inspector_enabled_);
-                reset_layout_requested_ |= ImGui::Button("Reset Layout");
-
+                ImGui::Checkbox("Enable Inspector", &inspector_.enabled);
+                requests_.reset_layout |= ImGui::Button("Reset Layout");
                 ImGui::EndMenu(); //!Inspector Settings
             }
 
             //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
 
             if (ImGui::BeginMenu("Scene")) {
-
-                if (ImGui::BeginMenu("Camera")) {
-                    scene().camera().render_settings_ui(window_);
-                    ImGui::EndMenu(); //!Camera Settings
-                }
-
-                ImGui::ColorEdit3("Background", clear_color_);
-                ImGui::Checkbox("Axis Cross", &scene().axis_cross_enabled());
-
+                scene().render_settings_ui();
                 ImGui::EndMenu(); //!Scene Settings
             }
 
@@ -740,6 +741,11 @@ void Application::render_main_menu_bar_ui()
 #if 1
         if (ImGui::BeginMenu("Debug"))
         {
+            if (ImGui::BeginMenu("Visualization")) {
+                ImGui::Checkbox("Show Picking Texture", &debug.display_picking_texture);
+                ImGui::EndMenu();
+            }
+
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
                 scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
             }
@@ -795,12 +801,14 @@ void Application::render_scenes_tab_bar_ui()
 
 void Application::render_inspector_ui()
 {
+    if (!inspector_.enabled) {return;}
+
     if (!ImGui::Begin("Inspector")) {
         ImGui::End();
         return;
     }
 
-    inspector_callback_();
+    inspector_.callback();
 
     ImGui::End();
 }
@@ -878,18 +886,16 @@ void Application::render_editor_ui()
         );
 
     // Rebuild the layout when requested.
-    if (reset_layout_requested_) {
+    if (requests_.reset_layout) {
         build_default_layout(dockspace_id);
-        reset_layout_requested_ = false;
+        requests_.reset_layout = false;
     }
 
     render_scenes_tab_bar_ui();
 
     render_viewport_ui();
 
-    if (inspector_enabled_) {
-        render_inspector_ui();
-    }
+    render_inspector_ui();
 
     ImGui::Render();
 }
@@ -904,9 +910,9 @@ void Application::render_gui(
     attachment.loadOp = wgpu::LoadOp::Clear;
     attachment.storeOp = wgpu::StoreOp::Store;
     attachment.clearValue = {
-        clear_color_[0],
-        clear_color_[1],
-        clear_color_[2],
+        scene().settings.clear_color[0],
+        scene().settings.clear_color[1],
+        scene().settings.clear_color[2],
         1.0f
     };
 
@@ -932,9 +938,9 @@ void Application::render_scene(wgpu::CommandEncoder& encoder)
     attachments[0].loadOp = wgpu::LoadOp::Clear;
     attachments[0].storeOp = wgpu::StoreOp::Store;
     attachments[0].clearValue = {
-        clear_color_[0],
-        clear_color_[1],
-        clear_color_[2],
+        scene().settings.clear_color[0],
+        scene().settings.clear_color[1],
+        scene().settings.clear_color[2],
         1.0f
     };
 

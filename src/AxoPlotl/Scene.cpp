@@ -51,6 +51,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
     const Mat4x4f view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
+    axis_renderer_.enabled() = settings.show_axis_cross;
     axis_renderer_.render(viewport.size(),
         _render_pass,
         view_proj);
@@ -70,6 +71,18 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass)
             }), objects_.end());
         objects_.shrink_to_fit();
     });
+}
+
+void Scene::render_settings_ui()
+{
+    if (ImGui::BeginMenu("Camera")) {
+        camera().render_settings_ui(app_->window());
+        ImGui::EndMenu();
+    }
+
+    ImGui::ColorEdit3("Background", settings.clear_color);
+    ImGui::Checkbox("Axis Cross", &settings.show_axis_cross);
+    ImGui::Checkbox("Zoom to New Object", &settings.zoom_to_new_object);
 }
 
 }

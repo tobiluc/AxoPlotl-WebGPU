@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "AxoPlotl/rendering/draw_texture.hpp"
 #include <webgpu/webgpu.hpp>
 #include <imgui.h>
 #include <cstdint>
@@ -36,7 +37,7 @@ public:
 
     wgpu::TextureView& color_view() { return color_view_; }
     wgpu::TextureView& depth_view() { return depth_view_; }
-    wgpu::TextureView& picking_view() { return picking_view_; }
+    const wgpu::TextureView& picking_view() const { return picking_view_; }
 
     wgpu::Texture& picking_texture() { return picking_texture_; }
 

@@ -547,11 +547,11 @@ bool OpenVolumeMeshObject::visualize_property(
 
 void OpenVolumeMeshObject::visualize_like(const OpenVolumeMeshObject& _obj)
 {
-    if (_obj.selected_property_name().has_value()) {
+    for (const auto& prop : _obj.visualized_props()) {
         visualize_property(
-            *_obj.selected_property_name(),
-            _obj.selected_property_entity_type(),
-            _obj.selected_property_typename());
+            prop->name(),
+            prop->entity_type(),
+            prop->typeNameWrapper());
     }
     vertex_renderer_.configure_like(_obj.vertex_renderer_);
     edge_renderer_.configure_like(_obj.edge_renderer_);
@@ -561,37 +561,14 @@ void OpenVolumeMeshObject::visualize_like(const OpenVolumeMeshObject& _obj)
     mat3x3_renderer_.configure_like(_obj.mat3x3_renderer_);
 }
 
-std::optional<OVM::PropertyStorageBase*> OpenVolumeMeshObject::selected_prop() const
+std::vector<OVM::PropertyStorageBase*> OpenVolumeMeshObject::visualized_props() const
 {
-    if (!selected_prop_entity_type_.has_value()) {
-        return std::nullopt;
-    }
-    switch(*selected_prop_entity_type_) {
-        case OpenVolumeMesh::EntityType::Vertex:
-            return (*v_prop_.prop_);
-        case OpenVolumeMesh::EntityType::Edge:
-            return (*e_prop_.prop_);
-        case OpenVolumeMesh::EntityType::Face:
-            return (*f_prop_.prop_);
-        case OpenVolumeMesh::EntityType::Cell:
-            return (*c_prop_.prop_);
-        default:
-            return std::nullopt;
-    }
-}
-
-std::optional<std::string> OpenVolumeMeshObject::selected_property_name() const
-{
-    const auto& p = selected_prop();
-    if (!p.has_value()) {return std::nullopt;}
-    return (*p)->name();
-}
-
-std::optional<std::string> OpenVolumeMeshObject::selected_property_typename() const
-{
-    const auto& p = selected_prop();
-    if (!p.has_value()) {return std::nullopt;}
-    return (*p)->typeNameWrapper();
+    std::vector<OVM::PropertyStorageBase*> props;
+    if (v_prop_.prop_.has_value()) {props.push_back(*v_prop_.prop_);}
+    if (e_prop_.prop_.has_value()) {props.push_back(*e_prop_.prop_);}
+    if (f_prop_.prop_.has_value()) {props.push_back(*f_prop_.prop_);}
+    if (c_prop_.prop_.has_value()) {props.push_back(*c_prop_.prop_);}
+    return props;
 }
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()
