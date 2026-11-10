@@ -101,13 +101,12 @@ fn fs_main(in:V2F) -> FragmentOutput
 {
     var out : FragmentOutput;
 
-    // Normalized position across the edge width
-    let y = abs(in.quadCorner.y) / (in.quadSize.y * 0.5);
-    // Bright center, darker edges
-    let shading = 0.75 + 0.25 * sqrt(max(0.0, 1.0 - y * y));
-    // Slight highlight on one side
-    let highlight = 0.08 * smoothstep(0.5, 0.0, in.quadCorner.y / in.quadSize.y);
-    let finalShading = shading + highlight;
+    // Fake 3D
+    let y = in.quadCorner.y / (in.quadSize.y * 0.5);
+    let shading = 0.78 + 0.22 * sqrt(max(0.0, 1.0 - y * y));
+    let highlight = 0.10 * exp(-pow((y + 0.45) * 12.0, 2.0));
+    let shadow = 0.12 * smoothstep(0.1, 1.0, y);
+    let finalShading = shading + highlight - shadow;
 
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
