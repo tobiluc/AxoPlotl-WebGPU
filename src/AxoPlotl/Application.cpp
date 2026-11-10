@@ -135,7 +135,6 @@ bool Application::init()
 
     surface_ = glfwGetWGPUSurface(instance, window_);
 
-    //surface_ = glfwGetWGPUSurface(instance, _window);
     wgpu::RequestAdapterOptions adapterOpts = {};
     adapterOpts.compatibleSurface = surface_;
     adapter_ = instance.requestAdapter(adapterOpts);
@@ -152,15 +151,7 @@ bool Application::init()
     deviceDesc.requiredLimits = nullptr;
     deviceDesc.defaultQueue.nextInChain = nullptr;
     deviceDesc.defaultQueue.label = wgpu::StringView("The default queue");
-    // deviceDesc.deviceLostCallbackInfo.callback = [](
-    //     const WGPUDevice* _device,
-    //     WGPUDeviceLostReason _reason,
-    //     const char* _message, void* _userdata)
-    // {
-    //     std::cerr << "Device lost: " << _reason;
-    //     if (_message) {std::cerr << " (" << _message << ")";}
-    //     std::cerr << std::endl;
-    // };
+
     deviceDesc.deviceLostCallbackInfo.callback = [](
          WGPUDevice const* _device,
          WGPUDeviceLostReason _reason,
@@ -188,18 +179,6 @@ bool Application::init()
     deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
 
     device_ = adapter_.requestDevice(deviceDesc);
-    //device.getLimits(&supportedLimits);
-    //std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
-
-    // error_callback_ = device_.setUncapturedErrorCallback([](wgpu::ErrorType type, char const* message) {
-    //     std::cerr << "Uncaptured device error: type " << type;
-    //     if (message) std::cout << " (" << message << ")";
-    //     std::cerr << std::endl;
-    //     std::exit(1);
-    // });
-
-    queue_ = device_.getQueue();
-
 
     //----------
     // Surface
@@ -212,8 +191,6 @@ bool Application::init()
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
     depth_texture_format_ = depthStencilState.format;
     viewport_.resize(device_, framebuffer_size().x, framebuffer_size().y, surface_format_, depth_texture_format_);
-    // create_depth_texture();
-    // create_picking_texture();
 
     wgpu::BufferDescriptor pickBuffDesc{};
     pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
@@ -236,178 +213,9 @@ bool Application::init()
         scene.init(this);
     }
     debug.picking_renderer_.init(device_, 256, 256);
-    // picking_visualizer_.initialize(device_, framebuffer_size().x, framebuffer_size().y);
 
     return true;
 }
-
-// void Application::frame_tick()
-// {
-//     // Input and Time Update
-//     time_.update();
-//     Input::Mouse::update(window_);
-//     glfwPollEvents();
-
-//     // Only render a certain number of frames
-//     // before redrawing
-//     if (!on_draw()) [[likely]] {return;}
-
-//     wgpu::CommandEncoder cmd_encoder = device_.createCommandEncoder();
-
-//     // Acquire next frame texture
-//     wgpu::SurfaceTexture surfaceTexture;
-//     surface_.getCurrentTexture(&surfaceTexture);
-
-//     // Safety Check
-//     if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) [[unlikely]] {
-// #ifndef WEBGPU_BACKEND_WGPU
-//         if (surfaceTexture.texture) {
-//             wgpuTextureRelease(surfaceTexture.texture);
-//         }
-// #endif //! WEBGPU_BACKEND_WGPU
-//         return;
-//     }
-
-//     wgpu::TextureViewDescriptor viewDescriptor;
-//     viewDescriptor.nextInChain = nullptr;
-//     viewDescriptor.label = wgpu::StringView("Surface texture view");
-//     viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
-//     viewDescriptor.dimension = WGPUTextureViewDimension_2D;
-//     viewDescriptor.baseMipLevel = 0;
-//     viewDescriptor.mipLevelCount = 1;
-//     viewDescriptor.baseArrayLayer = 0;
-//     viewDescriptor.arrayLayerCount = 1;
-//     viewDescriptor.aspect = WGPUTextureAspect_All;
-//     wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
-
-//     wgpu::RenderPassColorAttachment color_attachments[2];
-
-//     // Color Attachment
-//     color_attachments[0].view = targetView;
-//     color_attachments[0].loadOp = wgpu::LoadOp::Clear;
-//     color_attachments[0].storeOp = wgpu::StoreOp::Store;
-//     color_attachments[0].clearValue = {clear_color_[0],clear_color_[1],clear_color_[2],1.0f};
-//     color_attachments[0].resolveTarget = nullptr;
-//     color_attachments[0].nextInChain = nullptr;
-// #ifndef WEBGPU_BACKEND_WGPU
-//     color_attachments[0].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-// #endif //!WEBGPU_BACKEND_WGPU
-
-//     // Picking Attachment
-//     color_attachments[1].view = picking_view_;
-//     color_attachments[1].loadOp = wgpu::LoadOp::Clear;
-//     color_attachments[1].storeOp = wgpu::StoreOp::Store;
-//     color_attachments[1].clearValue = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
-//     color_attachments[1].resolveTarget = nullptr;
-//     color_attachments[1].nextInChain = nullptr;
-// #ifndef WEBGPU_BACKEND_WGPU
-//     color_attachments[1].depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-// #endif //!WEBGPU_BACKEND_WGPU
-
-//     wgpu::RenderPassDescriptor renderPassDesc{};
-//     renderPassDesc.colorAttachmentCount = 2;
-//     renderPassDesc.colorAttachments = color_attachments;
-//     renderPassDesc.label = wgpu::StringView("Main Render Pass");
-
-//     // Depth Attachment
-//     wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
-//     depthStencilAttachment.view = depth_texture_view_;
-//     depthStencilAttachment.depthClearValue = 1.0f; // "far"
-//     depthStencilAttachment.depthLoadOp = wgpu::LoadOp::Clear;
-//     depthStencilAttachment.depthStoreOp = wgpu::StoreOp::Store;
-//     depthStencilAttachment.depthReadOnly = false; // could turn off writing to depth buffer
-//     depthStencilAttachment.stencilClearValue = 0;
-// #ifdef WEBGPU_BACKEND_WGPU
-//     depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Clear;
-//     depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Store;
-// #endif
-// #ifdef WEBGPU_BACKEND_DAWN
-//     depthStencilAttachment.stencilLoadOp = wgpu::LoadOp::Undefined;
-//     depthStencilAttachment.stencilStoreOp = wgpu::StoreOp::Undefined;
-//     //depthStencilAttachment.depthClearValue = std::numeric_limits<float>::quiet_NaN();
-// #endif
-//     depthStencilAttachment.stencilReadOnly = true;
-//     renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
-
-//     // Begin render pass
-//     scene_render_pass_ =
-//         cmd_encoder.beginRenderPass(renderPassDesc);
-
-//     // Set the Scene Viewport
-//     auto viewport = scene_viewport();
-//     scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-//     scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-//     // Render the Scene with its objects
-//     scene().render(scene_render_pass_);
-
-//     // For the picking to work correctly, we resize the
-//     // scene viewprt to the full rectangle after rendering
-//     // viewport = total_viewport();
-//     // scene_render_pass_.setViewport(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 1.0f);
-//     // scene_render_pass_.setScissorRect(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-//     scene_render_pass_.end();
-
-//     //------------------
-//     // Click to Pick
-//     //------------------
-//     bool just_clicked_on_object(false);
-//     if (Input::Mouse::RIGHT_JUST_PRESSED) {
-//         int width, height;
-//         glfwGetWindowSize(window(), &width, &height);
-//         float x_scale = (float)total_viewport()[2] / (float)width;
-//         float y_scale = (float)total_viewport()[3] / (float)height;
-//         float x = x_scale*Input::Mouse::POSITION[0] - total_viewport()[0];
-//         float y = y_scale*Input::Mouse::POSITION[1] - total_viewport()[1];
-//         pick_result_ = request_pick_result(x, y);
-//         //std::cerr << pick_result_ << std::endl;
-//         if (pick_result_.object_id_ < UINT32_MAX) {
-//             just_clicked_on_object = true;
-//         }
-//     }
-
-//     //------------------
-//     // GUI Render Pass
-//     //------------------
-//     // only expects pixel color attachment (no picking texture)
-//     // wgpu::RenderPassColorAttachment guiColorAttachment{};
-//     // guiColorAttachment.view = targetView;
-//     color_attachments[0].loadOp = wgpu::LoadOp::Load; // load scene result
-//     wgpu::RenderPassDescriptor guiPassDesc{};
-//     guiPassDesc.colorAttachmentCount = 1;
-//     guiPassDesc.colorAttachments = &color_attachments[0];
-//     guiPassDesc.depthStencilAttachment = &depthStencilAttachment;
-//     gui_render_pass_ = cmd_encoder.beginRenderPass(guiPassDesc);
-//     render_imgui(gui_render_pass_, just_clicked_on_object);
-
-//     gui_render_pass_.end();
-
-//     // Submit
-//     wgpu::CommandBuffer cmdBuffer = cmd_encoder.finish();
-//     queue_.submit(1, &cmdBuffer);
-
-// #ifndef __EMSCRIPTEN__
-//     surface_.present();
-// #endif
-
-// // Cleanup
-// #ifndef WEBGPU_BACKEND_WGPU
-//     wgpuTextureRelease(surfaceTexture.texture);
-// #endif //! WEBGPU_BACKEND_WGPU
-//     targetView.release();
-//     scene_render_pass_.release();
-//     gui_render_pass_.release();
-//     cmdBuffer.release();
-//     cmd_encoder.release();
-
-//     wgpuPollEvents(device_, false);
-
-//     // Functions to execute after the command buffer submit
-//     // For example deletion of scene objects.
-//     for (auto& fn : deferred_calls_) {fn();}
-//     deferred_calls_.clear();
-// }
 
 void Application::frame_tick()
 {
@@ -478,7 +286,7 @@ void Application::frame_tick()
 
     // Submit.
     auto cmd_buffer = encoder.finish();
-    queue_.submit(1, &cmd_buffer);
+    device_.getQueue().submit(1, &cmd_buffer);
 
 #ifndef __EMSCRIPTEN__
     surface_.present();
@@ -526,8 +334,6 @@ void Application::on_window_resize(float width, float height)
     configure_surface();
     viewport_.resize(device_, width, height, surface_format_, depth_texture_format_);
     debug.picking_renderer_.resize(viewport_.width(), viewport_.height());
-    // create_depth_texture();
-    // create_picking_texture();
 
     wgpuPollEvents(device_, true);
 }
@@ -541,9 +347,10 @@ void Application::clear()
         scene.destroy();
     }
 
-    if (queue_) {
-        queue_.release();
-        queue_ = nullptr;
+    auto queue = device_.getQueue();
+    if (queue) {
+        queue.release();
+        queue = nullptr;
     }
     if (surface_) {
         surface_.unconfigure();
@@ -552,15 +359,6 @@ void Application::clear()
     }
 
     viewport_.release();
-    // if (depth_texture_view_) {
-    //     depth_texture_view_.release();
-    //     depth_texture_view_ = nullptr;
-    // }
-    // if (depth_texture_) {
-    //     depth_texture_.destroy();
-    //     depth_texture_.release();
-    //     depth_texture_ = nullptr;
-    // }
 
     if (adapter_) {
         adapter_.release();
@@ -612,19 +410,6 @@ bool Application::init_imgui()
 
     return true;
 }
-
-// glm::vec<4,float> Application::scene_viewport()
-// {
-//     return {0, 0, viewport_.width(), viewport_.height()};
-//     // int fbWidth, fbHeight;
-//     // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-//     // float sidebar_width = inspector_enabled_? (inspector_rel_width_ * fbWidth) : 0.0f;
-//     // if (inspector_right_aligned_) {
-//     //     return {0.0f, 0.0f, fbWidth - sidebar_width, fbHeight};
-//     // } else {
-//     //     return {sidebar_width, 0.0f, fbWidth - sidebar_width, fbHeight};
-//     // }
-// }
 
 void Application::render_viewport_ui() {
     viewport_.render_ui(
@@ -756,14 +541,21 @@ void Application::render_main_menu_bar_ui()
                 scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
             }
 
-            if (ImGui::Button("Save Screenshot")) {
-                bool success = save_viewport_screenshot("AxoPlotl_Screenshot.png", ViewSize{.width=2048,.height=2048});
-                std::cerr << "Screenshot Status " << success << std::endl;
+            if (ImGui::BeginMenu("Screenshot")) {
+                InputSlider2("SaveScreenshot",
+                             &debug.screenshot_width_,
+                             InputSliderOptions{
+                                .step=1,.min=1,.max=4000,
+                                .display_name=false});
+                ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
+                if (ImGui::Button("Save")) {
+                    save_viewport_screenshot(
+                        debug.screenshot_filename_,
+                        ViewSize{.width=debug.screenshot_width_,
+                                 .height=debug.screenshot_height_});
+                }
+                ImGui::EndMenu();
             }
-
-            // if (ImGui::MenuItem("Picking Texture")) {
-            //     draw_texture("PickingTexture", viewport_.picking_view());
-            // }
 
             ImGui::EndMenu(); // !Debug
         }
@@ -1000,24 +792,6 @@ void Application::render_scene(wgpu::CommandEncoder& encoder, Viewport& _viewpor
     pass.end();
 }
 
-// void Application::render_imgui(wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object)
-// {
-//     ImGui_ImplWGPU_NewFrame();
-//     ImGui_ImplGlfw_NewFrame();
-//     ImGui::NewFrame();
-
-//     render_main_menu_bar_ui(_just_clicked_on_object);
-
-//     render_scenes_tab_bar_ui();
-
-//     if (inspector_enabled_) {
-//         render_inspector_ui();
-//     }
-
-//     ImGui::Render();
-//     ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), _render_pass);
-// }
-
 PickResult Application::request_pick_result(float _x, float _y)
 {
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
@@ -1043,7 +817,7 @@ PickResult Application::request_pick_result(float _x, float _y)
     encoder.copyTextureToBuffer(src, dst, copySize);
 
     wgpu::CommandBuffer cb = encoder.finish();
-    queue_.submit(1, &cb);
+    device_.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
 
@@ -1180,85 +954,11 @@ bool Application::save_viewport_screenshot(
         surface_format_, depth_texture_format_);
     render_scene(encoder, newViewport);
     wgpu::CommandBuffer cb = encoder.finish();
-    queue_.submit(1, &cb);
+    device_.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
     return save_texture_to_file(_path, device_,
         newViewport.color_texture(), _size.width, _size.height);
 }
-
-// void Application::create_depth_texture()
-// {
-//     if (depth_texture_view_) {
-//         depth_texture_view_.release();
-//     }
-//     if (depth_texture_) {
-//         depth_texture_.destroy();
-//         depth_texture_.release();
-//     }
-
-//     // int fbWidth, fbHeight;
-//     // glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-//     // std::cout << "Framebuffer size: " << fbWidth << " x " << fbHeight << std::endl;
-//     auto viewport = total_viewport();
-
-//     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
-//     depth_texture_format_ = depthStencilState.format;
-
-//     // Create the depth texture
-//     wgpu::TextureDescriptor depthTextureDesc;
-//     depthTextureDesc.dimension = wgpu::TextureDimension::_2D;
-//     depthTextureDesc.format = depth_texture_format_;
-//     depthTextureDesc.mipLevelCount = 1;
-//     depthTextureDesc.sampleCount = 1;
-//     depthTextureDesc.size = {
-//         static_cast<uint32_t>(viewport[2]),
-//         static_cast<uint32_t>(viewport[3]),
-//         1};
-//     depthTextureDesc.usage = wgpu::TextureUsage::RenderAttachment;
-//     depthTextureDesc.viewFormatCount = 1;
-//     depthTextureDesc.viewFormats = (WGPUTextureFormat*)&depth_texture_format_;
-//     depth_texture_ = device_.createTexture(depthTextureDesc);
-
-//     // Create the view of the depth texture manipulated by the rasterizer
-//     wgpu::TextureViewDescriptor depthTextureViewDesc;
-//     depthTextureViewDesc.aspect = wgpu::TextureAspect::DepthOnly;
-//     depthTextureViewDesc.baseArrayLayer = 0;
-//     depthTextureViewDesc.arrayLayerCount = 1;
-//     depthTextureViewDesc.baseMipLevel = 0;
-//     depthTextureViewDesc.mipLevelCount = 1;
-//     depthTextureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
-//     depthTextureViewDesc.format = depth_texture_format_;
-//     depth_texture_view_ = depth_texture_.createView(depthTextureViewDesc);
-
-//     depthStencilState.stencilReadMask = 0;
-//     depthStencilState.stencilWriteMask = 0;
-// }
-
-// void Application::create_picking_texture()
-// {
-//     if (picking_view_) {picking_view_.release();}
-//     if (picking_texture_) {
-//         picking_texture_.destroy();
-//         picking_texture_.release();
-//     }
-//     auto viewport = total_viewport();
-
-//     wgpu::TextureDescriptor pickDesc{};
-//     pickDesc.label = wgpu::StringView("Picking Texture");
-//     pickDesc.dimension = wgpu::TextureDimension::_2D;
-//     pickDesc.size = {
-//         static_cast<uint32_t>(viewport[2]),
-//         static_cast<uint32_t>(viewport[3]),
-//         1
-//     };
-//     pickDesc.format = wgpu::TextureFormat::RGBA32Uint;
-//     pickDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
-//     pickDesc.sampleCount = 1;
-//     pickDesc.mipLevelCount = 1;
-
-//     picking_texture_ = device_.createTexture(pickDesc);
-//     picking_view_ = picking_texture_.createView();
-// }
 
 }

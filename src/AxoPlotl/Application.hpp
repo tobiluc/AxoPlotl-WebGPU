@@ -101,6 +101,9 @@ private:
     {
         DebugVis_PickingTextureRenderer picking_renderer_;
         bool display_picking_texture = false;
+        std::string screenshot_filename_ = "AxoPlotl_Screenshot.png";
+        float screenshot_width_ = 512;
+        float screenshot_height_ = 512;
     } debug;
 
     PickResult pick_result_;
@@ -111,8 +114,6 @@ private:
     std::vector<std::function<void()>> deferred_calls_;
 
     GLFWwindow* window_;
-    wgpu::Queue queue_;
-
     Viewport viewport_;
 
     wgpu::TextureFormat surface_format_ = wgpu::TextureFormat::Undefined;
@@ -142,9 +143,6 @@ private:
 
     void render_gui(wgpu::CommandEncoder& _encoder,
                     wgpu::TextureView& _target_view);
-
-    // void render_imgui(
-    //     wgpu::RenderPassEncoder _render_pass, bool _just_clicked_on_object);
 
     void render_main_menu_bar_ui();
 
