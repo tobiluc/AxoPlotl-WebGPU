@@ -4,7 +4,7 @@
 #include "ibex/ibex.hpp"
 #include <AxoPlotl/Scene.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 void SHObject::render(

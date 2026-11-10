@@ -12,7 +12,7 @@
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 class OpenVolumeMeshObject : public ObjectBase

@@ -4,7 +4,7 @@
 #include <AxoPlotl/objects/BaseObject.hpp>
 #include <AxoPlotl/rendering/MeshCellRenderer.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 class TetObject : public ObjectBase

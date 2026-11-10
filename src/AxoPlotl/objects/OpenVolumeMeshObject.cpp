@@ -7,7 +7,7 @@
 #include <AxoPlotl/Application.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 OpenVolumeMeshObject::OpenVolumeMeshObject(

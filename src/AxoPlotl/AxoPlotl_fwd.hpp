@@ -21,9 +21,9 @@ class ColoredVertexRenderer;
 class Vector3Renderer;
 class Matrix3x3Renderer;
 
-class ObjectBase;
-class OpenVolumeMeshObject;
 class ColorMap;
 }
 
+class ObjectBase;
+class OpenVolumeMeshObject;
 }

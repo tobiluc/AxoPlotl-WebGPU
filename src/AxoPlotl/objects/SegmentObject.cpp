@@ -3,7 +3,7 @@
 #include <AxoPlotl/Scene.hpp>
 #include <AxoPlotl/rendering/detail/create_static_render_data.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 void SegmentObject::render(

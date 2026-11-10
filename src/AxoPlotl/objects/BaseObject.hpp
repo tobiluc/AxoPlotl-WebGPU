@@ -6,8 +6,10 @@
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "webgpu/webgpu.hpp"
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
+
+using namespace internal;
 
 class ObjectBase
 {

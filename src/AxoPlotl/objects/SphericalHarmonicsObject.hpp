@@ -3,7 +3,7 @@
 #include "AxoPlotl/objects/BaseObject.hpp"
 #include "AxoPlotl/rendering/SphericalHarmonicsRenderer.hpp"
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 class SHObject : public ObjectBase

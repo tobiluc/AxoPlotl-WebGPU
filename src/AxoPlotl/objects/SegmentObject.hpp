@@ -4,7 +4,7 @@
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/objects/BaseObject.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl
 {
 
 class SegmentObject : public ObjectBase

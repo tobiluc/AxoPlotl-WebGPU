@@ -16,7 +16,7 @@ int DataControlTool::properties_object_id_ = -1;
 void DataControlTool::render_ui()
 {
     if (!ImGui::CollapsingHeader("Data Control")) {return;}
-    using ConstObj = const std::shared_ptr<internal::ObjectBase>&;
+    using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted
     if (!AxoPlotl::scene().get_object(info_object_id_)) {info_object_id_ = -1;}
