@@ -45,7 +45,9 @@ public:
         objects_.push_back(std::make_shared<Object>(this, _args...));
         objects_.back()->init_buffers();
         objects_.back()->recompute_bounding_box();
-        zoom_to_box(objects_.back()->bounding_box());
+        if (zoom_to_new_object_) {
+            zoom_to_box(objects_.back()->bounding_box());
+        }
         return std::static_pointer_cast<Object>(objects_.back());
     }
 
@@ -109,7 +111,12 @@ public:
         return camera_;
     }
 
+    bool& zoom_to_new_object() {
+        return zoom_to_new_object_;
+    }
+
 protected:
+    bool zoom_to_new_object_ = true;
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
     wgpu::Buffer axis_position_buffer_;
