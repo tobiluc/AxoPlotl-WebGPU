@@ -101,8 +101,12 @@ public:
 
     void visualize_like(const OpenVolumeMeshObject& _obj);
 
-    inline OVMVolumeMesh& mesh() {
+    OVMVolumeMesh& mesh() {
         return mesh_;
+    }
+
+    std::optional<std::filesystem::path> filepath() const {
+        return filepath_;
     }
 
 protected:
