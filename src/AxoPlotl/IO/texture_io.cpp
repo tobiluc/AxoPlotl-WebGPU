@@ -1,4 +1,4 @@
-#include "save_texture_to_file.hpp"
+#include "texture_io.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <AxoPlotl/IO/stb_image_write.h>

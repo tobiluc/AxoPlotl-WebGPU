@@ -294,21 +294,7 @@ void ColoredCellRenderer::create_triangle_pipeline(
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-
-    // color
-    color_targets[0].format = _render_context.surface_format;
-    color_targets[0].writeMask = wgpu::ColorWriteMask::All;
-
-    // picking
-    color_targets[1].format = wgpu::TextureFormat::RGBA32Uint;
-    color_targets[1].blend = nullptr;
-    color_targets[1].writeMask = wgpu::ColorWriteMask::All;
-
-    wgpu::FragmentState fragmentState{};
-    fragmentState.module = shaderModule;
-    fragmentState.entryPoint = wgpu::StringView("fs_main");
-    fragmentState.targetCount = 2;
-    fragmentState.targets = color_targets;
+    wgpu::FragmentState fragmentState = create_fragment_state(_render_context, shaderModule, color_targets);
 
     // Primitive state
     wgpu::PrimitiveState primitive{};

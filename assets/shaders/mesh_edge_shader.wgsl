@@ -8,7 +8,8 @@ struct Uniforms {
     @align(16) valueType: ValueType,
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
-    @align(16) ambient: vec4<f32>
+    @align(16) ambient: vec4<f32>,
+    @align(16) relDepthOffset: f32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -62,26 +63,44 @@ fn vs_main(
     let clip0 = ubo.mvp * vec4<f32>(positions[vh0], 1.0);
     let clip1 = ubo.mvp * vec4<f32>(positions[vh1], 1.0);
 
-    // Project to screen to get the 2D direction
-    let screen0 = (clip0.xy / clip0.w) * ubo.viewportSize;
-    let screen1 = (clip1.xy / clip1.w) * ubo.viewportSize;
-    let edgeDir = normalize(screen1 - screen0);
+    // Convert NDC to pixel coordinates.
+    // Y is inverted because screen coordinates usually grow downward.
+    let ndc0 = clip0.xy / clip0.w;
+    let ndc1 = clip1.xy / clip1.w;
+
+    // Convert to pixel coordinates
+    let screen0 = ndc0 * ubo.viewportSize * 0.5;
+    let screen1 = ndc1 * ubo.viewportSize * 0.5;
+
+    let edgeVector = screen1 - screen0;
+    let edgeLength = length(edgeVector);
+
+    let edgeDir = edgeVector / max(edgeLength, 0.0001);
     let perpDir = vec2<f32>(-edgeDir.y, edgeDir.x);
 
-    // Calculate final position
+    // Half-width in pixels
+    let offsetPixels = perpDir * (ubo.lineWidth * 0.5 * side);
+
+    // Convert back to NDC
+    let offsetNdc = offsetPixels * 2.0 / ubo.viewportSize;
+
     var outPos = mix(clip0, clip1, t);
 
-    // Apply thickness offset
-    let offset = (perpDir * ubo.lineWidth * 0.5 * side) / ubo.viewportSize;
-    outPos.x += offset.x * outPos.w * 2.0;
-    outPos.y += offset.y * outPos.w * 2.0;
+    // Apply offset in clip space.
+    outPos.x += offsetNdc.x * outPos.w;
+    outPos.y += offsetNdc.y * outPos.w;
+
+    // Subtract Depth Offset to render on top
+    // of faces
+    outPos.z -= ubo.relDepthOffset * outPos.w;
 
     out.position = outPos;
 
-    // Tell the fragment where we are relative to the center of the quad
-    out.quadSize = vec2<f32>(length(screen1-screen0), ubo.lineWidth);
-    out.quadCorner = vec2<f32>((config.x-0.5)*out.quadSize.x,
-                               0.5*config.y*out.quadSize.y);
+    out.quadSize = vec2<f32>(edgeLength, ubo.lineWidth);
+    out.quadCorner = vec2<f32>(
+        (config.x - 0.5) * edgeLength,
+        0.5 * config.y * ubo.lineWidth
+        );
 
     // Property and Clipping
     let value = props[eh];

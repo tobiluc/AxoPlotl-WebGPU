@@ -116,8 +116,8 @@ private:
     GLFWwindow* window_;
     Viewport viewport_;
 
-    wgpu::RenderPassEncoder gui_render_pass_;
-    wgpu::RenderPassEncoder scene_render_pass_;
+    // wgpu::RenderPassEncoder gui_render_pass_;
+    // wgpu::RenderPassEncoder scene_render_pass_;
 
     std::vector<Scene> scenes_;
     uint32_t current_scene_index_ = 0;

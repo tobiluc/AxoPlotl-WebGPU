@@ -20,6 +20,7 @@ protected:
         alignas(16) Property::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0.6,0.6,0.6,1);
+        alignas(16) float rel_depth_offset_ = 0.00001;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);
@@ -31,27 +32,35 @@ protected:
     ColorMap property_color_map_;
 
 public:
-    inline float& line_width() {
+    float& line_width() {
         return uniforms_.line_width_;
     };
 
-    inline Property::Type& property_type() {
+    Property::Type& property_type() {
         return uniforms_.type_;
     }
 
-    inline Property::Filter& property_filter() {
+    Property::Filter& property_filter() {
         return uniforms_.value_filter_;
     }
 
-    inline ClipBox& clip_box() {
+    ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
 
-    inline Vec4f& ambient() {
+    Vec4f& ambient() {
         return uniforms_.ambient_;
     }
 
-    inline ColorMap& color_map() {
+    // Value used in the shader as a
+    // negative depth bias proportional
+    // the the fragment depth. A higher value
+    // renders the fragment on top.
+    float& relative_depth_offset() {
+        return uniforms_.rel_depth_offset_;
+    }
+
+    ColorMap& color_map() {
         return property_color_map_;
     }
 

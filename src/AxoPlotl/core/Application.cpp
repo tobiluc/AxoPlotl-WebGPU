@@ -20,8 +20,7 @@
 #include <AxoPlotl/tools/DataControlTool.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 #include <imgui_internal.h>
-#include "AxoPlotl/rendering/save_texture_to_file.hpp"
-#include "AxoPlotl/gui/widgets/draw_texture.hpp"
+#include <AxoPlotl/IO/texture_io.hpp>
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
@@ -129,60 +128,15 @@ bool Application::init()
     });
 
     //------------------
-    // Instance
+    // GPU Context
     //------------------
     wgpu::Instance instance = wgpuCreateInstance(nullptr);
-
     render_context_.surface = glfwGetWGPUSurface(instance, window_);
+    gpu_context_.init(instance, render_context_.surface);
 
-    wgpu::RequestAdapterOptions adapterOpts = {};
-    adapterOpts.compatibleSurface = render_context_.surface;
-    gpu_context_.adapter = instance.requestAdapter(adapterOpts);
-
-    instance.release();
-
-    //------------------
-    // Device
-    //------------------
-
-    wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.label = wgpu::StringView("My Device");
-    deviceDesc.requiredFeatureCount = 0;
-    deviceDesc.requiredLimits = nullptr;
-    deviceDesc.defaultQueue.nextInChain = nullptr;
-    deviceDesc.defaultQueue.label = wgpu::StringView("The default queue");
-
-    deviceDesc.deviceLostCallbackInfo.callback = [](
-         WGPUDevice const* _device,
-         WGPUDeviceLostReason _reason,
-         WGPUStringView _message,
-         void* _userdata1, void* _userdata2)
-    {
-        std::cerr << "Device lost: " << static_cast<uint32_t>(_reason);
-
-        if (_message.data) {
-            std::cerr << " (" << std::string_view(_message.data, _message.length) << ")";
-        }
-        std::cerr << std::endl;
-    };
-    deviceDesc.uncapturedErrorCallbackInfo.callback = [](
-         WGPUDevice const* _device,
-         WGPUErrorType _type,
-         WGPUStringView _message,
-         void* _userdata1, void* _userdata2)
-    {
-        std::cerr << "WebGPU Error (" << static_cast<uint32_t>(_type) << "): "
-                  << _message.data << std::endl;
-        std::exit(1);
-    };
-    deviceDesc.uncapturedErrorCallbackInfo.userdata1 = nullptr;
-    deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
-
-    gpu_context_.device = gpu_context_.adapter.requestDevice(deviceDesc);
-
-    //----------
-    // Surface
-    //----------
+    //----------------
+    // Render Context
+    //----------------
     const auto fb_size = framebuffer_size();
     render_context_.configure_surface(gpu_context_, fb_size.x, fb_size.y);
 
@@ -191,13 +145,6 @@ bool Application::init()
     //-------------------
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
     viewport_.resize(gpu_context_.device, render_context_.surface_format, framebuffer_size().x, framebuffer_size().y);
-
-    // wgpu::BufferDescriptor pickBuffDesc{};
-    // pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
-    // pickBuffDesc.size = sizeof(PickResult);
-    // pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
-    // pickBuffDesc.mappedAtCreation = false;
-    // picking_buffer_ = device_.createBuffer(pickBuffDesc);
 
     //----------
     // Gui
@@ -212,6 +159,10 @@ bool Application::init()
     for (auto& scene : scenes_) {
         scene.init(this);
     }
+
+    //----------
+    // Picker
+    //----------
     picker_.init(gpu_context_.device);
     debug.picking_renderer_.init(gpu_context_.device, 256, 256);
 
