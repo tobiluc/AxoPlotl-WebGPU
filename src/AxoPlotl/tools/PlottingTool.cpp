@@ -1,5 +1,5 @@
 #include "PlottingTool.hpp"
-#include <AxoPlotl/Scene.hpp>
+#include <AxoPlotl/core/Scene.hpp>
 #include "AxoPlotl/AxoPlotl.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>

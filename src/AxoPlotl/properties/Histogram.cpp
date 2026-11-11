@@ -1,5 +1,5 @@
 #include <AxoPlotl/properties/Histogram.hpp>
-#include <AxoPlotl/rendering/draw_histogram.hpp>
+#include <AxoPlotl/gui/widgets/draw_histogram.hpp>
 
 namespace AxoPlotl::internal
 {

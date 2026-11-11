@@ -1,6 +1,6 @@
 #include "DebugTool.hpp"
 #include "AxoPlotl/AxoPlotl.hpp"
-#include <AxoPlotl/Scene.hpp>
+#include <AxoPlotl/core/Scene.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
 

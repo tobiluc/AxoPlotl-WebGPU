@@ -1,6 +1,6 @@
 #include "PickingTextureVis.hpp"
-#include "AxoPlotl/rendering/detail/wgpu_commons.hpp"
-#include "AxoPlotl/rendering/draw_texture.hpp"
+#include "AxoPlotl/rendering/wgpu_commons.hpp"
+#include "AxoPlotl/gui/widgets/draw_texture.hpp"
 #include <imgui.h>
 
 namespace AxoPlotl::internal

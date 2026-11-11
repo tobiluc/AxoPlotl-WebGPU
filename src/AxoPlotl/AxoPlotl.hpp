@@ -1,5 +1,5 @@
 #pragma once
-#include <AxoPlotl/Scene.hpp>
+#include <AxoPlotl/core/Scene.hpp>
 #include <functional>
 
 namespace AxoPlotl

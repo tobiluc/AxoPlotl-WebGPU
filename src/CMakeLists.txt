@@ -1,37 +1,46 @@
 # todo: allow plugins with external dependencies
 
 add_library(AxoPlotlCore
-    AxoPlotl/Application.cpp
+
     AxoPlotl/IO/file_access.cpp
     AxoPlotl/geometry/spherical_harmonics.cpp
-    AxoPlotl/Scene.cpp
-    AxoPlotl/objects/OpenVolumeMeshObject.cpp
-    AxoPlotl/objects/SphericalHarmonicsObject.cpp
-    AxoPlotl/objects/TetrahedronObject.cpp
-    AxoPlotl/objects/SegmentObject.cpp
+
+    AxoPlotl/core/Application.cpp
+    AxoPlotl/core/Scene.cpp
+    AxoPlotl/core/Viewport.cpp
+    AxoPlotl/core/picking.cpp
+    AxoPlotl/core/Camera.cpp
+
+    AxoPlotl/core/objects/BaseObject.cpp
+    AxoPlotl/core/objects/OpenVolumeMeshObject.cpp
+    AxoPlotl/core/objects/SphericalHarmonicsObject.cpp
+    AxoPlotl/core/objects/TetrahedronObject.cpp
+    AxoPlotl/core/objects/SegmentObject.cpp
+
     AxoPlotl/input/Mouse.cpp
-    AxoPlotl/Camera.cpp
-    AxoPlotl/objects/BaseObject.cpp
-    AxoPlotl/rendering/detail/create_static_render_data.cpp
-    AxoPlotl/rendering/detail/redraw.cpp
-    AxoPlotl/rendering/draw_histogram.cpp
+
+    AxoPlotl/rendering/create_static_render_data.cpp
+    AxoPlotl/rendering/redraw.cpp
+    AxoPlotl/gui/widgets/draw_histogram.cpp
     AxoPlotl/rendering/ColorMap.cpp
     AxoPlotl/properties/property_calculations.cpp
     AxoPlotl/properties/Histogram.cpp
     AxoPlotl/gui/themes.cpp
-    AxoPlotl/rendering/MeshVertexRenderer.cpp
-    AxoPlotl/rendering/MeshEdgeRenderer.cpp
-    AxoPlotl/rendering/MeshFaceRenderer.cpp
-    AxoPlotl/rendering/MeshCellRenderer.cpp
-    AxoPlotl/rendering/Vector3Renderer.cpp
-    AxoPlotl/rendering/Matrix3x3Renderer.cpp
-    AxoPlotl/rendering/SphericalHarmonicsRenderer.cpp
-    AxoPlotl/rendering/draw_range_sliders.cpp
-    AxoPlotl/rendering/draw_texture.cpp
+
+    AxoPlotl/rendering/renderers/MeshVertexRenderer.cpp
+    AxoPlotl/rendering/renderers/MeshEdgeRenderer.cpp
+    AxoPlotl/rendering/renderers/MeshFaceRenderer.cpp
+    AxoPlotl/rendering/renderers/MeshCellRenderer.cpp
+    AxoPlotl/rendering/renderers/Vector3Renderer.cpp
+    AxoPlotl/rendering/renderers/Matrix3x3Renderer.cpp
+    AxoPlotl/rendering/renderers/SphericalHarmonicsRenderer.cpp
+
+    AxoPlotl/gui/widgets/draw_range_sliders.cpp
+    AxoPlotl/gui/widgets/draw_texture.cpp
     AxoPlotl/rendering/save_texture_to_file.cpp
-    AxoPlotl/properties/property_visualization_settings.cpp
+    AxoPlotl/gui/properties/property_visualization_settings.cpp
     AxoPlotl/rendering/debug/PickingTextureVis.cpp
-    AxoPlotl/gui/input_slider.cpp
+    AxoPlotl/gui/widgets/input_slider.cpp
     AxoPlotl/gui/fonts.cpp
     AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp
@@ -41,9 +50,7 @@ add_library(AxoPlotlCore
     AxoPlotl/IO/om_to_ovm.cpp
     AxoPlotl/IO/read_shader.cpp
     AxoPlotl/AxoPlotl.cpp
-    AxoPlotl/Viewport.cpp
-    AxoPlotl/picking.cpp
-    AxoPlotl/rendering/wgpu_utils/MyGpuContext.cpp
+    AxoPlotl/rendering/MyGpuContext.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

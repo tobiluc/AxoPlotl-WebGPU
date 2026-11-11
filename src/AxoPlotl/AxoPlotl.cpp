@@ -1,5 +1,5 @@
 #include <AxoPlotl/AxoPlotl.hpp>
-#include <AxoPlotl/Application.hpp>
+#include <AxoPlotl/core/Application.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
 

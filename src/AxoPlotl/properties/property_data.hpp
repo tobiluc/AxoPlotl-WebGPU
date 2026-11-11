@@ -1,9 +1,8 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
-#include <AxoPlotl/rendering/RendererBase.hpp>
+#include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
-#include <AxoPlotl/properties/property_settings.hpp>
 
 namespace AxoPlotl::internal
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include "AxoPlotl/AxoPlotl_fwd.hpp"
+#include "AxoPlotl/core/AxoPlotl_fwd.hpp"
 #include "AxoPlotl/typedefs/glm.hpp"
 #include <array>
 #include <cstring>

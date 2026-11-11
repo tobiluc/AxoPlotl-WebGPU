@@ -6,6 +6,8 @@
 namespace AxoPlotl
 {
 
+/// glm vec only goes up to 4, for Spherical Harmonics we
+/// have this little Vec class...
 template<typename T, int DIM>
 struct Vec
 {

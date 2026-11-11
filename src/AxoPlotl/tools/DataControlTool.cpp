@@ -4,7 +4,7 @@
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/gui/fonts.hpp>
-#include <AxoPlotl/Scene.hpp>
+#include <AxoPlotl/core/Scene.hpp>
 
 namespace AxoPlotl
 {

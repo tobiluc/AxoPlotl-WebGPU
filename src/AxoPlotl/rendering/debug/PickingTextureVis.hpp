@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AxoPlotl/rendering/RendererBase.hpp>
+#include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 #include <webgpu/webgpu.hpp>
 
 namespace AxoPlotl::internal
