@@ -233,7 +233,7 @@ bool InputSlider(
 
     char buffer[64];
 
-    ImFormatString(buffer, sizeof(buffer), "%.3f", *_value);
+    ImFormatString(buffer, sizeof(buffer), _opt.fmt, *_value);
 
     const ImVec2 textSize = ImGui::CalcTextSize(buffer);
 

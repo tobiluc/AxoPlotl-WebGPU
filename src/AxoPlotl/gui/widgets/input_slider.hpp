@@ -26,6 +26,7 @@ struct InputSliderOptions
     InputSliderParser parser = nullptr;
     bool display_name = true;
     float scale_width = 1.0f;
+    const char* fmt = "%.3f";
 };
 
 bool InputSlider(

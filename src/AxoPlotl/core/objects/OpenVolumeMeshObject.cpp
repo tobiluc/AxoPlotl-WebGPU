@@ -43,14 +43,40 @@ void OpenVolumeMeshObject::render_ui_settings()
     ImGui::SameLine();
     ImGui::Checkbox("C", &cell_renderer_.enabled());
 
-    ImGui::SliderFloat("Point Size", &vertex_renderer_.point_size(), 0.0f, 32.0f);
-    ImGui::SliderFloat("Line Width", &edge_renderer_.line_width(), 0.0f, 32.0f);
-    ImGui::SliderFloat("Cell Scale", &cell_renderer_.cell_scale(), 0.0f, 1.0f);
-
-    ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
-    ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
-    ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
-    ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
+    if (ImGui::BeginMenu("Vertices")) {
+        ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
+        InputSlider("Point Size", &vertex_renderer_.point_size(), InputSliderOptions{.min= 0.0f, .max=32.0f});
+        InputSlider("Rel. Depth Offset",
+                    &vertex_renderer_.relative_depth_offset(),
+                    InputSliderOptions{
+                        .step=0.00001,
+                        .min = -0.5f,
+                        .max = 0.5f,
+                        .fmt = "%.5f"});
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Edges")) {
+        ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
+        InputSlider("Line Width", &edge_renderer_.line_width(), InputSliderOptions{.min= 0.0f, .max=32.0f});
+        InputSlider("Rel. Depth Offset",
+                    &edge_renderer_.relative_depth_offset(),
+                    InputSliderOptions{
+                        .step=0.00001,
+                        .min = -0.5f,
+                        .max = 0.5f,
+                        .fmt = "%.5f"
+                    });
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Faces")) {
+        ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Cells")) {
+        ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
+        InputSlider("Cell Scale", &cell_renderer_.cell_scale(), InputSliderOptions{.min= 0.0f, .max=2.0f});
+        ImGui::EndMenu();
+    }
 
     // Clip Box
     // Each entity technically has their own, but we
