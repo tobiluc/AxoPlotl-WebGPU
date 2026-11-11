@@ -9,15 +9,15 @@ namespace AxoPlotl
 
 void SHObject::render(
     wgpu::RenderPassEncoder _render_pass,
+    const ViewSize& _view_size,
     const Mat4x4f& _view_projection)
 
 {
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
-    const auto& vp_size = scene_->app()->viewport().size();
 
-    renderer_.render(vp_size, _render_pass, mvp);
+    renderer_.render(_view_size, _render_pass, mvp);
 }
 
 void SHObject::render_ui_info()

@@ -114,6 +114,10 @@ public:
         bool zoom_to_new_object = true;
         float clear_color[3] = {1,1,1};
         bool show_axis_cross = true;
+
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Settings,
+            zoom_to_new_object,
+            clear_color, show_axis_cross);
     } settings;
 
 protected:
@@ -122,8 +126,11 @@ protected:
     wgpu::Buffer axis_position_buffer_;
     // ColoredEdgeRenderer axis_renderer_;
     Matrix3x3Renderer axis_renderer_;
-
     Camera camera_;
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Scene,
+        camera_, settings);
 };
 
 }

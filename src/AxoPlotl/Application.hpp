@@ -110,9 +110,6 @@ private:
     } debug;
 
     Picker picker_;
-    // PickResult pick_result_;
-
-    // PickResult request_pick_result(float _x, float _y);
 
     // Processed at the end of a frame and then removed
     std::vector<std::function<void()>> deferred_calls_;
@@ -120,9 +117,6 @@ private:
     GLFWwindow* window_;
     Viewport viewport_;
 
-    // wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;
-
-    // wgpu::Buffer picking_buffer_;
     wgpu::RenderPassEncoder gui_render_pass_;
     wgpu::RenderPassEncoder scene_render_pass_;
 
@@ -151,8 +145,6 @@ private:
     void render_scenes_tab_bar_ui();
 
     void render_inspector_ui();
-
-    // void configure_surface();
 
     void build_default_layout(ImGuiID dockspace_id);
 

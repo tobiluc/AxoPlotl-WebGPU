@@ -60,7 +60,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
 
     // Render Scene Objects
     for (const auto& obj : objects_) {
-        obj->render(_render_pass, view_proj);
+        obj->render(_render_pass, _view_size, view_proj);
     }
 
     // Remove deleted objects

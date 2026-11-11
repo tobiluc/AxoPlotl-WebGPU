@@ -4,6 +4,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
+#include <AxoPlotl/IO/json_glm.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -46,6 +47,14 @@ public:
     void zoom_to_box(const glm::vec3& min, const glm::vec3& max);
 
     bool render_settings_ui(GLFWwindow* _window);
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera,
+        sensitivity_, pan_speed_, near_plane_, far_plane_,
+        fov_,
+        use_ortho_,
+        orbit_target_, eye_position_,
+        orientation_
+    );
 };
 
 }

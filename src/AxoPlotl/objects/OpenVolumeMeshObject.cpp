@@ -264,27 +264,26 @@ void OpenVolumeMeshObject::delete_buffers()
 }
 
 void OpenVolumeMeshObject::render(
-    wgpu::RenderPassEncoder _render_pass,
+    wgpu::RenderPassEncoder _render_pass, const ViewSize &_view_size,
     const Mat4x4f& _view_projection)
 {
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
-    const auto& vp_size = scene_->app()->viewport().size(); // TODO - transfer size
 
-    cell_renderer_.render(vp_size, _render_pass, mvp);
-    face_renderer_.render(vp_size, _render_pass, mvp);
-    edge_renderer_.render(vp_size, _render_pass, mvp);
-    vertex_renderer_.render(vp_size, _render_pass, mvp);
+    cell_renderer_.render(_view_size, _render_pass, mvp);
+    face_renderer_.render(_view_size, _render_pass, mvp);
+    edge_renderer_.render(_view_size, _render_pass, mvp);
+    vertex_renderer_.render(_view_size, _render_pass, mvp);
 
     vector3_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3
         || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
         || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
         || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
 
-    vector3_renderer_.render(vp_size, _render_pass, mvp);
+    vector3_renderer_.render(_view_size, _render_pass, mvp);
 
-    mat3x3_renderer_.render(vp_size, _render_pass, mvp);
+    mat3x3_renderer_.render(_view_size, _render_pass, mvp);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),

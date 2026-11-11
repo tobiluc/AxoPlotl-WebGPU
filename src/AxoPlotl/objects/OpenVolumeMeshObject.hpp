@@ -69,6 +69,7 @@ public:
 
     void render(
         wgpu::RenderPassEncoder _render_pass,
+        const ViewSize& _view_size,
         const Mat4x4f& _view_projection) override;
 
     void render_ui_info() override;
