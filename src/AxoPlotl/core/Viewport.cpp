@@ -4,42 +4,34 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <AxoPlotl/core/Application.hpp>
 
 namespace AxoPlotl::internal
 {
+
+Viewport::Viewport(Application* _app) : app_(_app)
+{
+}
 
 Viewport::~Viewport()
 {
     release();
 }
 
-void Viewport::release()
+void Viewport::Resources::release()
 {
     // Release views before their parent textures.
-    if (color_view_) {
-        color_view_.release();
-    }
+    if (color_view_) {color_view_.release();}
+    if (depth_view_) {depth_view_.release();}
+    if (picking_view_) {picking_view_.release();}
+    if (color_texture_) {color_texture_.release();}
+    if (depth_texture_) {depth_texture_.release();}
+    if (picking_texture_) {picking_texture_.release();}
+}
 
-    if (depth_view_) {
-        depth_view_.release();
-    }
-
-    if (picking_view_) {
-        picking_view_.release();
-    }
-
-    if (color_texture_) {
-        color_texture_.release();
-    }
-
-    if (depth_texture_) {
-        depth_texture_.release();
-    }
-
-    if (picking_texture_) {
-        picking_texture_.release();
-    }
-
+void Viewport::release()
+{
+    resources_.release();
     width_ = 0;
     height_ = 0;
 }
@@ -81,7 +73,16 @@ void Viewport::resize(
         return;
     }
 
-    release();
+    // It is important that we do not directly release Resources
+    // here but at the end of the frame since there might
+    // still be draws of this texture e.g. Screenshot Preview.
+    if (app_) [[likely]] {
+        Resources old_resources = std::move(resources_);
+        app_->call_deferred(
+            [r = std::move(old_resources)]() mutable {
+                r.release();
+            });
+    } else {release();}
 
     width_ = width;
     height_ = height;
@@ -95,8 +96,8 @@ void Viewport::resize(
     color_desc.label = wgpu::StringView("Viewport Color");
     color_desc.dimension = wgpu::TextureDimension::_2D;
     color_desc.size = {width, height, 1};
-    this->color_format_ = _color_format;
-    color_desc.format = color_format_;
+    resources_.color_format_ = _color_format;
+    color_desc.format = resources_.color_format_;
     color_desc.mipLevelCount = 1;
     color_desc.sampleCount = 1;
 
@@ -106,11 +107,11 @@ void Viewport::resize(
         wgpu::TextureUsage::RenderAttachment |
         wgpu::TextureUsage::TextureBinding;
 
-    color_texture_ = _device.createTexture(color_desc);
+    resources_.color_texture_ = _device.createTexture(color_desc);
 
     wgpu::TextureViewDescriptor color_view_desc{};
 
-    color_view_desc.format = color_format_;
+    color_view_desc.format = resources_.color_format_;
     color_view_desc.dimension = wgpu::TextureViewDimension::_2D;
     color_view_desc.baseMipLevel = 0;
     color_view_desc.mipLevelCount = 1;
@@ -118,7 +119,7 @@ void Viewport::resize(
     color_view_desc.arrayLayerCount = 1;
     color_view_desc.aspect = wgpu::TextureAspect::All;
 
-    color_view_ = color_texture_.createView(color_view_desc);
+    resources_.color_view_ = resources_.color_texture_.createView(color_view_desc);
 
     //----------------------------------
     // Depth texture
@@ -134,7 +135,7 @@ void Viewport::resize(
     depth_desc.sampleCount = 1;
     depth_desc.usage = wgpu::TextureUsage::RenderAttachment;
 
-    depth_texture_ = _device.createTexture(depth_desc);
+    resources_.depth_texture_ = _device.createTexture(depth_desc);
 
     wgpu::TextureViewDescriptor depth_view_desc{};
 
@@ -146,7 +147,7 @@ void Viewport::resize(
     depth_view_desc.arrayLayerCount = 1;
     depth_view_desc.aspect = wgpu::TextureAspect::DepthOnly;
 
-    depth_view_ = depth_texture_.createView(depth_view_desc);
+    resources_.depth_view_ = resources_.depth_texture_.createView(depth_view_desc);
 
     // ----------------------------------
     // Picking texture
@@ -168,8 +169,8 @@ void Viewport::resize(
         wgpu::TextureUsage::CopySrc |
         wgpu::TextureUsage::TextureBinding;
 
-    picking_texture_ = _device.createTexture(picking_desc);
-    picking_view_ = picking_texture_.createView();
+    resources_.picking_texture_ = _device.createTexture(picking_desc);
+    resources_.picking_view_ = resources_.picking_texture_.createView();
 }
 
 bool Viewport::render_ui(
@@ -207,7 +208,7 @@ bool Viewport::render_ui(
 
     // Dawn C++ handle -> raw WebGPU handle.
     const WGPUTextureView raw_view =
-        static_cast<WGPUTextureView>(color_view_);
+        static_cast<WGPUTextureView>(resources_.color_view_);
 
     const ImTextureID texture_id =
         (ImTextureID)(intptr_t)raw_view;

@@ -4,8 +4,8 @@
 namespace AxoPlotl::internal
 {
 
-void draw_texture(wgpu::TextureView& _view, float _width, float _height)
-{    
+void draw_texture(const wgpu::TextureView &_view, float _width, float _height)
+{
     if (!_view) {return;}
     ImVec2 size = {_width, _height};
     if (_width <= 0.0f || _height <= 0.0f) {

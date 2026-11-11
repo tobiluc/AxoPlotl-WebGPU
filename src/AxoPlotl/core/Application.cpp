@@ -1,3 +1,4 @@
+#include "AxoPlotl/gui/widgets/draw_texture.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "Application.hpp"
@@ -68,7 +69,8 @@ void Application::Time::update()
 }
 
 Application::Application() :
-    current_scene_index_(0)
+    current_scene_index_(0),
+    viewport_(this)
 {
     scenes_.emplace_back();
 }
@@ -258,7 +260,6 @@ void Application::frame_tick()
     for (auto& fn : deferred_calls_) {
         fn();
     }
-
     deferred_calls_.clear();
 }
 
@@ -471,20 +472,8 @@ void Application::render_main_menu_bar_ui()
                 scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
             }
 
-            if (ImGui::BeginMenu("Screenshot")) {
-                InputSlider2("SaveScreenshot",
-                             &debug.screenshot_width_,
-                             InputSliderOptions{
-                                .step=1,.min=1,.max=4000,
-                                .display_name=false});
-                ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
-                if (ImGui::Button("Save")) {
-                    save_viewport_screenshot(
-                        debug.screenshot_filename_,
-                        ViewSize{.width=debug.screenshot_width_,
-                                 .height=debug.screenshot_height_});
-                }
-                ImGui::EndMenu();
+            if (ImGui::MenuItem("Screenshot")) {
+                debug.show_screenshot_window_ = true;
             }
 
             ImGui::EndMenu(); // !Debug
@@ -500,6 +489,38 @@ void Application::render_main_menu_bar_ui()
             scene().add_mesh(filepath);
         }
         ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Screenshot Popup
+    if (debug.show_screenshot_window_) {
+        ImGui::SetNextWindowSize(
+            ImVec2(480, 320),
+            ImGuiCond_FirstUseEver
+            );
+        if (ImGui::Begin(
+                "Screenshot",
+                &debug.show_screenshot_window_))
+        {
+            InputSlider2("Size",
+                         &debug.screenshot_size_.width,
+                         InputSliderOptions{
+                            .step=1,.min=1,.max=4000,
+                            .display_name=true});
+
+            const float preview_width = ImGui::GetItemRectSize().x;
+            const float preview_height = preview_width / debug.screenshot_size_.aspect_ratio();
+
+            draw_texture(viewport().color_view(), preview_width, preview_height);
+
+            ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
+
+            if (ImGui::Button("Save")) {
+                save_viewport_screenshot(
+                    debug.screenshot_filename_,
+                    debug.screenshot_size_);
+            }
+        }
+        ImGui::End(); //!Screenshot
     }
 
     ImGui::End(); //!MenuBar
@@ -727,7 +748,7 @@ bool Application::save_viewport_screenshot(
     const ViewSize _size)
 {
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
-    Viewport newViewport;
+    Viewport newViewport(this);
     newViewport.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
     render_scene(encoder, newViewport);
     wgpu::CommandBuffer cb = encoder.finish();

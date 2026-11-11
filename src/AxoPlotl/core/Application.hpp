@@ -104,8 +104,8 @@ private:
         DebugVis_PickingTextureRenderer picking_renderer_;
         bool display_picking_texture = false;
         std::string screenshot_filename_ = "AxoPlotl_Screenshot.png";
-        float screenshot_width_ = 512;
-        float screenshot_height_ = 512;
+        ViewSize screenshot_size_ = {512, 512};
+        bool show_screenshot_window_ = false;
     } debug;
 
     Picker picker_;

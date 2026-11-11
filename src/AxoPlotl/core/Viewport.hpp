@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "AxoPlotl/gui/widgets/draw_texture.hpp"
-#include "AxoPlotl/rendering/MyGpuContext.hpp"
-#include <filesystem>
+#include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include <webgpu/webgpu.hpp>
 #include <imgui.h>
 #include <cstdint>
@@ -15,7 +13,7 @@ namespace AxoPlotl::internal
 class Viewport
 {
 public:
-    Viewport() = default;
+    Viewport(Application* _app);
     ~Viewport();
 
     Viewport(const Viewport&) = delete;
@@ -32,14 +30,14 @@ public:
 
     void release();
 
-    const wgpu::TextureView& color_view() const { return color_view_; }
-    const wgpu::TextureView& depth_view() const { return depth_view_; }
-    const wgpu::TextureView& picking_view() const { return picking_view_; }
+    const wgpu::TextureView& color_view() const { return resources_.color_view_; }
+    const wgpu::TextureView& depth_view() const { return resources_.depth_view_; }
+    const wgpu::TextureView& picking_view() const { return resources_.picking_view_; }
 
-    const wgpu::Texture& picking_texture() const { return picking_texture_; }
-    const wgpu::Texture& color_texture() const {return color_texture_;}
+    const wgpu::Texture& picking_texture() const { return resources_.picking_texture_; }
+    const wgpu::Texture& color_texture() const {return resources_.color_texture_;}
 
-    const wgpu::TextureFormat& color_format() const {return color_format_;}
+    const wgpu::TextureFormat& color_format() const {return resources_.color_format_;}
 
     uint32_t width() const { return width_; }
     uint32_t height() const { return height_; }
@@ -52,7 +50,7 @@ public:
 
     bool valid() const {
         return width_ > 0 && height_ > 0 &&
-               color_view_ && depth_view_ && picking_view_;
+               resources_.color_view_ && resources_.depth_view_ && resources_.picking_view_;
     }
 
     bool visible() const { return visible_; }
@@ -71,15 +69,23 @@ public:
     ImVec2 image_size() const { return image_size_; }
 
 private:
-    wgpu::Texture color_texture_;
-    wgpu::TextureView color_view_;
-    wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
+    Application* app_;
 
-    wgpu::Texture depth_texture_;
-    wgpu::TextureView depth_view_;
+    struct Resources
+    {
+        wgpu::Texture color_texture_;
+        wgpu::TextureView color_view_;
+        wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
 
-    wgpu::Texture picking_texture_;
-    wgpu::TextureView picking_view_;
+        wgpu::Texture depth_texture_;
+        wgpu::TextureView depth_view_;
+
+        wgpu::Texture picking_texture_;
+        wgpu::TextureView picking_view_;
+
+        void release();
+
+    } resources_;
 
     uint32_t width_ = 0;
     uint32_t height_ = 0;
