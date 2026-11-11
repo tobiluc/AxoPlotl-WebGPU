@@ -6,10 +6,11 @@
 namespace AxoPlotl
 {
 
-bool extract_texture_data(std::vector<uint8_t>& _data,
+bool extract_texture_data(std::vector<uint8_t>& _image_data,
                             wgpu::Device _device, wgpu::Texture _texture,
                             uint32_t _width, uint32_t _height)
 {
+    // std::cerr << _texture.getFormat() << std::endl;
     const uint32_t bytes_per_pixel = 4;
     const uint32_t unpadded_bytes_per_row = _width * bytes_per_pixel;
     const uint32_t padded_bytes_per_row = (unpadded_bytes_per_row + 255) & ~255;
@@ -99,11 +100,25 @@ bool extract_texture_data(std::vector<uint8_t>& _data,
     }
 
     // Copy into CPU-owned memory before unmapping.
-    _data.resize(buffer_size);
-    std::memcpy(_data.data(), mapped_data, buffer_size);
+    std::vector<uint8_t> data(buffer_size);
+    std::memcpy(data.data(), mapped_data, buffer_size);
 
     // Release the mapping.
     buffer.unmap();
+
+    // Remove Padding
+    _image_data.resize(_width * _height * 4);
+    for (uint32_t y = 0; y < _height; ++y) {
+        const uint8_t* src = data.data() + y * padded_bytes_per_row;
+        uint8_t* dst = _image_data.data() + y * _width * 4;
+
+        std::memcpy(dst, src, _width * 4);
+
+        // Convert BGRA to RGBA
+        for (uint32_t x = 0; x < _width; ++x) {
+            std::swap(dst[x * 4], dst[x * 4 + 2]);
+        }
+    }
     return true;
 }
 
