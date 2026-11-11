@@ -15,7 +15,8 @@ void ColoredFaceRenderer::init(
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
     wgpu::Buffer _position_buffer,
-    const std::vector<std::vector<uint32_t>>& _faces)
+    const std::vector<std::vector<uint32_t>>& _faces,
+    const std::vector<glm::vec4> &_face_normals)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
@@ -25,7 +26,7 @@ void ColoredFaceRenderer::init(
     n_faces_ = _faces.size();
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     position_buffer_ = _position_buffer;
-    create_buffers(_faces);
+    create_buffers(_faces, _face_normals);
     create_bind_group_layout();
     create_bind_group();
     create_pipeline(_gpu_context, _render_context);
@@ -38,10 +39,11 @@ void ColoredFaceRenderer::clear()
     destroy_buffer(property_buffer_);
     destroy_buffer(face_index_buffer_);
     destroy_buffer(uniform_buffer_);
+    destroy_buffer(normal_buffer_);
     initialized_ = false;
 }
 
-void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
+void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces, const std::vector<glm::vec4> &_face_normals)
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
@@ -97,13 +99,31 @@ void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>
 
         uniform_buffer_ = device.createBuffer(desc);
     }
+
+    // Normal Buffer
+    {
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(glm::vec4) * std::max(n_faces_,1lu);
+        desc.mappedAtCreation = false;
+        desc.label = wgpu::StringView("Mesh Face Normal Buffer");
+
+        normal_buffer_ = device.createBuffer(desc);
+
+        pipeline_state_.device_.getQueue().writeBuffer(
+            normal_buffer_,
+            0,
+            _face_normals.data(),
+            sizeof(glm::vec4) * _face_normals.size()
+            );
+    }
 }
 
 void ColoredFaceRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
-    wgpu::BindGroupLayoutEntry entries[5]{};
+    wgpu::BindGroupLayoutEntry entries[6]{};
 
     // 0 - Uniform
     entries[0].binding = 0;
@@ -134,8 +154,14 @@ void ColoredFaceRenderer::create_bind_group_layout()
     entries[4].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
     entries[4].buffer.minBindingSize = sizeof(Property::Data);
 
+    // 5 - Normals
+    entries[5].binding = 5;
+    entries[5].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
+    entries[5].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[5].buffer.minBindingSize = sizeof(glm::vec4);
+
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
-    layoutDesc.entryCount = 5;
+    layoutDesc.entryCount = 6;
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Face Bind Group Layout");
 
@@ -144,7 +170,7 @@ void ColoredFaceRenderer::create_bind_group_layout()
 
 void ColoredFaceRenderer::create_bind_group()
 {
-    wgpu::BindGroupEntry groupEntries[5]{};
+    wgpu::BindGroupEntry groupEntries[6]{};
 
     // 0 - Uniform
     groupEntries[0].binding = 0;
@@ -172,9 +198,15 @@ void ColoredFaceRenderer::create_bind_group()
     groupEntries[4].offset = 0;
     groupEntries[4].size = sizeof(Property::Data) * std::max(n_faces_,1lu);
 
+    // 5 - Normals
+    groupEntries[5].binding = 5;
+    groupEntries[5].buffer = normal_buffer_;
+    groupEntries[5].offset = 0;
+    groupEntries[5].size = sizeof(glm::vec4) * std::max(n_faces_,1lu);
+
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
-    bgDesc.entryCount = 5;
+    bgDesc.entryCount = 6;
     bgDesc.entries = groupEntries;
 
     bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);

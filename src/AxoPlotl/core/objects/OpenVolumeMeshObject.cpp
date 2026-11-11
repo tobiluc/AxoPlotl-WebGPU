@@ -237,7 +237,7 @@ void OpenVolumeMeshObject::init_buffers()
 
     vertex_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.vertices_);
     edge_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.edges_);
-    face_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.faces_);
+    face_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.faces_, data.faces_normals_);
     cell_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.cells_, cells_center_buffer_);
 
     // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);

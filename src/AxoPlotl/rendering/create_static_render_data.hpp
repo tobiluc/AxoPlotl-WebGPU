@@ -16,6 +16,7 @@ struct StaticRenderData
     std::vector<RendererBase::Position> edges_barycenters_;
     std::vector<RendererBase::Position> faces_barycenters_;
     std::vector<RendererBase::Position> cells_barycenters_;
+    std::vector<glm::vec4> faces_normals_;
 };
 
 StaticRenderData create_static_render_data(const OVMVolumeMesh& _mesh);

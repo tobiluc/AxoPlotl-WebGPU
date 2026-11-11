@@ -61,7 +61,8 @@ public:
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
               wgpu::Buffer _position_buffer,
-              const std::vector<std::vector<uint32_t>>& _faces);
+              const std::vector<std::vector<uint32_t>>& _faces,
+              const std::vector<glm::vec4>& _face_normals);
 
     void update_property_data(const std::vector<Property::Data>& _data);
 
@@ -80,7 +81,9 @@ private:
     size_t n_faces_ = 0;
     size_t n_indices_ = 0;
 
-    void create_buffers(const std::vector<std::vector<uint32_t>>& _faces);
+    void create_buffers(
+        const std::vector<std::vector<uint32_t>>& _faces,
+        const std::vector<glm::vec4> &_face_normals);
 
     void create_bind_group_layout();
 
@@ -93,6 +96,7 @@ private:
     wgpu::Buffer property_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
+    wgpu::Buffer normal_buffer_;
 
     static PipelineState pipeline_state_;
     wgpu::BindGroup bind_group_;

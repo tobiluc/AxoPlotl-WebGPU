@@ -11,6 +11,7 @@ AxoPlotl::internal::StaticRenderData AxoPlotl::internal::create_static_render_da
     data.faces_barycenters_.reserve(_mesh.n_faces());
     data.cells_.reserve(_mesh.n_cells());
     data.cells_barycenters_.reserve(_mesh.n_cells());
+    data.faces_normals_.reserve(_mesh.n_faces());
 
     for (auto v_it = _mesh.v_iter(); v_it.is_valid(); ++v_it) {
         const auto& p = _mesh.vertex(*v_it);
@@ -36,6 +37,8 @@ AxoPlotl::internal::StaticRenderData AxoPlotl::internal::create_static_render_da
         }
         bary /= bary_count;
         data.faces_barycenters_.emplace_back(bary[0],bary[1],bary[2],1);
+        const auto& n = _mesh.normal(fh.halfface_handle(0));
+        data.faces_normals_.emplace_back(n[0],n[1],n[2],1);
     }
     for (auto ch : _mesh.cells()) {
         data.cells_.emplace_back();
