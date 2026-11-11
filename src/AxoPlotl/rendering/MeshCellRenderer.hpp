@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -61,7 +62,9 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, internal::Application* _app,
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
       wgpu::Buffer _vertices_position_buffer,
       const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
         wgpu::Buffer _cells_center_buffer);
@@ -90,11 +93,11 @@ private:
 
     void create_bind_group_layout();
 
-    void create_bind_group();
+    void create_bind_group(const GpuContext& _gpu_context);
 
-    void create_triangle_pipeline();
+    void create_triangle_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context);
 
-    void create_line_pipeline();
+    void create_line_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context);
 
     wgpu::Buffer triangle_index_buffer_;
     wgpu::Buffer line_index_buffer_;

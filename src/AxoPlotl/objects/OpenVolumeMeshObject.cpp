@@ -224,16 +224,19 @@ void OpenVolumeMeshObject::init_buffers()
 {
     const auto& data = create_static_render_data(mesh_);
     n_positions_ = data.positions_.size();
+    const auto& gpu_context = scene()->app()->gpu_context();
+    const auto& render_context = scene()->app()->render_context();
+    const wgpu::Device& device = gpu_context.device;
 
-    vertices_position_buffer_ = create_position_buffer(scene_->app()->device_, data.positions_);
-    edges_center_buffer_ = create_position_buffer(scene_->app()->device_, data.edges_barycenters_);
-    faces_center_buffer_ = create_position_buffer(scene_->app()->device_, data.faces_barycenters_);
-    cells_center_buffer_ = create_position_buffer(scene_->app()->device_, data.cells_barycenters_);
+    vertices_position_buffer_ = create_position_buffer(device, data.positions_);
+    edges_center_buffer_ = create_position_buffer(device, data.edges_barycenters_);
+    faces_center_buffer_ = create_position_buffer(device, data.faces_barycenters_);
+    cells_center_buffer_ = create_position_buffer(device, data.cells_barycenters_);
 
-    vertex_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.vertices_);
-    edge_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.edges_);
-    face_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.faces_);
-    cell_renderer_.init(id(), scene_->app(), vertices_position_buffer_, data.cells_, cells_center_buffer_);
+    vertex_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.vertices_);
+    edge_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.edges_);
+    face_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.faces_);
+    cell_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.cells_, cells_center_buffer_);
 
     // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
     // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
@@ -289,9 +292,9 @@ void OpenVolumeMeshObject::render(
     //     mvp);
 }
 
-void OpenVolumeMeshObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig &_cfg)
+void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
 {
-    if (_p.object_id_ != id()) [[unlikely]] {return;} // error
+    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;} // error
 
     auto squared_distance = [](const Vec3f _p0, const OVM::Vec3f& _p1) -> float {
         float dx = _p0[0] - _p1[0];
@@ -306,7 +309,7 @@ void OpenVolumeMeshObject::render_ui_picking(internal::PickResult _p, const inte
         {
             auto show_item = [&]<typename T>() {
                 auto prop = mesh_.get_property<T,EntityTag>((*pp)->name()).value();
-                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.entity_index_)];
+                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.pixel().entity_index_)];
                 ImGui::Text("%s: %s",
                     (*pp)->name().c_str(),
                     value_to_string(val).c_str()
@@ -362,23 +365,26 @@ void OpenVolumeMeshObject::render_ui_picking(internal::PickResult _p, const inte
     }
 
     ImGui::Text("Position = (%f, %f, %f)",
-        _p.position_[0], _p.position_[1], _p.position_[2]);
-    switch (_p.entity_type_)
+        _p.pixel().position_[0],
+        _p.pixel().position_[1],
+        _p.pixel().position_[2]);
+
+    switch (_p.pixel().entity_type_)
     {
     case 0:
-        ImGui::Text("Vertex(%u)", _p.entity_index_);
+        ImGui::Text("Vertex(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Vertex>();
         break;
     case 1:
-        ImGui::Text("Edge(%u)", _p.entity_index_);
+        ImGui::Text("Edge(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Edge>();
         break;
     case 2:
-        ImGui::Text("Face(%u)", _p.entity_index_);
+        ImGui::Text("Face(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Face>();
         break;
     case 3:
-        ImGui::Text("Cell(%u)", _p.entity_index_);
+        ImGui::Text("Cell(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Cell>();
         break;
     default: break;
@@ -388,8 +394,8 @@ void OpenVolumeMeshObject::render_ui_picking(internal::PickResult _p, const inte
     if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
         const float s = std::max<float>(bbox_.diagonal()*0.01f, 0.01f);
         BoundingBox bbox;
-        bbox.expand_with_point(_p.position_-Vec3f(s,s,s));
-        bbox.expand_with_point(_p.position_+Vec3f(s,s,s));
+        bbox.expand_with_point(_p.pixel().position_-Vec3f(s,s,s));
+        bbox.expand_with_point(_p.pixel().position_+Vec3f(s,s,s));
         scene_->zoom_to_box(bbox);
     }
 }
@@ -416,12 +422,18 @@ bool OpenVolumeMeshObject::visualize_property(
         // a single vector renderer for all entities.
         if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
-                vector3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+                vector3_renderer_.init(id(),
+                                       scene_->app()->gpu_context(),
+                                       scene()->app()->render_context(),
+                                       entity_center_buffer<EntityTag>());
             }
         }
         if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
-                mat3x3_renderer_.init(id(), scene_->app(), entity_center_buffer<EntityTag>());
+                mat3x3_renderer_.init(id(),
+                                      scene_->app()->gpu_context(),
+                                      scene()->app()->render_context(),
+                                      entity_center_buffer<EntityTag>());
             }
         }
 

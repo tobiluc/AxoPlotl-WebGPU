@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -52,7 +53,10 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, internal::Application *_app, wgpu::Buffer _position_buffer);
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
+              wgpu::Buffer _position_buffer);
 
     void update_matrix_data(const std::vector<glm::mat3x4> &_data);
 
@@ -81,7 +85,8 @@ private:
 
     void create_bind_group();
 
-    void create_pipeline();
+    void create_pipeline(const GpuContext& _gpu_context,
+                         const RenderContext& _render_context);
 
     wgpu::Buffer matrix_buffer_;
     wgpu::Buffer position_buffer_;

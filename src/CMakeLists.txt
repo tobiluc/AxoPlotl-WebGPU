@@ -42,6 +42,8 @@ add_library(AxoPlotlCore
     AxoPlotl/IO/read_shader.cpp
     AxoPlotl/AxoPlotl.cpp
     AxoPlotl/Viewport.cpp
+    AxoPlotl/picking.cpp
+    AxoPlotl/rendering/wgpu_utils/MyGpuContext.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

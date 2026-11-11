@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -42,7 +43,10 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, internal::Application* _app, wgpu::Buffer _position_buffer);
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
+              wgpu::Buffer _position_buffer);
 
     void update_vector_data(const std::vector<Vec4f>& _data);
 
@@ -50,10 +54,6 @@ public:
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
-
-    inline bool is_initialized() const {
-        return initialized_;
-    }
 
     void configure_like(const Vector3Renderer& _r) {
         uniforms_ = _r.uniforms_;
@@ -63,7 +63,6 @@ public:
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;
-    bool initialized_ = false;
 
     void create_buffers();
 
@@ -71,7 +70,8 @@ private:
 
     void create_bind_group();
 
-    void create_pipeline();
+    void create_pipeline(const GpuContext& _gpu_context,
+                         const RenderContext& _render_context);
 
     wgpu::Buffer vector_buffer_;
     wgpu::Buffer position_buffer_;

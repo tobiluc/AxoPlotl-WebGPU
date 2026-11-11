@@ -2,6 +2,7 @@
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 #include "AxoPlotl/rendering/ColorMap.hpp"
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -69,7 +70,9 @@ public:
         uint32_t eh_; // points to EdgePropertyData
     };
 
-    void init(uint32_t _object_id, internal::Application* _app,
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
               wgpu::Buffer _position_buffer,
               const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
 
@@ -96,7 +99,8 @@ private:
 
     void create_bind_group();
 
-    void create_pipeline();
+    void create_pipeline(const GpuContext& _gpu_context,
+                         const RenderContext& _render_context);
 
     wgpu::Buffer edge_index_buffer_;
     wgpu::Buffer property_buffer_;

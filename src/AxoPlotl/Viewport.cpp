@@ -69,11 +69,10 @@ std::optional<glm::vec2> Viewport::mouse_to_local() const
 }
 
 void Viewport::resize(
-    wgpu::Device& device,
+    wgpu::Device _device,
+    wgpu::TextureFormat _color_format,
     uint32_t width,
-    uint32_t height,
-    wgpu::TextureFormat color_format,
-    wgpu::TextureFormat depth_format)
+    uint32_t height)
 {
     width = std::max(width, 1u);
     height = std::max(height, 1u);
@@ -96,7 +95,8 @@ void Viewport::resize(
     color_desc.label = wgpu::StringView("Viewport Color");
     color_desc.dimension = wgpu::TextureDimension::_2D;
     color_desc.size = {width, height, 1};
-    color_desc.format = color_format;
+    this->color_format_ = _color_format;
+    color_desc.format = color_format_;
     color_desc.mipLevelCount = 1;
     color_desc.sampleCount = 1;
 
@@ -106,11 +106,11 @@ void Viewport::resize(
         wgpu::TextureUsage::RenderAttachment |
         wgpu::TextureUsage::TextureBinding;
 
-    color_texture_ = device.createTexture(color_desc);
+    color_texture_ = _device.createTexture(color_desc);
 
     wgpu::TextureViewDescriptor color_view_desc{};
 
-    color_view_desc.format = color_format;
+    color_view_desc.format = color_format_;
     color_view_desc.dimension = wgpu::TextureViewDimension::_2D;
     color_view_desc.baseMipLevel = 0;
     color_view_desc.mipLevelCount = 1;
@@ -129,16 +129,16 @@ void Viewport::resize(
     depth_desc.label = wgpu::StringView("Viewport Depth");
     depth_desc.dimension = wgpu::TextureDimension::_2D;
     depth_desc.size = {width, height, 1};
-    depth_desc.format = depth_format;
+    depth_desc.format = RenderContext::depth_format;
     depth_desc.mipLevelCount = 1;
     depth_desc.sampleCount = 1;
     depth_desc.usage = wgpu::TextureUsage::RenderAttachment;
 
-    depth_texture_ = device.createTexture(depth_desc);
+    depth_texture_ = _device.createTexture(depth_desc);
 
     wgpu::TextureViewDescriptor depth_view_desc{};
 
-    depth_view_desc.format = depth_format;
+    depth_view_desc.format = RenderContext::depth_format;
     depth_view_desc.dimension = wgpu::TextureViewDimension::_2D;
     depth_view_desc.baseMipLevel = 0;
     depth_view_desc.mipLevelCount = 1;
@@ -157,7 +157,7 @@ void Viewport::resize(
     picking_desc.label = wgpu::StringView("Viewport Picking");
     picking_desc.dimension = wgpu::TextureDimension::_2D;
     picking_desc.size = {width, height, 1};
-    picking_desc.format = wgpu::TextureFormat::RGBA32Uint;
+    picking_desc.format = RenderContext::picking_format;
     picking_desc.mipLevelCount = 1;
     picking_desc.sampleCount = 1;
 
@@ -168,14 +168,12 @@ void Viewport::resize(
         wgpu::TextureUsage::CopySrc |
         wgpu::TextureUsage::TextureBinding;
 
-    picking_texture_ = device.createTexture(picking_desc);
+    picking_texture_ = _device.createTexture(picking_desc);
     picking_view_ = picking_texture_.createView();
 }
 
 bool Viewport::render_ui(
-    wgpu::Device& device,
-    wgpu::TextureFormat color_format,
-    wgpu::TextureFormat depth_format)
+    wgpu::Device _device, wgpu::TextureFormat _color_format)
 {
     visible_ = false;
     hovered_ = false;
@@ -205,7 +203,7 @@ bool Viewport::render_ui(
         std::round(available.y * io.DisplayFramebufferScale.y));
 
     // Resize before displaying the texture.
-    resize(device, width, height, color_format, depth_format);
+    resize(_device, _color_format, width, height);
 
     // Dawn C++ handle -> raw WebGPU handle.
     const WGPUTextureView raw_view =

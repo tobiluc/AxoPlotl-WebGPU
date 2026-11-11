@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -59,7 +60,9 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, internal::Application* _app,
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
               wgpu::Buffer _position_buffer,
               const std::vector<uint32_t>& _indices);
 
@@ -86,7 +89,8 @@ private:
 
     void create_bind_group();
 
-    void create_pipeline();
+    void create_pipeline(const GpuContext& _gpu_context,
+                         const RenderContext& _render_context);
 
     wgpu::Buffer vertex_index_buffer_;
     wgpu::Buffer property_buffer_;

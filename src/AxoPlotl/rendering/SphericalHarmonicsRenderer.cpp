@@ -9,25 +9,26 @@ PipelineState SHRenderer::pipeline_state_;
 
 void SHRenderer::init(
     uint32_t _object_id,
-    internal::Application* _app,
+    const GpuContext &_gpu_context, const RenderContext &_render_context,
     size_t _resolution)
 {
     resolution_ = _resolution;
-    pipeline_state_.set_device(_app->device_);
+    pipeline_state_.set_device(_gpu_context.device);
 
-    color_map_.create(_app->device_);
+    color_map_.create(_gpu_context.device);
     color_map_.set_coolwarm();
 
     object_id_ = _object_id;
-    app_ = _app;
     create_buffers();
     create_bind_group_layout();
     create_bind_group();
-    create_pipeline();
+    create_pipeline(_gpu_context, _render_context);
 
     update([](const Vec3f& _pos) -> float32_t {
         return std::pow(_pos.x, 4) + std::pow(_pos.y, 4) + std::pow(_pos.z, 4);
     });
+
+    initialized_ = true;
 }
 
 void SHRenderer::clear()
@@ -35,11 +36,12 @@ void SHRenderer::clear()
     destroy_buffer(vertex_buffer_);
     destroy_buffer(index_buffer_);
     destroy_buffer(uniform_buffer_);
+    initialized_ = false;
 }
 
 void SHRenderer::create_buffers()
 {
-    wgpu::Device device = app_->device_;
+    wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
     // Create the Mesh Data based on resolution_
@@ -156,7 +158,7 @@ void SHRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("SH Bind Group Layout");
 
-    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
 void SHRenderer::create_bind_group()
@@ -182,15 +184,16 @@ void SHRenderer::create_bind_group()
     bgDesc.entryCount = 3;
     bgDesc.entries = groupEntries;
 
-    bind_group_ = app_->device_.createBindGroup(bgDesc);
+    bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void SHRenderer::create_pipeline()
+void SHRenderer::create_pipeline(const GpuContext& _gpu_context,
+                                 const RenderContext& _render_context)
 {
     if (pipeline_state_.pipeline_) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
-        app_->device_,
+        _gpu_context.device,
         "spherical_harmonics_shader.wgsl",
         "SH Shader");
 
@@ -222,11 +225,9 @@ void SHRenderer::create_pipeline()
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-    wgpu::SurfaceCapabilities surf_caps;
-    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
 
     // color
-    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].format = _render_context.surface_format;
     color_targets[0].writeMask = wgpu::ColorWriteMask::All;
 
     // picking
@@ -256,7 +257,7 @@ void SHRenderer::create_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = _gpu_context.device.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -269,7 +270,7 @@ void SHRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = wgpu::StringView("SH Triangle Pipeline");
 
-    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
 void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
@@ -283,7 +284,7 @@ void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
         uniforms_.value_range_.y = std::max(uniforms_.value_range_.y, vertices_[i].value_);
     }
 
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         vertex_buffer_,
         0,
         vertices_.data(),
@@ -296,12 +297,12 @@ void SHRenderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {
-    if (!enabled_) {return;}
+    if (!initialized_ || !enabled_) {return;}
 
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.object_id_ = object_id_;
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);

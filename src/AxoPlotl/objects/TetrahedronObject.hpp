@@ -42,7 +42,7 @@ public:
 
     void render_ui_properties() override;
 
-    void render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg) override;
+    void render_ui_picking(const Picker& _p) override;
 
     void init_buffers() override;
 

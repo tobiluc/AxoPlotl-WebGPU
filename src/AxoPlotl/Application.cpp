@@ -133,11 +133,11 @@ bool Application::init()
     //------------------
     wgpu::Instance instance = wgpuCreateInstance(nullptr);
 
-    surface_ = glfwGetWGPUSurface(instance, window_);
+    render_context_.surface = glfwGetWGPUSurface(instance, window_);
 
     wgpu::RequestAdapterOptions adapterOpts = {};
-    adapterOpts.compatibleSurface = surface_;
-    adapter_ = instance.requestAdapter(adapterOpts);
+    adapterOpts.compatibleSurface = render_context_.surface;
+    gpu_context_.adapter = instance.requestAdapter(adapterOpts);
 
     instance.release();
 
@@ -178,26 +178,26 @@ bool Application::init()
     deviceDesc.uncapturedErrorCallbackInfo.userdata1 = nullptr;
     deviceDesc.uncapturedErrorCallbackInfo.userdata2 = nullptr;
 
-    device_ = adapter_.requestDevice(deviceDesc);
+    gpu_context_.device = gpu_context_.adapter.requestDevice(deviceDesc);
 
     //----------
     // Surface
     //----------
-    configure_surface();
+    const auto fb_size = framebuffer_size();
+    render_context_.configure_surface(gpu_context_, fb_size.x, fb_size.y);
 
     //-------------------
     // Special Textures
     //-------------------
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
-    depth_texture_format_ = depthStencilState.format;
-    viewport_.resize(device_, framebuffer_size().x, framebuffer_size().y, surface_format_, depth_texture_format_);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, framebuffer_size().x, framebuffer_size().y);
 
-    wgpu::BufferDescriptor pickBuffDesc{};
-    pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
-    pickBuffDesc.size = sizeof(PickResult);
-    pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
-    pickBuffDesc.mappedAtCreation = false;
-    picking_buffer_ = device_.createBuffer(pickBuffDesc);
+    // wgpu::BufferDescriptor pickBuffDesc{};
+    // pickBuffDesc.label = wgpu::StringView("Pixel Picking Buffer");
+    // pickBuffDesc.size = sizeof(PickResult);
+    // pickBuffDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+    // pickBuffDesc.mappedAtCreation = false;
+    // picking_buffer_ = device_.createBuffer(pickBuffDesc);
 
     //----------
     // Gui
@@ -212,7 +212,8 @@ bool Application::init()
     for (auto& scene : scenes_) {
         scene.init(this);
     }
-    debug.picking_renderer_.init(device_, 256, 256);
+    picker_.init(gpu_context_.device);
+    debug.picking_renderer_.init(gpu_context_.device, 256, 256);
 
     return true;
 }
@@ -229,7 +230,7 @@ void Application::frame_tick()
 
     // Acquire surface texture.
     wgpu::SurfaceTexture surface_texture;
-    surface_.getCurrentTexture(&surface_texture);
+    render_context_.surface.getCurrentTexture(&surface_texture);
 
     if (surface_texture.status !=
         wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) {
@@ -241,7 +242,7 @@ void Application::frame_tick()
 
     // Create surface view.
     wgpu::TextureViewDescriptor view_desc{};
-    view_desc.format = surface_format_;
+    view_desc.format = render_context_.surface_format;
     view_desc.dimension = wgpu::TextureViewDimension::_2D;
     view_desc.baseMipLevel = 0;
     view_desc.mipLevelCount = 1;
@@ -254,7 +255,7 @@ void Application::frame_tick()
             wgpuTextureCreateView(surface_texture.texture, &view_desc));
 
     // Create command encoder.
-    auto encoder = device_.createCommandEncoder();
+    auto encoder = gpu_context_.device.createCommandEncoder();
 
     // Render scene only if viewport is visible.
     if (viewport_.visible() && viewport_.valid())
@@ -269,8 +270,8 @@ void Application::frame_tick()
         if (Mouse::RIGHT_JUST_PRESSED) {
             const auto pos = viewport().mouse_to_local();
             if (pos.has_value()) {
-                pick_result_ = request_pick_result(pos->x, pos->y);
-                if (pick_result_.object_id_ < UINT32_MAX) {
+                picker_.request_pixel(viewport(), scene().camera(), pos->x, pos->y);
+                if (picker_.pixel().object_id_ < UINT32_MAX) {
                     requests_.pick_result = true;
                 }
             }
@@ -286,10 +287,10 @@ void Application::frame_tick()
 
     // Submit.
     auto cmd_buffer = encoder.finish();
-    device_.getQueue().submit(1, &cmd_buffer);
+    gpu_context_.device.getQueue().submit(1, &cmd_buffer);
 
 #ifndef __EMSCRIPTEN__
-    surface_.present();
+    render_context_.surface.present();
 #endif
 
     // Release resources as in your original implementation.
@@ -301,7 +302,7 @@ void Application::frame_tick()
     wgpuTextureRelease(surface_texture.texture);
 #endif
 
-    wgpuPollEvents(device_, false);
+    wgpuPollEvents(gpu_context_.device, false);
 
     for (auto& fn : deferred_calls_) {
         fn();
@@ -331,11 +332,12 @@ void Application::on_window_resize(float width, float height)
 {
     if (width == 0|| height == 0) {return;} // window minimized
 
-    configure_surface();
-    viewport_.resize(device_, width, height, surface_format_, depth_texture_format_);
+    //const auto fb_size = framebuffer_size();
+    render_context_.configure_surface(gpu_context_, width, height);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, width, height);
     debug.picking_renderer_.resize(viewport_.width(), viewport_.height());
 
-    wgpuPollEvents(device_, true);
+    wgpuPollEvents(gpu_context_.device, true);
 }
 
 void Application::clear()
@@ -347,27 +349,8 @@ void Application::clear()
         scene.destroy();
     }
 
-    auto queue = device_.getQueue();
-    if (queue) {
-        queue.release();
-        queue = nullptr;
-    }
-    if (surface_) {
-        surface_.unconfigure();
-        surface_.release();
-        surface_ = nullptr;
-    }
-
+    gpu_context_.release();
     viewport_.release();
-
-    if (adapter_) {
-        adapter_.release();
-        adapter_ = nullptr;
-    }
-    if (device_) {
-        device_.release();
-        device_ = nullptr;
-    }
 
     if (window_) {
         glfwDestroyWindow(window_);
@@ -385,14 +368,13 @@ bool Application::init_imgui()
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOther(window_, true);
-    wgpu::SurfaceCapabilities surf_caps{};
-    surface_.getCapabilities(adapter_, &surf_caps);
+    wgpu::SurfaceCapabilities surf_caps = render_context_.get_surface_capabilities(gpu_context_);
 
     // new imgui init
     ImGui_ImplWGPU_InitInfo imgui_init_info{};
-    imgui_init_info.Device = device_;
+    imgui_init_info.Device = gpu_context_.device;
     imgui_init_info.NumFramesInFlight = 3;
-    imgui_init_info.RenderTargetFormat = surface_format_;
+    imgui_init_info.RenderTargetFormat = surf_caps.formats[0];
     //imgui_init_info.RenderTargetFormat = wgpu::TextureFormat::BGRA8Unorm;
     // imgui_init_info.DepthStencilFormat = depth_texture_format_;
     imgui_init_info.DepthStencilFormat = WGPUTextureFormat_Undefined;
@@ -411,21 +393,18 @@ bool Application::init_imgui()
     return true;
 }
 
-void Application::render_viewport_ui() {
-    viewport_.render_ui(
-        device_,
-        surface_format_,
-        depth_texture_format_
-        );
+void Application::render_viewport_ui()
+{
+    viewport_.render_ui(gpu_context_.device, render_context_.surface_format);
 
     // Clicking on an Object
     if (requests_.pick_result) [[unlikely]] {
         ImGui::OpenPopup("PickingPopup");
         requests_.pick_result = false;
     }
-    if (pick_result_.object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
-        auto obj = scene().get_object(pick_result_.object_id_);
-        if (obj) [[likely]] {obj->render_ui_picking(pick_result_, picking_config_);}
+    if (picker_.pixel().object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+        auto obj = scene().get_object(picker_.pixel().object_id_);
+        if (obj) [[likely]] {obj->render_ui_picking(picker_);}
         ImGui::EndPopup();
     }
 
@@ -792,172 +771,171 @@ void Application::render_scene(wgpu::CommandEncoder& encoder, Viewport& _viewpor
     pass.end();
 }
 
-PickResult Application::request_pick_result(float _x, float _y)
-{
-    wgpu::CommandEncoder encoder = device_.createCommandEncoder();
+// PickResult Application::request_pick_result(float _x, float _y)
+// {
+//     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 
-    // We copy FROM the picking texture
-    wgpu::TexelCopyTextureInfo src{};
-    src.texture = viewport_.picking_texture();// picking_texture_;
-    src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
-    src.mipLevel = 0;
-    src.aspect = wgpu::TextureAspect::All;
+//     // We copy FROM the picking texture
+//     wgpu::TexelCopyTextureInfo src{};
+//     src.texture = viewport_.picking_texture();// picking_texture_;
+//     src.origin = {static_cast<uint32_t>(_x), static_cast<uint32_t>(_y), 0};
+//     src.mipLevel = 0;
+//     src.aspect = wgpu::TextureAspect::All;
 
-    // We copy TO the picking buffer
-    wgpu::TexelCopyBufferInfo dst{};
-    dst.buffer = picking_buffer_;
-    dst.layout.offset = 0;
-    // this needs to be a multiple of 256
-    // even if we care only about a 1x1x1x1 pixel
-    dst.layout.bytesPerRow = 256;
-    dst.layout.rowsPerImage = 1;
+//     // We copy TO the picking buffer
+//     wgpu::TexelCopyBufferInfo dst{};
+//     dst.buffer = picking_buffer_;
+//     dst.layout.offset = 0;
+//     // this needs to be a multiple of 256
+//     // even if we care only about a 1x1x1x1 pixel
+//     dst.layout.bytesPerRow = 256;
+//     dst.layout.rowsPerImage = 1;
 
-    // Copy the single pixel we clicked on (1 pixel is 1x1x1)
-    wgpu::Extent3D copySize = {1,1,1};
-    encoder.copyTextureToBuffer(src, dst, copySize);
+//     // Copy the single pixel we clicked on (1 pixel is 1x1x1)
+//     wgpu::Extent3D copySize = {1,1,1};
+//     encoder.copyTextureToBuffer(src, dst, copySize);
 
-    wgpu::CommandBuffer cb = encoder.finish();
-    device_.getQueue().submit(1, &cb);
-    cb.release();
-    encoder.release();
+//     wgpu::CommandBuffer cb = encoder.finish();
+//     device_.getQueue().submit(1, &cb);
+//     cb.release();
+//     encoder.release();
 
-    struct Context {
-        bool ready;
-        wgpu::Buffer buffer;
-        PickResult pick;
-        Scene* scene;
-        ViewSize scene_size;
-    };
+//     struct Context {
+//         bool ready;
+//         wgpu::Buffer buffer;
+//         PickResult pick;
+//         Scene* scene;
+//         ViewSize scene_size;
+//     };
 
-    auto on_buffer_mapped = [](
-        WGPUMapAsyncStatus status,
-        WGPUStringView message,
-        void* _user_data, void*)
-    {
-        Context* context = reinterpret_cast<Context*>(_user_data);
-        context->ready = true;
-        //std::cout << "Buffer mapped with status " << status << std::endl;
-        if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {return;}
+//     auto on_buffer_mapped = [](
+//         WGPUMapAsyncStatus status,
+//         WGPUStringView message,
+//         void* _user_data, void*)
+//     {
+//         Context* context = reinterpret_cast<Context*>(_user_data);
+//         context->ready = true;
+//         //std::cout << "Buffer mapped with status " << status << std::endl;
+//         if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {return;}
 
-        // Extract Info from Picking Result
-        // and Map clicked position back to world space
+//         // Extract Info from Picking Result
+//         // and Map clicked position back to world space
 
-        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
+//         uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(PickResult));
 
-        // Index 0 stores the Object ID, so we know which
-        // Objects we clicked. The corresponding object's
-        // render_picking_ui function is called.
-        context->pick.object_id_ = data[0];
+//         // Index 0 stores the Object ID, so we know which
+//         // Objects we clicked. The corresponding object's
+//         // render_picking_ui function is called.
+//         context->pick.object_id_ = data[0];
 
-        // For Meshes, we store the entity type and handle index
-        // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
-        context->pick.entity_type_ = data[1];
-        context->pick.entity_index_ = data[2];
+//         // For Meshes, we store the entity type and handle index
+//         // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
+//         context->pick.entity_type_ = data[1];
+//         context->pick.entity_index_ = data[2];
 
-        // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
-        // are both stored at index 2 of the pixel
-        // TODO: Maybe we want different PickResult Objects instead?
-        context->pick.function_value_ = std::bit_cast<float32_t>(data[2]);
+//         // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
+//         // are both stored at index 2 of the pixel
+//         // TODO: Maybe we want different PickResult Objects instead?
+//         context->pick.function_value_ = std::bit_cast<float32_t>(data[2]);
 
-        // At Index 3 we store the fragment's depth value
-        // Based on this, we can reconstruct the 3d position
-        // in world space
-        // (normalized devie coords (ndc) x and y value, we already
-        // have, it's the normalized viewport position)
-        float depth = std::bit_cast<float>(data[3]);
-        context->pick.ndc_.z = depth;
-        const auto& v = context->scene->camera().get_view_matrix();
-        const auto& p = context->scene->camera().get_projection_matrix(context->scene_size);
-        Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
-        pos /= pos.w;
-        context->pick.position_[0] = pos[0];
-        context->pick.position_[1] = pos[1];
-        context->pick.position_[2] = pos[2];
+//         // At Index 3 we store the fragment's depth value
+//         // Based on this, we can reconstruct the 3d position
+//         // in world space
+//         // (normalized devie coords (ndc) x and y value, we already
+//         // have, it's the normalized viewport position)
+//         float depth = std::bit_cast<float>(data[3]);
+//         context->pick.ndc_.z = depth;
+//         const auto& v = context->scene->camera().get_view_matrix();
+//         const auto& p = context->scene->camera().get_projection_matrix(context->scene_size);
+//         Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick.ndc_, 1);
+//         pos /= pos.w;
+//         context->pick.position_[0] = pos[0];
+//         context->pick.position_[1] = pos[1];
+//         context->pick.position_[2] = pos[2];
 
-        // unmap the memory
-        context->buffer.unmap();
-    };
+//         // unmap the memory
+//         context->buffer.unmap();
+//     };
 
-    // The context contains everyhting that is required
-    // for our picking computation in on_buffer_mapped.
-    // Is it passed as userdata1
-    Context context;
-    context.ready = false;
-    context.buffer = picking_buffer_;
-    context.scene = &scene();
-    context.scene_size = viewport().size();
+//     // The context contains everyhting that is required
+//     // for our picking computation in on_buffer_mapped.
+//     // Is it passed as userdata1
+//     Context context;
+//     context.ready = false;
+//     context.buffer = picking_buffer_;
+//     context.scene = &scene();
+//     context.scene_size = viewport().size();
 
-    // Get x and y components of Normalized Device Coordinates
-    _x -= 0; // topleft of vieport is origin since docking rework
-    _y -= 0;
-    context.pick.ndc_ = {
-        std::clamp((2.0*_x)/context.scene_size.width - 1.0, -1.0, 1.0),
-        std::clamp(1.0-(2.0*_y)/context.scene_size.height, -1.0, 1.0),
-        0
-    };
+//     // Get x and y components of Normalized Device Coordinates
+//     _x -= 0; // topleft of vieport is origin since docking rework
+//     _y -= 0;
+//     context.pick.ndc_ = {
+//         std::clamp((2.0*_x)/context.scene_size.width - 1.0, -1.0, 1.0),
+//         std::clamp(1.0-(2.0*_y)/context.scene_size.height, -1.0, 1.0),
+//         0
+//     };
 
-    WGPUBufferMapCallbackInfo callback_info;
-    callback_info.callback = on_buffer_mapped;
-    callback_info.mode = WGPUCallbackMode_AllowSpontaneous;
-    callback_info.userdata1 = (void*)&context;
-    callback_info.userdata2 = nullptr;
-    callback_info.nextInChain = nullptr;
+//     WGPUBufferMapCallbackInfo callback_info;
+//     callback_info.callback = on_buffer_mapped;
+//     callback_info.mode = WGPUCallbackMode_AllowSpontaneous;
+//     callback_info.userdata1 = (void*)&context;
+//     callback_info.userdata2 = nullptr;
+//     callback_info.nextInChain = nullptr;
 
-    wgpuBufferMapAsync(
-        picking_buffer_,
-        wgpu::MapMode::Read,
-        0, sizeof(PickResult),
-        callback_info
-    );
-    while (!context.ready) {
-        wgpuPollEvents(device_, true);
-    }
+//     wgpuBufferMapAsync(
+//         picking_buffer_,
+//         wgpu::MapMode::Read,
+//         0, sizeof(PickResult),
+//         callback_info
+//     );
+//     while (!context.ready) {
+//         wgpuPollEvents(device_, true);
+//     }
 
-    return context.pick;
+//     return context.pick;
 
-}
+// }
 
-void Application::configure_surface()
-{
-    auto fb_size = framebuffer_size();
-    //std::cerr << viewport[2] << "/" << viewport[3] << std::endl;
+// void Application::configure_surface()
+// {
+//     auto fb_size = framebuffer_size();
+//     //std::cerr << viewport[2] << "/" << viewport[3] << std::endl;
 
-    // Configure the surface
-    wgpu::SurfaceConfiguration config = {};
+//     // Configure the surface
+//     wgpu::SurfaceConfiguration config = {};
 
-    // Configuration of the textures created for the underlying swap chain
-    config.width = static_cast<uint32_t>(fb_size.x);
-    config.height = static_cast<uint32_t>(fb_size.y);
-    config.usage = wgpu::TextureUsage::RenderAttachment;
-    wgpu::SurfaceCapabilities capabilities = {};
-    surface_.getCapabilities(adapter_, &capabilities);
-    config.format = capabilities.formats[0];
-    surface_format_ = config.format;
+//     // Configuration of the textures created for the underlying swap chain
+//     config.width = static_cast<uint32_t>(fb_size.x);
+//     config.height = static_cast<uint32_t>(fb_size.y);
+//     config.usage = wgpu::TextureUsage::RenderAttachment;
+//     wgpu::SurfaceCapabilities capabilities = {};
+//     gpu_context_.surface.getCapabilities(gpu_context_.adapter, &capabilities);
+//     config.format = capabilities.formats[0];
+//     gpu_context_.surface_format = config.format;
 
-    // And we do not need any particular view format:
-    config.viewFormatCount = 0;
-    config.viewFormats = nullptr;
-    config.device = device_;
-    config.presentMode = wgpu::PresentMode::Fifo;
-    config.alphaMode = capabilities.alphaModes[0];
+//     // And we do not need any particular view format:
+//     config.viewFormatCount = 0;
+//     config.viewFormats = nullptr;
+//     config.device = gpu_context_.device;
+//     config.presentMode = wgpu::PresentMode::Fifo;
+//     config.alphaMode = capabilities.alphaModes[0];
 
-    surface_.unconfigure();
-    surface_.configure(config);
-}
+//     gpu_context_.surface.unconfigure();
+//     gpu_context_.surface.configure(config);
+// }
 
 bool Application::save_viewport_screenshot(
     const std::filesystem::path& _path, const ViewSize _size)
 {
-    wgpu::CommandEncoder encoder = device_.createCommandEncoder();
+    wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
     Viewport newViewport;
-    newViewport.resize(device_, _size.width, _size.height,
-        surface_format_, depth_texture_format_);
+    newViewport.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
     render_scene(encoder, newViewport);
     wgpu::CommandBuffer cb = encoder.finish();
-    device_.getQueue().submit(1, &cb);
+    gpu_context_.device.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
-    return save_texture_to_file(_path, device_,
+    return save_texture_to_file(_path, gpu_context_.device,
         newViewport.color_texture(), _size.width, _size.height);
 }
 

@@ -102,9 +102,8 @@ public:
         trigger_redraw();
     }
 
-    Application* app() {
-        return app_;
-    }
+    Application* app() {return app_;}
+    const Application* app() const {return app_;}
 
     Camera& camera() {
         return camera_;

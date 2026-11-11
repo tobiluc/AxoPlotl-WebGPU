@@ -13,27 +13,30 @@ struct CellIndex {
     uint32_t ch_;
 };
 
-void ColoredCellRenderer::init(uint32_t _object_id, internal::Application *_app,
+void ColoredCellRenderer::init(uint32_t _object_id,
+                               const GpuContext& _gpu_context,
+                               const RenderContext &_render_context,
                                wgpu::Buffer _vertices_position_buffer,
                                const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
                                wgpu::Buffer _cells_center_buffer)
 {
-    triangle_pipeline_state_.set_device(_app->device_);
-    outline_pipeline_state_.set_device(_app->device_);
+    triangle_pipeline_state_.set_device(_gpu_context.device);
+    outline_pipeline_state_.set_device(_gpu_context.device);
 
     object_id_ = _object_id;
-    property_color_map_.create(_app->device_);
+    property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
-    app_ = _app;
     n_cells_ = _cells.size();
     n_positions_ = _vertices_position_buffer.getSize()/sizeof(Position);
     vertices_position_buffer_ = _vertices_position_buffer;
     cells_center_buffer_ = _cells_center_buffer;
     create_buffers(_cells);
     create_bind_group_layout();
-    create_bind_group();
-    create_triangle_pipeline();
-    create_line_pipeline();
+    create_bind_group(_gpu_context);
+    create_triangle_pipeline(_gpu_context, _render_context);
+    create_line_pipeline(_gpu_context, _render_context);
+
+    initialized_ = true;
 }
 
 void ColoredCellRenderer::clear()
@@ -44,12 +47,13 @@ void ColoredCellRenderer::clear()
     destroy_buffer(triangle_index_buffer_);
     destroy_buffer(line_index_buffer_);
     destroy_buffer(uniform_buffer_);
+    initialized_ = false;
 }
 
 void ColoredCellRenderer::create_buffers(
     const std::vector<std::vector<std::vector<uint32_t>>>& _cells)
 {
-    wgpu::Device device = app_->device_;
+    wgpu::Device device = triangle_pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
     // Triangulate the Faces to get the vertices
@@ -204,11 +208,11 @@ void ColoredCellRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Cell Bind Group Layout");
 
-    triangle_pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    triangle_pipeline_state_.bind_group_layout_ = outline_pipeline_state_.device_.createBindGroupLayout(layoutDesc);
     outline_pipeline_state_.bind_group_layout_ = triangle_pipeline_state_.bind_group_layout_;
 }
 
-void ColoredCellRenderer::create_bind_group()
+void ColoredCellRenderer::create_bind_group(const GpuContext &_gpu_context)
 {
     wgpu::BindGroupEntry groupEntries[6]{};
 
@@ -249,15 +253,17 @@ void ColoredCellRenderer::create_bind_group()
     bgDesc.entryCount = 6;
     bgDesc.entries = groupEntries;
 
-    bind_group_ = app_->device_.createBindGroup(bgDesc);
+    bind_group_ = _gpu_context.device.createBindGroup(bgDesc);
 }
 
-void ColoredCellRenderer::create_triangle_pipeline()
+void ColoredCellRenderer::create_triangle_pipeline(
+    const GpuContext &_gpu_context,
+    const RenderContext& _render_context)
 {
     if (triangle_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
-        app_->device_,
+        _gpu_context.device,
         "mesh_cell_shader.wgsl",
         "Cell Shader");
 
@@ -289,11 +295,9 @@ void ColoredCellRenderer::create_triangle_pipeline()
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-    wgpu::SurfaceCapabilities surf_caps;
-    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
 
     // color
-    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].format = _render_context.surface_format;
     color_targets[0].writeMask = wgpu::ColorWriteMask::All;
 
     // picking
@@ -323,7 +327,7 @@ void ColoredCellRenderer::create_triangle_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&triangle_pipeline_state_.bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = _gpu_context.device.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -336,15 +340,15 @@ void ColoredCellRenderer::create_triangle_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = wgpu::StringView("Cell Triangle Pipeline");
 
-    triangle_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    triangle_pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredCellRenderer::create_line_pipeline()
+void ColoredCellRenderer::create_line_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
 {
     if (outline_pipeline_state_.pipeline_ || n_cells_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
-        app_->device_,
+        _gpu_context.device,
         "mesh_cell_outline_shader.wgsl",
         "Cell Outline");
 
@@ -376,11 +380,9 @@ void ColoredCellRenderer::create_line_pipeline()
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-    wgpu::SurfaceCapabilities surf_caps;
-    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
 
     // color
-    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].format = _render_context.surface_format;
     color_targets[0].writeMask = wgpu::ColorWriteMask::All;
 
     // picking
@@ -410,7 +412,7 @@ void ColoredCellRenderer::create_line_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&outline_pipeline_state_.bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = _gpu_context.device.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -423,12 +425,12 @@ void ColoredCellRenderer::create_line_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = wgpu::StringView("Cell Outline Pipeline");
 
-    outline_pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    outline_pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredCellRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
-    app_->device_.getQueue().writeBuffer(
+    triangle_pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,
         _data.data(),
@@ -441,13 +443,13 @@ void ColoredCellRenderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {
-    if (!enabled_ || n_cells_==0) {return;}
+    if (!initialized_ || !enabled_ || n_cells_==0) {return;}
 
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_size.width,_size.height};
     uniforms_.object_id_ = object_id_;
-    app_->device_.getQueue().writeBuffer(
+    triangle_pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
     _render_pass.setPipeline(triangle_pipeline_state_.pipeline_);

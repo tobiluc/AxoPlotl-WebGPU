@@ -115,9 +115,9 @@ void SHObject::render_ui_properties()
     }
 }
 
-void SHObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg)
+void SHObject::render_ui_picking(const Picker& _p)
 {
-    if (_p.object_id_ != id()) [[unlikely]] {return;}
+    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;}
 
     auto polar_angle = [](const Vec3f& _pos) -> float {
         return std::acos(_pos.z/(glm::length(_pos)));
@@ -129,20 +129,20 @@ void SHObject::render_ui_picking(internal::PickResult _p, const internal::PickCo
 
     // The input position is the direction from the origin
     // (ignore deformed geometry)
-    _p.position_ = glm::normalize(_p.position_);
+    auto pos = glm::normalize(_p.pixel().position_);
 
     ImGui::SeparatorText(name_.c_str());
     ImGui::Text("(x, y, z) = (%f, %f, %f)",
-        _p.position_.x, _p.position_.y, _p.position_.z);
+        pos.x, pos.y, pos.z);
     ImGui::Text("(phi, theta) = (%f, %f)·π",
-                polar_angle(_p.position_)/M_PI,
-                azimuth_angle(_p.position_)/M_PI);
-    ImGui::Text("Value = %f", _p.function_value_);
+                polar_angle(pos)/M_PI,
+                azimuth_angle(pos)/M_PI);
+    ImGui::Text("Value = %f", _p.pixel().function_value_);
 }
 
 void SHObject::init_buffers()
 {
-    renderer_.init(id_, scene_->app(), render_resolution_);
+    renderer_.init(id_, scene_->app()->gpu_context(), scene()->app()->render_context(), render_resolution_);
 
     renderer_.update([&](const Vec3f& _pos) -> float
     {

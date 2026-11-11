@@ -41,34 +41,23 @@ public:
 
     virtual void render_ui_properties() = 0;
 
-    virtual void render_ui_picking(internal::PickResult _p,
-                                const internal::PickConfig& _cfg) = 0;
+    virtual void render_ui_picking(const Picker& _p) = 0;
 
     virtual bool export_file(const std::filesystem::path& _path) const;
 
-    inline const BoundingBox& bounding_box() const {
-        return bbox_;
-    }
+    const BoundingBox& bounding_box() const {return bbox_;}
 
-    inline bool& target() {
-        return target_;
-    }
+    bool& target() {return target_;}
 
-    inline bool& deleted() {
-        return deleted_;
-    }
+    bool& deleted() {return deleted_;}
 
-    inline std::string& name() {
-        return name_;
-    }
+    std::string& name() {return name_;}
 
-    inline const int id() const {
-        return id_;
-    }
+    const int id() const {return id_;}
 
-    inline bool& visible() {
-        return visible_;
-    }
+    bool& visible() {return visible_;}
+
+    const Scene* scene() const {return scene_;}
 
     bool input_name();
 

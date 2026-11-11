@@ -8,20 +8,21 @@ namespace AxoPlotl::internal
 
 PipelineState Vector3Renderer::pipeline_state_;
 
-void Vector3Renderer::init(uint32_t _object_id, internal::Application* _app,
+void Vector3Renderer::init(uint32_t _object_id,
+                           const GpuContext& _gpu_context,
+                           const RenderContext& _render_context,
                           wgpu::Buffer _position_buffer)
 {
-    pipeline_state_.set_device(_app->device_);
+    pipeline_state_.set_device(_gpu_context.device);
     clear();
 
     object_id_ = _object_id;
-    app_ = _app;
     position_buffer_ = _position_buffer;
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     create_buffers();
     create_bind_group_layout();
     create_bind_group();
-    create_pipeline();
+    create_pipeline(_gpu_context, _render_context);
 
     initialized_ = true;
 }
@@ -35,7 +36,7 @@ void Vector3Renderer::clear()
 
 void Vector3Renderer::create_buffers()
 {
-    wgpu::Device device = app_->device_;
+    wgpu::Device device = pipeline_state_.device_;
     // wgpu::Queue queue = device.getQueue();
 
     // Vector Buffer
@@ -90,7 +91,7 @@ void Vector3Renderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Vector Bind Group Layout");
 
-    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
 void Vector3Renderer::create_bind_group()
@@ -120,15 +121,15 @@ void Vector3Renderer::create_bind_group()
     bgDesc.entryCount = 3;
     bgDesc.entries = groupEntries;
 
-    bind_group_ = app_->device_.createBindGroup(bgDesc);
+    bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void Vector3Renderer::create_pipeline()
+void Vector3Renderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
 {
     if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
-        app_->device_,
+        _gpu_context.device,
         "vector_shader.wgsl",
         "Vector Shader");
 
@@ -143,11 +144,9 @@ void Vector3Renderer::create_pipeline()
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-    wgpu::SurfaceCapabilities surf_caps;
-    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
 
     // color
-    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].format = _render_context.surface_format;
     color_targets[0].writeMask = wgpu::ColorWriteMask::All;
 
     // picking
@@ -182,19 +181,19 @@ void Vector3Renderer::create_pipeline()
     wgpu::RenderPipelineDescriptor pipelineDesc{};
     wgpu::DepthStencilState depth = create_default_depth_state();
     pipelineDesc.depthStencil = &depth;
-    pipelineDesc.layout = app_->device_.createPipelineLayout(layoutDesc);
+    pipelineDesc.layout = _gpu_context.device.createPipelineLayout(layoutDesc);
     pipelineDesc.vertex = vertexState;
     pipelineDesc.fragment = &fragmentState;
     pipelineDesc.primitive = primitive;
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = wgpu::StringView("Vector Pipeline");
 
-    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
 void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
 {
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         vector_buffer_,
         0,
         _data.data(),
@@ -207,13 +206,13 @@ void Vector3Renderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {
-    if (!enabled_ || n_positions_==0) {return;}
+    if (!initialized_ || !enabled_ || n_positions_==0) {return;}
 
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_size.width,_size.height};
     uniforms_.object_id_ = object_id_;
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);

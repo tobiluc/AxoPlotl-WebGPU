@@ -12,23 +12,26 @@ struct FaceIndex {
 };
 
 void ColoredFaceRenderer::init(
-    uint32_t _object_id, internal::Application* _app,
+    uint32_t _object_id,
+    const GpuContext& _gpu_context,
+    const RenderContext& _render_context,
     wgpu::Buffer _position_buffer,
     const std::vector<std::vector<uint32_t>>& _faces)
 {
-    pipeline_state_.set_device(_app->device_);
+    pipeline_state_.set_device(_gpu_context.device);
 
     object_id_ = _object_id;
-    property_color_map_.create(_app->device_);
+    property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
-    app_ = _app;
     n_faces_ = _faces.size();
     n_positions_ = _position_buffer.getSize()/sizeof(Position);
     position_buffer_ = _position_buffer;
     create_buffers(_faces);
     create_bind_group_layout();
     create_bind_group();
-    create_pipeline();
+    create_pipeline(_gpu_context, _render_context);
+
+    initialized_ = true;
 }
 
 void ColoredFaceRenderer::clear()
@@ -36,11 +39,12 @@ void ColoredFaceRenderer::clear()
     destroy_buffer(property_buffer_);
     destroy_buffer(face_index_buffer_);
     destroy_buffer(uniform_buffer_);
+    initialized_ = false;
 }
 
 void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces)
 {
-    wgpu::Device device = app_->device_;
+    wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
     // Triangulate the Faces
@@ -136,7 +140,7 @@ void ColoredFaceRenderer::create_bind_group_layout()
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Face Bind Group Layout");
 
-    pipeline_state_.bind_group_layout_ = app_->device_.createBindGroupLayout(layoutDesc);
+    pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
 void ColoredFaceRenderer::create_bind_group()
@@ -174,15 +178,15 @@ void ColoredFaceRenderer::create_bind_group()
     bgDesc.entryCount = 5;
     bgDesc.entries = groupEntries;
 
-    bind_group_ = app_->device_.createBindGroup(bgDesc);
+    bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void ColoredFaceRenderer::create_pipeline()
+void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
 {
     if (pipeline_state_.pipeline_ || n_faces_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
-        app_->device_,
+        _gpu_context.device,
         "mesh_face_shader.wgsl",
         "Face Shader");
 
@@ -214,11 +218,9 @@ void ColoredFaceRenderer::create_pipeline()
     // Fragment state
     //-----------------
     wgpu::ColorTargetState color_targets[2] = {};
-    wgpu::SurfaceCapabilities surf_caps;
-    app_->surface_.getCapabilities(app_->adapter_, &surf_caps);
 
     // color
-    color_targets[0].format = surf_caps.formats[0];
+    color_targets[0].format = _render_context.surface_format;
     color_targets[0].writeMask = wgpu::ColorWriteMask::All;
 
     // picking
@@ -248,7 +250,7 @@ void ColoredFaceRenderer::create_pipeline()
     wgpu::PipelineLayoutDescriptor layoutDesc{};
     layoutDesc.bindGroupLayoutCount = 1;
     layoutDesc.bindGroupLayouts = reinterpret_cast<WGPUBindGroupLayout*>(&pipeline_state_.bind_group_layout_);
-    wgpu::PipelineLayout pipelineLayout = app_->device_.createPipelineLayout(layoutDesc);
+    wgpu::PipelineLayout pipelineLayout = _gpu_context.device.createPipelineLayout(layoutDesc);
 
     // Render pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
@@ -261,12 +263,12 @@ void ColoredFaceRenderer::create_pipeline()
     pipelineDesc.multisample = multisample;
     pipelineDesc.label = wgpu::StringView("Face Triangle Pipeline");
 
-    pipeline_state_.pipeline_ = app_->device_.createRenderPipeline(pipelineDesc);
+    pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
 void ColoredFaceRenderer::update_property_data(const std::vector<Property::Data>& _data)
 {
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,
         _data.data(),
@@ -279,13 +281,13 @@ void ColoredFaceRenderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4f& _mvp)
 {
-    if (!enabled_ || n_faces_==0) {return;}
+    if (!initialized_ || !enabled_ || n_faces_==0) {return;}
 
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_size.width,_size.height};;
     uniforms_.object_id_ = object_id_;
-    app_->device_.getQueue().writeBuffer(
+    pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);

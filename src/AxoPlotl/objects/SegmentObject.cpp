@@ -35,7 +35,7 @@ void SegmentObject::render_ui_properties()
     changed |= ImGui::InputFloat3("A", input_[0].data());
     changed |= ImGui::InputFloat3("B", input_[1].data());
     if (changed) {
-        scene_->app()->device_.getQueue().writeBuffer(
+        scene()->app()->gpu_context().queue().writeBuffer(
             vertex_position_buffer_,
             0,
             input_.data(),
@@ -44,12 +44,14 @@ void SegmentObject::render_ui_properties()
     }
 }
 
-void SegmentObject::render_ui_picking(internal::PickResult _p, const internal::PickConfig& _cfg)
+void SegmentObject::render_ui_picking(const Picker& _p)
 {
-    if (_p.object_id_ != id()) [[unlikely]] {return;}
+    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;}
     ImGui::SeparatorText(name_.c_str());
     ImGui::Text("(x, y, z) = (%f, %f, %f)",
-                _p.position_.x, _p.position_.y, _p.position_.z);
+        _p.pixel().position_.x,
+        _p.pixel().position_.y,
+        _p.pixel().position_.z);
 }
 
 void SegmentObject::init_buffers()
@@ -57,8 +59,8 @@ void SegmentObject::init_buffers()
     std::vector<ColoredCellRenderer::Position> positions = {
         {0,0,0,1}, {1,1,1,1}
     };
-    vertex_position_buffer_ = internal::create_position_buffer(scene_->app()->device_, positions);
-    renderer_.init(id_, scene_->app(), vertex_position_buffer_, {{0,1}});
+    vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
+    renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), vertex_position_buffer_, {{0,1}});
     renderer_.update_property_data({{1,1,1,1}}); // white
 }
 

@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/debug/PickingTextureVis.hpp"
 #include "AxoPlotl/rendering/draw_texture.hpp"
 #include <webgpu/webgpu.hpp>
+#include <AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp>
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -23,7 +24,7 @@ namespace AxoPlotl::internal
 class Application
 {
 private:
-    PickConfig picking_config_;
+    // PickConfig picking_config_;
     // PickingTextureRenderer picking_visualizer_;
 
     struct Time {
@@ -43,6 +44,9 @@ private:
         bool reset_layout = false;
         bool pick_result = false;
     } requests_;
+
+    GpuContext gpu_context_;
+    RenderContext render_context_;
 
     // Draw a frame and handle events
     void frame_tick();
@@ -65,15 +69,14 @@ public:
 
     GLFWwindow* window() {return window_;}
 
-    wgpu::Device device_;
-    wgpu::Adapter adapter_;
-    wgpu::Surface surface_;
-
     glm::vec<2,int> framebuffer_size() const {
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
         return {fbWidth, fbHeight};
     }
+
+    const GpuContext& gpu_context() const {return gpu_context_;}
+    const RenderContext& render_context() const {return render_context_;}
 
     const Viewport& viewport() const {return viewport_;}
     Viewport& viewport() {return viewport_;}
@@ -106,9 +109,10 @@ private:
         float screenshot_height_ = 512;
     } debug;
 
-    PickResult pick_result_;
+    Picker picker_;
+    // PickResult pick_result_;
 
-    PickResult request_pick_result(float _x, float _y);
+    // PickResult request_pick_result(float _x, float _y);
 
     // Processed at the end of a frame and then removed
     std::vector<std::function<void()>> deferred_calls_;
@@ -116,11 +120,9 @@ private:
     GLFWwindow* window_;
     Viewport viewport_;
 
-    wgpu::TextureFormat surface_format_ = wgpu::TextureFormat::Undefined;
+    // wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;
 
-    wgpu::TextureFormat depth_texture_format_ = wgpu::TextureFormat::Undefined;
-
-    wgpu::Buffer picking_buffer_;
+    // wgpu::Buffer picking_buffer_;
     wgpu::RenderPassEncoder gui_render_pass_;
     wgpu::RenderPassEncoder scene_render_pass_;
 
@@ -150,7 +152,7 @@ private:
 
     void render_inspector_ui();
 
-    void configure_surface();
+    // void configure_surface();
 
     void build_default_layout(ImGuiID dockspace_id);
 

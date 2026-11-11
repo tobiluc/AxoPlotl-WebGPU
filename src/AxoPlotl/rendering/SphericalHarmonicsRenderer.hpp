@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/rendering/RendererBase.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 #include <AxoPlotl/AxoPlotl_fwd.hpp>
 
 namespace AxoPlotl::internal
@@ -36,7 +37,10 @@ public:
 
     void clear() override;
 
-    void init(uint32_t _object_id, internal::Application *_app, size_t _resolution);
+    void init(uint32_t _object_id,
+              const GpuContext& _gpu_context,
+              const RenderContext& _render_context,
+              size_t _resolution);
 
     void update(const std::function<float32_t(const Vec3f&)>& _f);
 
@@ -55,7 +59,8 @@ private:
 
     void create_bind_group();
 
-    void create_pipeline();
+    void create_pipeline(const GpuContext& _gpu_context,
+                         const RenderContext& _render_context);
 
     std::vector<Vertex> vertices_;
 

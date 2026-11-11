@@ -51,7 +51,7 @@ protected:
     using Pad12 = uint32_t[3];
 
     bool enabled_ = true;
-    internal::Application* app_;
+    bool initialized_ = false;
 
     static_assert(sizeof(ClipBox)%16==0);
 

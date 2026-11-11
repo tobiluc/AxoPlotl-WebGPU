@@ -14,8 +14,11 @@ void Scene::init(Application *_app)
     // Initialize the Coordinate Axes Cross
     using D = ColoredEdgeRenderer::Property::Data;
     axis_position_buffer_ = create_position_buffer(
-        app_->device_, {Vec4f(0,0,0,1)});
-    axis_renderer_.init(UINT32_MAX, app_, axis_position_buffer_);
+        app_->gpu_context().device, {Vec4f(0,0,0,1)});
+    axis_renderer_.init(UINT32_MAX,
+                        app()->gpu_context(),
+                        app()->render_context(),
+                        axis_position_buffer_);
     glm::mat3x4 m;
     m[0] = {1,0,0,1};
     m[1] = {0,1,0,1};

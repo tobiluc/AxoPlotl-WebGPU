@@ -2,6 +2,7 @@
 #pragma once
 
 #include "AxoPlotl/rendering/draw_texture.hpp"
+#include "AxoPlotl/rendering/wgpu_utils/MyGpuContext.hpp"
 #include <filesystem>
 #include <webgpu/webgpu.hpp>
 #include <imgui.h>
@@ -20,28 +21,25 @@ public:
     Viewport(const Viewport&) = delete;
     Viewport& operator=(const Viewport&) = delete;
 
-    bool render_ui(
-        wgpu::Device& device,
-        wgpu::TextureFormat color_format,
-        wgpu::TextureFormat depth_format
-        );
+    bool render_ui(    wgpu::Device _device,
+                   wgpu::TextureFormat _color_format);
 
     void resize(
-        wgpu::Device& device,
+        wgpu::Device _device,
+        wgpu::TextureFormat _color_format,
         uint32_t width,
-        uint32_t height,
-        wgpu::TextureFormat color_format,
-        wgpu::TextureFormat depth_format
-        );
+        uint32_t height);
 
     void release();
 
-    wgpu::TextureView& color_view() { return color_view_; }
-    wgpu::TextureView& depth_view() { return depth_view_; }
+    const wgpu::TextureView& color_view() const { return color_view_; }
+    const wgpu::TextureView& depth_view() const { return depth_view_; }
     const wgpu::TextureView& picking_view() const { return picking_view_; }
 
-    wgpu::Texture& picking_texture() { return picking_texture_; }
+    const wgpu::Texture& picking_texture() const { return picking_texture_; }
     const wgpu::Texture& color_texture() const {return color_texture_;}
+
+    const wgpu::TextureFormat& color_format() const {return color_format_;}
 
     uint32_t width() const { return width_; }
     uint32_t height() const { return height_; }
@@ -75,6 +73,7 @@ public:
 private:
     wgpu::Texture color_texture_;
     wgpu::TextureView color_view_;
+    wgpu::TextureFormat color_format_ = wgpu::TextureFormat::Undefined;
 
     wgpu::Texture depth_texture_;
     wgpu::TextureView depth_view_;
