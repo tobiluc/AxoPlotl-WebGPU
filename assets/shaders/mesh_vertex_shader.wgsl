@@ -9,7 +9,7 @@ struct Uniforms {
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
     @align(16) ambient: vec4<f32>,
-    @align(16) relDepthOffset: f32
+    @align(16) depthOffset: f32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -37,7 +37,7 @@ fn vs_main(
 
     // Subtract Depth Offset to render on top
     // of edges
-    out.position.z -= ubo.relDepthOffset * out.position.w;
+    out.position.z -= ubo.depthOffset;
 
     // A Point Instance is rendered as a Quad
     out.corner = vec2<f32>(0.0);

@@ -46,8 +46,8 @@ void OpenVolumeMeshObject::render_ui_settings()
     if (ImGui::BeginMenu("Vertices")) {
         ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
         InputSlider("Point Size", &vertex_renderer_.point_size(), InputSliderOptions{.min= 0.0f, .max=32.0f});
-        InputSlider("Rel. Depth Offset",
-                    &vertex_renderer_.relative_depth_offset(),
+        InputSlider("Depth Offset",
+                    &vertex_renderer_.depth_offset(),
                     InputSliderOptions{
                         .step=0.00001,
                         .min = -0.5f,
@@ -58,8 +58,8 @@ void OpenVolumeMeshObject::render_ui_settings()
     if (ImGui::BeginMenu("Edges")) {
         ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
         InputSlider("Line Width", &edge_renderer_.line_width(), InputSliderOptions{.min= 0.0f, .max=32.0f});
-        InputSlider("Rel. Depth Offset",
-                    &edge_renderer_.relative_depth_offset(),
+        InputSlider("Depth Offset",
+                    &edge_renderer_.depth_offset(),
                     InputSliderOptions{
                         .step=0.00001,
                         .min = -0.5f,
