@@ -15,6 +15,7 @@ void TetObject::render(
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
+    renderer_.directional_light() = scene()->directional_light;
 
     renderer_.render(_view_size, _render_pass, mvp);
 }
