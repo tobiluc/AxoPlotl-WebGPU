@@ -522,10 +522,16 @@ void Application::render_main_menu_bar_ui()
 
             ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
 
-            if (ImGui::Button("Save")) {
-                save_viewport_screenshot(
-                    debug.screenshot_filename_,
-                    debug.screenshot_size_);
+            if (debug.screenshot_size_.width <= 8000
+                && debug.screenshot_size_.height <= 8000)
+            {
+                if (ImGui::Button("Save")) {
+                    save_viewport_screenshot(
+                        debug.screenshot_filename_,
+                        debug.screenshot_size_);
+                }
+            } else {
+                ImGui::Text("Size too big! (Max. 8000 x 8000)");
             }
         }
         ImGui::End(); //!Screenshot
