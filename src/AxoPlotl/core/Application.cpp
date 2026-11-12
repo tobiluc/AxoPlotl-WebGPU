@@ -761,6 +761,10 @@ bool Application::save_viewport_screenshot(
     const std::filesystem::path& _path,
     const ViewSize _size)
 {
+    if (_size.width > 8000 || _size.height > 8000) {
+        std::cerr << "Screenshot Size too big! (Max. 8000 x 8000)";
+        return false;
+    }
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
     Viewport newViewport(this);
     newViewport.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
