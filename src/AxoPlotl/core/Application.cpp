@@ -505,8 +505,15 @@ void Application::render_main_menu_bar_ui()
             InputSlider2("Size",
                          &debug.screenshot_size_.width,
                          InputSliderOptions{
-                            .step=1,.min=1,.max=4000,
+                            .step=1,.min=1,.max=8000,
                             .display_name=true});
+            if (ImGui::Button("Keep Aspect Ratio")) {
+                if (debug.screenshot_size_.height > debug.screenshot_size_.width) {
+                    debug.screenshot_size_.width = debug.screenshot_size_.height * viewport().size().aspect_ratio();
+                } else {
+                    debug.screenshot_size_.height = debug.screenshot_size_.width / viewport().size().aspect_ratio();
+                }
+            }
 
             const float preview_width = ImGui::GetItemRectSize().x;
             const float preview_height = preview_width / debug.screenshot_size_.aspect_ratio();
