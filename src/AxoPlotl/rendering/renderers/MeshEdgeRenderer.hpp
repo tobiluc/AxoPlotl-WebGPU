@@ -20,7 +20,7 @@ protected:
         alignas(16) Property::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0.6,0.6,0.6,1);
-        alignas(16) float depth_offset_ = 0.00001;
+        alignas(16) float depth_offset_ = 0.00002;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);

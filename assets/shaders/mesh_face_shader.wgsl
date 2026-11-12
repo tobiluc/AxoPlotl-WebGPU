@@ -7,7 +7,8 @@ struct Uniforms {
     @align(16) valueType:ValueType,
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
-    @align(16) ambient: vec4<f32>
+    @align(16) ambient: vec4<f32>,
+    @align(16) depthOffset: f32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -36,6 +37,10 @@ fn vs_main(
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
     out.normal = normals[face_index];
+
+    // Subtract Depth Offset to render on top
+    // of cells
+    out.position.z -= ubo.depthOffset;
 
     let value = props[face_index];
     if (isOutsideClipBox(pos, ubo.clipBox)

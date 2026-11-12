@@ -35,17 +35,17 @@ void OpenVolumeMeshObject::render_ui_settings()
 {
     input_name();
 
-    ImGui::Checkbox("V", &vertex_renderer_.enabled());
+    ImGui::PushID(0);
+    if (ImGui::Button(vertex_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+        vertex_renderer_.enabled() = !vertex_renderer_.enabled();
+    }
     ImGui::SameLine();
-    ImGui::Checkbox("E", &edge_renderer_.enabled());
-    ImGui::SameLine();
-    ImGui::Checkbox("F", &face_renderer_.enabled());
-    ImGui::SameLine();
-    ImGui::Checkbox("C", &cell_renderer_.enabled());
-
     if (ImGui::BeginMenu("Vertices")) {
         ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
-        InputSlider("Point Size", &vertex_renderer_.point_size(), InputSliderOptions{.min= 0.0f, .max=32.0f});
+        InputSlider("Point Size",
+                    &vertex_renderer_.point_size(),
+                    InputSliderOptions{
+                        .step=0.1f, .min= 0.0f, .max=128.0f});
         InputSlider("Depth Offset",
                     &vertex_renderer_.depth_offset(),
                     InputSliderOptions{
@@ -55,9 +55,19 @@ void OpenVolumeMeshObject::render_ui_settings()
                         .fmt = "%.5f"});
         ImGui::EndMenu();
     }
+    ImGui::PopID();
+
+    ImGui::PushID(1);
+    if (ImGui::Button(edge_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+        edge_renderer_.enabled() = !edge_renderer_.enabled();
+    }
+    ImGui::SameLine();
     if (ImGui::BeginMenu("Edges")) {
         ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
-        InputSlider("Line Width", &edge_renderer_.line_width(), InputSliderOptions{.min= 0.0f, .max=32.0f});
+        InputSlider("Line Width",
+                    &edge_renderer_.line_width(),
+                    InputSliderOptions{
+                        .step=0.1f, .min= 0.0f, .max=32.0f});
         InputSlider("Depth Offset",
                     &edge_renderer_.depth_offset(),
                     InputSliderOptions{
@@ -68,15 +78,37 @@ void OpenVolumeMeshObject::render_ui_settings()
                     });
         ImGui::EndMenu();
     }
+    ImGui::PopID();
+
+    ImGui::PushID(2);
+    if (ImGui::Button(face_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+        face_renderer_.enabled() = !face_renderer_.enabled();
+    }
+    ImGui::SameLine();
     if (ImGui::BeginMenu("Faces")) {
         ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
+        InputSlider("Depth Offset",
+                    &face_renderer_.depth_offset(),
+                    InputSliderOptions{
+                       .step=0.00001,
+                       .min = -0.5f,
+                       .max = 0.5f,
+                       .fmt = "%.5f"});
         ImGui::EndMenu();
     }
+    ImGui::PopID();
+
+    ImGui::PushID(3);
+    if (ImGui::Button(cell_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+        cell_renderer_.enabled() = !cell_renderer_.enabled();
+    }
+    ImGui::SameLine();
     if (ImGui::BeginMenu("Cells")) {
         ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
         InputSlider("Cell Scale", &cell_renderer_.cell_scale(), InputSliderOptions{.min= 0.0f, .max=2.0f});
         ImGui::EndMenu();
     }
+    ImGui::PopID();
 
     // Clip Box
     // Each entity technically has their own, but we
