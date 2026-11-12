@@ -1,11 +1,11 @@
 #pragma once
-#include <AxoPlotl/rendering/renderers/RendererBase.hpp>
+#include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
 
-class ColoredVertexRenderer : public RendererBase
+class ColoredVertexRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -27,20 +27,16 @@ protected:
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
-    ColorMap property_color_map_;
-
 public:
-    float& point_size() {return uniforms_.point_size_;}
-
-    ColorMap& color_map() {
-        return property_color_map_;
+    float& point_size() {
+        return uniforms_.point_size_;
     }
 
-    Property::Type& property_type() {
+    Property::Type& property_type() override {
         return uniforms_.type_;
     }
 
-    Property::Filter& property_filter() {
+    Property::Filter& property_filter() override {
         return uniforms_.value_filter_;
     }
 

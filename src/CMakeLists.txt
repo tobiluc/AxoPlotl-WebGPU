@@ -1,9 +1,9 @@
 # todo: allow plugins with external dependencies
 
 add_library(AxoPlotlCore
-
-    AxoPlotl/IO/file_access.cpp
     AxoPlotl/geometry/spherical_harmonics.cpp
+
+    AxoPlotl/AxoPlotl.cpp
 
     AxoPlotl/core/Application.cpp
     AxoPlotl/core/Scene.cpp
@@ -35,24 +35,31 @@ add_library(AxoPlotlCore
     AxoPlotl/rendering/renderers/Matrix3x3Renderer.cpp
     AxoPlotl/rendering/renderers/SphericalHarmonicsRenderer.cpp
 
+    AxoPlotl/gui/widgets/input_slider.cpp
+    AxoPlotl/gui/fonts.cpp
+
     AxoPlotl/gui/widgets/draw_range_sliders.cpp
     AxoPlotl/gui/widgets/draw_texture.cpp
     AxoPlotl/gui/widgets/draw_basic_renderer_settings.cpp
 
-    AxoPlotl/IO/texture_io.cpp
-    AxoPlotl/gui/properties/property_visualization_settings.cpp
-    AxoPlotl/rendering/debug/PickingTextureVis.cpp
-    AxoPlotl/gui/widgets/input_slider.cpp
-    AxoPlotl/gui/fonts.cpp
+    AxoPlotl/gui/properties/property_settings.cpp
+    AxoPlotl/gui/properties/PropertyRendererSettingsBool.cpp
+    AxoPlotl/gui/properties/PropertyRendererSettingsVec3.cpp
+    AxoPlotl/gui/properties/PropertyRendererSettingsMat3x3.cpp
+
     AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp
     AxoPlotl/tools/DebugTool.cpp
+
     AxoPlotl/IO/rapidobj_to_ovm.cpp
     AxoPlotl/IO/happly_to_ovm.cpp
     AxoPlotl/IO/om_to_ovm.cpp
     AxoPlotl/IO/read_shader.cpp
-    AxoPlotl/AxoPlotl.cpp
+    AxoPlotl/IO/file_access.cpp
+    AxoPlotl/IO/texture_io.cpp
+
     AxoPlotl/rendering/MyGpuContext.cpp
+    AxoPlotl/rendering/debug/PickingTextureVis.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

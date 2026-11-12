@@ -1,11 +1,12 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
+#include "AxoPlotl/rendering/renderers/PropertyRendererBase.hpp"
 
 namespace AxoPlotl::internal
 {
 
-class ColoredCellRenderer : public RendererBase
+class ColoredCellRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -26,31 +27,25 @@ protected:
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
-    ColorMap property_color_map_;
-
 public:
-    inline float& cell_scale() {
+    float& cell_scale() {
         return uniforms_.cell_scale_;
     }
 
-    inline Property::Type& property_type() {
+    Property::Type& property_type() override {
         return uniforms_.type_;
     }
 
-    inline Property::Filter& property_filter() {
+    Property::Filter& property_filter() override {
         return uniforms_.value_filter_;
     }
 
-    inline ClipBox& clip_box() {
+    ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
 
-    inline Vec4f& ambient() {
+    Vec4f& ambient() {
         return uniforms_.ambient_;
-    }
-
-    inline ColorMap& color_map() {
-        return property_color_map_;
     }
 
     ColoredCellRenderer() {}

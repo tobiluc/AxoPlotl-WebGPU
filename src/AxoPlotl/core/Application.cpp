@@ -1,4 +1,5 @@
 #include "AxoPlotl/gui/widgets/draw_texture.hpp"
+#include "AxoPlotl/gui/widgets/input_slider.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "Application.hpp"

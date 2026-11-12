@@ -1,13 +1,13 @@
 #pragma once
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include "AxoPlotl/rendering/ColorMap.hpp"
-#include <AxoPlotl/rendering/renderers/RendererBase.hpp>
+#include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
 {
 
-class ColoredEdgeRenderer : public RendererBase
+class ColoredEdgeRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -29,18 +29,16 @@ protected:
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
     static_assert(sizeof(Uniforms)%16==0);
 
-    ColorMap property_color_map_;
-
 public:
     float& line_width() {
         return uniforms_.line_width_;
     };
 
-    Property::Type& property_type() {
+    Property::Type& property_type() override {
         return uniforms_.type_;
     }
 
-    Property::Filter& property_filter() {
+    Property::Filter& property_filter() override {
         return uniforms_.value_filter_;
     }
 
@@ -57,10 +55,6 @@ public:
     // renders the fragment on top.
     float& depth_offset() {
         return uniforms_.depth_offset_;
-    }
-
-    ColorMap& color_map() {
-        return property_color_map_;
     }
 
     ColoredEdgeRenderer() {}
