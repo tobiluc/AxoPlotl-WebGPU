@@ -295,6 +295,7 @@ public:
     inline void set_default_settings() override {
         renderer_.vector_scale() = 1.0f;
         renderer_.draw_symmetric() = true;
+        renderer_.normalize() = false;
     }
 private:
     Matrix3x3Renderer& renderer_;

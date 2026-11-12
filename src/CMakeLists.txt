@@ -37,6 +37,8 @@ add_library(AxoPlotlCore
 
     AxoPlotl/gui/widgets/draw_range_sliders.cpp
     AxoPlotl/gui/widgets/draw_texture.cpp
+    AxoPlotl/gui/widgets/draw_basic_renderer_settings.cpp
+
     AxoPlotl/IO/texture_io.cpp
     AxoPlotl/gui/properties/property_visualization_settings.cpp
     AxoPlotl/rendering/debug/PickingTextureVis.cpp

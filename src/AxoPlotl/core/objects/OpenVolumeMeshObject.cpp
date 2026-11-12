@@ -1,4 +1,5 @@
 #include "OpenVolumeMeshObject.hpp"
+#include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
 #include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
 #include "AxoPlotl/rendering/create_static_render_data.hpp"
@@ -36,76 +37,37 @@ void OpenVolumeMeshObject::render_ui_settings()
     input_name();
 
     ImGui::PushID(0);
-    if (ImGui::Button(vertex_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-        vertex_renderer_.enabled() = !vertex_renderer_.enabled();
-    }
+    RendererVisibilityToggle(&vertex_renderer_);
     ImGui::SameLine();
     if (ImGui::BeginMenu("Vertices")) {
-        ImGui::ColorEdit3("Vertex Ambient", &vertex_renderer_.ambient()[0]);
-        InputSlider("Point Size",
-                    &vertex_renderer_.point_size(),
-                    InputSliderOptions{
-                        .step=0.1f, .min= 0.0f, .max=128.0f});
-        InputSlider("Depth Offset",
-                    &vertex_renderer_.depth_offset(),
-                    InputSliderOptions{
-                        .step=0.00001,
-                        .min = -0.5f,
-                        .max = 0.5f,
-                        .fmt = "%.5f"});
+        draw_basic_renderer_settings(vertex_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(1);
-    if (ImGui::Button(edge_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-        edge_renderer_.enabled() = !edge_renderer_.enabled();
-    }
+    RendererVisibilityToggle(&edge_renderer_);
     ImGui::SameLine();
     if (ImGui::BeginMenu("Edges")) {
-        ImGui::ColorEdit3("Edge Ambient", &edge_renderer_.ambient()[0]);
-        InputSlider("Line Width",
-                    &edge_renderer_.line_width(),
-                    InputSliderOptions{
-                        .step=0.1f, .min= 0.0f, .max=32.0f});
-        InputSlider("Depth Offset",
-                    &edge_renderer_.depth_offset(),
-                    InputSliderOptions{
-                        .step=0.00001,
-                        .min = -0.5f,
-                        .max = 0.5f,
-                        .fmt = "%.5f"
-                    });
+        draw_basic_renderer_settings(edge_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(2);
-    if (ImGui::Button(face_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-        face_renderer_.enabled() = !face_renderer_.enabled();
-    }
+    RendererVisibilityToggle(&face_renderer_);
     ImGui::SameLine();
     if (ImGui::BeginMenu("Faces")) {
-        ImGui::ColorEdit3("Face Ambient", &face_renderer_.ambient()[0]);
-        InputSlider("Depth Offset",
-                    &face_renderer_.depth_offset(),
-                    InputSliderOptions{
-                       .step=0.00001,
-                       .min = -0.5f,
-                       .max = 0.5f,
-                       .fmt = "%.5f"});
+        draw_basic_renderer_settings(face_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(3);
-    if (ImGui::Button(cell_renderer_.enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-        cell_renderer_.enabled() = !cell_renderer_.enabled();
-    }
+    RendererVisibilityToggle(&cell_renderer_);
     ImGui::SameLine();
     if (ImGui::BeginMenu("Cells")) {
-        ImGui::ColorEdit3("Cell Ambient", &cell_renderer_.ambient()[0]);
-        InputSlider("Cell Scale", &cell_renderer_.cell_scale(), InputSliderOptions{.min= 0.0f, .max=2.0f});
+        draw_basic_renderer_settings(cell_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
@@ -115,26 +77,12 @@ void OpenVolumeMeshObject::render_ui_settings()
     // just modify all at once.
     const auto& bbox = bounding_box();
     RendererBase::ClipBox& cb = vertex_renderer_.clip_box();
-    bool clip_box_enabled = cb.enabled_;
-    if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
-        cb.set(bbox.min(),bbox.max());
-    }
-    cb.enabled_ = clip_box_enabled;
-    if (clip_box_enabled)
-    {
-        Vec2f x = {cb.min_[0],cb.max_[0]};
-        Vec2f y = {cb.min_[1],cb.max_[1]};
-        Vec2f z = {cb.min_[2],cb.max_[2]};
-        ImGui::SliderFloat2("x", &x[0], bbox.min()[0], bbox.max()[0]);
-        ImGui::SliderFloat2("y", &y[0], bbox.min()[1], bbox.max()[1]);
-        ImGui::SliderFloat2("z", &z[0], bbox.min()[2], bbox.max()[2]);
-        cb.min_ = {x[0],y[0],z[0]};
-        cb.max_ = {x[1],y[1],z[1]};
-    }
+    draw_clipbox_settings(cb, bbox);
     edge_renderer_.clip_box() = cb;
     face_renderer_.clip_box() = cb;
     cell_renderer_.clip_box() = cb;
-    // vertex_vector_renderer_.clip_box() = cb;
+    vector3_renderer_.clip_box() = cb;
+    mat3x3_renderer_.clip_box() = cb;
 }
 
 void OpenVolumeMeshObject::render_ui_info()
