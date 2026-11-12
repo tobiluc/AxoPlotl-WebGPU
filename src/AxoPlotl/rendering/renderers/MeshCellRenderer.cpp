@@ -7,7 +7,13 @@ namespace AxoPlotl::internal
 PipelineState ColoredCellRenderer::triangle_pipeline_state_;
 PipelineState ColoredCellRenderer::outline_pipeline_state_;
 
-struct CellIndex {
+struct CellTriangleIndex {
+    uint32_t vh_;
+    uint32_t ch_;
+    uint32_t normal_index_;
+};
+
+struct CellLineIndex {
     uint32_t vh_;
     uint32_t ch_;
 };
@@ -16,6 +22,7 @@ void ColoredCellRenderer::init(uint32_t _object_id,
                                const GpuContext& _gpu_context,
                                const RenderContext &_render_context,
                                wgpu::Buffer _vertices_position_buffer,
+                               const std::vector<glm::vec4> &_vertices_position_data,
                                const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
                                wgpu::Buffer _cells_center_buffer)
 {
@@ -29,7 +36,7 @@ void ColoredCellRenderer::init(uint32_t _object_id,
     n_positions_ = _vertices_position_buffer.getSize()/sizeof(Position);
     vertices_position_buffer_ = _vertices_position_buffer;
     cells_center_buffer_ = _cells_center_buffer;
-    create_buffers(_cells);
+    create_buffers(_cells, _vertices_position_data);
     create_bind_group_layout();
     create_bind_group(_gpu_context);
     create_triangle_pipeline(_gpu_context, _render_context);
@@ -46,31 +53,70 @@ void ColoredCellRenderer::clear()
     destroy_buffer(triangle_index_buffer_);
     destroy_buffer(line_index_buffer_);
     destroy_buffer(uniform_buffer_);
+    destroy_buffer(normal_buffer_);
     initialized_ = false;
 }
 
 void ColoredCellRenderer::create_buffers(
-    const std::vector<std::vector<std::vector<uint32_t>>>& _cells)
+    const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
+    const std::vector<glm::vec4>& _vertices_position_data)
 {
     wgpu::Device device = triangle_pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
     // Triangulate the Faces to get the vertices
-    std::vector<CellIndex> triangle_indices;
+    std::vector<CellTriangleIndex> triangle_indices;
     triangle_indices.reserve(n_cells_*4*3);
+    uint32_t normal_idx = 0;
     for (uint32_t ch = 0; ch < n_cells_; ++ch) {
         for (const auto& f : _cells[ch]) {
+            if (f.size()<3) {continue;}
             for (int i = 1; i < f.size()-1; ++i) {
-                triangle_indices.push_back({.vh_ = f[0], .ch_ = ch});
-                triangle_indices.push_back({.vh_ = f[i], .ch_ = ch});
-                triangle_indices.push_back({.vh_ = f[i+1], .ch_ = ch});
+                triangle_indices.push_back({.vh_ = f[0], .ch_ = ch, .normal_index_=normal_idx});
+                triangle_indices.push_back({.vh_ = f[i], .ch_ = ch, .normal_index_=normal_idx});
+                triangle_indices.push_back({.vh_ = f[i+1], .ch_ = ch, .normal_index_=normal_idx});
             }
+            ++normal_idx;
         }
     }
     n_triangle_indices_ = triangle_indices.size();
+    n_normals_ = normal_idx;
+
+    // Normal Buffer
+    {
+        std::vector<glm::vec4> normal_data;
+        normal_data.resize(n_normals_);
+        normal_idx = 0;
+        for (uint32_t ch = 0; ch < n_cells_; ++ch) {
+            for (const auto& f : _cells[ch]) {
+                if (f.size()<3) {continue;}
+                const auto& p0 = _vertices_position_data[f[0]];
+                const auto& p1 = _vertices_position_data[f[1]];
+                const auto& p2 = _vertices_position_data[f[2]];
+                const auto n = glm::normalize(glm::cross(glm::vec3(p1 - p0), glm::vec3(p2 - p1)));
+                normal_data[normal_idx] = glm::vec4(n,1);
+                ++normal_idx;
+            }
+        }
+
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Vertex
+                    | wgpu::BufferUsage::Storage
+                    | wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(glm::vec4) * normal_data.size();
+        desc.mappedAtCreation = false;
+        desc.label = wgpu::StringView("Mesh Cell Triangle Normal Buffer");
+        normal_buffer_ = device.createBuffer(desc);
+        queue.writeBuffer(
+            normal_buffer_,
+            0,
+            normal_data.data(),
+            desc.size
+            );
+    }
 
     // For the Edges, make sure we don't have duplicates
-    std::vector<CellIndex> line_indices;
+    std::vector<CellLineIndex> line_indices;
     line_indices.reserve(n_cells_*6*2);
     for (uint32_t ch = 0; ch < n_cells_; ++ch) {
         for (const auto& f : _cells[ch]) {
@@ -84,31 +130,11 @@ void ColoredCellRenderer::create_buffers(
     }
     n_line_indices_ = line_indices.size();
 
-    // Cell Incenter Buffer
-    // {
-    //     wgpu::BufferDescriptor desc{};
-    //     desc.usage =
-    //         wgpu::BufferUsage::Storage |
-    //         wgpu::BufferUsage::CopyDst |
-    //         wgpu::BufferUsage::Vertex;
-    //     desc.size = sizeof(Position) * std::max(n_cells_,1lu);
-    //     desc.mappedAtCreation = false;
-    //     desc.label = "Mesh Cell Incenter Buffer";
-
-    //     center_buffer_ = device.createBuffer(desc);
-    //     queue.writeBuffer(
-    //         center_buffer_, 0,
-    //         _centers.data(),
-    //         sizeof(Position)*_centers.size());
-
-    //     std::cout << "Mesh Cell Incenter Buffer Size: " << desc.size << std::endl;
-    // }
-
     // Cell Triangle Index Buffer
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(CellIndex) * triangle_indices.size();
+        desc.size = sizeof(CellTriangleIndex) * triangle_indices.size();
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Cell Triangle Index Buffer");
 
@@ -125,7 +151,7 @@ void ColoredCellRenderer::create_buffers(
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(CellIndex) * line_indices.size();
+        desc.size = sizeof(CellLineIndex) * line_indices.size();
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Cell Outline Index Buffer");
 
@@ -165,7 +191,7 @@ void ColoredCellRenderer::create_bind_group_layout()
 {
     if (triangle_pipeline_state_.bind_group_layout_) {return;}
 
-    wgpu::BindGroupLayoutEntry entries[6]{};
+    wgpu::BindGroupLayoutEntry entries[7]{};
 
     // 0 - Uniform
     entries[0].binding = 0;
@@ -202,8 +228,14 @@ void ColoredCellRenderer::create_bind_group_layout()
     entries[5].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
     entries[5].buffer.minBindingSize = sizeof(Position);
 
+    // 6 - Normals
+    entries[6].binding = 6;
+    entries[6].visibility = wgpu::ShaderStage::Vertex;
+    entries[6].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[6].buffer.minBindingSize = sizeof(glm::vec4);
+
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
-    layoutDesc.entryCount = 6;
+    layoutDesc.entryCount = 7;
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Cell Bind Group Layout");
 
@@ -213,7 +245,7 @@ void ColoredCellRenderer::create_bind_group_layout()
 
 void ColoredCellRenderer::create_bind_group(const GpuContext &_gpu_context)
 {
-    wgpu::BindGroupEntry groupEntries[6]{};
+    wgpu::BindGroupEntry groupEntries[7]{};
 
     // 0 - Uniform
     groupEntries[0].binding = 0;
@@ -247,9 +279,15 @@ void ColoredCellRenderer::create_bind_group(const GpuContext &_gpu_context)
     groupEntries[5].offset = 0;
     groupEntries[5].size = sizeof(Position) * std::max(n_cells_,1lu);
 
+    // 6 - Normals
+    groupEntries[6].binding = 6;
+    groupEntries[6].buffer = normal_buffer_;
+    groupEntries[6].offset = 0;
+    groupEntries[6].size = sizeof(glm::vec4) * n_normals_;
+
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = triangle_pipeline_state_.bind_group_layout_;
-    bgDesc.entryCount = 6;
+    bgDesc.entryCount = 7;
     bgDesc.entries = groupEntries;
 
     bind_group_ = _gpu_context.device.createBindGroup(bgDesc);
@@ -267,19 +305,24 @@ void ColoredCellRenderer::create_triangle_pipeline(
         "Cell Shader");
 
     // 0 -- Vertex Index
-    wgpu::VertexAttribute attrs[2]{};
+    wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(CellIndex, vh_);;
+    attrs[0].offset = offsetof(CellTriangleIndex, vh_);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
-    // 1 -- Celll Index
+    // 1 -- Cell Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(CellIndex, ch_);
+    attrs[1].offset = offsetof(CellTriangleIndex, ch_);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
+    // 2 -- Normal Index
+    attrs[2].shaderLocation = 2;
+    attrs[2].offset = offsetof(CellTriangleIndex, normal_index_);
+    attrs[2].format = wgpu::VertexFormat::Uint32;
+
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(CellIndex);
-    vertexBufferLayout.attributeCount = 2;
+    vertexBufferLayout.arrayStride = sizeof(CellTriangleIndex);
+    vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
 
@@ -340,16 +383,16 @@ void ColoredCellRenderer::create_line_pipeline(const GpuContext& _gpu_context, c
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(CellIndex, vh_);;
+    attrs[0].offset = offsetof(CellLineIndex, vh_);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Cell Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(CellIndex, ch_);
+    attrs[1].offset = offsetof(CellLineIndex, ch_);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(CellIndex);
+    vertexBufferLayout.arrayStride = sizeof(CellLineIndex);
     vertexBufferLayout.attributeCount = 2;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
@@ -439,13 +482,15 @@ void ColoredCellRenderer::render(
 
     _render_pass.setPipeline(triangle_pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-    _render_pass.setVertexBuffer(0, triangle_index_buffer_, 0, n_triangle_indices_*sizeof(CellIndex));
+    _render_pass.setVertexBuffer(0, triangle_index_buffer_, 0, n_triangle_indices_*sizeof(CellTriangleIndex));
     _render_pass.draw(n_triangle_indices_, 1, 0, 0);
 
-    _render_pass.setPipeline(outline_pipeline_state_.pipeline_);
-    _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
-    _render_pass.setVertexBuffer(0, line_index_buffer_, 0, n_line_indices_*sizeof(CellIndex));
-    _render_pass.draw(n_line_indices_, 1, 0, 0);
+    if (outlines_enabled_) {
+        _render_pass.setPipeline(outline_pipeline_state_.pipeline_);
+        _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+        _render_pass.setVertexBuffer(0, line_index_buffer_, 0, n_line_indices_*sizeof(CellLineIndex));
+        _render_pass.draw(n_line_indices_, 1, 0, 0);
+    }
 }
 
 }

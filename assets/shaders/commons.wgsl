@@ -15,6 +15,12 @@ struct ClipBox {
     @align(16) enabled: i32
 };
 
+struct DirectionalLight {
+    @align(16) color: vec3<f32>,
+    @align(16) dir: vec3<f32>,
+    @align(16) strength: f32
+};
+
 fn isOutsideClipBox(pos:vec3<f32>, clipBox:ClipBox) -> bool {
     return (clipBox.enabled>0 && ((pos.x < clipBox.min.x)
 || (pos.x > clipBox.max.x) || (pos.y < clipBox.min.y)

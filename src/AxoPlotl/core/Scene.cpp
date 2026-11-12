@@ -1,6 +1,7 @@
 #include "Scene.hpp"
 #include "AxoPlotl/IO/file_access.hpp"
 #include "AxoPlotl/core/objects/SphericalHarmonicsObject.hpp"
+#include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include "AxoPlotl/rendering/create_static_render_data.hpp"
 #include <AxoPlotl/core/Application.hpp>
 
@@ -79,6 +80,13 @@ void Scene::render_settings_ui()
 {
     if (ImGui::BeginMenu("Camera")) {
         camera().render_settings_ui(app_->window());
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Light")) {
+        ImGui::ColorEdit3("Color", &directional_light.color[0]);
+        ImGui::InputFloat3("Direction", &directional_light.direction[0]);
+        InputSlider("Strength", &directional_light.strength);
         ImGui::EndMenu();
     }
 

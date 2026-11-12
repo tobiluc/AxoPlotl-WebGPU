@@ -8,7 +8,8 @@ struct Uniforms {
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
     @align(16) ambient: vec4<f32>,
-    @align(16) depthOffset: f32
+    @align(16) depthOffset: f32,
+    @align(16) dirLight: DirectionalLight
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -63,13 +64,17 @@ fn fs_main(in:V2F) -> FragmentOutput
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         ) * ubo.ambient;
 
-    // Subtle Lighting
-    let lightDir = normalize(vec3<f32>(-0.4, 0.6, 1.0));
-    let lighting = clamp(max(dot(in.normal, lightDir), 0.0), 0.9, 1.0);
-    out.color = out.color * vec4<f32>(
-        vec3<f32>(lighting),
-        1.0
-    );
+    // Directional diffuse lighting
+    let N = normalize(in.normal);
+    let L = normalize(-ubo.dirLight.dir);
+    let diffuse = max(dot(N, L), 0.0);
+    let lighting = ubo.dirLight.color
+                   * ubo.dirLight.strength * diffuse;
+
+    out.color = vec4<f32>(
+        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.a
+        );
 
     out.pick = vec4<u32>(ubo.objectId, 2, in.faceHandle, bitcast<u32>(in.position.z));
     return out;

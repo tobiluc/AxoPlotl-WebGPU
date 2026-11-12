@@ -9,7 +9,7 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/core/objects/OpenVolumeMeshObject.hpp>
 #include <filesystem>
-
+#include <AxoPlotl/core/Light.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -128,6 +128,9 @@ protected:
     Camera camera_;
 
 public:
+
+    DirectionalLight directional_light;
+
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Scene,
         camera_, settings);
 };

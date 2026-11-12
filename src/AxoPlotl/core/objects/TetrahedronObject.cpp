@@ -72,7 +72,8 @@ void TetObject::init_buffers()
     };
     renderer_.init(id_, scene()->app()->gpu_context(),
                    scene()->app()->render_context(),
-                   vertex_position_buffer_, cells, cell_center_buffer_);
+                   vertex_position_buffer_,
+                   positions, cells, cell_center_buffer_);
     renderer_.update_property_data({{1,1,1,1}}); // white
     renderer_.cell_scale() = 1;
 }

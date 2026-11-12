@@ -244,7 +244,8 @@ void OpenVolumeMeshObject::init_buffers()
     vertex_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.vertices_);
     edge_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.edges_);
     face_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.faces_, data.faces_normals_);
-    cell_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.cells_, cells_center_buffer_);
+    cell_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_,
+        data.positions_, data.cells_, cells_center_buffer_);
 
     // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
     // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
@@ -278,6 +279,9 @@ void OpenVolumeMeshObject::render(
     if (deleted() || !visible()) {return;}
 
     const auto& mvp = _view_projection * transform_;
+
+    cell_renderer_.directional_light() = scene()->directional_light;
+    face_renderer_.directional_light() = scene()->directional_light;
 
     cell_renderer_.render(_view_size, _render_pass, mvp);
     face_renderer_.render(_view_size, _render_pass, mvp);

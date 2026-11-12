@@ -8,7 +8,8 @@ struct Uniforms {
     @align(16) valueType:ValueType,
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
-    @align(16) ambient: vec4<f32>
+    @align(16) ambient: vec4<f32>,
+    @align(16) dirLight: DirectionalLight
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -17,20 +18,24 @@ struct Uniforms {
 @group(0) @binding(3) var colorSampler : sampler;
 @group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
 @group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
+@group(0) @binding(6) var<storage, read> normals : array<vec3<f32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
-    @location(1) @interpolate(flat) cellHandle: u32
+    @location(1) @interpolate(flat) cellHandle: u32,
+    @location(2) @interpolate(flat) normal: vec3<f32>
 };
 
 @vertex
 fn vs_main(
     @location(0) vertex_index : u32,
-    @location(1) cell_index : u32
+    @location(1) cell_index : u32,
+    @location(2) normal_index : u32
 ) -> V2F {
 
     var out : V2F;
+    out.normal = normals[normal_index];
 
     // Scale around incenter
     let pos = cellCenters[cell_index]
@@ -54,7 +59,20 @@ fn fs_main(in:V2F) -> FragmentOutput
     var out:FragmentOutput;
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        ) * ubo.ambient;;
+        );
+
+    // Directional diffuse lighting
+    let N = normalize(in.normal);
+    let L = normalize(-ubo.dirLight.dir);
+    let diffuse = max(dot(N, L), 0.0);
+    let lighting = ubo.dirLight.color
+        * ubo.dirLight.strength * diffuse;
+
+    out.color = vec4<f32>(
+        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.a
+        );
+
     out.pick = vec4<u32>(ubo.objectId, 3, in.cellHandle, bitcast<u32>(in.position.z));
     return out;
 }
