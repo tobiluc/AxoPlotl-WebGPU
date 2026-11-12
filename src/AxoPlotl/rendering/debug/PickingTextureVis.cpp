@@ -10,20 +10,20 @@ PipelineState DebugVis_PickingTextureRenderer::pipeline_state_;
 
 bool DebugVis_PickingTextureRenderer::init(
     wgpu::Device& device,
-    uint32_t width,
-    uint32_t height)
+    uint32_t _width,
+    uint32_t _height)
 {
     this->pipeline_state_.device_ = device;
-    this->width = width;
-    this->height = height;
+    this->width_ = _width;
+    this->height_ = _height;
 
     // Output texture.
 
     wgpu::TextureDescriptor texture_desc{};
     texture_desc.label = wgpu::StringView("Picking visualization texture");
     texture_desc.size = {
-        width,
-        height,
+                         _width,
+        _height,
         1
     };
     texture_desc.mipLevelCount = 1;
@@ -179,12 +179,12 @@ void DebugVis_PickingTextureRenderer::render(
 
 void DebugVis_PickingTextureRenderer::resize(uint32_t width, uint32_t height)
 {
-    if (this->width == width && this->height == height) {
+    if (this->width_ == width && this->height_ == height) {
         return;
     }
 
-    this->width = width;
-    this->height = height;
+    this->width_ = width;
+    this->height_ = height;
 
     output_texture.destroy();
 
@@ -212,7 +212,9 @@ void DebugVis_PickingTextureRenderer::render_ui()
         uniforms_.mode = mode;
     }
 
-    draw_texture(output_view);
+    float draw_width = ImGui::GetContentRegionAvail().x;
+    float draw_height = draw_width / width_ * height_;
+    draw_texture(output_view, draw_width, draw_height);
     ImGui::End();
 }
 

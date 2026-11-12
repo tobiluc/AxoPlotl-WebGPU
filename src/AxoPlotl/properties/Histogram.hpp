@@ -18,13 +18,13 @@ public:
         int b_begin, int b_end,
         const ColorMap& _cm);
 
-    inline int render_ui(const ColorMap& _cm) {
+    int render_ui(const ColorMap& _cm) {
         return render_ui(0, n_buckets_, _cm);
     }
 
-    inline const size_t& n_buckets() const {return n_buckets_;}
+    const size_t& n_buckets() const {return n_buckets_;}
 
-    inline const size_t total_count() const {
+    const size_t total_count() const {
         size_t count(0);
         for (int b = 0; b < n_buckets_; ++b) {
             count += bucket_count(b);
@@ -32,18 +32,18 @@ public:
         return count;
     }
 
-    inline const size_t& bucket_count(int _b) const {
+    const size_t& bucket_count(int _b) const {
         return bucket_counts_[_b];
     }
 
-    inline float bucket_rel_count(int _b) const {
+    float bucket_rel_count(int _b) const {
         return static_cast<float>(bucket_count(_b)) / total_count();
     }
 
-    virtual inline std::string bucket_tooltip(int _b) const {return "";};
+    virtual std::string bucket_tooltip(int _b) const {return "";};
 
 protected:
-    virtual inline bool render_ui_begin() {return true;};
+    virtual bool render_ui_begin() {return true;};
 
     size_t n_buckets_ = 1;
     std::vector<size_t> bucket_counts_;
@@ -58,7 +58,7 @@ public:
         recompute(2);
     }
 
-    inline void recompute(size_t) override
+    void recompute(size_t) override
     {
         n_buckets_ = 2;
         bucket_counts_.resize(2);
@@ -69,22 +69,22 @@ public:
         bucket_counts_[0] = prop_->size() - bucket_counts_[1];
     }
 
-    inline bool bucket_max(int _b) const {
+    bool bucket_max(int _b) const {
         return _b!=0;
     }
 
-    inline bool bucket_min(int _b) const {
+    bool bucket_min(int _b) const {
         return _b!=0;
     }
 
-    inline int find_bucket(const bool& _val) const {
+    int find_bucket(const bool& _val) const {
         return static_cast<int>(_val);
     }
 
 protected:
     OVM::PropertyStorageT<bool>* prop_;
 
-    inline std::string bucket_tooltip(int _b) const override {
+    std::string bucket_tooltip(int _b) const override {
         char buf[32];
         snprintf(buf, sizeof(buf), "%s\n%zu (%f %%)", (_b>0)? "true" : "false",
             bucket_count(_b), 100.0f*bucket_rel_count(_b));
@@ -102,7 +102,7 @@ public:
         recompute(_n_buckets);
     }
 
-    inline void recompute(size_t _n_buckets) override
+    void recompute(size_t _n_buckets) override
     {
         n_buckets_ = _n_buckets;
 
@@ -135,15 +135,15 @@ public:
         }
     }
 
-    inline IT bucket_min(int _b) const {
+    IT bucket_min(int _b) const {
         return (_b==0)? min_ : bucket_max_[_b-1]+static_cast<IT>(1);
     }
 
-    inline IT bucket_max(int _b) const {
+    IT bucket_max(int _b) const {
         return bucket_max_[_b];
     }
 
-    inline int find_bucket(const IT& _val) const {
+    int find_bucket(const IT& _val) const {
         for (int b = 0; b < n_buckets_; ++b) {
             if (_val <= bucket_max(b)) {
                 return b;
@@ -152,10 +152,10 @@ public:
         return -1;
     }
 
-    inline const IT& min() const {return min_;}
-    inline const IT& max() const {return max_;}
+    const IT& min() const {return min_;}
+    const IT& max() const {return max_;}
 
-    inline std::string bucket_tooltip(int _b) const override {
+    std::string bucket_tooltip(int _b) const override {
         char buf[64];
         if (bucket_min(_b)==bucket_max(_b)) {
             snprintf(buf, sizeof(buf), "%s\n%zu (%f %%)",
@@ -176,7 +176,7 @@ protected:
     IT min_;
     IT max_;
 
-    inline bool render_ui_begin() override {
+    bool render_ui_begin() override {
         // Set Number of Buckets
         int n_buckets = n_buckets_;
         if (ImGui::InputInt("##", &n_buckets, 1)) {
@@ -196,7 +196,7 @@ public:
         recompute(_n_buckets);
     }
 
-    inline void recompute(size_t _n_buckets) override
+    void recompute(size_t _n_buckets) override
     {
         n_buckets_ = _n_buckets;
 
@@ -233,21 +233,21 @@ public:
     }
 
     // inclusive
-    inline FT bucket_min(int _b) const {
+    FT bucket_min(int _b) const {
         return (_b==0)? this->min_ : bucket_max_[_b-1];
     }
 
     // inclusive
-    inline FT bucket_max(int _b) const {
+    FT bucket_max(int _b) const {
         return (_b==n_buckets_-1)? max_ :
             (std::nextafterf(bucket_max_[_b], -std::numeric_limits<FT>::infinity()));
     }
 
-    inline bool has_valid_values() const {
+    bool has_valid_values() const {
         return n_nan_ + n_inf_ < prop_->size();
     }
 
-    inline int find_bucket(const FT& _val) const {
+    int find_bucket(const FT& _val) const {
         for (int b = 0; b < n_buckets_; ++b) {
             if (_val <= bucket_max(b)) {
                 return b;
@@ -256,10 +256,10 @@ public:
         return -1;
     }
 
-    inline const FT& min() const {return min_;}
-    inline const FT& max() const {return max_;}
+    const FT& min() const {return min_;}
+    const FT& max() const {return max_;}
 
-    inline std::string bucket_tooltip(int _b) const override {
+    std::string bucket_tooltip(int _b) const override {
         char buf[128];
         snprintf(buf, sizeof(buf), "[%s,%s)\n%zu (%f %%)",
                  std::to_string(bucket_min(_b)).c_str(),
@@ -277,7 +277,7 @@ protected:
     FT min_;
     FT max_;
 
-    inline bool render_ui_begin() override {
+    bool render_ui_begin() override {
         if (n_nan_ > 0) {ImGui::Text("#NAN = %zu", n_nan_);}
         if (n_nan_ && n_inf_) {ImGui::SameLine();}
         if (n_nan_ > 0) {ImGui::Text("#INF = %zu", n_inf_);}

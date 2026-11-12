@@ -20,8 +20,8 @@ public:
 
     bool init(
         wgpu::Device& device,
-        uint32_t width,
-        uint32_t height
+        uint32_t _width,
+        uint32_t _height
         );
 
     void render(
@@ -48,8 +48,8 @@ private:
 
     static PipelineState pipeline_state_;
 
-    uint32_t width = 0;
-    uint32_t height = 0;
+    uint32_t width_ = 0;
+    uint32_t height_ = 0;
 
     bool initialized = false;
 };

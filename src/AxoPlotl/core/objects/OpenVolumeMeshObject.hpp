@@ -99,18 +99,18 @@ public:
 
 protected:
     template<typename EntityTag>
-    inline auto& colored_entity_renderer();
-    template<> inline auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
-    template<> inline auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
-    template<> inline auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
-    template<> inline auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
+    auto& colored_entity_renderer();
+    template<> auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
+    template<> auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
+    template<> auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
+    template<> auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
     template<typename EntityTag>
-    inline wgpu::Buffer& entity_center_buffer();
-    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
-    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
-    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return edges_center_buffer_;}
-    template<> inline wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return vertices_position_buffer_;}
+    wgpu::Buffer& entity_center_buffer();
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return edges_center_buffer_;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return vertices_position_buffer_;}
 
 protected:
     size_t n_positions_;
