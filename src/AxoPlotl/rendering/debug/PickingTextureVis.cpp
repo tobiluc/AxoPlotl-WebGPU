@@ -9,7 +9,7 @@ namespace AxoPlotl::internal
 PipelineState DebugVis_PickingTextureRenderer::pipeline_state_;
 
 bool DebugVis_PickingTextureRenderer::init(
-    wgpu::Device& device,
+    const wgpu::Device &device,
     uint32_t _width,
     uint32_t _height)
 {
@@ -204,8 +204,6 @@ void DebugVis_PickingTextureRenderer::resize(uint32_t width, uint32_t height)
 
 void DebugVis_PickingTextureRenderer::render_ui()
 {
-    ImGui::Begin("PickingTexture");
-
     static const char* modes[]{"Object Id","Entity Type","Entity Index", "Depth"};
     int mode = uniforms_.mode;
     if (ImGui::Combo("Mode", &mode, modes, 4)) {
@@ -215,7 +213,6 @@ void DebugVis_PickingTextureRenderer::render_ui()
     float draw_width = ImGui::GetContentRegionAvail().x;
     float draw_height = draw_width / width_ * height_;
     draw_texture(output_view, draw_width, draw_height);
-    ImGui::End();
 }
 
 }

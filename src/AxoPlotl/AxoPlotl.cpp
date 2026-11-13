@@ -6,39 +6,39 @@
 namespace AxoPlotl
 {
 
-static internal::Application& get_app() {
+internal::Application& app() {
     static internal::Application app_instance;
     return app_instance;
 }
 
 bool init()
 {
-    return get_app().init();
+    return app().init();
 }
 
 void run()
 {
-    get_app().run();
+    app().run();
 }
 
 internal::Scene& scene()
 {
-    return get_app().scene();
+    return app().scene();
 }
 
 void set_inspector_callback(const std::function<void()>& _callback)
 {
-    get_app().inspector_callback() = _callback;
+    app().inspector_callback() = _callback;
 }
 
 void show_inspector(bool _show)
 {
-    get_app().inspector_enabled() = _show;
+    app().inspector_enabled() = _show;
 }
 
 float frames_per_second()
 {
-    return get_app().fps();
+    return app().fps();
 }
 
 float memory_usage_mb()

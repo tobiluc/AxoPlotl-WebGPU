@@ -9,6 +9,8 @@ bool init();
 
 void run();
 
+internal::Application& app();
+
 internal::Scene& scene();
 
 void set_inspector_callback(const std::function<void()>& _callback);

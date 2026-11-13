@@ -287,8 +287,6 @@ void Application::on_window_resize(float width, float height)
 
     //const auto fb_size = framebuffer_size();
     render_context_.configure_surface(gpu_context_, width, height);
-    viewport_.resize(gpu_context_.device, render_context_.surface_format, width, height);
-    debug.picking_renderer_.resize(width, height);
 
     wgpuPollEvents(gpu_context_.device, true);
 }
@@ -360,10 +358,6 @@ void Application::render_viewport_ui()
         if (obj) [[likely]] {obj->render_ui_picking(picker_);}
         ImGui::EndPopup();
     }
-
-    if (debug.display_picking_texture) {
-        debug.picking_renderer_.render_ui();
-    }
 }
 
 void Application::render_main_menu_bar_ui()
@@ -394,6 +388,10 @@ void Application::render_main_menu_bar_ui()
                     "LoadMeshDialogKey", "Choose File",
                     "Mesh files (*.obj *.ovm *.ovmb *ply){.obj,.ovm,.ovmb,.ply}",
                     config);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save Screenshot")) {
+                debug.show_screenshot_window_ = true;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
@@ -457,29 +455,6 @@ void Application::render_main_menu_bar_ui()
 
             ImGui::EndMenu(); // !Settings
         }
-
-#if 1
-        if (ImGui::BeginMenu("Debug"))
-        {
-            if (ImGui::BeginMenu("Visualization")) {
-                ImGui::Checkbox("Show Picking Texture", &debug.display_picking_texture);
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
-                scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
-            }
-            if (ImGui::MenuItem("Add empty Mesh")) {
-                scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
-            }
-
-            if (ImGui::MenuItem("Screenshot")) {
-                debug.show_screenshot_window_ = true;
-            }
-
-            ImGui::EndMenu(); // !Debug
-        }
-#endif
         ImGui::EndMainMenuBar();
     }
 

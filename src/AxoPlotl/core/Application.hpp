@@ -98,11 +98,15 @@ public:
         return time_.frames_per_second_;
     }
 
+    void render_picking_texture_ui() {
+        debug.picking_renderer_.resize(viewport_.width(), viewport_.height());
+        debug.picking_renderer_.render_ui();
+    }
+
 private:
     struct Debugging
     {
         DebugVis_PickingTextureRenderer picking_renderer_;
-        bool display_picking_texture = false;
         std::string screenshot_filename_ = "AxoPlotl_Screenshot.png";
         ViewSize screenshot_size_ = {512, 512};
         bool show_screenshot_window_ = false;

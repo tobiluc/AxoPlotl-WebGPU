@@ -19,7 +19,7 @@ public:
     };
 
     bool init(
-        wgpu::Device& device,
+        const wgpu::Device& device,
         uint32_t _width,
         uint32_t _height
         );
