@@ -7,7 +7,7 @@ struct Uniforms
 var picking_texture: texture_2d<u32>;
 
 @group(0) @binding(1)
-var<uniform> uniforms: Uniforms;
+var<uniform> ubo: Uniforms;
 
 struct VertexOutput
 {
@@ -57,7 +57,7 @@ fn fs_main(
 
     var color = vec3<f32>(0.0);
 
-    switch uniforms.mode
+    switch ubo.mode
     {
         case 0u: {
             // Object Id
@@ -76,18 +76,13 @@ fn fs_main(
 
         case 3u: {
             // Depth
-            color = vec3<f32>(bitcast<f32>(data.a));
+            let depth = bitcast<f32>(data.a);
+            color = vec3<f32>(depth);
         }
 
         default: {
             color = vec3<f32>(1.0, 0.0, 1.0);
         }
-    }
-
-    // Zero represents the background.
-    if (data.r == 0u && uniforms.mode == 0u)
-    {
-        color = vec3<f32>(0.0);
     }
 
     return vec4<f32>(color, 1.0);

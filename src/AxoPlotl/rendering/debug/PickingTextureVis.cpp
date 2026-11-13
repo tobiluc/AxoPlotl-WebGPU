@@ -122,10 +122,9 @@ void DebugVis_PickingTextureRenderer::render(
     wgpu::CommandEncoder& encoder,
     const wgpu::TextureView &picking_texture)
 {
-    if (!initialized || !picking_texture)
+    if (!initialized || !picking_texture) {
         return;
-
-    // Update visualization mode.
+    }
 
     pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer,

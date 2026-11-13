@@ -82,6 +82,6 @@ fn fs_main(in : VSOut) -> FragmentOutput
                     in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
                     ) * ubo.ambient * shading;
 
-    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(in.position.z));
+    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(in.position.z / in.position.w));
     return out;
 }

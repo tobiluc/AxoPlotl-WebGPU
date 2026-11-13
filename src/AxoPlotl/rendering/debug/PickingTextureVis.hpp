@@ -26,8 +26,7 @@ public:
 
     void render(
         wgpu::CommandEncoder& encoder,
-        const wgpu::TextureView& picking_texture
-        );
+        const wgpu::TextureView& picking_texture);
 
     void resize(uint32_t width, uint32_t height);
 

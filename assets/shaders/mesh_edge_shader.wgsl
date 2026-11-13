@@ -77,6 +77,6 @@ fn fs_main(in:V2F) -> FragmentOutput
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         ) * ubo.ambient * shading;
-    out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z));
+    out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z / in.position.w));
     return out;
 }
