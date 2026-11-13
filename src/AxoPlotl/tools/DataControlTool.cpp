@@ -5,6 +5,7 @@
 #include <mach/mach.h>
 #include <AxoPlotl/gui/fonts.hpp>
 #include <AxoPlotl/core/Scene.hpp>
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -15,7 +16,6 @@ int DataControlTool::properties_object_id_ = -1;
 
 void DataControlTool::render_ui()
 {
-    if (!ImGui::CollapsingHeader("Data Control")) {return;}
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted
@@ -142,6 +142,9 @@ void DataControlTool::render_ui()
         ImGui::PopID();
         ImGui::Separator();
     }
+    if (AxoPlotl::scene().num_objects() == 0lu) {
+        ImGui::TextWrapped("Your objects are displayed here, but you don't have any...");
+    }
 
     // Export File Dialog
     if (ImGuiFileDialog::Instance()->Display("SaveMeshDialogKey")) {
@@ -163,27 +166,25 @@ void DataControlTool::render_ui()
     }
 
     // Property Visualization
-    std::string title = "Properties";
-    if (ImGui::CollapsingHeader(title.c_str())) {
-        if (ImGui::BeginMenu("Object")) {
-            for (const auto& obj : AxoPlotl::scene().get_objects()) {
-                ImGui::PushID(obj->id());
-                if (ImGui::MenuItem(obj->name().c_str())) {
-                    if (properties_object_id_ == obj->id()) {
-                        properties_object_id_ = -1;
-                    } else {
-                        properties_object_id_ = obj->id();
-                    }
+    ImGui::SeparatorText("Properties");
+    if (ImGui::BeginMenu("Object")) {
+        for (const auto& obj : AxoPlotl::scene().get_objects()) {
+            ImGui::PushID(obj->id());
+            if (ImGui::MenuItem(obj->name().c_str())) {
+                if (properties_object_id_ == obj->id()) {
+                    properties_object_id_ = -1;
+                } else {
+                    properties_object_id_ = obj->id();
                 }
-                ImGui::PopID();
             }
-            ImGui::EndMenu();
+            ImGui::PopID();
         }
-        if (auto obj = AxoPlotl::scene().get_object(properties_object_id_)) {
-            ImGui::SeparatorText(obj->name().c_str());
-            obj->render_ui_properties();
-        } else {properties_object_id_ = -1;}
+        ImGui::EndMenu();
     }
+    if (auto obj = AxoPlotl::scene().get_object(properties_object_id_)) {
+        ImGui::SeparatorText(obj->name().c_str());
+        obj->render_ui_properties();
+    } else {properties_object_id_ = -1;}
 }
 
 }

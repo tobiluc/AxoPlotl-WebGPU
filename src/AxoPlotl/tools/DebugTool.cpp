@@ -9,8 +9,6 @@ namespace AxoPlotl
 
 void DebugTool::render_ui()
 {
-    if (!ImGui::CollapsingHeader("Debug")) {return;}
-
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", AxoPlotl::memory_usage_mb());
     ImGui::Text("%f FPS", AxoPlotl::frames_per_second());

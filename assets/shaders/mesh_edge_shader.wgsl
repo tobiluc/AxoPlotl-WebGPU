@@ -1,4 +1,5 @@
 #include "commons.wgsl"
+#include "line_as_quad.wgsl"
 
 struct Uniforms {
     @align(16) mvp : mat4x4<f32>,
@@ -37,75 +38,26 @@ fn vs_main(
 {
     var out : V2F;
 
-    //-------------------------------
-    // An Edge instance is rendered
-    // as a thin quad with width
-    // given in screen space
-    //-------------------------------
-
-    // Define the quad corners: (t, side)
-    // t: 0.0 = start of edge, 1.0 = end of edge
-    // side: -1.0 = left, 1.0 = right
-
-    // For Triangle Strip (0, 1, 2, 3):
-    // 0: Start-Left, 1: Start-Right, 2: End-Left, 3: End-Right
-    var configs = array<vec2<f32>, 4>(
-        vec2<f32>(0.0, -1.0), // 0
-        vec2<f32>(0.0,  1.0), // 1
-        vec2<f32>(1.0, -1.0), // 2
-        vec2<f32>(1.0,  1.0)  // 3
+    let quadCorner = getLineQuadCorner(
+        ubo.mvp * vec4<f32>(positions[vh0], 1.0),
+        ubo.mvp * vec4<f32>(positions[vh1], 1.0),
+        vid,
+        ubo.viewportSize,
+        ubo.lineWidth
     );
-
-    let config = configs[vid];
-    let t = config.x;
-    let side = config.y;
-
-    let clip0 = ubo.mvp * vec4<f32>(positions[vh0], 1.0);
-    let clip1 = ubo.mvp * vec4<f32>(positions[vh1], 1.0);
-
-    // Convert NDC to pixel coordinates.
-    // Y is inverted because screen coordinates usually grow downward.
-    let ndc0 = clip0.xy / clip0.w;
-    let ndc1 = clip1.xy / clip1.w;
-
-    // Convert to pixel coordinates
-    let screen0 = ndc0 * ubo.viewportSize * 0.5;
-    let screen1 = ndc1 * ubo.viewportSize * 0.5;
-
-    let edgeVector = screen1 - screen0;
-    let edgeLength = length(edgeVector);
-
-    let edgeDir = edgeVector / max(edgeLength, 0.0001);
-    let perpDir = vec2<f32>(-edgeDir.y, edgeDir.x);
-
-    // Half-width in pixels
-    let offsetPixels = perpDir * (ubo.lineWidth * 0.5 * side);
-
-    // Convert back to NDC
-    let offsetNdc = offsetPixels * 2.0 / ubo.viewportSize;
-
-    var outPos = mix(clip0, clip1, t);
-
-    // Apply offset in clip space.
-    outPos.x += offsetNdc.x * outPos.w;
-    outPos.y += offsetNdc.y * outPos.w;
 
     // Subtract Depth Offset to render on top
     // of faces
-    outPos.z -= ubo.depthOffset;
+    out.position = quadCorner.position;
+    out.position.z -= ubo.depthOffset;
 
-    out.position = outPos;
-
-    out.quadSize = vec2<f32>(edgeLength, ubo.lineWidth);
-    out.quadCorner = vec2<f32>(
-        (config.x - 0.5) * edgeLength,
-        0.5 * config.y * ubo.lineWidth
-        );
+    out.quadSize = quadCorner.quadSize;
+    out.quadCorner = quadCorner.quadCorner;
 
     // Property and Clipping
     let value = props[eh];
-    let pos = mix(positions[vh0], positions[vh1], t);
-    if (isOutsideClipBox(pos, ubo.clipBox)
+    // let pos = mix(positions[vh0], positions[vh1], t);
+    if (isOutsideClipBox(out.position.xyz, ubo.clipBox)
         || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
         out.position = clippedPosition();
     }
@@ -120,16 +72,11 @@ fn fs_main(in:V2F) -> FragmentOutput
 {
     var out : FragmentOutput;
 
-    // Fake 3D
-    let y = in.quadCorner.y / (in.quadSize.y * 0.5);
-    let shading = 0.78 + 0.22 * sqrt(max(0.0, 1.0 - y * y));
-    let highlight = 0.10 * exp(-pow((y + 0.45) * 12.0, 2.0));
-    let shadow = 0.12 * smoothstep(0.1, 1.0, y);
-    let finalShading = shading + highlight - shadow;
+    let shading = getLineQuadShading(in.quadCorner, in.quadSize);
 
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-        ) * ubo.ambient * finalShading;
+        ) * ubo.ambient * shading;
     out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z));
     return out;
 }

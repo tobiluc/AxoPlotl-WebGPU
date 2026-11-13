@@ -17,7 +17,7 @@ protected:
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0.8,0.8,0.8,1);
+        alignas(16) Vec4f ambient_ = Vec4f(0.9,0.8,0.8,1);
         alignas(16) float depth_offset_ = 0.00001;
         alignas(16) Vec3f light_dir_ = {-1,-1,-1};
         alignas(16) DirectionalLight dir_light_ ;

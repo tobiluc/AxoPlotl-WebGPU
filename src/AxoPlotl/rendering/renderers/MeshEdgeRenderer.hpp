@@ -14,12 +14,12 @@ protected:
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
-        alignas(16) float line_width_ = 8.0f;
+        alignas(16) float line_width_ = 3.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0.6,0.6,0.6,1);
+        alignas(16) Vec4f ambient_ = Vec4f(0,0,0,1);
         alignas(16) float depth_offset_ = 0.00002;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);

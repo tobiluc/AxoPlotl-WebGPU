@@ -131,7 +131,7 @@ void Matrix3x3Renderer::create_pipeline(const GpuContext& _gpu_context, const Re
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         _gpu_context.device,
-        "matrix_shader.wgsl",
+        "mat3x3_shader.wgsl",
         "Matrix3x3 Shader");
 
     // Vertex state (no vertex buffer)
@@ -149,7 +149,8 @@ void Matrix3x3Renderer::create_pipeline(const GpuContext& _gpu_context, const Re
 
     // Primitive state
     wgpu::PrimitiveState primitive{};
-    primitive.topology = wgpu::PrimitiveTopology::LineList;
+    // primitive.topology = wgpu::PrimitiveTopology::LineList;
+    primitive.topology = wgpu::PrimitiveTopology::TriangleStrip;
     primitive.frontFace = wgpu::FrontFace::CCW;
     primitive.cullMode = wgpu::CullMode::None;
 
@@ -206,7 +207,8 @@ void Matrix3x3Renderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.draw(6, n_positions_, 0, 0);
+    // _render_pass.draw(6, n_positions_, 0, 0);
+    _render_pass.draw(4, n_positions_*3u, 0, 0);
 
     set_next_draw_index();
 }

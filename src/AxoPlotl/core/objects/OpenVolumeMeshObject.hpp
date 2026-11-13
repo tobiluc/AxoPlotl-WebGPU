@@ -20,8 +20,7 @@ protected:
     template<typename EntityTag>
     struct Property {
         std::optional<OVM::PropertyStorageBase*> prop_;
-        std::vector<std::shared_ptr<internal::PropertySettingsBase>> settings_;
-        int filter_index_ = 0;
+        std::shared_ptr<internal::PropertySettingsBase> settings_;
     };
 
     Property<OVM::Entity::Vertex> v_prop_;
@@ -58,7 +57,7 @@ public:
                          const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
     ~OpenVolumeMeshObject() {
-        delete_buffers();
+        destroy();
     }
 
     void render(
@@ -74,9 +73,9 @@ public:
 
     void render_ui_picking(const Picker& _p) override;
 
-    void init_buffers() override;
+    void init() override;
 
-    void delete_buffers() override;
+    void destroy() override;
 
     void recompute_bounding_box() override;
 

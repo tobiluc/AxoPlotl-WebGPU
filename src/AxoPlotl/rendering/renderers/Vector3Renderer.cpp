@@ -131,7 +131,7 @@ void Vector3Renderer::create_pipeline(const GpuContext& _gpu_context, const Rend
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         _gpu_context.device,
-        "vector_shader.wgsl",
+        "vec3_shader.wgsl",
         "Vector Shader");
 
     // Vertex state (no vertex buffer)

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <unordered_map>
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -16,6 +17,7 @@ private:
 public:
 
     static void render_ui();
+    static constexpr const char* icon() {return ICON_FA_CHART_LINE;}
 
 private:
     struct Input

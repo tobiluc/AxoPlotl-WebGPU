@@ -26,7 +26,7 @@ public:
     }
 
     ~SegmentObject() {
-        delete_buffers();
+        destroy();
     }
 
     void render(
@@ -42,9 +42,9 @@ public:
 
     void render_ui_picking(const Picker& _p) override;
 
-    void init_buffers() override;
+    void init() override;
 
-    void delete_buffers() override;
+    void destroy() override;
 
     void recompute_bounding_box() override;
 

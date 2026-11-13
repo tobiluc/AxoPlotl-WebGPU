@@ -397,7 +397,7 @@ void Application::render_main_menu_bar_ui()
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
-
+                glfwSetWindowShouldClose(window_, GLFW_TRUE);
             }
             ImGui::EndMenu();
         }
@@ -768,7 +768,10 @@ bool Application::save_viewport_screenshot(
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
     Viewport newViewport(this);
     newViewport.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
+    Scene::Settings sceneSettings = scene().settings;
+    scene().settings.show_orbit_target_cross = false;
     render_scene(encoder, newViewport);
+    scene().settings = sceneSettings;
     wgpu::CommandBuffer cb = encoder.finish();
     gpu_context_.device.getQueue().submit(1, &cb);
     cb.release();

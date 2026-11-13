@@ -140,7 +140,7 @@ void SHObject::render_ui_picking(const Picker& _p)
     ImGui::Text("Value = %f", _p.pixel().function_value_);
 }
 
-void SHObject::init_buffers()
+void SHObject::init()
 {
     renderer_.init(id_, scene_->app()->gpu_context(), scene()->app()->render_context(), render_resolution_);
 
@@ -150,7 +150,7 @@ void SHObject::init_buffers()
     });
 }
 
-void SHObject::delete_buffers()
+void SHObject::destroy()
 {
     renderer_.clear();
 }

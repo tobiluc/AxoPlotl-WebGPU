@@ -52,6 +52,10 @@ public:
         return glm::length(orbit_target_ - eye_position_);
     }
 
+    float& near_plane() {return near_plane_;}
+
+    float& far_plane() {return far_plane_;}
+
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera,
         sensitivity_, pan_speed_, near_plane_, far_plane_,
         fov_,

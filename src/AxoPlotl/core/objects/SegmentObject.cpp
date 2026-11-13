@@ -54,7 +54,7 @@ void SegmentObject::render_ui_picking(const Picker& _p)
         _p.pixel().position_.z);
 }
 
-void SegmentObject::init_buffers()
+void SegmentObject::init()
 {
     std::vector<ColoredCellRenderer::Position> positions = {
         {0,0,0,1}, {1,1,1,1}
@@ -64,7 +64,7 @@ void SegmentObject::init_buffers()
     renderer_.update_property_data({{1,1,1,1}}); // white
 }
 
-void SegmentObject::delete_buffers()
+void SegmentObject::destroy()
 {
     renderer_.clear();
 }

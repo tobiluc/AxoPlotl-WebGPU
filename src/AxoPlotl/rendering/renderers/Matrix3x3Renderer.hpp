@@ -12,12 +12,13 @@ protected:
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
-        alignas(16) float line_width_ = 8.0f;
+        alignas(16) float line_width_ = 3.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) float vec_scale_ = 1.0f;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) uint32_t draw_symmetric_ = 1;
-        alignas(16) uint32_t normalize = 0;
+        alignas(16) uint32_t normalize_ = 0;
+        alignas(16) std::array<Vec4f,3> axis_colors_ = {{{1,0,0,1},{0,1,0,1},{0,0,1,1}}};
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);
@@ -40,12 +41,16 @@ public:
         return uniforms_.vec_scale_;
     };
 
+    std::array<Vec4f,3>& axis_colors() {
+        return uniforms_.axis_colors_;
+    }
+
     uint32_t& draw_symmetric() {
         return uniforms_.draw_symmetric_;
     };
 
     uint32_t& normalize() {
-        return uniforms_.normalize;
+        return uniforms_.normalize_;
     };
 
     ClipBox& clip_box() {

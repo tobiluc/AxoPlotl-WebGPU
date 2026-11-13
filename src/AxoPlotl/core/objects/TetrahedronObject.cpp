@@ -59,7 +59,7 @@ void TetObject::render_ui_picking(const Picker& _p)
         _p.pixel().position_.z);
 }
 
-void TetObject::init_buffers()
+void TetObject::init()
 {
     const wgpu::Device& device = scene()->app()->gpu_context().device;
     std::vector<ColoredCellRenderer::Position> positions = {
@@ -79,7 +79,7 @@ void TetObject::init_buffers()
     renderer_.cell_scale() = 1;
 }
 
-void TetObject::delete_buffers()
+void TetObject::destroy()
 {
     renderer_.clear();
 }

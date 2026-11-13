@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -11,10 +12,7 @@ private:
     DataControlTool() {};
 public:
     static void render_ui();
-
-    static const char* name() {
-        return "Data Control";
-    }
+    static constexpr const char* icon() {return ICON_FA_SLIDERS;}
 private:
     static int info_object_id_;
     static int settings_object_id_;

@@ -13,8 +13,6 @@ int PlottingTool::selected_id_ = -1;
 
 void PlottingTool::render_ui()
 {
-    if (!ImGui::CollapsingHeader("Plotting")) {return;}
-
     if (ImGui::BeginMenu("Modify")) {
         for (auto& obj : AxoPlotl::scene().get_objects()) {
             if (objects_.contains(obj->id())) {

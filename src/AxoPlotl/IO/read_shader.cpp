@@ -43,7 +43,7 @@ std::string parse_shader_file_with_includes(std::filesystem::path _path)
 
         // Resolve relative to current file directory
         std::filesystem::path include_path =
-            _path.parent_path() / include_name;
+            _path.parent_path() / "includes" / include_name;
 
         // Recursively parse included file
         std::string included_source =

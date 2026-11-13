@@ -56,6 +56,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     unit_frame_renderer_.draw_symmetric() = false;
     unit_frame_renderer_.enabled() = settings.show_axis_cross;
     unit_frame_renderer_.vector_scale() = 1.0f;
+    unit_frame_renderer_.axis_colors() = {{{1,0,0,1},{0,1,0,1},{0,0,1,1}}};
     unit_frame_renderer_.render(_view_size,
         _render_pass,
         view_proj);
@@ -63,11 +64,12 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     // Render Camera Target at Orbit Target
     unit_frame_renderer_.enabled() = settings.show_orbit_target_cross;
     unit_frame_renderer_.draw_symmetric() = true;
-    unit_frame_renderer_.vector_scale() = 0.02f;
+    unit_frame_renderer_.vector_scale() = 0.0002f;
+    unit_frame_renderer_.axis_colors() = {{{0,0,0,1},{0,0,0,1},{0,0,0,1}}};
     unit_frame_renderer_.render(_view_size,
         _render_pass, proj
          * glm::translate(glm::mat4(1),
-            Camera::FORWARD*camera().orbit_distance()));
+            Camera::FORWARD*camera().near_plane()));
 
     // Render Scene Objects
     for (const auto& obj : objects_) {

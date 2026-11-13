@@ -7,8 +7,8 @@ namespace AxoPlotl
 struct DirectionalLight
 {
     alignas(16) Vec3f color = {1,1,1};
-    alignas(16) Vec3f direction = {-1,-1,-1};
-    alignas(16) float strength = 0.1f;
+    alignas(16) Vec3f direction = {0,-1,1};
+    alignas(16) float strength = 0.25f;
 };
 
 }

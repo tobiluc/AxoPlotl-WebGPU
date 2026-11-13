@@ -15,9 +15,21 @@ int main()
 
     AxoPlotl::set_inspector_callback([&]()
     {
-        AxoPlotl::DataControlTool::render_ui();
-        AxoPlotl::PlottingTool::render_ui();
-        AxoPlotl::DebugTool::render_ui();
+        if (ImGui::BeginTabBar("")) {
+            if (ImGui::BeginTabItem(AxoPlotl::DataControlTool::icon())) {
+                AxoPlotl::DataControlTool::render_ui();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem(AxoPlotl::PlottingTool::icon())) {
+                AxoPlotl::PlottingTool::render_ui();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem(AxoPlotl::DebugTool::icon())) {
+                AxoPlotl::DebugTool::render_ui();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
     });
 
     AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);

@@ -1,4 +1,5 @@
 #pragma once
+#include <AxoPlotl/gui/fonts.hpp>
 
 namespace AxoPlotl
 {
@@ -9,6 +10,7 @@ private:
     DebugTool() {}
 public:
     static void render_ui();
+    static constexpr const char* icon() {return ICON_FA_BUG;}
 };
 
 }

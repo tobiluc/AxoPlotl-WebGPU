@@ -47,7 +47,7 @@ public:
     std::shared_ptr<Object> add_object(Args... _args)
     {
         objects_.push_back(std::make_shared<Object>(this, _args...));
-        objects_.back()->init_buffers();
+        objects_.back()->init();
         objects_.back()->recompute_bounding_box();
         if (settings.zoom_to_new_object) {
             zoom_to_box(objects_.back()->bounding_box());
