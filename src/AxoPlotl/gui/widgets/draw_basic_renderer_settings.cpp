@@ -20,7 +20,9 @@ void draw_clipbox_settings(RendererBase::ClipBox& _cb, const BoundingBox &_bb)
 {
     bool clip_box_enabled = _cb.enabled_;
     if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
-        _cb.set(_bb.min(),_bb.max());
+        _cb.min_ = _bb.min();
+        _cb.max_ = _bb.max();
+        _cb.enabled_ = true;
     }
     _cb.enabled_ = clip_box_enabled;
     if (clip_box_enabled)

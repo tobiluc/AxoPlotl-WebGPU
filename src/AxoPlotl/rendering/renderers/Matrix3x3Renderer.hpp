@@ -27,6 +27,11 @@ protected:
     static_assert(sizeof(Uniforms)%16==0);
 
 public:
+
+    Matrix3x3Renderer(uint32_t _max_draw_calls = 1)
+        : RendererBase(_max_draw_calls)
+    {}
+
     float& line_width() {
         return uniforms_.line_width_;
     };
@@ -46,8 +51,6 @@ public:
     ClipBox& clip_box() {
         return uniforms_.clip_box_;
     }
-
-    Matrix3x3Renderer() {}
 
     ~Matrix3x3Renderer() {clear();}
 

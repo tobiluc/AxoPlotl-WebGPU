@@ -11,6 +11,8 @@
 namespace AxoPlotl
 {
 
+using PropMode = PropertyRendererBase::Prop::Mode;
+
 OpenVolumeMeshObject::OpenVolumeMeshObject(
     internal::Scene* _scene,
     OVMVolumeMesh& _mesh,
@@ -201,8 +203,8 @@ void OpenVolumeMeshObject::render_ui_properties()
         // Clear
         if (ImGui::Button("Unselect Property")) {
             upload_default_property_data<EntityTag>();
-            colored_entity_renderer<EntityTag>().property_type()
-                = RendererBase::Property::Type::COLOR;
+            colored_entity_renderer<EntityTag>().property_mode()
+                = PropMode::COLOR;
             selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
             prop<EntityTag>().settings_.clear();
@@ -288,10 +290,10 @@ void OpenVolumeMeshObject::render(
     edge_renderer_.render(_view_size, _render_pass, mvp);
     vertex_renderer_.render(_view_size, _render_pass, mvp);
 
-    vector3_renderer_.enabled() = vertex_renderer_.property_type() == RendererBase::Property::Type::VEC3
-        || edge_renderer_.property_type() == RendererBase::Property::Type::VEC3
-        || face_renderer_.property_type() == RendererBase::Property::Type::VEC3
-        || cell_renderer_.property_type() == RendererBase::Property::Type::VEC3;
+    vector3_renderer_.enabled() = vertex_renderer_.property_mode() == PropMode::VEC3
+        || edge_renderer_.property_mode() == PropMode::VEC3
+        || face_renderer_.property_mode() == PropMode::VEC3
+        || cell_renderer_.property_mode() == PropMode::VEC3;
 
     vector3_renderer_.render(_view_size, _render_pass, mvp);
 
@@ -479,7 +481,7 @@ bool OpenVolumeMeshObject::visualize_property(
             const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
                 mesh_, _pp);
             col_rend.update_property_data(data);
-            col_rend.property_type() = get_buffer_property_type<T>();
+            col_rend.property_mode() = get_buffer_property_type<T>();
         }
 
         // Upload Data to Vector Renderer
@@ -596,7 +598,7 @@ std::vector<OVM::PropertyStorageBase*> OpenVolumeMeshObject::visualized_props() 
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = ColoredVertexRenderer::Prop::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_vertices());
     for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
@@ -606,7 +608,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
 }
 void OpenVolumeMeshObject::upload_default_edge_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = ColoredEdgeRenderer::Prop::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_edges());
     for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
@@ -616,7 +618,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
 }
 void OpenVolumeMeshObject::upload_default_face_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = ColoredFaceRenderer::Prop::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_faces());
     for (OVM::FH fh : mesh_.faces()) {
@@ -626,7 +628,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
 }
 void OpenVolumeMeshObject::upload_default_cell_property_data()
 {
-    using D = RendererBase::Property::Data;
+    using D = ColoredCellRenderer::Prop::Data;
     std::vector<D> props;
     props.reserve(mesh_.n_cells());
     for (OVM::CH ch : mesh_.cells()) {

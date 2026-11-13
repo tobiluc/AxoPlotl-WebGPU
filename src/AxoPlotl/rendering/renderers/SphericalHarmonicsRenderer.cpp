@@ -120,6 +120,8 @@ void SHRenderer::create_buffers()
 
     // Uniform Buffer
     {
+        compute_uniform_stride<Uniforms>(device);
+
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
@@ -141,6 +143,7 @@ void SHRenderer::create_bind_group_layout()
     entries[0].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[0].buffer.type = wgpu::BufferBindingType::Uniform;
     entries[0].buffer.minBindingSize = sizeof(Uniforms);
+    entries[0].buffer.hasDynamicOffset = true;
 
     // 2 - Color Map
     entries[1].binding = 1;
@@ -285,18 +288,22 @@ void SHRenderer::render(
 {
     if (!initialized_ || !enabled_) {return;}
 
+    const uint32_t offset = draw_index_ * uniform_stride_;
+
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.object_id_ = object_id_;
     pipeline_state_.device_.getQueue().writeBuffer(
-        uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
+        uniform_buffer_, offset, &uniforms_, sizeof(Uniforms));
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
-    _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+    _render_pass.setBindGroup(0, bind_group_, 1, &offset);
     _render_pass.setVertexBuffer(0, vertex_buffer_, 0, vertices_.size()*sizeof(Vertex));
     _render_pass.setIndexBuffer(index_buffer_, wgpu::IndexFormat::Uint32, 0, n_indices_*sizeof(uint32_t));
     _render_pass.drawIndexed(n_indices_, 1, 0, 0, 0);
     //_render_pass.draw(n_indices_, 1, 0, 0);
+
+    set_next_draw_index();
 }
 
 }

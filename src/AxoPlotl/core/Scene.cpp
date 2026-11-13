@@ -12,22 +12,21 @@ void Scene::init(Application *_app)
 {
     app_ = _app;
 
-    // Initialize the Coordinate Axes Cross
-    using D = ColoredEdgeRenderer::Property::Data;
-    axis_position_buffer_ = create_position_buffer(
+    // Coordinate Axes Cross
+    using D = ColoredEdgeRenderer::Prop::Data;
+
+    origin_position_buffer_ = create_position_buffer(
         app_->gpu_context().device, {Vec4f(0,0,0,1)});
-    axis_renderer_.init(UINT32_MAX,
+
+    unit_frame_renderer_.init(UINT32_MAX,
                         app()->gpu_context(),
                         app()->render_context(),
-                        axis_position_buffer_);
+                        origin_position_buffer_);
     glm::mat3x4 m;
     m[0] = {1,0,0,1};
     m[1] = {0,1,0,1};
     m[2] = {0,0,1,1};
-    axis_renderer_.update_matrix_data({m});
-    axis_renderer_.draw_symmetric() = false;
-
-    //add_object<SHObject>();
+    unit_frame_renderer_.update_matrix_data({m});
 }
 
 std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const OVMVolumeMesh &&_mesh)
@@ -54,10 +53,21 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     const Mat4x4f view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
-    axis_renderer_.enabled() = settings.show_axis_cross;
-    axis_renderer_.render(_view_size,
+    unit_frame_renderer_.draw_symmetric() = false;
+    unit_frame_renderer_.enabled() = settings.show_axis_cross;
+    unit_frame_renderer_.vector_scale() = 1.0f;
+    unit_frame_renderer_.render(_view_size,
         _render_pass,
         view_proj);
+
+    // Render Camera Target at Orbit Target
+    unit_frame_renderer_.enabled() = settings.show_orbit_target_cross;
+    unit_frame_renderer_.draw_symmetric() = true;
+    unit_frame_renderer_.vector_scale() = 0.02f;
+    unit_frame_renderer_.render(_view_size,
+        _render_pass, proj
+         * glm::translate(glm::mat4(1),
+            Camera::FORWARD*camera().orbit_distance()));
 
     // Render Scene Objects
     for (const auto& obj : objects_) {
@@ -92,6 +102,7 @@ void Scene::render_settings_ui()
 
     ImGui::ColorEdit3("Background", settings.clear_color);
     ImGui::Checkbox("Axis Cross", &settings.show_axis_cross);
+    ImGui::Checkbox("Orbit Cross", &settings.show_orbit_target_cross);
     ImGui::Checkbox("Zoom to New Object", &settings.zoom_to_new_object);
 }
 

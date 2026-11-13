@@ -37,7 +37,9 @@ public:
         return uniforms_.clip_box_;
     }
 
-    Vector3Renderer() {}
+    Vector3Renderer(uint32_t _max_draw_calls = 1)
+        : RendererBase(_max_draw_calls)
+    {}
 
     ~Vector3Renderer() {clear();}
 

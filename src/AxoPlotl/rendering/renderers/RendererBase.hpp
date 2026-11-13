@@ -35,13 +35,18 @@ public:
         alignas(16) Vec3f max_;
         alignas(16) int32_t enabled_ = false;
 
-        inline void set(const Vec3f& _min, const Vec3f& _max) {
-            enabled_ = true;
-            min_ = _min;
-            max_ = _max;
-        }
+        // void set(const Vec3f& _min, const Vec3f& _max) {
+        //     enabled_ = true;
+        //     min_ = _min;
+        //     max_ = _max;
+        // }
     };
     static_assert(sizeof(ClipBox)==3*16);
+    static_assert(sizeof(ClipBox)%16==0);
+
+    RendererBase(uint32_t _max_draw_calls = 1)
+        : max_draw_calls_(std::max(_max_draw_calls, 1u))
+    {}
 
     virtual void clear() = 0;
 
@@ -53,22 +58,35 @@ protected:
     bool enabled_ = true;
     bool initialized_ = false;
 
-    static_assert(sizeof(ClipBox)%16==0);
+    /// You can use a Renderer several times
+    /// per frame (with different Uniforms)
+    /// by modyfying max_draw_calls_. uniform_stride
+    /// must be initialized in init.
+    /// Do not exceed max draw calls (i.e. call render on
+    /// the same Renderer more
+    /// than max_draw_calls many times in the same frame tick)!
+    uint32_t uniform_stride_ = 0;
+    const uint32_t max_draw_calls_;
+    uint32_t draw_index_ = 0;
+
+    constexpr void set_next_draw_index() {
+        draw_index_ = (draw_index_ + 1u) % max_draw_calls_;
+    }
+
+    template<typename UniformT>
+    void compute_uniform_stride(const wgpu::Device& _device) {
+        wgpu::Limits limits;
+        _device.getLimits(&limits);
+        const uint32_t alignment = limits.minUniformBufferOffsetAlignment;
+        uniform_stride_ = (sizeof(UniformT) + alignment - 1) / alignment * alignment;
+    }
 
 public:
-    struct Property
-    {
-        enum class Type : uint32_t {
-            COLOR = 0u,
-            SCALAR = 1u,
-            VEC3 = 2u,
-            MAT3x3 = 3u
-        };
-        using Data = Vec4f;
-        struct Filter {
-            Vec2f range_ = {0,0};
-        };
-    };
+    constexpr void reset_draw_index() {
+        draw_index_ = 0u;
+    }
+
+public:
 
     virtual void render(
         const ViewSize& _size,

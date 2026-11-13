@@ -18,7 +18,8 @@ class Scene
 {
 public:
 
-    Scene() {};
+    Scene() : unit_frame_renderer_(2)
+    {};
 
     ~Scene() {
         destroy();
@@ -33,7 +34,8 @@ public:
     void render_settings_ui();
 
     inline void destroy() {
-        destroy_buffer(axis_position_buffer_);
+        destroy_buffer(origin_position_buffer_);
+        unit_frame_renderer_.clear();
         objects_.clear();
     }
 
@@ -113,18 +115,21 @@ public:
         bool zoom_to_new_object = true;
         float clear_color[3] = {1,1,1};
         bool show_axis_cross = true;
+        bool show_orbit_target_cross = true;
 
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(Settings,
             zoom_to_new_object,
-            clear_color, show_axis_cross);
+            clear_color, show_axis_cross,
+            show_orbit_target_cross);
     } settings;
 
 protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
-    wgpu::Buffer axis_position_buffer_;
-    // ColoredEdgeRenderer axis_renderer_;
-    Matrix3x3Renderer axis_renderer_;
+
+    wgpu::Buffer origin_position_buffer_;
+    Matrix3x3Renderer unit_frame_renderer_;
+
     Camera camera_;
 
 public:

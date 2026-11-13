@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AxoPlotl/geometry/geometry_traits.hpp"
-#include <AxoPlotl/rendering/renderers/RendererBase.hpp>
+#include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include <AxoPlotl/typedefs/ovm.hpp>
 
 namespace AxoPlotl::internal
@@ -56,9 +56,9 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-std::optional<RendererBase::Property::Data> get_buffer_property_data_vec4(const T& _val)
+std::optional<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(const T& _val)
 {
-    using D = RendererBase::Property::Data;
+    using D = PropertyRendererBase::Prop::Data;
 
     if constexpr(std::is_floating_point_v<T>) {
         if (std::isnan(_val)) {
@@ -90,26 +90,26 @@ std::optional<RendererBase::Property::Data> get_buffer_property_data_vec4(const 
 }
 
 template<typename T>
-constexpr RendererBase::Property::Type get_buffer_property_type()
+constexpr PropertyRendererBase::Prop::Mode get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
-        return RendererBase::Property::Type::SCALAR;
+        return PropertyRendererBase::Prop::Mode::SCALAR;
     } else if constexpr(is_vector<T>) {
         if constexpr(vector_dim<T> == 3) {
-            return RendererBase::Property::Type::VEC3;
+            return PropertyRendererBase::Prop::Mode::VEC3;
         }
     }
-    return RendererBase::Property::Type::COLOR;
+    return PropertyRendererBase::Prop::Mode::COLOR;
 }
 
 template<typename T, typename EntityTag>
-std::vector<RendererBase::Property::Data> get_buffer_property_data_vec4(
+std::vector<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(
     const OVMVolumeMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
 {
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
-    std::vector<RendererBase::Property::Data> data;
+    std::vector<PropertyRendererBase::Prop::Data> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
         auto d = get_buffer_property_data_vec4(static_cast<T>(prop[h]));

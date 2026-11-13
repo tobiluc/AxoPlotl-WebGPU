@@ -27,7 +27,9 @@ protected:
     ColorMap color_map_;
 
 public:
-    SHRenderer() {}
+    SHRenderer(uint32_t _max_draw_calls = 1)
+        : RendererBase(_max_draw_calls)
+    {}
 
     ~SHRenderer() {clear();}
 

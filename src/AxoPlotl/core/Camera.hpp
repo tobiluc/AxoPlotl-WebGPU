@@ -11,12 +11,12 @@ namespace AxoPlotl::internal
 
 class Camera
 {
-
-private:
+public:
     static constexpr glm::vec3 UP = {0,1,0};
     static constexpr glm::vec3 RIGHT = {1,0,0};
     static constexpr glm::vec3 FORWARD = {0,0,-1};
 
+private:
     float sensitivity_ = 0.005f;
     float pan_speed_ = 2.0f;
 
@@ -47,6 +47,10 @@ public:
     void zoom_to_box(const glm::vec3& min, const glm::vec3& max);
 
     bool render_settings_ui(GLFWwindow* _window);
+
+    float orbit_distance() const {
+        return glm::length(orbit_target_ - eye_position_);
+    }
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera,
         sensitivity_, pan_speed_, near_plane_, far_plane_,

@@ -62,7 +62,7 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
+        desc.size = sizeof(Prop::Data) * std::max(n_vertices_,1lu);
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Vertex Property Buffer");
 
@@ -71,6 +71,8 @@ void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices
 
     // Uniform Buffer
     {
+        compute_uniform_stride<Uniforms>(device);
+
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
         desc.size = sizeof(Uniforms);
@@ -92,6 +94,7 @@ void ColoredVertexRenderer::create_bind_group_layout()
     entries[0].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[0].buffer.type = wgpu::BufferBindingType::Uniform;
     entries[0].buffer.minBindingSize = sizeof(Uniforms);
+    entries[0].buffer.hasDynamicOffset = true;
 
     // 1 - Positions
     entries[1].binding = 1;
@@ -114,7 +117,7 @@ void ColoredVertexRenderer::create_bind_group_layout()
     entries[4].binding = 4;
     entries[4].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[4].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
-    entries[4].buffer.minBindingSize = sizeof(Property::Data);
+    entries[4].buffer.minBindingSize = sizeof(Prop::Data);
 
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
     layoutDesc.entryCount = 5;
@@ -152,7 +155,7 @@ void ColoredVertexRenderer::create_bind_group()
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(Property::Data) * std::max(n_vertices_,1lu);
+    groupEntries[4].size = sizeof(Prop::Data) * std::max(n_vertices_,1lu);
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -217,13 +220,13 @@ void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, cons
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredVertexRenderer::update_property_data(const std::vector<Property::Data>& _data)
+void ColoredVertexRenderer::update_property_data(const std::vector<Prop::Data>& _data)
 {
     pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,
         _data.data(),
-        sizeof(Property::Data) * _data.size()
+        sizeof(Prop::Data) * _data.size()
         );
 }
 
@@ -234,18 +237,22 @@ void ColoredVertexRenderer::render(
 {
     if (!initialized_ || !enabled_ || n_vertices_==0) {return;}
 
+    const uint32_t offset = draw_index_ * uniform_stride_;
+
     // Update uniforms
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_size.width,_size.height};
     uniforms_.object_id_ = object_id_;
     pipeline_state_.device_.getQueue().writeBuffer(
-        uniform_buffer_, 0, &uniforms_, sizeof(Uniforms));
+        uniform_buffer_, offset, &uniforms_, sizeof(Uniforms));
 
     // Instancing. For each instance, we draw 4 vertices
     // that form a quad
     _render_pass.setPipeline(pipeline_state_.pipeline_);
-    _render_pass.setBindGroup(0, bind_group_, 0, nullptr);
+    _render_pass.setBindGroup(0, bind_group_, 1, &offset);
     _render_pass.draw(4, n_vertices_, 0, 0);
+
+    set_next_draw_index();
 }
 
 }

@@ -16,8 +16,8 @@ protected:
         alignas(16) Vec2f viewport_size_;
         alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) Property::Type type_ = Property::Type::COLOR;
-        alignas(16) Property::Filter value_filter_;
+        alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;
+        alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0.9,0.9,0.9,1);
         alignas(16) DirectionalLight dir_light_ ;
@@ -34,11 +34,11 @@ public:
         return uniforms_.cell_scale_;
     }
 
-    Property::Type& property_type() override {
+    Prop::Mode& property_mode() override {
         return uniforms_.type_;
     }
 
-    Property::Filter& property_filter() override {
+    Prop::Filter& property_filter() override {
         return uniforms_.value_filter_;
     }
 
@@ -54,7 +54,9 @@ public:
         return uniforms_.dir_light_;
     }
 
-    ColoredCellRenderer() {}
+    ColoredCellRenderer(uint32_t _max_draw_calls = 1)
+        : PropertyRendererBase(_max_draw_calls)
+    {}
 
     ~ColoredCellRenderer()
     {
@@ -71,7 +73,7 @@ public:
             const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
             wgpu::Buffer _cells_center_buffer);
 
-    void update_property_data(const std::vector<Property::Data>& _data);
+    void update_property_data(const std::vector<Prop::Data>& _data);
 
     void render(
         const ViewSize& _size,
