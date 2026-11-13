@@ -346,7 +346,7 @@ void ColoredCellRenderer::create_triangle_pipeline(
     wgpu::PrimitiveState primitive{};
     primitive.topology = wgpu::PrimitiveTopology::TriangleList;
     primitive.frontFace = wgpu::FrontFace::CCW;
-    primitive.cullMode = wgpu::CullMode::None;
+    primitive.cullMode = wgpu::CullMode::Front;
 
     // Multisample
     wgpu::MultisampleState multisample{};

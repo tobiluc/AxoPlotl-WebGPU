@@ -205,7 +205,7 @@ void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, cons
     // Pipeline
     wgpu::RenderPipelineDescriptor pipelineDesc{};
     wgpu::DepthStencilState depth = create_default_depth_state();
-    depth.depthBias = 0.0f; // 0=V, 1=E, 2=F (z-fighting)
+    depth.depthBias = 0.0f;
     depth.depthBiasSlopeScale = 0.0f;
     depth.depthBiasClamp = 0.0f;
     depth.depthCompare = wgpu::CompareFunction::LessEqual; // allow vertices exactly on faces
