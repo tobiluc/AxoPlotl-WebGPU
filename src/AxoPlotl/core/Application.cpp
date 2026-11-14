@@ -627,6 +627,7 @@ void Application::render_editor_ui()
 
     // Rebuild the layout when requested.
     if (requests_.reset_layout) {
+        inspector_.enabled = true;
         build_default_layout(dockspace_id);
         requests_.reset_layout = false;
     }
