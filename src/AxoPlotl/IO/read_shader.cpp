@@ -8,6 +8,8 @@ namespace AxoPlotl::IO
 std::string parse_shader_file_with_includes(std::filesystem::path _path)
 {
     _path = std::filesystem::path(AXOPLOTL_SHADERS_DIR)/_path;
+    static const std::filesystem::path AXOPLOTL_SHADERS_INCLUDE_DIR
+        = std::filesystem::path(AXOPLOTL_SHADERS_DIR) / "includes";
 
     if (!std::filesystem::exists(_path)) {
         throw std::runtime_error("Shader file not found: " + _path.string());
@@ -28,6 +30,8 @@ std::string parse_shader_file_with_includes(std::filesystem::path _path)
 
     while ((pos = result.find("#include", pos)) != std::string::npos)
     {
+        bool relative_include_path = false;
+
         size_t quote_start = result.find('"', pos);
         size_t quote_end   = result.find('"', quote_start + 1);
 
@@ -41,9 +45,12 @@ std::string parse_shader_file_with_includes(std::filesystem::path _path)
         std::string include_name =
             result.substr(quote_start + 1, quote_end - quote_start - 1);
 
-        // Resolve relative to current file directory
+        // Resolve include path
         std::filesystem::path include_path =
-            _path.parent_path() / "includes" / include_name;
+            relative_include_path?
+                _path.parent_path() / include_name
+            :
+                AXOPLOTL_SHADERS_INCLUDE_DIR / include_name;
 
         // Recursively parse included file
         std::string included_source =

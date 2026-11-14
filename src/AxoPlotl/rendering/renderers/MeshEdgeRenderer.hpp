@@ -1,5 +1,6 @@
 #pragma once
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
+#include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/ColorMap.hpp"
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
@@ -21,6 +22,7 @@ protected:
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0,0,0,1);
         alignas(16) float depth_offset_ = 0.00002;
+        alignas(16) DirectionalLight dir_light_ ;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);

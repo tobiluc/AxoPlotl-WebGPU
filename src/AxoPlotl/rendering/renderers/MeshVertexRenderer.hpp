@@ -17,7 +17,7 @@ protected:
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0.1,0.1,0.1,1);
+        alignas(16) Vec4f ambient_ = Vec4f(0.5,0.5,0.5,1);
         alignas(16) float depth_offset_ = 0.00003;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);

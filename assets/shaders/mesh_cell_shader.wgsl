@@ -61,12 +61,7 @@ fn fs_main(in:V2F) -> FragmentOutput
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
 
-    // Directional diffuse lighting
-    let N = normalize(in.normal);
-    let L = normalize(-ubo.dirLight.dir);
-    let diffuse = max(dot(N, L), 0.0);
-    let lighting = ubo.dirLight.color
-        * ubo.dirLight.strength * diffuse;
+    let lighting = getLightContribution(ubo.dirLight, in.normal);
 
     out.color = vec4<f32>(
         out.color.rgb * (lighting + ubo.ambient.rgb),
