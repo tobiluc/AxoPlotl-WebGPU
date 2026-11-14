@@ -9,7 +9,10 @@ struct LineQuadCorner
     quadCorner: vec2<f32>,
 
     // x: Edge Length (L), y: Line Width (W)
-    quadSize: vec2<f32>
+    quadSize: vec2<f32>,
+
+    // Interpolation t along edge in [0,1]
+    t:f32
 };
 
 fn getLineQuadCorner(
@@ -41,7 +44,7 @@ fn getLineQuadCorner(
     );
 
     let config = configs[_corner_i];
-    let t = config.x;
+    res.t = config.x;
     let side = config.y;
 
     // Convert NDC to pixel coordinates.
@@ -65,7 +68,7 @@ fn getLineQuadCorner(
     // Convert back to NDC
     let offsetNdc = offsetPixels * 2.0 / _viewportSize;
 
-    var outPos = mix(_clip0, _clip1, t);
+    var outPos = mix(_clip0, _clip1, res.t);
 
     // Apply offset in clip space.
     outPos.x += offsetNdc.x * outPos.w;

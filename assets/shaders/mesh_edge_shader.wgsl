@@ -56,8 +56,8 @@ fn vs_main(
 
     // Property and Clipping
     let value = props[eh];
-    // let pos = mix(positions[vh0], positions[vh1], t);
-    if (isOutsideClipBox(out.position.xyz, ubo.clipBox)
+    let pos = mix(positions[vh0], positions[vh1], quadCorner.t);
+    if (isOutsideClipBox(pos, ubo.clipBox)
         || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
         out.position = clippedPosition();
     }
