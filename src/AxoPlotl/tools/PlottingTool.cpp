@@ -3,15 +3,29 @@
 #include "AxoPlotl/AxoPlotl.hpp"
 #include "imgui.h"
 #include <ibex/ibex.hpp>
+#include <AxoPlotl/gui/fonts.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::PlottingTool
 {
 
-PlottingTool::Input PlottingTool::input_;
-std::unordered_map<int,PlottingTool::Input> PlottingTool::objects_;
-int PlottingTool::selected_id_ = -1;
+struct Input
+{
+    char x_[1024];
+    char y_[1024];
+    char z_[1024];
+    Vec2f u_ = {-1,1};
+    Vec2f v_ = {-1,1};
+    int resolution_ = 16;
+};
+static Input input_;
+static std::unordered_map<int,Input> objects_;
+static int selected_id_ = -1;
 
-void PlottingTool::render_ui()
+const char* icon() {
+    return ICON_FA_CHART_LINE;
+}
+
+void render_ui()
 {
     if (ImGui::BeginMenu("Modify")) {
         for (auto& obj : AxoPlotl::scene().get_objects()) {

@@ -6,11 +6,14 @@
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/debug/PickingTextureVis.hpp>
 #include <AxoPlotl/core/Application.hpp>
+#include <AxoPlotl/gui/fonts.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::DebugTool
 {
 
-void DebugTool::render_ui()
+const char* icon() {return ICON_FA_BUG;}
+
+void render_ui()
 {
     ImGui::SeparatorText("Performance");
     ImGui::Text("%f MB", AxoPlotl::memory_usage_mb());

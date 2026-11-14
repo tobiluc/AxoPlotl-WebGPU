@@ -7,14 +7,16 @@
 #include <AxoPlotl/core/Scene.hpp>
 #include <AxoPlotl/gui/fonts.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::DataControlTool
 {
 
-int DataControlTool::info_object_id_ = -1;
-int DataControlTool::settings_object_id_ = -1;
-int DataControlTool::properties_object_id_ = -1;
+static int info_object_id_ = -1;
+static int settings_object_id_ = -1;
+static int properties_object_id_ = -1;
 
-void DataControlTool::render_ui()
+const char* icon() {return ICON_FA_SLIDERS;}
+
+void render_ui()
 {
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 

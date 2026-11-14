@@ -631,7 +631,7 @@ void Application::render_editor_ui()
         requests_.reset_layout = false;
     }
 
-    render_scenes_tab_bar_ui();
+    // render_scenes_tab_bar_ui();
 
     render_viewport_ui();
 
