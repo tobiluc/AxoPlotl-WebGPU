@@ -8,8 +8,6 @@
 namespace AxoPlotl::internal
 {
 
-class Application;
-
 struct PipelineState
 {
     wgpu::Device device_;
@@ -94,5 +92,7 @@ public:
         const Mat4x4f& _mvp) = 0;
 
     bool& enabled() {return enabled_;}
+
+    virtual void set_default_uniforms() = 0;
 };
 }

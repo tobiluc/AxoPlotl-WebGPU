@@ -1,4 +1,5 @@
 #include "PropertyRendererSettingsMat3x3.hpp"
+#include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include <imgui.h>
 
@@ -14,15 +15,7 @@ PropertySettingsMat3x3::PropertySettingsMat3x3(Matrix3x3Renderer& _renderer) :
 
 void PropertySettingsMat3x3::render_ui()
 {
-    bool b = renderer_.normalize();
-    ImGui::Checkbox("Normalize", &b);
-    renderer_.normalize() = b;
-
-    b = renderer_.draw_symmetric();
-    ImGui::Checkbox("Symmetric", &b);
-    renderer_.draw_symmetric() = b;
-
-    InputSlider("Vector Scale", &renderer_.vector_scale());
+    draw_basic_renderer_settings(renderer_);
 }
 
 void PropertySettingsMat3x3::set_default_settings() {

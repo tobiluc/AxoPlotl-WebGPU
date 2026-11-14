@@ -92,6 +92,10 @@ public:
         enabled_ = _r.enabled_;
     }
 
+    void set_default_uniforms() override {
+        uniforms_ = Uniforms();
+    };
+
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;

@@ -111,6 +111,11 @@ void draw_basic_renderer_settings(
     _r.draw_symmetric() = b;
 
     InputSlider("Vector Scale", &_r.vector_scale());
+    InputSlider("Line Width", &_r.line_width());
+
+    ImGui::ColorEdit3("Color 1", &_r.axis_colors()[0][0]);
+    ImGui::ColorEdit3("Color 2", &_r.axis_colors()[1][0]);
+    ImGui::ColorEdit3("Color 3", &_r.axis_colors()[2][0]);
 }
 
 }

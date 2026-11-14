@@ -50,6 +50,11 @@ public:
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4f& _mvp) override;
+
+    void set_default_uniforms() override {
+        uniforms_ = Uniforms();
+    };
+
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t resolution_;

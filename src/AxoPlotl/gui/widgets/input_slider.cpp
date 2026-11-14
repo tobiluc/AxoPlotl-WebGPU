@@ -1,7 +1,6 @@
 #include "input_slider.hpp"
-
+#include <unordered_map>
 #include <algorithm>
-#include <cmath>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <iostream>
@@ -9,6 +8,17 @@
 
 namespace AxoPlotl
 {
+
+struct InputSliderState
+{
+    bool editing = false;
+    bool requestFocus = false;
+    float originalValue = 0.0f;
+    char buffer[128] = {};
+};
+
+static std::unordered_map<unsigned int, InputSliderState> input_slider_states_;
+
 
 bool InputSlider(
     const char* _name,
@@ -29,7 +39,7 @@ bool InputSlider(
 
     const ImGuiID id = window->GetID(_name);
 
-    auto& state = g_InputSliderStates[id];
+    auto& state = input_slider_states_[id];
 
     const float width = ImGui::CalcItemWidth() * _opt.scale_width;
     const float height = ImGui::GetFrameHeight();
