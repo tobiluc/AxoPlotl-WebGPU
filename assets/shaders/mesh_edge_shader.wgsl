@@ -81,6 +81,11 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
 {
     var out : FragOutColPickDepth;
 
+    if (doDiscardRoundedLineQuadCornerFragment(
+            in.quadCorner, in.quadSize)) {
+        discard;
+    }
+
     // Base property color
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
@@ -109,9 +114,9 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
         );
 
     // Depth correction for 3d imposter
-    let depthCorrection = getDepthCorrection(
+    let depthCorrection = getSphereDepthCorrection(
         in.position.w,
-        ubo.lineWidth * z * dot(F, viewDir),
+        ubo.lineWidth * 0.5 * z * dot(F, viewDir),
         ubo.projection,
         ubo.viewportSize.y
         );

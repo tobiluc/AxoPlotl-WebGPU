@@ -48,13 +48,12 @@ fn getLineQuadCorner(
     let side = config.y;
 
     // Convert NDC to pixel coordinates.
-    // Y is inverted because screen coordinates usually grow downward.
     let ndc0 = _clip0.xy / _clip0.w;
     let ndc1 = _clip1.xy / _clip1.w;
 
     // Convert to pixel coordinates
-    let screen0 = ndc0 * ubo.viewportSize * 0.5;
-    let screen1 = ndc1 * ubo.viewportSize * 0.5;
+    let screen0 = ndc0 * _viewportSize * 0.5;
+    let screen1 = ndc1 * _viewportSize * 0.5;
 
     let edgeVector = screen1 - screen0;
     let edgeLength = length(edgeVector);
@@ -68,17 +67,32 @@ fn getLineQuadCorner(
     // Convert back to NDC
     let offsetNdc = offsetPixels * 2.0 / _viewportSize;
 
-    var outPos = mix(_clip0, _clip1, res.t);
+    // Extend the quad by half its width at both ends
+    // for nicer looking connections
+    let extT = (_lineWidth * 0.5) / max(edgeLength, 0.0001);
+    let t = select(
+        -extT,
+        1.0 + extT,
+        config.x > 0.5
+    );
+    var outPos = mix(_clip0, _clip1, config.x);
+
+    // Store 0 or 1 along edge
+    // (is interpolated in the fragment shader)
+    res.t = t;
 
     // Apply offset in clip space.
     outPos.x += offsetNdc.x * outPos.w;
     outPos.y += offsetNdc.y * outPos.w;
 
     res.position = outPos;
-    res.quadSize = vec2<f32>(edgeLength, ubo.lineWidth);
+    res.quadSize = vec2<f32>(
+        edgeLength + _lineWidth,
+        _lineWidth
+    );
     res.quadCorner = vec2<f32>(
-        (config.x - 0.5) * edgeLength,
-        0.5 * config.y * ubo.lineWidth
+        (config.x - 0.5) * res.quadSize.x,
+        0.5 * config.y * _lineWidth
         );
 
     return res;
@@ -96,4 +110,28 @@ fn getLineQuadShading(
     let shadow = 0.12 * smoothstep(0.1, 1.0, y);
     let finalShading = shading + highlight - shadow;
     return finalShading;
+}
+
+fn doDiscardRoundedLineQuadCornerFragment(
+    _quadCorner: vec2<f32>,
+    _quadSize: vec2<f32>
+) -> bool
+{
+    // Rounded endpoints
+    let halfWidth = _quadSize.y * 0.5;
+    let halfLength = _quadSize.x * 0.5;
+
+    // Distance from the center of the line segment.
+    let p = _quadCorner;
+
+    // Closest point on the central line segment.
+    let closest = vec2<f32>(
+        clamp(p.x, -halfLength, halfLength),
+        0.0
+    );
+
+    // Signed distance to capsule.
+    let distance = length(p - closest) - halfWidth;
+
+    return (distance > 0.0);
 }
