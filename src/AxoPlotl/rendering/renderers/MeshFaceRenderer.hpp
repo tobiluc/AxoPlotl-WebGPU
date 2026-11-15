@@ -12,14 +12,14 @@ protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
-        alignas(16) Vec2f viewport_size_;
+        alignas(16) Vec2 viewport_size_;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0.9,0.8,0.8,1);
         alignas(16) float depth_offset_ = 0.00001;
-        alignas(16) Vec3f light_dir_ = {-1,-1,-1};
+        alignas(16) Vec3 light_dir_ = {-1,-1,-1};
         alignas(16) DirectionalLight dir_light_ ;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);

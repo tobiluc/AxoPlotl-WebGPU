@@ -29,8 +29,8 @@ public:
     using Position = Vec4f; // ensure 16 byte alignment with 4f vector
 
     struct alignas(16) ClipBox {
-        alignas(16) Vec3f min_;
-        alignas(16) Vec3f max_;
+        alignas(16) Vec3 min_;
+        alignas(16) Vec3 max_;
         alignas(16) int32_t enabled_ = false;
 
         // void set(const Vec3f& _min, const Vec3f& _max) {

@@ -24,8 +24,8 @@ private:
     HistogramBool hist_;
     PropertyRendererBase* renderer_;
 
-    Vec3f color_true_ = {0,1,0};
-    Vec3f color_false_ = {1,0,0};
+    Vec3 color_true_ = {0,1,0};
+    Vec3 color_false_ = {1,0,0};
     bool show_true_ = true;
     bool show_false_ = true;
     bool changed_ = true;

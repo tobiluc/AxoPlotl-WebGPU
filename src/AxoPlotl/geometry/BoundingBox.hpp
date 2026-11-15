@@ -32,16 +32,16 @@ public:
         }
     }
 
-    inline const Vec3f& min() const {return min_;}
-    inline const Vec3f& max() const {return max_;}
+    inline const Vec3& min() const {return min_;}
+    inline const Vec3& max() const {return max_;}
 
     inline constexpr float diagonal() const {
         return glm::length(max_ - min_);
     }
 
 private:
-    Vec3f min_;
-    Vec3f max_;
+    Vec3 min_;
+    Vec3 max_;
 };
 
 }

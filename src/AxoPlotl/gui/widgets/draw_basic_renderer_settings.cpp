@@ -27,9 +27,9 @@ void draw_clipbox_settings(RendererBase::ClipBox& _cb, const BoundingBox &_bb)
     _cb.enabled_ = clip_box_enabled;
     if (clip_box_enabled)
     {
-        Vec2f x = {_cb.min_[0],_cb.max_[0]};
-        Vec2f y = {_cb.min_[1],_cb.max_[1]};
-        Vec2f z = {_cb.min_[2],_cb.max_[2]};
+        Vec2 x = {_cb.min_[0],_cb.max_[0]};
+        Vec2 y = {_cb.min_[1],_cb.max_[1]};
+        Vec2 z = {_cb.min_[2],_cb.max_[2]};
         ImGui::SliderFloat2("x", &x[0], _bb.min()[0], _bb.max()[0]);
         ImGui::SliderFloat2("y", &y[0], _bb.min()[1], _bb.max()[1]);
         ImGui::SliderFloat2("z", &z[0], _bb.min()[2], _bb.max()[2]);

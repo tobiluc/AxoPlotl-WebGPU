@@ -321,7 +321,7 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
 {
     if (_p.pixel().object_id_ != id()) [[unlikely]] {return;} // error
 
-    auto squared_distance = [](const Vec3f _p0, const OVM::Vec3f& _p1) -> float {
+    auto squared_distance = [](const Vec3 _p0, const OVM::Vec3f& _p1) -> float {
         float dx = _p0[0] - _p1[0];
         float dy = _p0[1] - _p1[1];
         float dz = _p0[2] - _p1[2];
@@ -419,8 +419,8 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
         const float s = std::max<float>(bbox_.diagonal()*0.01f, 0.01f);
         BoundingBox bbox;
-        bbox.expand_with_point(_p.pixel().position_-Vec3f(s,s,s));
-        bbox.expand_with_point(_p.pixel().position_+Vec3f(s,s,s));
+        bbox.expand_with_point(_p.pixel().position_-Vec3(s,s,s));
+        bbox.expand_with_point(_p.pixel().position_+Vec3(s,s,s));
         scene_->zoom_to_box(bbox);
     }
 }

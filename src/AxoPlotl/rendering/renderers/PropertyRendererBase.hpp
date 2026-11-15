@@ -18,7 +18,7 @@ public:
             MAT3x3 = 3u
         };
         struct Filter {
-            Vec2f range_ = {0,0};
+            Vec2 range_ = {0,0};
         };
         using Data = Vec4f;
     };

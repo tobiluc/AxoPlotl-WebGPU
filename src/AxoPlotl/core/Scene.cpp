@@ -50,6 +50,11 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     const Mat4x4f& view = camera_.get_view_matrix();
     const Mat4x4f& proj = camera_.get_projection_matrix(_view_size);
 
+    // The light can point in the camera forward direction
+    if (settings.light_from_camera) {
+        directional_light.direction = camera_.orientation() * Camera::FORWARD;
+    }
+
     const Mat4x4f view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
@@ -99,6 +104,7 @@ void Scene::render_settings_ui()
         ImGui::ColorEdit3("Color", &directional_light.color[0]);
         ImGui::InputFloat3("Direction", &directional_light.direction[0]);
         InputSlider("Strength", &directional_light.strength);
+        ImGui::Checkbox("From Camera", &settings.light_from_camera);
         ImGui::EndMenu();
     }
 

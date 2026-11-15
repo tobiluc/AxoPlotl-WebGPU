@@ -78,7 +78,7 @@ void SegmentObject::recompute_bounding_box()
 {
     bbox_ = BoundingBox();
     for (int i = 0; i < 2; ++i) {
-        bbox_.expand_with_point(Vec3f(input_[i][0],input_[i][1],input_[i][2]));
+        bbox_.expand_with_point(Vec3(input_[i][0],input_[i][1],input_[i][2]));
     }
 }
 

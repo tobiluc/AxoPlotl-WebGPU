@@ -20,8 +20,8 @@ ColorMap::f16x3 ColorMap::sample_color(float _t) const
     int idx1 = idx0 + 1;
     f16 local_t = scaled - idx0;
 
-    const Vec3f &c0 = colors_.at(idx0);
-    const Vec3f &c1 = colors_.at(idx1);
+    const Vec3 &c0 = colors_.at(idx0);
+    const Vec3 &c1 = colors_.at(idx1);
 
     f16 r = c0.r + local_t * (c1.r - c0.r);
     f16 g = c0.g + local_t * (c1.g - c0.g);
@@ -259,7 +259,7 @@ void ColorMap::render_menu()
             for (int i = 0; i < custom_colors_.size(); ++i)
             {
                 ImGui::PushID(i);
-                Vec3f col(custom_colors_[i][0],
+                Vec3 col(custom_colors_[i][0],
                           custom_colors_[i][1],
                           custom_colors_[i][2]);
                 if (ImGui::ColorEdit3("Color", &col[0])) {

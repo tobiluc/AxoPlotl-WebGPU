@@ -31,7 +31,7 @@ public:
             mode_ = static_cast<Mode>(mode);
         }
 
-        Vec2f& rangef = renderer_->property_filter().range_;
+        Vec2& rangef = renderer_->property_filter().range_;
         ColorMap& cm = renderer_->color_map();
 
         switch (mode_) {

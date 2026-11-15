@@ -24,7 +24,7 @@ void SHRenderer::init(
     create_bind_group();
     create_pipeline(_gpu_context, _render_context);
 
-    update([](const Vec3f& _pos) -> float32_t {
+    update([](const Vec3& _pos) -> float32_t {
         return std::pow(_pos.x, 4) + std::pow(_pos.y, 4) + std::pow(_pos.z, 4);
     });
 
@@ -262,7 +262,7 @@ void SHRenderer::create_pipeline(const GpuContext& _gpu_context,
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
+void SHRenderer::update(const std::function<float32_t (const Vec3 &)> &_f)
 {
     if (!initialized_) {return;}
 

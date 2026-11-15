@@ -71,7 +71,7 @@ void SHObject::render_ui_properties()
                     // vars["theta"] = z;
                     return ibex::eval_postfix(rpn, vars, funcs);
                 };
-                renderer_.update([&](const Vec3f& _pos) -> float
+                renderer_.update([&](const Vec3& _pos) -> float
                 {
                     return func(_pos.x, _pos.y, _pos.z);
                 });
@@ -87,7 +87,7 @@ void SHObject::render_ui_properties()
 
         if (updated_)
         {
-            renderer_.update([&](const Vec3f& _pos) -> float
+            renderer_.update([&](const Vec3& _pos) -> float
             {
                 return (1.0 + (
                              canonical_odeco_frame(lengths[0],lengths[1],lengths[2])
@@ -105,7 +105,7 @@ void SHObject::render_ui_properties()
 
         if (updated_)
         {
-            renderer_.update([&](const Vec3f& _pos) -> float
+            renderer_.update([&](const Vec3& _pos) -> float
             {
                 return (1.0 + (
                  canonical_octa_frame()
@@ -120,10 +120,10 @@ void SHObject::render_ui_picking(const Picker& _p)
 {
     if (_p.pixel().object_id_ != id()) [[unlikely]] {return;}
 
-    auto polar_angle = [](const Vec3f& _pos) -> float {
+    auto polar_angle = [](const Vec3& _pos) -> float {
         return std::acos(_pos.z/(glm::length(_pos)));
     };
-    auto azimuth_angle = [](const Vec3f& _pos) -> float {
+    auto azimuth_angle = [](const Vec3& _pos) -> float {
         float a = std::acos(_pos.x/(std::sqrt(_pos.x*_pos.x+_pos.y*_pos.y)));
         return (_pos.y<0)? -a : a;
     };
@@ -145,7 +145,7 @@ void SHObject::init()
 {
     renderer_.init(id_, scene_->app()->gpu_context(), scene()->app()->render_context(), render_resolution_);
 
-    renderer_.update([&](const Vec3f& _pos) -> float
+    renderer_.update([&](const Vec3& _pos) -> float
     {
         return canonical_odeco_frame(1,1,1).dot(sh_band024(_pos.x,_pos.y,_pos.z));
     });
@@ -159,8 +159,8 @@ void SHObject::destroy()
 void SHObject::recompute_bounding_box()
 {
     bbox_ = BoundingBox();
-    bbox_.expand_with_point(Vec3f(-1,-1,-1));
-    bbox_.expand_with_point(Vec3f(1,1,1));
+    bbox_.expand_with_point(Vec3(-1,-1,-1));
+    bbox_.expand_with_point(Vec3(1,1,1));
 }
 
 }

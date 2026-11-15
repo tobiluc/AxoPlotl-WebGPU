@@ -24,7 +24,7 @@ public:
             ImGui::TextColored(ImVec4(1,0,0,1), "No valid value exists.\nEither there are no entities\nor every value is NaN or Infinity.");
             return;
         }
-        Vec2f& rangef = renderer_->property_filter().range_;
+        Vec2& rangef = renderer_->property_filter().range_;
         ColorMap& cm = renderer_->color_map();
         int b = hist_.render_ui(cm);
         if (b >= 0) {

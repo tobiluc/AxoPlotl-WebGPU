@@ -23,8 +23,8 @@ private:
     float near_plane_ = 1.0f/64.0f;
     float far_plane_ = (1<<11);
 
-    Vec3f orbit_target_ = {0, 0, 0};
-    Vec3f eye_position_ = {0, 0, 1};
+    Vec3 orbit_target_ = {0, 0, 0};
+    Vec3 eye_position_ = {0, 0, 1};
     Quat orientation_ = {1, 0, 0, 0};
 
     float fov_ = 0.25*M_PI; // field of view in radians
@@ -55,6 +55,8 @@ public:
     float& near_plane() {return near_plane_;}
 
     float& far_plane() {return far_plane_;}
+
+    const Quat& orientation() const {return orientation_;}
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera,
         sensitivity_, pan_speed_, near_plane_, far_plane_,

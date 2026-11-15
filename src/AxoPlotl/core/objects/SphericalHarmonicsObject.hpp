@@ -10,8 +10,8 @@ class SHObject : public ObjectBase
 {
 private:
     SHRenderer renderer_;
-    Vec3f lengths = {1,1,1};
-    Vec3f angles = {0,0,0};
+    Vec3 lengths = {1,1,1};
+    Vec3 angles = {0,0,0};
     constexpr static size_t render_resolution_ = 64;
 
     enum class Type

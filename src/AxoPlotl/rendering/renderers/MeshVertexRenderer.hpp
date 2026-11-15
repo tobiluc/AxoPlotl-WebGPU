@@ -14,7 +14,7 @@ protected:
         alignas(16) Mat4x4f view_;
         alignas(16) Mat4x4f projection_;
         alignas(16) Mat4x4f mvp_;
-        alignas(16) Vec2f viewport_size_;
+        alignas(16) Vec2 viewport_size_;
         alignas(16) float point_size_ = 8.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;

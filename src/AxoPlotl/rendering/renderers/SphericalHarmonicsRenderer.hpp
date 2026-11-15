@@ -12,7 +12,7 @@ protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
-        alignas(16) Vec2f value_range_ = {-1,1};
+        alignas(16) Vec2 value_range_ = {-1,1};
         alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -20,7 +20,7 @@ protected:
 
     struct Vertex
     {
-        Vec3f position_;
+        Vec3 position_;
         float value_;
     };
 
@@ -44,7 +44,7 @@ public:
               const RenderContext& _render_context,
               size_t _resolution);
 
-    void update(const std::function<float32_t(const Vec3f&)>& _f);
+    void update(const std::function<float32_t(const Vec3&)>& _f);
 
     void render(
         const ViewSize& _size,

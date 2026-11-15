@@ -13,8 +13,8 @@ struct Input
     char x_[1024];
     char y_[1024];
     char z_[1024];
-    Vec2f u_ = {-1,1};
-    Vec2f v_ = {-1,1};
+    Vec2 u_ = {-1,1};
+    Vec2 v_ = {-1,1};
     int resolution_ = 16;
 };
 static Input input_;
@@ -61,10 +61,10 @@ void render_ui()
         auto rpn_z = ibex::generate_postfix(ibex::tokenize(input_.z_));
         if (!rpn_x.empty() && !rpn_y.empty() && !rpn_z.empty())
         {
-            auto func = [&](const float& u, const float& v) -> Vec3f {
+            auto func = [&](const float& u, const float& v) -> Vec3 {
                 vars["u"] = u;
                 vars["v"] = v;
-                return Vec3f{
+                return Vec3{
                     ibex::eval_postfix(rpn_x, vars, funcs),
                     ibex::eval_postfix(rpn_y, vars, funcs),
                     ibex::eval_postfix(rpn_z, vars, funcs)

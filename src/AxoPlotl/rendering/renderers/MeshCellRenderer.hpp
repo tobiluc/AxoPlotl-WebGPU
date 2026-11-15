@@ -13,7 +13,7 @@ protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
         alignas(16) Mat4x4f mvp_;
-        alignas(16) Vec2f viewport_size_;
+        alignas(16) Vec2 viewport_size_;
         alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;

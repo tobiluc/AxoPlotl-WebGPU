@@ -116,6 +116,7 @@ public:
         float clear_color[3] = {1,1,1};
         bool show_axis_cross = true;
         bool show_orbit_target_cross = true;
+        bool light_from_camera = false;
 
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(Settings,
             zoom_to_new_object,
