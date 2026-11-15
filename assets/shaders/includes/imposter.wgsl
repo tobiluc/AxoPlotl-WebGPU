@@ -14,5 +14,4 @@ fn getDepthCorrection(
         B * _posW *
         (1.0 / (1.0 - k) - 1.0);
     return depthCorrection;
-
 }

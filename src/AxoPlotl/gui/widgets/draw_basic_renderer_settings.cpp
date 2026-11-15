@@ -45,7 +45,7 @@ void draw_basic_renderer_settings(
     InputSlider("Point Size",
                 &_r.point_size(),
                 InputSliderOptions{
-                                   .step=0.1f, .min= 0.0f, .max=128.0f});
+                                   .step=0.1f, .min= 0.0f, .max=256.0f});
     InputSlider("Depth Offset",
                 &_r.depth_offset(),
                 InputSliderOptions{
@@ -62,7 +62,7 @@ void draw_basic_renderer_settings(
     InputSlider("Line Width",
                 &_r.line_width(),
                 InputSliderOptions{
-                    .step=0.1f, .min= 0.0f, .max=32.0f});
+                    .step=0.1f, .min= 0.0f, .max=128.0f});
     InputSlider("Depth Offset",
                 &_r.depth_offset(),
                 InputSliderOptions{

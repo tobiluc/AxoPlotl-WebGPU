@@ -111,7 +111,7 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
     // Depth correction for 3d imposter
     let depthCorrection = getDepthCorrection(
         in.position.w,
-        ubo.lineWidth * z,
+        ubo.lineWidth * z * dot(F, viewDir),
         ubo.projection,
         ubo.viewportSize.y
         );
