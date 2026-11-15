@@ -78,9 +78,9 @@ fn fs_main(in : VSOut) -> FragOutColPickDepth
 
     // Depth correction for 3d imposter
     let sphereZ = sqrt(1.0 - dist2);
-    let depthCorrection = getSphereDepthCorrection(
+    let depthCorrection = getImposterDepthCorrection(
         in.position.w,
-        ubo.pointSize * sphereZ,
+        ubo.pointSize * sphereZ * 0.5,
         ubo.projection,
         ubo.viewportSize.y
         );
