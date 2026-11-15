@@ -254,6 +254,8 @@ void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const 
 
 void ColoredEdgeRenderer::update_property_data(const std::vector<Prop::Data>& _data)
 {
+    if (!initialized_) {return;}
+
     pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,
@@ -265,14 +267,17 @@ void ColoredEdgeRenderer::update_property_data(const std::vector<Prop::Data>& _d
 void ColoredEdgeRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const Mat4x4f& _mvp)
+    const MVP& _mvp)
 {
     if (!initialized_ || !enabled_ || n_edges_==0) {return;}
 
     const uint32_t offset = draw_index_ * uniform_stride_;
 
     // Update uniforms
-    uniforms_.mvp_ = _mvp;
+    uniforms_.projection_ = _mvp.proj;
+    uniforms_.model_view_ = _mvp.modelview();
+    uniforms_.view_ = _mvp.view;
+    uniforms_.mvp_ = _mvp.proj * uniforms_.model_view_;
     uniforms_.viewport_size_ = {_size.width,_size.height};;
     uniforms_.object_id_ = object_id_;
     pipeline_state_.device_.getQueue().writeBuffer(

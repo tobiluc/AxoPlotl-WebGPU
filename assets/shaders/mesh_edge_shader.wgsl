@@ -2,6 +2,9 @@
 #include "line_as_quad.wgsl"
 
 struct Uniforms {
+    @align(16) view : mat4x4<f32>,
+    @align(16) modelView : mat4x4<f32>,
+    @align(16) projection : mat4x4<f32>,
     @align(16) mvp : mat4x4<f32>,
     @align(16) viewportSize: vec2<f32>,
     @align(16) lineWidth: f32,
@@ -25,7 +28,8 @@ struct V2F {
     @location(0) @interpolate(flat) value : vec4<f32>,
     @location(1) quadCorner: vec2<f32>,
     @location(2) @interpolate(flat) quadSize: vec2<f32>,
-    @location(3) @interpolate(flat) edgeHandle: u32
+    @location(3) @interpolate(flat) edgeHandle: u32,
+    @location(4) @interpolate(flat) edgeDirView: vec3<f32>
 };
 
 @vertex
@@ -38,6 +42,10 @@ fn vs_main(
 ) -> V2F
 {
     var out : V2F;
+
+    let p0View = ubo.modelView * vec4<f32>(positions[vh0], 1.0);
+    let p1View = ubo.modelView * vec4<f32>(positions[vh1], 1.0);
+    out.edgeDirView = normalize(p1View.xyz / p1View.w - p0View.xyz / p0View.w);
 
     let quadCorner = getLineQuadCorner(
         ubo.mvp * vec4<f32>(positions[vh0], 1.0),
@@ -69,23 +77,47 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in:V2F) -> FragmentOutput
+fn fs_main(in:V2F) -> FragOutColPickDepth
 {
-    var out : FragmentOutput;
+    var out : FragOutColPickDepth;
 
-    let lighting =
-        getLineQuadShading(in.quadCorner, in.quadSize)
-                  * ubo.dirLight.color;
-
+    // Base property color
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
 
+    // Compute Normal in View Space
+    let T = normalize(in.edgeDirView);
+    let viewDir = vec3<f32>(0.0, 0.0, 1.0);
+    let S = normalize(cross(viewDir, T));
+    let F = normalize(cross(T, S));
+    let y = clamp(in.quadCorner.y / (in.quadSize.y * 0.5), -1.0, 1.0);
+    let z = sqrt(max(0.0, 1.0 - y * y));
+    let normal = normalize(y * S + z * F);
+
+    // We transform the light direction to view space
+    var dirLightView = ubo.dirLight;
+    dirLightView.dir = normalize(
+        (ubo.view * vec4<f32>(dirLightView.dir, 0.0)).xyz
+        );
+    let lighting = getLightContribution(dirLightView, normal);
+
+    // Final color
     out.color = vec4<f32>(
         out.color.rgb * (lighting + ubo.ambient.rgb),
         out.color.a
         );
 
-    out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(in.position.z / in.position.w));
+    // Depth correction for 3d imposter
+    let depthCorrection = getDepthCorrection(
+        in.position.w,
+        ubo.lineWidth * z,
+        ubo.projection,
+        ubo.viewportSize.y
+        );
+    let depth = in.position.z + depthCorrection;
+    out.depth = depth;
+
+    out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(depth));
     return out;
 }

@@ -86,11 +86,6 @@ public:
 
 public:
 
-    virtual void render(
-        const ViewSize& _size,
-        wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) = 0;
-
     bool& enabled() {return enabled_;}
 
     virtual void set_default_uniforms() = 0;

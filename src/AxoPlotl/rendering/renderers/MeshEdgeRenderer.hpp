@@ -13,6 +13,9 @@ class ColoredEdgeRenderer : public PropertyRendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
+        alignas(16) Mat4x4f view_;
+        alignas(16) Mat4x4f model_view_;
+        alignas(16) Mat4x4f projection_;
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
         alignas(16) float line_width_ = 3.0f;
@@ -59,6 +62,10 @@ public:
         return uniforms_.depth_offset_;
     }
 
+    DirectionalLight& directional_light() {
+        return uniforms_.dir_light_;
+    }
+
     ColoredEdgeRenderer(uint32_t _max_draw_calls = 1)
         : PropertyRendererBase(_max_draw_calls)
     {}
@@ -87,7 +94,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) override;
+        const MVP& _mvp);
 
     void configure_like(const ColoredEdgeRenderer& _r) {
         uniforms_ = _r.uniforms_;

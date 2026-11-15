@@ -9,12 +9,17 @@ namespace AxoPlotl
 void SegmentObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const ViewSize& _view_size,
-    const Mat4x4f& _view_projection)
+    const Mat4x4f& _view,
+    const Mat4x4f& _proj)
 
 {
     if (deleted() || !visible()) {return;}
 
-    const auto& mvp = _view_projection * transform_;
+    const auto& mvp = MVP{
+        .model=transform_,
+        .view = _view,
+        .proj = _proj
+    };
 
     renderer_.render(_view_size, _render_pass, mvp);
 }

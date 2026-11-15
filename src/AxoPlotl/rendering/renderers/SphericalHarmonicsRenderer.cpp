@@ -264,6 +264,8 @@ void SHRenderer::create_pipeline(const GpuContext& _gpu_context,
 
 void SHRenderer::update(const std::function<float32_t (const Vec3f &)> &_f)
 {
+    if (!initialized_) {return;}
+
     uniforms_.value_range_.x = std::numeric_limits<float>::infinity();
     uniforms_.value_range_.y = -std::numeric_limits<float>::infinity();
     for (int i = 0; i < vertices_.size(); ++i)

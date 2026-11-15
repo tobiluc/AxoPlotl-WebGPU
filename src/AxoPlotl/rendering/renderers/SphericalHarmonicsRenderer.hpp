@@ -49,7 +49,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) override;
+        const Mat4x4f& _mvp);
 
     void set_default_uniforms() override {
         uniforms_ = Uniforms();

@@ -279,17 +279,26 @@ void OpenVolumeMeshObject::destroy()
 
 void OpenVolumeMeshObject::render(
     wgpu::RenderPassEncoder _render_pass, const ViewSize &_view_size,
-    const Mat4x4f& _view_projection)
+    const Mat4x4f& _view,
+    const Mat4x4f& _proj)
 {
     if (deleted() || !visible()) {return;}
 
-    const auto& mvp = _view_projection * transform_;
+    const auto& modelview = _view * transform_;
+    const auto& mvp = MVP{
+        .model = transform_,
+        .view = _view,
+        .proj = _proj
+    };
+    const auto& mvp_mat = _proj * modelview;
 
     cell_renderer_.directional_light() = scene()->directional_light;
     face_renderer_.directional_light() = scene()->directional_light;
+    edge_renderer_.directional_light() = scene()->directional_light;
+    vertex_renderer_.directional_light() = scene()->directional_light;
 
-    cell_renderer_.render(_view_size, _render_pass, mvp);
-    face_renderer_.render(_view_size, _render_pass, mvp);
+    cell_renderer_.render(_view_size, _render_pass, mvp_mat);
+    face_renderer_.render(_view_size, _render_pass, mvp_mat);
     edge_renderer_.render(_view_size, _render_pass, mvp);
     vertex_renderer_.render(_view_size, _render_pass, mvp);
 
@@ -298,9 +307,9 @@ void OpenVolumeMeshObject::render(
         || face_renderer_.property_mode() == PropMode::VEC3
         || cell_renderer_.property_mode() == PropMode::VEC3;
 
-    vector3_renderer_.render(_view_size, _render_pass, mvp);
+    vector3_renderer_.render(_view_size, _render_pass, mvp_mat);
 
-    mat3x3_renderer_.render(_view_size, _render_pass, mvp);
+    mat3x3_renderer_.render(_view_size, _render_pass, mvp_mat);
 
     // cell_translucent_renderer_.render(
     //     scene_->app()->scene_viewport(),

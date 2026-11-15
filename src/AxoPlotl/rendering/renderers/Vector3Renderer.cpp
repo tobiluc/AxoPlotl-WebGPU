@@ -180,6 +180,8 @@ void Vector3Renderer::create_pipeline(const GpuContext& _gpu_context, const Rend
 
 void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
 {
+    if (!initialized_) {return;}
+
     pipeline_state_.device_.getQueue().writeBuffer(
         vector_buffer_,
         0,

@@ -20,4 +20,21 @@ namespace AxoPlotl
         float height = 1;
         float aspect_ratio() const {return width/height;}
     };
+
+    struct VP {
+        Mat4x4f view;
+        Mat4x4f proj;
+        Mat4x4f viewproj() const {return proj*view;}
+    };
+    using ViewProjection = VP;
+
+    struct MVP {
+        Mat4x4f model;
+        Mat4x4f view;
+        Mat4x4f proj;
+        Mat4x4f modelview() const {return view*model;}
+        Mat4x4f viewproj() const {return proj*view;}
+        Mat4x4f modelviewproj() const {return proj*view*model;}
+    };
+    using ModelViewProjection = MVP;
 }

@@ -1,6 +1,8 @@
 #include "commons.wgsl"
 
 struct Uniforms {
+    @align(16) view : mat4x4<f32>,
+    @align(16) projection : mat4x4<f32>,
     @align(16) mvp : mat4x4<f32>,
     @align(16) viewportSize: vec2<f32>,
     @align(16) pointSize: f32,
@@ -9,7 +11,8 @@ struct Uniforms {
     @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
     @align(16) ambient: vec4<f32>,
-    @align(16) depthOffset: f32
+    @align(16) depthOffset: f32,
+    @align(16) dirLight: DirectionalLight
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -67,21 +70,48 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in : VSOut) -> FragmentOutput
+fn fs_main(in : VSOut) -> FragOutColPickDepth
 {
-    let dist = length(in.corner);
+    // Render as Circle
+    let dist2 = dot(in.corner, in.corner);
+    if (dist2 > 1.0) {discard;}
 
-    if (dist > 1.0) {discard;} //round
+    // Depth correction for 3d imposter
+    let sphereZ = sqrt(1.0 - dist2);
+    let depthCorrection = getDepthCorrection(
+        in.position.w,
+        ubo.pointSize * sphereZ,
+        ubo.projection,
+        ubo.viewportSize.y
+        );
+    let depth = in.position.z + depthCorrection;
 
-    var out: FragmentOutput;
+    var out: FragOutColPickDepth;
 
-    // brighter center, darker edges
-    let shading = 0.85 + 0.15 * cos(dist * 3.14159265 / 2.0);
-
+    // Base color
     out.color = getFragmentColorFromPropertyValue(
-                    in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
-                    ) * ubo.ambient * shading;
+        in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
+        );
 
-    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(in.position.z / in.position.w));
+    // Lighting - computed in view space
+    var dirLightView = ubo.dirLight;
+    dirLightView.dir = normalize(
+        (ubo.view * vec4<f32>(dirLightView.dir, 0.0)).xyz
+    );
+    let normal = normalize(vec3<f32>(
+        in.corner.x,
+        in.corner.y,
+        sphereZ
+        ));
+    let lighting = getLightContribution(dirLightView, normal);
+
+    // Final fragment output
+    out.color = vec4<f32>(
+        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.a
+        );
+    out.depth = depth;
+    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(depth));
+
     return out;
 }

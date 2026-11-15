@@ -291,6 +291,8 @@ void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const 
 
 void ColoredFaceRenderer::update_property_data(const std::vector<Prop::Data>& _data)
 {
+    if (!initialized_) {return;}
+
     pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,

@@ -78,7 +78,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) override;
+        const Mat4x4f& _mvp);
 
     void configure_like(const ColoredCellRenderer& _r) {
         uniforms_ = _r.uniforms_;

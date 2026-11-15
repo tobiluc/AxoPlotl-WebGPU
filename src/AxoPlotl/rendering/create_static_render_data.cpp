@@ -37,7 +37,7 @@ AxoPlotl::internal::StaticRenderData AxoPlotl::internal::create_static_render_da
         }
         bary /= bary_count;
         data.faces_barycenters_.emplace_back(bary[0],bary[1],bary[2],1);
-        const auto& n = _mesh.normal(fh.halfface_handle(0));
+        const auto& n = _mesh.normal(fh.halfface_handle(1));
         data.faces_normals_.emplace_back(n[0],n[1],n[2],1);
     }
     for (auto ch : _mesh.cells()) {

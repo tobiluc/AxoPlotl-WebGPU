@@ -1,5 +1,6 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
+#include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
 
 namespace AxoPlotl::internal
@@ -10,6 +11,8 @@ class ColoredVertexRenderer : public PropertyRendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
+        alignas(16) Mat4x4f view_;
+        alignas(16) Mat4x4f projection_;
         alignas(16) Mat4x4f mvp_;
         alignas(16) Vec2f viewport_size_;
         alignas(16) float point_size_ = 8.0f;
@@ -19,6 +22,7 @@ protected:
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4f ambient_ = Vec4f(0.5,0.5,0.5,1);
         alignas(16) float depth_offset_ = 0.00003;
+        alignas(16) DirectionalLight dir_light_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);
@@ -46,6 +50,10 @@ public:
 
     Vec4f& ambient() {
         return uniforms_.ambient_;
+    }
+
+    DirectionalLight& directional_light() {
+        return uniforms_.dir_light_;
     }
 
     // Value used in the shader as a
@@ -77,7 +85,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) override;
+        const MVP& _mvp);
 
     void configure_like(const ColoredVertexRenderer& _r) {
         uniforms_ = _r.uniforms_;

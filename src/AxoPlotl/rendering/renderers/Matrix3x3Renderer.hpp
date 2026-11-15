@@ -71,7 +71,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp) override;
+        const Mat4x4f& _mvp);
 
     inline bool is_initialized() const {
         return initialized_;

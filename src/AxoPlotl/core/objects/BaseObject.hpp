@@ -34,7 +34,8 @@ public:
     virtual void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
-        const Mat4x4f& _view_projection) = 0;
+        const Mat4x4f& _view,
+        const Mat4x4f& _proj) = 0;
 
     virtual void render_ui_info() = 0;
 

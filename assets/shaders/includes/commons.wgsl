@@ -1,4 +1,5 @@
 #include "light.wgsl"
+#include "imposter.wgsl"
 
 alias PropertyValue = vec4<f32>;
 
@@ -58,6 +59,12 @@ fn isOutsideRange(val:f32, range:vec2<f32>) -> bool {
 struct FragmentOutput {
     @location(0) color : vec4<f32>,
     @location(1) pick : vec4<u32> // picking
+};
+
+struct FragOutColPickDepth {
+    @location(0) color : vec4<f32>,
+    @location(1) pick : vec4<u32>,
+    @builtin(frag_depth) depth: f32
 };
 
 fn getFragmentColorFromPropertyValue(

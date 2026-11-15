@@ -181,6 +181,8 @@ void Matrix3x3Renderer::create_pipeline(const GpuContext& _gpu_context, const Re
 
 void Matrix3x3Renderer::update_matrix_data(const std::vector<glm::mat3x4> &_data)
 {
+    if (!initialized_) {return;}
+
     pipeline_state_.device_.getQueue().writeBuffer(
         matrix_buffer_,
         0,

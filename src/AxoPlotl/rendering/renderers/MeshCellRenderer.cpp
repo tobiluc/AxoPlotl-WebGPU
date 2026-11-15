@@ -26,6 +26,8 @@ void ColoredCellRenderer::init(uint32_t _object_id,
                                const std::vector<std::vector<std::vector<uint32_t>>>& _cells,
                                wgpu::Buffer _cells_center_buffer)
 {
+    if (_cells.empty()) {return;}
+
     triangle_pipeline_state_.set_device(_gpu_context.device);
     outline_pipeline_state_.set_device(_gpu_context.device);
 
@@ -94,7 +96,8 @@ void ColoredCellRenderer::create_buffers(
                 const auto& p1 = _vertices_position_data[f[1]];
                 const auto& p2 = _vertices_position_data[f[2]];
                 const auto n = glm::normalize(glm::cross(glm::vec3(p1 - p0), glm::vec3(p2 - p1)));
-                normal_data[normal_idx] = glm::vec4(n,1);
+                // We flip th normal to point outwards
+                normal_data[normal_idx] = -glm::vec4(n,1);
                 ++normal_idx;
             }
         }
@@ -103,7 +106,7 @@ void ColoredCellRenderer::create_buffers(
         desc.usage = wgpu::BufferUsage::Vertex
                     | wgpu::BufferUsage::Storage
                     | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(glm::vec4) * normal_data.size();
+        desc.size = sizeof(glm::vec4) * std::max(normal_data.size(),1lu);
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Cell Triangle Normal Buffer");
         normal_buffer_ = device.createBuffer(desc);
@@ -181,7 +184,7 @@ void ColoredCellRenderer::create_buffers(
 
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Uniforms);
+        desc.size = sizeof(Uniforms) * std::max(n_cells_,1lu);;
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Cell Uniform Buffer");
 
@@ -461,6 +464,8 @@ void ColoredCellRenderer::create_line_pipeline(const GpuContext& _gpu_context, c
 
 void ColoredCellRenderer::update_property_data(const std::vector<Prop::Data>& _data)
 {
+    if (!initialized_) {return;}
+
     triangle_pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,
         0,
