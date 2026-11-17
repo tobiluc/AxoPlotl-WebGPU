@@ -12,7 +12,7 @@ fn getLightContribution(
     // Directional diffuse lighting
     let N = normalize(n);
     let L = normalize(-l.dir);
-    let diffuse = max(dot(N, L), 0.0);
+    let diffuse = max(dot(N, L), 0.05);
     let lighting = l.color
                    * l.strength * diffuse;
     return lighting;
