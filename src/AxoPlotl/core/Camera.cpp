@@ -83,12 +83,9 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
         orientation_ * (-FORWARD * orbit_distance);
 }
 
-void Camera::reset(GLFWwindow *window) {
-    orbit_target_ = {0,0,0};
-    eye_position_ = {0,0,1};
-    orientation_ = {1,0,0,0};
-    fov_ = 0.25*M_PI;
-    use_ortho_ = false;
+void Camera::set_default()
+{
+    *this = Camera();
 }
 
 void Camera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
@@ -113,11 +110,8 @@ void Camera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
                 glm::vec3 local = glm::inverse(orientation_) *
                     (corner - orbit_target_);
 
-                float required_x =
-                    std::abs(local.x) / std::tan(half_fov_x) + local.z;
-
-                float required_y =
-                    std::abs(local.y) / std::tan(half_fov_y) + local.z;
+                float required_x = std::abs(local.x) / std::tan(half_fov_x) + local.z;
+                float required_y = std::abs(local.y) / std::tan(half_fov_y) + local.z;
 
                 required_distance = std::max(
                     required_distance,
@@ -161,7 +155,7 @@ bool Camera::render_settings_ui(GLFWwindow* _window)
     }
 
     if (ImGui::Button("Reset")) {
-        reset(_window);
+        set_default();
         changed = true;
     }
 

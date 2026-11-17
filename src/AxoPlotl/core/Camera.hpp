@@ -42,7 +42,7 @@ public:
 
     void update(GLFWwindow* window, bool _allow_input = true);
 
-    void reset(GLFWwindow* window);
+    void set_default();
 
     void zoom_to_box(const glm::vec3& min, const glm::vec3& max);
 
