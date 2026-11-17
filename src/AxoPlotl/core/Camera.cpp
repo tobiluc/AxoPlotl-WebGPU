@@ -2,22 +2,20 @@
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
 #include "imgui.h"
-#include <iostream>
-#include <ostream>
 
 namespace AxoPlotl::internal
 {
 
-glm::mat4 Camera::get_view_matrix() const {
+Mat4x4 Camera::get_view_matrix() const {
     return glm::lookAtRH(eye_position_, orbit_target_, orientation_ * UP);
 }
 
-glm::mat4 Camera::get_perspective_projection_matrix(const ViewSize &_viewport_size) const {
+Mat4x4 Camera::get_perspective_projection_matrix(const ViewSize &_viewport_size) const {
     float width_over_height = _viewport_size.aspect_ratio();
     return glm::perspectiveRH_ZO(fov_, width_over_height, near_plane_, far_plane_);
 }
 
-glm::mat4 Camera::get_orthographic_projection_matrix(const ViewSize& _viewport_size) const
+Mat4x4 Camera::get_orthographic_projection_matrix(const ViewSize& _viewport_size) const
 {
     const float width_over_height = _viewport_size.aspect_ratio();
     const float distance = glm::length(eye_position_ - orbit_target_);
@@ -36,7 +34,7 @@ glm::mat4 Camera::get_orthographic_projection_matrix(const ViewSize& _viewport_s
     );
 }
 
-glm::mat4 Camera::get_projection_matrix(const ViewSize& _viewport_size) const {
+Mat4x4 Camera::get_projection_matrix(const ViewSize& _viewport_size) const {
     return use_ortho_? get_orthographic_projection_matrix(_viewport_size)
                       : get_perspective_projection_matrix(_viewport_size);
 }
@@ -72,8 +70,8 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
             }
             else {
                 // Orbit
-                glm::quat rot_pitch = glm::angleAxis(dy, RIGHT);
-                glm::quat rot_yaw = glm::angleAxis(-dx, UP);
+                Quat rot_pitch = glm::angleAxis(dy, RIGHT);
+                Quat rot_yaw = glm::angleAxis(-dx, UP);
                 orientation_ = glm::normalize(orientation_ * rot_yaw * rot_pitch);
             }
         }
@@ -88,7 +86,7 @@ void Camera::set_default()
     *this = Camera();
 }
 
-void Camera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
+void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max)
 {
     float required_distance = 0.0f;
     orbit_target_ = (min + max) * 0.5f;
@@ -101,13 +99,13 @@ void Camera::zoom_to_box(const glm::vec3& min, const glm::vec3& max)
         for (int y = 0; y < 2; ++y) {
             for (int z = 0; z < 2; ++z)
             {
-                glm::vec3 corner(
+                Vec3 corner(
                     x? max.x : min.x,
                     y? max.y : min.y,
                     z? max.z : min.z
                 );
 
-                glm::vec3 local = glm::inverse(orientation_) *
+                Vec3 local = glm::inverse(orientation_) *
                     (corner - orbit_target_);
 
                 float required_x = std::abs(local.x) / std::tan(half_fov_x) + local.z;

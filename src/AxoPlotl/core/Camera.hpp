@@ -12,9 +12,9 @@ namespace AxoPlotl::internal
 class Camera
 {
 public:
-    static constexpr glm::vec3 UP = {0,1,0};
-    static constexpr glm::vec3 RIGHT = {1,0,0};
-    static constexpr glm::vec3 FORWARD = {0,0,-1};
+    static constexpr Vec3 UP = {0,1,0};
+    static constexpr Vec3 RIGHT = {1,0,0};
+    static constexpr Vec3 FORWARD = {0,0,-1};
 
 private:
     float sensitivity_ = 0.005f;
@@ -32,19 +32,19 @@ private:
     bool use_ortho_ = false;
 
 public:
-    glm::mat4 get_view_matrix() const;
+    Mat4x4 get_view_matrix() const;
 
-    glm::mat4 get_perspective_projection_matrix(const ViewSize& _viewport_size) const;
+    Mat4x4 get_perspective_projection_matrix(const ViewSize& _viewport_size) const;
 
-    glm::mat4 get_orthographic_projection_matrix(const ViewSize& _viewport_size) const;
+    Mat4x4 get_orthographic_projection_matrix(const ViewSize& _viewport_size) const;
 
-    glm::mat4 get_projection_matrix(const ViewSize& _viewport_size) const;
+    Mat4x4 get_projection_matrix(const ViewSize& _viewport_size) const;
 
     void update(GLFWwindow* window, bool _allow_input = true);
 
     void set_default();
 
-    void zoom_to_box(const glm::vec3& min, const glm::vec3& max);
+    void zoom_to_box(const Vec3& min, const Vec3& max);
 
     bool render_settings_ui(GLFWwindow* _window);
 
