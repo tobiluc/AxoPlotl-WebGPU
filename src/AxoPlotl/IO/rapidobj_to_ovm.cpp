@@ -3,19 +3,18 @@
 namespace AxoPlotl::IO
 {
 
-void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, OVMVolumeMesh& _ovm)
+void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, VolMesh& _ovm)
 {
     _ovm.clear();
     auto v_shape_i = _ovm.create_persistent_vertex_property<int>("rabidobj::v_shape", -1).value();
     auto e_shape_i = _ovm.create_persistent_edge_property<int>("rabidobj::e_shape", -1).value();
     auto f_shape_i = _ovm.create_persistent_face_property<int>("rabidobj::f_shape", -1).value();
-    auto f_normal = _ovm.create_persistent_face_property<OVMVolumeMesh::Point>("rabidobj::f_normal", {0,0,0}).value();
-    using Vec3 = OVMVolumeMesh::Point;
+    auto f_normal = _ovm.create_persistent_face_property<OVMVec3>("rabidobj::f_normal", {0,0,0}).value();
 
     // Positions
     _ovm.reserve_vertices(_robj.attributes.positions.size()/3);
     for (int i = 0; i < _robj.attributes.positions.size(); i += 3) {
-        _ovm.add_vertex(Vec3(
+        _ovm.add_vertex(OVMVec3(
             _robj.attributes.positions[i+0],
             _robj.attributes.positions[i+1],
             _robj.attributes.positions[i+2]
@@ -50,7 +49,7 @@ void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, OVMVolumeMesh& _o
         idx = 0;
         for (const auto& n_inds : _robj.shapes.at(shape_i).mesh.num_face_vertices) {
             std::vector<OVM::VH> vhs;
-            OVMVolumeMesh::PointT normal(0,0,0);
+            OVMVec3 normal(0,0,0);
             for (int i = idx; i < idx+n_inds; ++i) {
 
                 int pt_idx = _robj.shapes.at(shape_i).mesh.indices[i].position_index;
@@ -66,7 +65,7 @@ void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, OVMVolumeMesh& _o
             }
             OVM::FH fh = _ovm.add_face(vhs);
             f_shape_i[fh] = shape_i;
-            f_normal[fh] = (normal==OVMVolumeMesh::PointT(0,0,0))? normal : normal.normalized();
+            f_normal[fh] = (normal==OVMVec3(0,0,0))? normal : normal.normalized();
             idx += n_inds;
         }
     }

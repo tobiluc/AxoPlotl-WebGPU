@@ -1,8 +1,6 @@
 #include "Scene.hpp"
 #include "AxoPlotl/IO/file_access.hpp"
-#include "AxoPlotl/core/objects/SphericalHarmonicsObject.hpp"
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
-#include "AxoPlotl/rendering/create_static_render_data.hpp"
 #include <AxoPlotl/core/Application.hpp>
 
 namespace AxoPlotl::internal
@@ -29,7 +27,7 @@ void Scene::init(Application *_app)
     unit_frame_renderer_.update_matrix_data({m});
 }
 
-std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const OVMVolumeMesh &&_mesh)
+std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const VolMesh &&_mesh)
 {
     return add_object<OpenVolumeMeshObject>(std::move(_mesh));
 }

@@ -14,7 +14,7 @@ enum class ReadMeshStatus {
 
 struct ReadMeshResult
 {
-    OVMVolumeMesh mesh_;
+    VolMesh mesh_;
     ReadMeshStatus status_;
 };
 

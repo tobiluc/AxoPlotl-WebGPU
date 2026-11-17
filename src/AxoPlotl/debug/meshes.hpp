@@ -5,9 +5,9 @@
 namespace AxoPlotl
 {
 
-inline OVMVolumeMesh mesh_with_nan_and_inf_props()
+inline VolMesh mesh_with_nan_and_inf_props()
 {
-    OVMVolumeMesh mesh;
+    VolMesh mesh;
     auto v_d = mesh.create_persistent_vertex_property<double>("v_double").value();
     auto e_f = mesh.create_persistent_edge_property<float>("e_float").value();
     auto f_d = mesh.create_persistent_face_property<double>("f_double").value();

@@ -5,6 +5,6 @@
 namespace AxoPlotl::IO
 {
 
-void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, OVMVolumeMesh &_ovm);
+void rapidobj_to_openvolumemesh(const rapidobj::Result& _robj, VolMesh &_ovm);
 
 }

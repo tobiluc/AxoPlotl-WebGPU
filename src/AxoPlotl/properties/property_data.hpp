@@ -9,7 +9,7 @@ namespace AxoPlotl::internal
 
 template<typename T, typename EntityTag>
 std::pair<T,T> get_scalar_property_range(
-    const OVMVolumeMesh& _mesh,
+    const VolMesh& _mesh,
     const OpenVolumeMesh::PropertyPtr<T,EntityTag>& _prop)
 {
     if (_mesh.n<EntityTag>()==0) {return {0,0};}
@@ -104,7 +104,7 @@ constexpr PropertyRendererBase::Prop::Mode get_buffer_property_type()
 
 template<typename T, typename EntityTag>
 std::vector<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(
-    const OVMVolumeMesh& _mesh,
+    const VolMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
 {
@@ -122,7 +122,7 @@ std::vector<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(
 template<typename T, typename EntityTag>
     requires(is_matrix<T> && has_rows_and_cols<T,3,3>)
 std::vector<glm::mat3x4> get_buffer_property_data_mat3x4(
-    const OVMVolumeMesh& _mesh,
+    const VolMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop)
 {
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();

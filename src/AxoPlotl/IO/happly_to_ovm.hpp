@@ -5,6 +5,6 @@
 namespace AxoPlotl::IO
 {
 
-void happly_to_openvolumemesh(happly::PLYData& _data, OVMVolumeMesh& _ovm);
+void happly_to_openvolumemesh(happly::PLYData& _data, VolMesh& _ovm);
 
 }

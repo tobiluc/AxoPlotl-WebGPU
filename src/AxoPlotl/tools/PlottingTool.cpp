@@ -71,19 +71,18 @@ void render_ui()
                 };
             };
 
-            OVMVolumeMesh mesh;
+            VolMesh mesh;
             mesh.reserve_vertices((input_.resolution_+1)*(input_.resolution_+1));
             mesh.reserve_edges(2*(input_.resolution_+1)*(input_.resolution_+1));
             mesh.reserve_faces(input_.resolution_*input_.resolution_);
             auto u_prop = mesh.create_persistent_vertex_property<float>("u").value();
             auto v_prop = mesh.create_persistent_vertex_property<float>("v").value();
-            using PointT = OVMVolumeMesh::PointT;
             for (int i = 0; i <= input_.resolution_; ++i) {
                 float u = input_.u_.x + ((float)i/input_.resolution_)*(input_.u_.y-input_.u_.x);
                 for (int j = 0; j <= input_.resolution_; ++j) {
                     float v = input_.v_.x + ((float)j/input_.resolution_)*(input_.v_.y-input_.v_.x);
                     auto p = func(u,v);
-                    OVM::VH vh = mesh.add_vertex(PointT(p[0],p[1],p[2]));
+                    OVM::VH vh = mesh.add_vertex(OVMVec3(p[0],p[1],p[2]));
                     u_prop[vh] = u;
                     v_prop[vh] = v;
                 }

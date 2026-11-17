@@ -4,7 +4,7 @@
 namespace AxoPlotl::internal
 {
 
-OVM::CellPropertyT<int> calc_cell_boundary_distance(OVMVolumeMesh& _mesh, std::string _name)
+OVM::CellPropertyT<int> calc_cell_boundary_distance(VolMesh& _mesh, std::string _name)
 {
     auto c_boundary_distance = _mesh.request_cell_property<int>(_name, INT_MAX);
     _mesh.set_persistent(c_boundary_distance);
@@ -93,7 +93,7 @@ OVM::CellPropertyT<int> calc_cell_boundary_distance(OVMVolumeMesh& _mesh, std::s
 //     return c_min_dihedral_angle;
 // }
 
-OVM::VertexPropertyT<OVM::Vec3f> calc_vertex_normalized_position(OVMVolumeMesh& _mesh, std::string _name)
+OVM::VertexPropertyT<OVM::Vec3f> calc_vertex_normalized_position(VolMesh& _mesh, std::string _name)
 {
     auto v_normalized_pos = _mesh.request_vertex_property<OVM::Vec3f>(_name);
     _mesh.set_persistent(v_normalized_pos);
@@ -105,7 +105,7 @@ OVM::VertexPropertyT<OVM::Vec3f> calc_vertex_normalized_position(OVMVolumeMesh& 
     return v_normalized_pos;
 }
 
-OVM::FacePropertyT<OVM::Vec3f> calc_face_normal(OVMVolumeMesh& _mesh, std::string _name)
+OVM::FacePropertyT<OVM::Vec3f> calc_face_normal(VolMesh& _mesh, std::string _name)
 {
     auto f_normal = _mesh.request_face_property<OVM::Vec3f>(_name);
     _mesh.set_persistent(f_normal);

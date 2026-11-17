@@ -3,7 +3,7 @@
 namespace AxoPlotl::IO
 {
 
-void happly_to_openvolumemesh(happly::PLYData &_data, OVMVolumeMesh& _ovm)
+void happly_to_openvolumemesh(happly::PLYData &_data, VolMesh& _ovm)
 {
     _ovm.clear();
     std::vector<std::array<double,3>> vPos = _data.getVertexPositions();
@@ -11,7 +11,7 @@ void happly_to_openvolumemesh(happly::PLYData &_data, OVMVolumeMesh& _ovm)
     _ovm.reserve_vertices(vPos.size());
     _ovm.reserve_faces(fInd.size());
     for (const auto& p : vPos) {
-        _ovm.add_vertex(OVMVolumeMesh::Point(p[0],p[1],p[2]));
+        _ovm.add_vertex(OVMVec3(p[0],p[1],p[2]));
     }
     for (const auto& f : fInd) {
         std::vector<OVM::VH> vhs(f.size());

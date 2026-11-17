@@ -19,7 +19,7 @@ add_library(AxoPlotlCore
 
     AxoPlotl/input/Mouse.cpp
 
-    AxoPlotl/rendering/create_static_render_data.cpp
+    AxoPlotl/rendering/MeshData.cpp
     AxoPlotl/rendering/redraw.cpp
     AxoPlotl/gui/widgets/draw_histogram.cpp
     AxoPlotl/rendering/ColorMap.cpp

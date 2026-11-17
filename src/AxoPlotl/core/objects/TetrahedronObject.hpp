@@ -21,10 +21,10 @@ public:
         ObjectBase(_scene, "")
     {
         this->name_ = "Tet " + std::to_string(id_);
-        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,0));
-        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,1));
-        OVM::VH vh2 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(1,0,0));
-        OVM::VH vh3 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,1,0));
+        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVec3(0,0,0));
+        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVec3(0,0,1));
+        OVM::VH vh2 = mesh_data_.mesh.add_vertex(OVMVec3(1,0,0));
+        OVM::VH vh3 = mesh_data_.mesh.add_vertex(OVMVec3(0,1,0));
         OVM::HFH hfh0 = mesh_data_.mesh.add_face({vh0,vh1,vh2}).halfface_handle(0);
         OVM::HFH hfh1 = mesh_data_.mesh.add_face({vh0,vh2,vh3}).halfface_handle(0);
         OVM::HFH hfh2 = mesh_data_.mesh.add_face({vh0,vh1,vh3}).halfface_handle(0);

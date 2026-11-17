@@ -20,8 +20,8 @@ public:
         ObjectBase(_scene, "")
     {
         this->name_ = "Segment " + std::to_string(id_);
-        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,0));
-        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(1,1,1));
+        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVec3(0,0,0));
+        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVec3(1,1,1));
         mesh_data_.mesh.add_edge(vh0, vh1);
         input_[0] = {0,0,0,1};
         input_[1] = {1,1,1,1};

@@ -1,7 +1,7 @@
 #include "TetrahedronObject.hpp"
 #include "AxoPlotl/core/Application.hpp"
 #include <AxoPlotl/core/Scene.hpp>
-#include <AxoPlotl/rendering/create_static_render_data.hpp>
+#include <AxoPlotl/rendering/MeshData.hpp>
 
 namespace AxoPlotl
 {

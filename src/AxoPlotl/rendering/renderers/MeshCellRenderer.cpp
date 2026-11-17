@@ -1,5 +1,5 @@
 #include "MeshCellRenderer.hpp"
-#include "AxoPlotl/rendering/create_static_render_data.hpp"
+#include "AxoPlotl/rendering/MeshData.hpp"
 #include "AxoPlotl/rendering/wgpu_commons.hpp"
 
 namespace AxoPlotl::internal

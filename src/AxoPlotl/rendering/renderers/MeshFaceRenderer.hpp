@@ -2,7 +2,7 @@
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
-#include "AxoPlotl/rendering/create_static_render_data.hpp"
+#include "AxoPlotl/rendering/MeshData.hpp"
 
 namespace AxoPlotl::internal
 {

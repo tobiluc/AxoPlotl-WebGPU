@@ -41,7 +41,7 @@ public:
 
     std::shared_ptr<OpenVolumeMeshObject> add_mesh(const std::filesystem::path& _path);
 
-    std::shared_ptr<OpenVolumeMeshObject> add_mesh(const OVMVolumeMesh&& _mesh);
+    std::shared_ptr<OpenVolumeMeshObject> add_mesh(const VolMesh&& _mesh);
 
     template<typename Object, typename ...Args>
     std::shared_ptr<Object> add_object(Args... _args)

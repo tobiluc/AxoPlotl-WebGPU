@@ -3,7 +3,7 @@
 #include "AxoPlotl/gui/properties/property_settings.hpp"
 #include <AxoPlotl/rendering/renderers/renderers.hpp>
 #include "AxoPlotl/core/objects/BaseObject.hpp"
-#include "AxoPlotl/rendering/create_static_render_data.hpp"
+#include "AxoPlotl/rendering/MeshData.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
 
@@ -55,7 +55,7 @@ protected:
         upload_default_cell_property_data();}
 
 public:
-    OpenVolumeMeshObject(internal::Scene* _scene, OVMVolumeMesh& _mesh,
+    OpenVolumeMeshObject(internal::Scene* _scene, VolMesh& _mesh,
                          const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
     ~OpenVolumeMeshObject() {
@@ -91,8 +91,8 @@ public:
 
     void visualize_like(const OpenVolumeMeshObject& _obj);
 
-    OVMVolumeMesh& mesh() {return mesh_data_.mesh;}
-    const OVMVolumeMesh& mesh() const {return mesh_data_.mesh;}
+    VolMesh& mesh() {return mesh_data_.mesh;}
+    const VolMesh& mesh() const {return mesh_data_.mesh;}
 
     std::optional<std::filesystem::path> filepath() const {
         return filepath_;

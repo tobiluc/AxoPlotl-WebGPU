@@ -44,6 +44,30 @@ wgpu::Buffer create_bufferT(
     return buffer;
 }
 
+inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
+    if (_buffer) {
+        _buffer.destroy();
+        _buffer.release();
+        _buffer = nullptr;
+    }
+}
+
+template<typename T>
+struct BufferData {
+    wgpu::Buffer buffer;
+    std::vector<T> data;
+    ~BufferData() {destroy();}
+    void create_buffer(const wgpu::Device& _device) {
+        destroy_buffer(buffer);
+        buffer = create_bufferT<T>(_device, data);
+    }
+    void destroy() {
+        destroy_buffer(buffer);
+        data.clear();
+    }
+};
+
+
 inline wgpu::DepthStencilState create_default_depth_state()
 {
     wgpu::DepthStencilState depthStencilState;
@@ -80,31 +104,6 @@ inline wgpu::FragmentState create_fragment_state(
     return fragmentState;
 }
 
-// inline wgpu::ShaderModule create_mesh_shader_module(
-//     wgpu::Device _device,
-//     const std::string& _source,
-//     const char* _name = "Unlabeled Shader Module")
-// {
-//     // Specify the WGSL part of the shader module descriptor
-//     wgpu::ShaderModuleWGSLDescriptor wgslDesc = {};
-//     wgslDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
-//     std::string parsed_shader_code = parse_shader_with_includes(_source);
-//     wgslDesc.code = parsed_shader_code.c_str();
-
-//     wgpu::ShaderModuleDescriptor desc = {};
-// #ifdef WEBGPU_BACKEND_WGPU
-//     desc.hintCount = 0;
-//     desc.hints = nullptr;
-// #endif
-
-//     // Connect the chain
-//     desc.nextInChain = &wgslDesc.chain;
-//     desc.nextInChain = reinterpret_cast<const WGPUChainedStruct*>(&wgslDesc);
-//     desc.label = _name;
-
-//     return _device.createShaderModule(desc);
-// }
-
 inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     wgpu::Device _device,
     const std::filesystem::path& _path,
@@ -128,14 +127,6 @@ inline wgpu::ShaderModule create_mesh_shader_module_from_file(
     desc.label = wgpu::StringView(_name);
 
     return _device.createShaderModule(desc);
-}
-
-inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
-    if (_buffer) {
-        _buffer.destroy();
-        _buffer.release();
-        _buffer = nullptr;
-    }
 }
 
 }

@@ -5,7 +5,7 @@
 namespace AxoPlotl::IO
 {
 
-void openmesh_to_openvolumemesh(const OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits>& _om, OVMVolumeMesh& _ovm)
+void openmesh_to_openvolumemesh(const OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits>& _om, VolMesh& _ovm)
 {
     _ovm.clear();
     _ovm.reserve_vertices(_om.n_vertices());
@@ -15,7 +15,7 @@ void openmesh_to_openvolumemesh(const OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::
     // Copy Vertices
     for (auto vh : _om.vertices()) {
         const auto& p = _om.point(vh);
-        _ovm.add_vertex(OVMVolumeMesh::PointT(p[0],p[1],p[2]));
+        _ovm.add_vertex(OVMVec3(p[0],p[1],p[2]));
     }
 
     // Copy Edges

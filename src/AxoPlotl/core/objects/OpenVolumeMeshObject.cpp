@@ -2,7 +2,7 @@
 #include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
 #include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
-#include "AxoPlotl/rendering/create_static_render_data.hpp"
+#include "AxoPlotl/rendering/MeshData.hpp"
 #include "IconsFontAwesome7.h"
 #include "imgui.h"
 #include <AxoPlotl/core/Application.hpp>
@@ -15,7 +15,7 @@ using PropMode = PropertyRendererBase::Prop::Mode;
 
 OpenVolumeMeshObject::OpenVolumeMeshObject(
     internal::Scene* _scene,
-    OVMVolumeMesh& _mesh,
+    VolMesh &_mesh,
     const std::optional<std::filesystem::path>& _filepath)
     :
     ObjectBase(_scene, ""),

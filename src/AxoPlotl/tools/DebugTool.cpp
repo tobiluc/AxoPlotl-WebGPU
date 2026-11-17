@@ -27,7 +27,7 @@ void render_ui()
             scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
         }
         if (ImGui::MenuItem("Add empty Mesh")) {
-            scene().add_object<OpenVolumeMeshObject>(OVMVolumeMesh());
+            scene().add_object<OpenVolumeMeshObject>(VolMesh());
         }
         ImGui::EndMenu();
     }
