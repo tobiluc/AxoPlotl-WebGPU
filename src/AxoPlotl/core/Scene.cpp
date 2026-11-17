@@ -15,8 +15,8 @@ void Scene::init(Application *_app)
     // Coordinate Axes Cross
     using D = ColoredEdgeRenderer::Prop::Data;
 
-    origin_position_buffer_ = create_position_buffer(
-        app_->gpu_context().device, {Vec4f(0,0,0,1)});
+    origin_position_buffer_ = create_bufferT<Vec4>(
+        app_->gpu_context().device, {Vec4(0,0,0,1)});
 
     unit_frame_renderer_.init(UINT32_MAX,
                         app()->gpu_context(),
@@ -47,15 +47,15 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
 {
     // Get Width and Height
     camera_.update(app_->window(), _allow_input);
-    const Mat4x4f& view = camera_.get_view_matrix();
-    const Mat4x4f& proj = camera_.get_projection_matrix(_view_size);
+    const auto& view = camera_.get_view_matrix();
+    const auto& proj = camera_.get_projection_matrix(_view_size);
 
     // The light can point in the camera forward direction
     if (settings.light_from_camera) {
         directional_light.direction = camera_.orientation() * Camera::FORWARD;
     }
 
-    const Mat4x4f view_proj = proj * view;
+    const auto view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
     unit_frame_renderer_.draw_symmetric() = false;

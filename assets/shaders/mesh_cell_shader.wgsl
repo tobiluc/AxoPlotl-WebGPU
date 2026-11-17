@@ -18,7 +18,7 @@ struct Uniforms {
 @group(0) @binding(3) var colorSampler : sampler;
 @group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
 @group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
-@group(0) @binding(6) var<storage, read> normals : array<vec3<f32>>;
+@group(0) @binding(6) var<storage, read> halffaceNormals : array<vec3<f32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -31,11 +31,11 @@ struct V2F {
 fn vs_main(
     @location(0) vertex_index : u32,
     @location(1) cell_index : u32,
-    @location(2) normal_index : u32
+    @location(2) halfface_index : u32
 ) -> V2F {
 
     var out : V2F;
-    out.normal = normals[normal_index];
+    out.normal = halffaceNormals[halfface_index^1u];
 
     // Scale around incenter
     let pos = cellCenters[cell_index]

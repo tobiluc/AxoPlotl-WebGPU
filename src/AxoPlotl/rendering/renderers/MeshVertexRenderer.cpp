@@ -10,20 +10,27 @@ void ColoredVertexRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
-    wgpu::Buffer _position_buffer,
-    const std::vector<uint32_t>& _indices)
+    const VolMeshData& _data)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
     object_id_ = _object_id;
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
-    n_vertices_ = _indices.size();
-    n_positions_ = _position_buffer.getSize()/sizeof(Position);
-    position_buffer_ = _position_buffer;
-    create_buffers(_indices);
+
+    n_positions_ = _data.vertices_positions.data.size();
+
+    if (n_positions_ == 0u) {
+        initialized_ = false;
+        return;
+    }
+
+    position_buffer_ = _data.vertices_positions.buffer;
+
+    create_buffers();
     create_bind_group_layout();
     create_bind_group();
+
     create_pipeline(_gpu_context, _render_context);
     initialized_ = true;
 }
@@ -31,55 +38,32 @@ void ColoredVertexRenderer::init(
 void ColoredVertexRenderer::clear()
 {
     destroy_buffer(property_buffer_);
-    destroy_buffer(vertex_index_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
 
-void ColoredVertexRenderer::create_buffers(const std::vector<uint32_t> &_indices)
+void ColoredVertexRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
-    // Vertex Index Buffer
-    {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(uint32_t) * std::max(n_vertices_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Vertex Index Buffer");
-
-        vertex_index_buffer_ = device.createBuffer(desc);
-        queue.writeBuffer(
-            vertex_index_buffer_,
-            0,
-            _indices.data(),
-            sizeof(uint32_t) * _indices.size()
-            );
-    }
-
     // Property Buffer
     {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Prop::Data) * std::max(n_vertices_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Vertex Property Buffer");
-
-        property_buffer_ = device.createBuffer(desc);
+        property_buffer_ = create_bufferT<Prop::Data>(
+            device, n_positions_,
+            wgpu::BufferUsage::Storage |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Vertex Property Buffer");
     }
 
     // Uniform Buffer
     {
         compute_uniform_stride<Uniforms>(device);
-
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Uniforms);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Vertex Uniform Buffer");
-
-        uniform_buffer_ = device.createBuffer(desc);
+        uniform_buffer_ = create_bufferT<Uniforms>(
+            device, max_draw_calls_,
+            wgpu::BufferUsage::Uniform |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Vertex Uniform Buffer");
     }
 }
 
@@ -155,7 +139,7 @@ void ColoredVertexRenderer::create_bind_group()
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(Prop::Data) * std::max(n_vertices_,1lu);
+    groupEntries[4].size = sizeof(Prop::Data) * std::max(n_positions_,1lu);
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -167,7 +151,7 @@ void ColoredVertexRenderer::create_bind_group()
 
 void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, const RenderContext &_render_context)
 {
-    if (pipeline_state_.pipeline_ || n_vertices_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         pipeline_state_.device_, "mesh_vertex_shader.wgsl", "Mesh Vertex Shader");
@@ -237,7 +221,7 @@ void ColoredVertexRenderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const MVP& _mvp)
 {
-    if (!initialized_ || !enabled_ || n_vertices_==0) {return;}
+    if (!initialized_ || !enabled_ || n_positions_==0) {return;}
 
     const uint32_t offset = draw_index_ * uniform_stride_;
 
@@ -255,7 +239,7 @@ void ColoredVertexRenderer::render(
     // that form a quad
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.draw(4, n_vertices_, 0, 0);
+    _render_pass.draw(4, n_positions_, 0, 0);
 
     set_next_draw_index();
 }

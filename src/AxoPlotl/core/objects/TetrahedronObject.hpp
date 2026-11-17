@@ -11,8 +11,7 @@ class TetObject : public ObjectBase
 {
 private:
     ColoredCellRenderer renderer_;
-    wgpu::Buffer vertex_position_buffer_;
-    wgpu::Buffer cell_center_buffer_;
+    VolMeshData mesh_data_;
 
     std::array<std::array<float,4>,4> input_;
 
@@ -22,6 +21,15 @@ public:
         ObjectBase(_scene, "")
     {
         this->name_ = "Tet " + std::to_string(id_);
+        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,0));
+        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,1));
+        OVM::VH vh2 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(1,0,0));
+        OVM::VH vh3 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,1,0));
+        OVM::HFH hfh0 = mesh_data_.mesh.add_face({vh0,vh1,vh2}).halfface_handle(0);
+        OVM::HFH hfh1 = mesh_data_.mesh.add_face({vh0,vh2,vh3}).halfface_handle(0);
+        OVM::HFH hfh2 = mesh_data_.mesh.add_face({vh0,vh1,vh3}).halfface_handle(0);
+        OVM::HFH hfh3 = mesh_data_.mesh.add_face({vh1,vh2,vh3}).halfface_handle(0);
+        mesh_data_.mesh.add_cell({hfh0,hfh1,hfh2,hfh3});
         input_[0] = {0,0,0,1};
         input_[1] = {0,0,1,1};
         input_[2] = {1,0,0,1};
@@ -35,8 +43,8 @@ public:
     void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
-        const Mat4x4f& _view,
-        const Mat4x4f& _proj) override;
+        const Mat4x4& _view,
+        const Mat4x4& _proj) override;
 
     void render_ui_info() override;
 

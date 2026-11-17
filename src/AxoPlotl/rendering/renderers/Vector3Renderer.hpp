@@ -10,7 +10,7 @@ class Vector3Renderer : public RendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
         alignas(16) float line_width_ = 8.0f;
         alignas(16) ClipBox clip_box_;
@@ -50,12 +50,12 @@ public:
               const RenderContext& _render_context,
               wgpu::Buffer _position_buffer);
 
-    void update_vector_data(const std::vector<Vec4f>& _data);
+    void update_vector_data(const std::vector<Vec4>& _data);
 
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp);
+        const Mat4x4& _mvp);
 
     void configure_like(const Vector3Renderer& _r) {
         uniforms_ = _r.uniforms_;

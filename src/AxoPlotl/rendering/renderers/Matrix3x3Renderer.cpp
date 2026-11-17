@@ -194,7 +194,7 @@ void Matrix3x3Renderer::update_matrix_data(const std::vector<glm::mat3x4> &_data
 void Matrix3x3Renderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const Mat4x4f& _mvp)
+    const Mat4x4& _mvp)
 {
     if (!initialized_ || !enabled_ || n_positions_==0) {return;}
 

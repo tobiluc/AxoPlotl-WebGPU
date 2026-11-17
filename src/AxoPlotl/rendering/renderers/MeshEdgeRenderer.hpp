@@ -4,6 +4,7 @@
 #include "AxoPlotl/rendering/ColorMap.hpp"
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
+#include "AxoPlotl/rendering/create_static_render_data.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -13,17 +14,17 @@ class ColoredEdgeRenderer : public PropertyRendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f view_;
-        alignas(16) Mat4x4f model_view_;
-        alignas(16) Mat4x4f projection_;
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 view_;
+        alignas(16) Mat4x4 model_view_;
+        alignas(16) Mat4x4 projection_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
         alignas(16) float line_width_ = 3.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0,0,0,1);
+        alignas(16) Vec4 ambient_ = {0.3,0.3,0.3,1};
         alignas(16) float depth_offset_ = 0.00002;
         alignas(16) DirectionalLight dir_light_ ;
     } uniforms_;
@@ -51,7 +52,7 @@ public:
         return uniforms_.clip_box_;
     }
 
-    Vec4f& ambient() {
+    Vec4& ambient() {
         return uniforms_.ambient_;
     }
 
@@ -77,17 +78,10 @@ public:
 
     void clear() override;
 
-    struct EdgeInstance {
-        uint32_t vh0_; // used to lookup position
-        uint32_t vh1_; // used to lookup position
-        uint32_t eh_; // points to EdgePropertyData
-    };
-
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
-              wgpu::Buffer _position_buffer,
-              const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
+              const VolMeshData& _data);
 
     void update_property_data(const std::vector<Prop::Data>& _data);
 
@@ -110,7 +104,7 @@ private:
     size_t n_positions_ = 0;
     size_t n_edges_ = 0;
 
-    void create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges);
+    void create_buffers();
 
     void create_bind_group_layout();
 

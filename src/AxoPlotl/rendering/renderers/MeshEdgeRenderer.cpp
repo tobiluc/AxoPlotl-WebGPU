@@ -6,18 +6,26 @@ namespace AxoPlotl::internal
 PipelineState ColoredEdgeRenderer::pipeline_state_;
 
 void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context, const RenderContext &_render_context,
-                               wgpu::Buffer _position_buffer,
-                               const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
+                               const VolMeshData& _data)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
     object_id_ = _object_id;
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
-    n_edges_ = _edges.size();
-    n_positions_ = _position_buffer.getSize()/sizeof(Position);
-    position_buffer_ = _position_buffer;
-    create_buffers(_edges);
+
+    n_edges_ = _data.mesh.n_edges();
+    n_positions_ = _data.vertices_positions.data.size();
+
+    if (n_edges_ == 0) {
+        initialized_ = false;
+        return;
+    }
+
+    position_buffer_ = _data.vertices_positions.buffer;
+
+    edge_index_buffer_ = _data.edges_instances.buffer;
+    create_buffers();
     create_bind_group_layout();
     create_bind_group();
     create_pipeline(_gpu_context, _render_context);
@@ -33,60 +41,28 @@ void ColoredEdgeRenderer::clear()
     initialized_ = false;
 }
 
-void ColoredEdgeRenderer::create_buffers(const std::vector<std::pair<uint32_t,uint32_t>>& _edges)
+void ColoredEdgeRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
-    // Edge Index Buffer
-    {
-        std::vector<EdgeInstance> instances;
-        instances.reserve(n_edges_);
-        for (uint32_t eh = 0; eh < n_edges_; ++eh) {
-            instances.push_back({
-                .vh0_=_edges[eh].first,
-                .vh1_=_edges[eh].second,
-                .eh_=eh
-            });
-        }
-
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(EdgeInstance) * std::max(n_edges_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Edge Index Buffer");
-
-        edge_index_buffer_ = device.createBuffer(desc);
-        queue.writeBuffer(
-            edge_index_buffer_,
-            0,
-            instances.data(),
-            sizeof(EdgeInstance) * instances.size()
-            );
-    }
-
     // Property Buffer
     {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Prop::Data) * std::max(n_edges_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Edge Property Buffer");
-
-        property_buffer_ = device.createBuffer(desc);
+        property_buffer_ = create_bufferT<Prop::Data>(
+            device, n_edges_,
+            wgpu::BufferUsage::Storage |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Edge Property Buffer");
     }
 
     // Uniform Buffer
     {
         compute_uniform_stride<Uniforms>(device);
-
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Uniforms);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Edge Uniform Buffer");
-
-        uniform_buffer_ = device.createBuffer(desc);
+        uniform_buffer_ = create_bufferT<Uniforms>(
+            device, max_draw_calls_,
+            wgpu::BufferUsage::Uniform |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Edge Uniform Buffer");
     }
 }
 
@@ -184,21 +160,21 @@ void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     // 0 -- Vertex Index 0
     wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(EdgeInstance, vh0_);
+    attrs[0].offset = offsetof(VolMeshData::EdgeInstance, vh0);
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Vertex Index 1
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(EdgeInstance, vh1_);
+    attrs[1].offset = offsetof(VolMeshData::EdgeInstance, vh1);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     // 2 -- Edge Index
     attrs[2].shaderLocation = 2;
-    attrs[2].offset = offsetof(EdgeInstance, eh_);
+    attrs[2].offset = offsetof(VolMeshData::EdgeInstance, eh);
     attrs[2].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(EdgeInstance);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshData::EdgeInstance);
     vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Instance;
@@ -285,7 +261,7 @@ void ColoredEdgeRenderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, edge_index_buffer_, 0, n_edges_*sizeof(EdgeInstance));
+    _render_pass.setVertexBuffer(0, edge_index_buffer_, 0, n_edges_*sizeof(VolMeshData::EdgeInstance));
 
     // An Edge Instance is rendered as a quad
     _render_pass.draw(4, n_edges_, 0, 0);

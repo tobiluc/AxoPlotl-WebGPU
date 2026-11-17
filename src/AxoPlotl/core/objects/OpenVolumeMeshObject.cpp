@@ -19,7 +19,7 @@ OpenVolumeMeshObject::OpenVolumeMeshObject(
     const std::optional<std::filesystem::path>& _filepath)
     :
     ObjectBase(_scene, ""),
-    mesh_(std::move(_mesh)),
+    mesh_data_(std::move(_mesh)),
     filepath_(_filepath)
 {
     this->name_ = _filepath.has_value()?
@@ -90,8 +90,8 @@ void OpenVolumeMeshObject::render_ui_settings()
 void OpenVolumeMeshObject::render_ui_info()
 {
     ImGui::Text("V/E/F/C = %zu/%zu/%zu/%zu",
-        mesh_.n_vertices(), mesh_.n_edges(),
-        mesh_.n_faces(), mesh_.n_cells());
+        mesh().n_vertices(), mesh().n_edges(),
+        mesh().n_faces(), mesh().n_cells());
     ImGui::Text("BBox Min (%f, %f, %f)",
         bbox_.min()[0], bbox_.min()[1], bbox_.min()[2]);
     ImGui::Text("BBox Max (%f, %f, %f)",
@@ -102,18 +102,18 @@ void OpenVolumeMeshObject::render_ui_properties()
 {
     if (ImGui::BeginMenu("Mesh Properties")) {
         static constexpr OVM::MeshHandle mh(0);
-        for (auto p  = mesh_.persistent_props_begin<OVM::Entity::Mesh>();
-             p != mesh_.persistent_props_end<OVM::Entity::Mesh>(); ++p)
+        for (auto p  = mesh().persistent_props_begin<OVM::Entity::Mesh>();
+             p != mesh().persistent_props_end<OVM::Entity::Mesh>(); ++p)
         {
             // std::cerr << (*p)->name() << std::endl;
             if ((*p)->typeNameWrapper() == "double") {
-                auto prop = mesh_.get_property<double,OVM::Entity::Mesh>((*p)->name()).value();
+                auto prop = mesh().get_property<double,OVM::Entity::Mesh>((*p)->name()).value();
                 ImGui::Text("%s = %f", (*p)->name().c_str(), static_cast<float>(prop[mh]));
             } else if ((*p)->typeNameWrapper() == "float") {
-                auto prop = mesh_.get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
+                auto prop = mesh().get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
                 ImGui::Text("%s = %f", (*p)->name().c_str(), prop[mh]);
             } else if ((*p)->typeNameWrapper() == "string") {
-                auto prop = mesh_.get_property<std::string,OVM::Entity::Mesh>((*p)->name()).value();
+                auto prop = mesh().get_property<std::string,OVM::Entity::Mesh>((*p)->name()).value();
                 ImGui::Text("%s = %s", (*p)->name().c_str(), prop[mh].c_str());
             }
         }
@@ -122,24 +122,24 @@ void OpenVolumeMeshObject::render_ui_properties()
 
     if (ImGui::BeginMenu("Calculate Property"))
     {
-        if (mesh_.n_vertices()>0 && ImGui::BeginMenu("Vertices")){
+        if (mesh().n_vertices()>0 && ImGui::BeginMenu("Vertices")){
             if (ImGui::MenuItem("Normalized Position")) {
-                internal::calc_vertex_normalized_position(mesh_);
+                internal::calc_vertex_normalized_position(mesh());
             }
             ImGui::EndMenu();
         }
-        if (mesh_.n_faces()>0 && ImGui::BeginMenu("Faces")){
+        if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
             if (ImGui::MenuItem("Normal")) {
-                internal::calc_face_normal(mesh_);
+                internal::calc_face_normal(mesh());
             }
             ImGui::EndMenu();
         }
-        if (mesh_.n_cells()>0 && ImGui::BeginMenu("Cells")) {
+        if (mesh().n_cells()>0 && ImGui::BeginMenu("Cells")) {
             // if (ImGui::MenuItem("Minimum Dihedral Angle")) {
             //     calc_cell_min_dihedral_angle(mesh_);
             // }
             if (ImGui::MenuItem("Boundary Distance")) {
-                internal::calc_cell_boundary_distance(mesh_);
+                internal::calc_cell_boundary_distance(mesh());
             }
             ImGui::EndMenu();
         }
@@ -155,7 +155,7 @@ void OpenVolumeMeshObject::render_ui_properties()
         else {title += "none";}
 
         // Select Property
-        if (mesh_.n_props<EntityTag>()>0 &&
+        if (mesh().n_props<EntityTag>()>0 &&
             ImGui::BeginMenu(title.c_str()))
         {
             // Select an already selected property
@@ -163,8 +163,8 @@ void OpenVolumeMeshObject::render_ui_properties()
                 selected_prop_entity_type_ = EntityTag::type();
             }
 
-            for (auto pp = mesh_.persistent_props_begin<EntityTag>();
-                 pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+            for (auto pp = mesh().persistent_props_begin<EntityTag>();
+                 pp != mesh().persistent_props_end<EntityTag>(); ++pp)
             {
                 ImGui::PushID((*pp)->name().c_str());
                 std::string s = (*pp)->name() + " [" + (*pp)->typeNameWrapper() + "]";
@@ -219,22 +219,21 @@ void OpenVolumeMeshObject::render_ui_properties()
 
 void OpenVolumeMeshObject::init()
 {
-    const auto& data = create_static_render_data(mesh_);
-    n_positions_ = data.positions_.size();
     const auto& gpu_context = scene()->app()->gpu_context();
     const auto& render_context = scene()->app()->render_context();
     const wgpu::Device& device = gpu_context.device;
 
-    vertices_position_buffer_ = create_position_buffer(device, data.positions_);
-    edges_center_buffer_ = create_position_buffer(device, data.edges_barycenters_);
-    faces_center_buffer_ = create_position_buffer(device, data.faces_barycenters_);
-    cells_center_buffer_ = create_position_buffer(device, data.cells_barycenters_);
+    mesh_data_.create_buffers(device);
 
-    vertex_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.vertices_);
-    edge_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.edges_);
-    face_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_, data.faces_, data.faces_normals_);
-    cell_renderer_.init(id(), gpu_context, render_context, vertices_position_buffer_,
-        data.positions_, data.cells_, cells_center_buffer_);
+    // vertices_position_buffer_ = create_position_buffer(device, data.positions_);
+    // edges_center_buffer_ = create_position_buffer(device, data.edges_barycenters_);
+    // faces_center_buffer_ = create_position_buffer(device, data.faces_barycenters_);
+    // cells_center_buffer_ = create_position_buffer(device, data.cells_barycenters_);
+
+    vertex_renderer_.init(id(), gpu_context, render_context, mesh_data_);
+    edge_renderer_.init(id(), gpu_context, render_context, mesh_data_);
+    face_renderer_.init(id(), gpu_context, render_context, mesh_data_);
+    cell_renderer_.init(id(), gpu_context, render_context, mesh_data_);
 
     // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
     // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
@@ -250,25 +249,21 @@ void OpenVolumeMeshObject::init()
     edge_renderer_.enabled() = false;
     face_renderer_.enabled() = false;
     cell_renderer_.enabled() = false;
-    if (mesh_.n_cells() > 0) {
+    if (mesh().n_cells() > 0) {
         cell_renderer_.enabled() = true;
-    } else if (mesh_.n_faces() > 0) {
+    } else if (mesh().n_faces() > 0) {
         face_renderer_.enabled() = true;
         edge_renderer_.enabled() = true;
-    } else if (mesh_.n_edges() > 0) {
+    } else if (mesh().n_edges() > 0) {
         edge_renderer_.enabled() = true;
         vertex_renderer_.enabled() = true;
-    } else if (mesh_.n_vertices() > 0) {
+    } else if (mesh().n_vertices() > 0) {
         vertex_renderer_.enabled() = true;
     }
 }
 
 void OpenVolumeMeshObject::destroy()
 {
-    destroy_buffer(vertices_position_buffer_);
-    destroy_buffer(edges_center_buffer_);
-    destroy_buffer(faces_center_buffer_);
-    destroy_buffer(cells_center_buffer_);
     vertex_renderer_.clear();
     edge_renderer_.clear();
     face_renderer_.clear();
@@ -279,8 +274,8 @@ void OpenVolumeMeshObject::destroy()
 
 void OpenVolumeMeshObject::render(
     wgpu::RenderPassEncoder _render_pass, const ViewSize &_view_size,
-    const Mat4x4f& _view,
-    const Mat4x4f& _proj)
+    const Mat4x4& _view,
+    const Mat4x4& _proj)
 {
     if (deleted() || !visible()) {return;}
 
@@ -329,11 +324,11 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     };
 
     auto show_prop_list = [&]<typename EntityTag>() {
-        for (auto pp = mesh_.persistent_props_begin<EntityTag>();
-             pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+        for (auto pp = mesh().persistent_props_begin<EntityTag>();
+             pp != mesh().persistent_props_end<EntityTag>(); ++pp)
         {
             auto show_item = [&]<typename T>() {
-                auto prop = mesh_.get_property<T,EntityTag>((*pp)->name()).value();
+                auto prop = mesh().get_property<T,EntityTag>((*pp)->name()).value();
                 const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.pixel().entity_index_)];
                 ImGui::Text("%s: %s",
                     (*pp)->name().c_str(),
@@ -488,7 +483,7 @@ bool OpenVolumeMeshObject::visualize_property(
         // (except if matrix...)
         if constexpr(!is_matrix<T>) {
             const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
-                mesh_, _pp);
+                mesh(), _pp);
             col_rend.update_property_data(data);
             col_rend.property_mode() = get_buffer_property_type<T>();
         }
@@ -497,7 +492,7 @@ bool OpenVolumeMeshObject::visualize_property(
         if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
                 const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
-                    mesh_, _pp);
+                    mesh(), _pp);
                 vector3_renderer_.update_vector_data(data);
             }
         }
@@ -505,7 +500,7 @@ bool OpenVolumeMeshObject::visualize_property(
         // Upload Data to Matrix Renderer
         if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
-                const auto& data = get_buffer_property_data_mat3x4<T,EntityTag>(mesh_, _pp);
+                const auto& data = get_buffer_property_data_mat3x4<T,EntityTag>(mesh(), _pp);
                 mat3x3_renderer_.update_matrix_data(data);
             }
         }
@@ -523,8 +518,8 @@ bool OpenVolumeMeshObject::visualize_property(
     auto search_and_select_property = [&]<typename EntityTag>()
     {
         if (_entity_type.has_value() && _entity_type.value() != EntityTag::type()) {return;}
-        for (auto pp = mesh_.persistent_props_begin<EntityTag>();
-             pp != mesh_.persistent_props_end<EntityTag>(); ++pp)
+        for (auto pp = mesh().persistent_props_begin<EntityTag>();
+             pp != mesh().persistent_props_end<EntityTag>(); ++pp)
         {
             if (uploaded_property || (_type_name.has_value()
                 && (*pp)->typeNameWrapper() != _type_name.value())
@@ -608,8 +603,8 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
 {
     using D = ColoredVertexRenderer::Prop::Data;
     std::vector<D> props;
-    props.reserve(mesh_.n_vertices());
-    for (uint32_t i = 0; i < mesh_.n_vertices(); ++i) {
+    props.reserve(mesh().n_vertices());
+    for (uint32_t i = 0; i < mesh().n_vertices(); ++i) {
         props.push_back(D(1,1,1,1));
     }
     vertex_renderer_.update_property_data(props);
@@ -618,8 +613,8 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
 {
     using D = ColoredEdgeRenderer::Prop::Data;
     std::vector<D> props;
-    props.reserve(mesh_.n_edges());
-    for (uint32_t i = 0; i < mesh_.n_edges(); ++i) {
+    props.reserve(mesh().n_edges());
+    for (uint32_t i = 0; i < mesh().n_edges(); ++i) {
         props.push_back(D(1,1,1,1));
     }
     edge_renderer_.update_property_data(props);
@@ -628,8 +623,8 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
 {
     using D = ColoredFaceRenderer::Prop::Data;
     std::vector<D> props;
-    props.reserve(mesh_.n_faces());
-    for (OVM::FH fh : mesh_.faces()) {
+    props.reserve(mesh().n_faces());
+    for (OVM::FH fh : mesh().faces()) {
         props.emplace_back(1,1,1,1);
     }
     face_renderer_.update_property_data(props);
@@ -638,8 +633,8 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
 {
     using D = ColoredCellRenderer::Prop::Data;
     std::vector<D> props;
-    props.reserve(mesh_.n_cells());
-    for (OVM::CH ch : mesh_.cells()) {
+    props.reserve(mesh().n_cells());
+    for (OVM::CH ch : mesh().cells()) {
         props.emplace_back(1,1,1,1);
     }
     cell_renderer_.update_property_data(props);
@@ -648,14 +643,14 @@ void OpenVolumeMeshObject::upload_default_cell_property_data()
 void OpenVolumeMeshObject::recompute_bounding_box()
 {
     bbox_.reset();
-    for (const auto& p : mesh_.vertex_positions()) {
+    for (const auto& p : mesh().vertex_positions()) {
         bbox_.expand_with_point(p);
     }
 }
 
 bool OpenVolumeMeshObject::export_file(const std::filesystem::path& _path) const
 {
-    return OVM::IO::ovmb_write(_path, mesh_)
+    return OVM::IO::ovmb_write(_path, mesh())
            == OVM::IO::WriteResult::Ok;
 }
 

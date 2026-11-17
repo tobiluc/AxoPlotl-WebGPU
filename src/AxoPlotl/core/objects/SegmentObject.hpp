@@ -11,8 +11,7 @@ class SegmentObject : public ObjectBase
 {
 private:
     ColoredEdgeRenderer renderer_;
-    wgpu::Buffer vertex_position_buffer_;
-
+    VolMeshData mesh_data_;
     std::array<std::array<float,4>,2> input_;
 
 public:
@@ -21,6 +20,9 @@ public:
         ObjectBase(_scene, "")
     {
         this->name_ = "Segment " + std::to_string(id_);
+        OVM::VH vh0 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(0,0,0));
+        OVM::VH vh1 = mesh_data_.mesh.add_vertex(OVMVolumeMesh::PointT(1,1,1));
+        mesh_data_.mesh.add_edge(vh0, vh1);
         input_[0] = {0,0,0,1};
         input_[1] = {1,1,1,1};
     }
@@ -32,8 +34,8 @@ public:
     void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
-        const Mat4x4f& _view,
-        const Mat4x4f& _proj) override;
+        const Mat4x4& _view,
+        const Mat4x4& _proj) override;
 
     void render_ui_info() override;
 

@@ -20,7 +20,7 @@ public:
         struct Filter {
             Vec2 range_ = {0,0};
         };
-        using Data = Vec4f;
+        using Data = Vec4;
     };
 
     PropertyRendererBase(uint32_t _max_draw_calls = 1)

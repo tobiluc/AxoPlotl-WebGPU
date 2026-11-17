@@ -9,7 +9,8 @@ struct Uniforms {
     @align(16) objectId:u32,
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
-    @align(16) dirLight: DirectionalLight
+    @align(16) dirLight: DirectionalLight,
+    @align(16) flipNormals: u32
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -17,7 +18,7 @@ struct Uniforms {
 @group(0) @binding(2) var colorMap : texture_2d<f32>;
 @group(0) @binding(3) var colorSampler : sampler;
 @group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
-@group(0) @binding(5) var<storage, read> normals : array<vec3<f32>>;
+@group(0) @binding(5) var<storage, read> halffaceNormals : array<vec3<f32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
@@ -37,7 +38,7 @@ fn vs_main(
     let pos = positions[vertex_index];
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
-    out.normal = normals[face_index];
+    out.normal = halffaceNormals[(face_index<<1u) + min(ubo.flipNormals,1u)];
 
     // Subtract Depth Offset to render on top
     // of cells

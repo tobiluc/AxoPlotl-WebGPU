@@ -10,7 +10,7 @@ class Matrix3x3Renderer : public RendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
         alignas(16) float line_width_ = 3.0f;
         alignas(16) ClipBox clip_box_;
@@ -18,7 +18,7 @@ protected:
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) uint32_t draw_symmetric_ = 1;
         alignas(16) uint32_t normalize_ = 0;
-        alignas(16) std::array<Vec4f,3> axis_colors_ = {{{1,0,0,1},{0,1,0,1},{0,0,1,1}}};
+        alignas(16) std::array<Vec4,3> axis_colors_ = {{{1,0,0,1},{0,1,0,1},{0,0,1,1}}};
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,vec_scale_)%16==0);
@@ -41,7 +41,7 @@ public:
         return uniforms_.vec_scale_;
     };
 
-    std::array<Vec4f,3>& axis_colors() {
+    std::array<Vec4,3>& axis_colors() {
         return uniforms_.axis_colors_;
     }
 
@@ -71,7 +71,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp);
+        const Mat4x4& _mvp);
 
     inline bool is_initialized() const {
         return initialized_;

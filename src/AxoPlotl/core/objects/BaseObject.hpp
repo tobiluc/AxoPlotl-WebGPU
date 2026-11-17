@@ -34,8 +34,8 @@ public:
     virtual void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
-        const Mat4x4f& _view,
-        const Mat4x4f& _proj) = 0;
+        const Mat4x4& _view,
+        const Mat4x4& _proj) = 0;
 
     virtual void render_ui_info() = 0;
 
@@ -68,7 +68,7 @@ protected:
     int id_;
     std::string name_;
     //std::unique_ptr<RendererBase> renderer_;
-    Mat4x4f transform_;
+    Mat4x4 transform_;
     static int id_counter_;
     BoundingBox bbox_;
     bool deleted_ = false;

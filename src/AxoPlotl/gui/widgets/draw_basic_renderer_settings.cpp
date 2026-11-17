@@ -80,10 +80,14 @@ void draw_basic_renderer_settings(
     InputSlider("Depth Offset",
                 &_r.depth_offset(),
                 InputSliderOptions{
-                                   .step=0.00001,
-                                   .min = -0.5f,
-                                   .max = 0.5f,
-                                   .fmt = "%.5f"});
+                   .step=0.00001,
+                   .min = -0.5f,
+                   .max = 0.5f,
+                   .fmt = "%.5f"});
+
+    bool b = _r.flip_normals();
+    ImGui::Checkbox("Flip Normals", &b);
+    _r.flip_normals() = b;
 }
 
 void draw_basic_renderer_settings(

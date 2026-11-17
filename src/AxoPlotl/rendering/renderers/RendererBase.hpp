@@ -26,7 +26,7 @@ struct PipelineState
 class RendererBase
 {
 public:
-    using Position = Vec4f; // ensure 16 byte alignment with 4f vector
+    using Position = Vec4; // ensure 16 byte alignment with 4f vector
 
     struct alignas(16) ClipBox {
         alignas(16) Vec3 min_;

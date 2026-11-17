@@ -3,6 +3,7 @@
 #include "AxoPlotl/gui/properties/property_settings.hpp"
 #include <AxoPlotl/rendering/renderers/renderers.hpp>
 #include "AxoPlotl/core/objects/BaseObject.hpp"
+#include "AxoPlotl/rendering/create_static_render_data.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
 
@@ -12,7 +13,8 @@ namespace AxoPlotl
 class OpenVolumeMeshObject : public ObjectBase
 {
 protected:
-    OVMVolumeMesh mesh_;
+    VolMeshData mesh_data_;
+
     std::optional<std::filesystem::path> filepath_;
 
     //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
@@ -63,8 +65,8 @@ public:
     void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
-        const Mat4x4f& _view,
-        const Mat4x4f& _proj) override;
+        const Mat4x4& _view,
+        const Mat4x4& _proj) override;
 
     void render_ui_info() override;
 
@@ -89,9 +91,8 @@ public:
 
     void visualize_like(const OpenVolumeMeshObject& _obj);
 
-    OVMVolumeMesh& mesh() {
-        return mesh_;
-    }
+    OVMVolumeMesh& mesh() {return mesh_data_.mesh;}
+    const OVMVolumeMesh& mesh() const {return mesh_data_.mesh;}
 
     std::optional<std::filesystem::path> filepath() const {
         return filepath_;
@@ -107,17 +108,12 @@ protected:
 
     template<typename EntityTag>
     wgpu::Buffer& entity_center_buffer();
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return cells_center_buffer_;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return faces_center_buffer_;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return edges_center_buffer_;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return vertices_position_buffer_;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return mesh_data_.cells_centers.buffer;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return mesh_data_.faces_centers.buffer;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return mesh_data_.edges_centers.buffer;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return mesh_data_.vertices_positions.buffer;}
 
 protected:
-    size_t n_positions_;
-    wgpu::Buffer vertices_position_buffer_;
-    wgpu::Buffer edges_center_buffer_;
-    wgpu::Buffer faces_center_buffer_;
-    wgpu::Buffer cells_center_buffer_;
     ColoredVertexRenderer vertex_renderer_;
     ColoredEdgeRenderer edge_renderer_;
     ColoredFaceRenderer face_renderer_;

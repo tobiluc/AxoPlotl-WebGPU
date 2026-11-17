@@ -8,6 +8,42 @@
 namespace AxoPlotl::internal
 {
 
+template<typename T>
+wgpu::Buffer create_bufferT(
+    wgpu::Device _device,
+    const size_t _size,
+    const WGPUBufferUsage _usage =
+    wgpu::BufferUsage::Storage |
+    wgpu::BufferUsage::CopyDst |
+    wgpu::BufferUsage::Vertex,
+    const std::string& _name = "Buffer T")
+{
+    wgpu::BufferDescriptor desc{};
+    desc.usage =_usage;
+    desc.size = sizeof(T) * std::max(_size, 1lu);
+    desc.mappedAtCreation = false;
+    desc.label = wgpu::StringView(_name);
+    wgpu::Buffer buffer = _device.createBuffer(desc);
+    return buffer;
+}
+
+template<typename T>
+wgpu::Buffer create_bufferT(
+    wgpu::Device _device,
+    const std::vector<T>& _data,
+    const WGPUBufferUsage _usage =
+    wgpu::BufferUsage::Storage |
+    wgpu::BufferUsage::CopyDst |
+    wgpu::BufferUsage::Vertex,
+    const std::string& _name = "Buffer T")
+{
+    auto buffer = create_bufferT<T>(_device, _data.size(), _usage, _name);
+    if (!_data.empty()) [[likely]] {
+        _device.getQueue().writeBuffer(buffer, 0, _data.data(), buffer.getSize());
+    }
+    return buffer;
+}
+
 inline wgpu::DepthStencilState create_default_depth_state()
 {
     wgpu::DepthStencilState depthStencilState;

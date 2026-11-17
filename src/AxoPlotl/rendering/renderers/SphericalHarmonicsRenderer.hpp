@@ -11,7 +11,7 @@ class SHRenderer : public RendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 value_range_ = {-1,1};
         alignas(16) uint32_t object_id_ = 0;
     } uniforms_;
@@ -49,7 +49,7 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp);
+        const Mat4x4& _mvp);
 
     void set_default_uniforms() override {
         uniforms_ = Uniforms();

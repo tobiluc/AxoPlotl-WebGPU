@@ -41,7 +41,7 @@ void Vector3Renderer::create_buffers()
     {
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Vec4f) * std::max(n_positions_,1lu);
+        desc.size = sizeof(Vec4) * std::max(n_positions_,1lu);
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Vector Buffer");
 
@@ -115,7 +115,7 @@ void Vector3Renderer::create_bind_group()
     groupEntries[2].binding = 2;
     groupEntries[2].buffer = vector_buffer_;
     groupEntries[2].offset = 0;
-    groupEntries[2].size = sizeof(Vec4f) * std::max(n_positions_,1lu);
+    groupEntries[2].size = sizeof(Vec4) * std::max(n_positions_,1lu);
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -178,7 +178,7 @@ void Vector3Renderer::create_pipeline(const GpuContext& _gpu_context, const Rend
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
+void Vector3Renderer::update_vector_data(const std::vector<Vec4> &_data)
 {
     if (!initialized_) {return;}
 
@@ -186,14 +186,14 @@ void Vector3Renderer::update_vector_data(const std::vector<Vec4f> &_data)
         vector_buffer_,
         0,
         _data.data(),
-        sizeof(Vec4f) * _data.size()
+        sizeof(Vec4) * _data.size()
         );
 }
 
 void Vector3Renderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const Mat4x4f& _mvp)
+    const Mat4x4& _mvp)
 {
     if (!initialized_ || !enabled_ || n_positions_==0) {return;}
 

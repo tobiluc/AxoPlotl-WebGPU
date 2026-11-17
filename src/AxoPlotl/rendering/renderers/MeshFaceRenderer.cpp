@@ -5,28 +5,33 @@ namespace AxoPlotl::internal
 {
 PipelineState ColoredFaceRenderer::pipeline_state_;
 
-struct FaceIndex {
-    uint32_t vh_;
-    uint32_t fh_;
-};
-
 void ColoredFaceRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
-    wgpu::Buffer _position_buffer,
-    const std::vector<std::vector<uint32_t>>& _faces,
-    const std::vector<glm::vec4> &_face_normals)
+    const VolMeshData &_data)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
     object_id_ = _object_id;
+
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
-    n_faces_ = _faces.size();
-    n_positions_ = _position_buffer.getSize()/sizeof(Position);
-    position_buffer_ = _position_buffer;
-    create_buffers(_faces, _face_normals);
+
+    n_faces_ = _data.mesh.n_faces();
+    n_positions_ = _data.vertices_positions.data.size();
+    n_indices_ = _data.faces_indices_.data.size();
+
+    if (n_indices_ == 0) {
+        initialized_ = false;
+        return;
+    }
+
+    position_buffer_ = _data.vertices_positions.buffer;
+    halfface_normal_buffer_ = _data.halffaces_normals.buffer;
+    face_index_buffer_ = _data.faces_indices_.buffer;
+
+    create_buffers();
     create_bind_group_layout();
     create_bind_group();
     create_pipeline(_gpu_context, _render_context);
@@ -37,87 +42,32 @@ void ColoredFaceRenderer::init(
 void ColoredFaceRenderer::clear()
 {
     destroy_buffer(property_buffer_);
-    destroy_buffer(face_index_buffer_);
     destroy_buffer(uniform_buffer_);
-    destroy_buffer(normal_buffer_);
     initialized_ = false;
 }
 
-void ColoredFaceRenderer::create_buffers(const std::vector<std::vector<uint32_t>> &_faces, const std::vector<glm::vec4> &_face_normals)
+void ColoredFaceRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
 
-    // Triangulate the Faces
-    std::vector<FaceIndex> inds;
-    inds.reserve(3*n_faces_);
-    for (uint32_t fh = 0; fh < n_faces_; ++fh) {
-        const auto& f = _faces[fh];
-        for (int i = 1; i < f.size()-1; ++i) {
-            inds.push_back({.vh_ = f[0], .fh_ = fh});
-            inds.push_back({.vh_ = f[i], .fh_ = fh});
-            inds.push_back({.vh_ = f[i+1], .fh_ = fh});
-        }
-    }
-    n_indices_ = inds.size();
-
-    // Face Index Buffer
-    {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(FaceIndex) * inds.size();
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Face Index Buffer");
-
-        face_index_buffer_ = device.createBuffer(desc);
-        queue.writeBuffer(
-            face_index_buffer_,
-            0,
-            inds.data(),
-            sizeof(FaceIndex) * inds.size()
-            );
-    }
-
     // Property Buffer
     {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Prop::Data) * std::max(n_faces_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Face Property Buffer");
-
-        property_buffer_ = device.createBuffer(desc);
+        property_buffer_ = create_bufferT<Prop::Data>(
+            device, n_faces_,
+            wgpu::BufferUsage::Storage |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Face Property Buffer");
     }
 
     // Uniform Buffer
     {
         compute_uniform_stride<Uniforms>(device);
-
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(Uniforms);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Face Uniform Buffer");
-
-        uniform_buffer_ = device.createBuffer(desc);
-    }
-
-    // Normal Buffer
-    {
-        wgpu::BufferDescriptor desc{};
-        desc.usage = wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(glm::vec4) * std::max(n_faces_,1lu);
-        desc.mappedAtCreation = false;
-        desc.label = wgpu::StringView("Mesh Face Normal Buffer");
-
-        normal_buffer_ = device.createBuffer(desc);
-
-        pipeline_state_.device_.getQueue().writeBuffer(
-            normal_buffer_,
-            0,
-            _face_normals.data(),
-            sizeof(glm::vec4) * _face_normals.size()
-            );
+        uniform_buffer_ = create_bufferT<Uniforms>(
+            device, max_draw_calls_,
+            wgpu::BufferUsage::Uniform |
+                wgpu::BufferUsage::CopyDst,
+            "Mesh Face Uniform Buffer");
     }
 }
 
@@ -203,9 +153,9 @@ void ColoredFaceRenderer::create_bind_group()
 
     // 5 - Normals
     groupEntries[5].binding = 5;
-    groupEntries[5].buffer = normal_buffer_;
+    groupEntries[5].buffer = halfface_normal_buffer_;
     groupEntries[5].offset = 0;
-    groupEntries[5].size = sizeof(glm::vec4) * std::max(n_faces_,1lu);
+    groupEntries[5].size = sizeof(glm::vec4) * std::max(n_faces_*2lu,1lu);
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -227,16 +177,16 @@ void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(FaceIndex, vh_);;
+    attrs[0].offset = offsetof(VolMeshData::FaceIndex, vh);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Face Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(FaceIndex, fh_);
+    attrs[1].offset = offsetof(VolMeshData::FaceIndex, fh);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(FaceIndex);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshData::FaceIndex);
     vertexBufferLayout.attributeCount = 2;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
@@ -304,7 +254,7 @@ void ColoredFaceRenderer::update_property_data(const std::vector<Prop::Data>& _d
 void ColoredFaceRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const Mat4x4f& _mvp)
+    const Mat4x4& _mvp)
 {
     if (!initialized_ || !enabled_ || n_faces_==0) {return;}
 
@@ -319,7 +269,7 @@ void ColoredFaceRenderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, face_index_buffer_, 0, n_indices_*sizeof(FaceIndex));
+    _render_pass.setVertexBuffer(0, face_index_buffer_, 0, n_indices_*sizeof(VolMeshData::FaceIndex));
     _render_pass.draw(n_indices_, 1, 0, 0);
 
     set_next_draw_index();

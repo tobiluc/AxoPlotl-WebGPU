@@ -2,6 +2,7 @@
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
+#include "AxoPlotl/rendering/create_static_render_data.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -11,16 +12,16 @@ class ColoredVertexRenderer : public PropertyRendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f view_;
-        alignas(16) Mat4x4f projection_;
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 view_;
+        alignas(16) Mat4x4 projection_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
         alignas(16) float point_size_ = 8.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0.5,0.5,0.5,1);
+        alignas(16) Vec4 ambient_ = {0.5,0.5,0.5,1};
         alignas(16) float depth_offset_ = 0.00003;
         alignas(16) DirectionalLight dir_light_;
     } uniforms_;
@@ -48,7 +49,7 @@ public:
         return uniforms_.clip_box_;
     }
 
-    Vec4f& ambient() {
+    Vec4& ambient() {
         return uniforms_.ambient_;
     }
 
@@ -77,8 +78,7 @@ public:
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
-              wgpu::Buffer _position_buffer,
-              const std::vector<uint32_t>& _indices);
+              const VolMeshData& _data);
 
     void update_property_data(const std::vector<Prop::Data>& _data);
 
@@ -99,9 +99,8 @@ public:
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;
-    size_t n_vertices_ = 0;
 
-    void create_buffers(const std::vector<uint32_t>& _indices);
+    void create_buffers();
 
     void create_bind_group_layout();
 
@@ -110,7 +109,6 @@ private:
     void create_pipeline(const GpuContext& _gpu_context,
                          const RenderContext& _render_context);
 
-    wgpu::Buffer vertex_index_buffer_;
     wgpu::Buffer property_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;

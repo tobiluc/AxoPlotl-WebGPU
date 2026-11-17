@@ -9,8 +9,8 @@ namespace AxoPlotl
 void SegmentObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const ViewSize& _view_size,
-    const Mat4x4f& _view,
-    const Mat4x4f& _proj)
+    const Mat4x4& _view,
+    const Mat4x4& _proj)
 
 {
     if (deleted() || !visible()) {return;}
@@ -37,11 +37,12 @@ void SegmentObject::render_ui_settings()
 void SegmentObject::render_ui_properties()
 {
     bool changed = false;
+
     changed |= ImGui::InputFloat3("A", input_[0].data());
     changed |= ImGui::InputFloat3("B", input_[1].data());
     if (changed) {
         scene()->app()->gpu_context().queue().writeBuffer(
-            vertex_position_buffer_,
+            mesh_data_.vertices_positions.buffer,
             0,
             input_.data(),
             sizeof(input_));
@@ -61,11 +62,12 @@ void SegmentObject::render_ui_picking(const Picker& _p)
 
 void SegmentObject::init()
 {
-    std::vector<ColoredCellRenderer::Position> positions = {
-        {0,0,0,1}, {1,1,1,1}
-    };
-    vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
-    renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), vertex_position_buffer_, {{0,1}});
+    // std::vector<ColoredCellRenderer::Position> positions = {
+    //     {0,0,0,1}, {1,1,1,1}
+    // };
+    // vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
+    mesh_data_.create_buffers(scene()->app()->gpu_context().device);
+    renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), mesh_data_);
     renderer_.update_property_data({{1,1,1,1}}); // white
 }
 

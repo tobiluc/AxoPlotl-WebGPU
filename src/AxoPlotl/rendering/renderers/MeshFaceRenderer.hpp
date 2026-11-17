@@ -2,6 +2,7 @@
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
+#include "AxoPlotl/rendering/create_static_render_data.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -11,16 +12,16 @@ class ColoredFaceRenderer : public PropertyRendererBase
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
     struct alignas(16) Uniforms {
-        alignas(16) Mat4x4f mvp_;
+        alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
         alignas(16) ClipBox clip_box_;
         alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;
         alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4f ambient_ = Vec4f(0.9,0.8,0.8,1);
+        alignas(16) Vec4 ambient_ = {0.9,0.8,0.8,1};
         alignas(16) float depth_offset_ = 0.00001;
-        alignas(16) Vec3 light_dir_ = {-1,-1,-1};
         alignas(16) DirectionalLight dir_light_ ;
+        alignas(16) uint32_t flip_normals_ = 0;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
     static_assert(offsetof(Uniforms,type_)%16==0);
@@ -42,12 +43,16 @@ public:
         return uniforms_.clip_box_;
     }
 
-    Vec4f& ambient() {
+    Vec4& ambient() {
         return uniforms_.ambient_;
     }
 
     DirectionalLight& directional_light() {
         return uniforms_.dir_light_;
+    }
+
+    uint32_t& flip_normals() {
+        return uniforms_.flip_normals_;
     }
 
     // Value used in the shader as a
@@ -71,16 +76,14 @@ public:
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
-              wgpu::Buffer _position_buffer,
-              const std::vector<std::vector<uint32_t>>& _faces,
-              const std::vector<glm::vec4>& _face_normals);
+              const VolMeshData& _data);
 
     void update_property_data(const std::vector<Prop::Data>& _data);
 
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4f& _mvp);
+        const Mat4x4& _mvp);
 
     void configure_like(const ColoredFaceRenderer& _r) {
         uniforms_ = _r.uniforms_;
@@ -97,9 +100,7 @@ private:
     size_t n_faces_ = 0;
     size_t n_indices_ = 0;
 
-    void create_buffers(
-        const std::vector<std::vector<uint32_t>>& _faces,
-        const std::vector<glm::vec4> &_face_normals);
+    void create_buffers();
 
     void create_bind_group_layout();
 
@@ -112,7 +113,7 @@ private:
     wgpu::Buffer property_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
-    wgpu::Buffer normal_buffer_;
+    wgpu::Buffer halfface_normal_buffer_;
 
     static PipelineState pipeline_state_;
     wgpu::BindGroup bind_group_;

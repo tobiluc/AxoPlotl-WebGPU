@@ -8,10 +8,8 @@ namespace AxoPlotl
     using FT = float; // should always be float
     using Vec2 = glm::vec<2,FT>;
     using Vec3 = glm::vec<3,FT>;
-    using Vec4f = glm::vec<4,FT>;
     using Vec4 = glm::vec<4,FT>;
     using Mat3x3 = glm::mat<3,3,FT>;
-    using Mat4x4f = glm::mat<4,4,FT>;
     using Mat4x4 = glm::mat<4,4,FT>;
     using Quat = glm::quat;
 

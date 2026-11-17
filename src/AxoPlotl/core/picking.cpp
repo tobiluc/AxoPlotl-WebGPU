@@ -96,7 +96,7 @@ Picker::Pixel Picker::request_pixel(
         context->pick_pixel.ndc_.z = depth;
         const auto& v = context->camera->get_view_matrix();
         const auto& p = context->camera->get_projection_matrix(context->scene_size);
-        Vec4f pos = glm::inverse(p * v) * Vec4f(context->pick_pixel.ndc_, 1);
+        Vec4 pos = glm::inverse(p * v) * Vec4(context->pick_pixel.ndc_, 1);
         pos /= pos.w;
         context->pick_pixel.position_[0] = pos[0];
         context->pick_pixel.position_[1] = pos[1];

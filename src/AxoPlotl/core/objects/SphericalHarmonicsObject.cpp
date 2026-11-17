@@ -10,8 +10,8 @@ namespace AxoPlotl
 void SHObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const ViewSize& _view_size,
-    const Mat4x4f& _view,
-    const Mat4x4f& _proj)
+    const Mat4x4& _view,
+    const Mat4x4& _proj)
 
 {
     if (deleted() || !visible()) {return;}

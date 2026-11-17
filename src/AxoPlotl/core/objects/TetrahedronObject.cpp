@@ -9,8 +9,8 @@ namespace AxoPlotl
 void TetObject::render(
     wgpu::RenderPassEncoder _render_pass,
     const ViewSize& _view_size,
-    const Mat4x4f& _view,
-    const Mat4x4f& _proj)
+    const Mat4x4& _view,
+    const Mat4x4& _proj)
 
 {
     if (deleted() || !visible()) {return;}
@@ -41,7 +41,7 @@ void TetObject::render_ui_properties()
     changed |= ImGui::InputFloat3("D", input_[3].data());
     if (changed) {
         scene()->app()->gpu_context().queue().writeBuffer(
-            vertex_position_buffer_,
+            mesh_data_.vertices_positions.buffer,
             0,
             input_.data(),
             sizeof(input_));
@@ -63,19 +63,12 @@ void TetObject::render_ui_picking(const Picker& _p)
 void TetObject::init()
 {
     const wgpu::Device& device = scene()->app()->gpu_context().device;
-    std::vector<ColoredCellRenderer::Position> positions = {
-        {0,0,0,1}, {0,0,1,1}, {1,0,0,1}, {0,1,0,1}
-    };
-    vertex_position_buffer_ = internal::create_position_buffer(device, positions);
-    std::vector<ColoredCellRenderer::Position> center(1);
-    cell_center_buffer_ = internal::create_position_buffer(device, center);
-    std::vector<std::vector<std::vector<uint32_t>>> cells = {
-        {{0,1,2},{0,3,1},{0,2,3},{1,3,2}}
-    };
+
+    mesh_data_.create_buffers(device);
+
     renderer_.init(id_, scene()->app()->gpu_context(),
                    scene()->app()->render_context(),
-                   vertex_position_buffer_,
-                   positions, cells, cell_center_buffer_);
+                   mesh_data_);
     renderer_.update_property_data({{1,1,1,1}}); // white
     renderer_.cell_scale() = 1;
 }
