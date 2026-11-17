@@ -82,6 +82,23 @@ add_executable(AxoPlotlApp
     main.cpp
 )
 
+if(APPLE)
+    set_target_properties(AxoPlotlApp PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "AxoPlotl"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.tobiluc.axoplotl"
+        MACOSX_BUNDLE_ICON_FILE "AppIcon.icns"
+    )
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../assets/MacOS/AppIcon.icns"
+        PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    target_sources(AxoPlotlApp PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../assets/MacOS/AppIcon.icns"
+    )
+endif()
+
 target_link_libraries(AxoPlotlApp PUBLIC
     AxoPlotlCore   
 )
