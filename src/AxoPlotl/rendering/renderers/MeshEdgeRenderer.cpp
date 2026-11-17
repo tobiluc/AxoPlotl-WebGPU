@@ -36,7 +36,6 @@ void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_conte
 void ColoredEdgeRenderer::clear()
 {
     destroy_buffer(property_buffer_);
-    destroy_buffer(edge_index_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }

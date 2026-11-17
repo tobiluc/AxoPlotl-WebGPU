@@ -54,9 +54,9 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in:V2F) -> FragmentOutput
+fn fs_main(in:V2F) -> FragOutColPick
 {
-    var out:FragmentOutput;
+    var out:FragOutColPick;
     out.color = getFragmentColorFromPropertyValue(
         in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
         );
@@ -64,10 +64,10 @@ fn fs_main(in:V2F) -> FragmentOutput
     let lighting = getLightContribution(ubo.dirLight, in.normal);
 
     out.color = vec4<f32>(
-        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
 
-    out.pick = vec4<u32>(ubo.objectId, 3, in.cellHandle, bitcast<u32>(in.position.z));
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_CELL, in.cellHandle, bitcast<u32>(in.position.z));
     return out;
 }

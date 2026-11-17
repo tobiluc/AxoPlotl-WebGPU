@@ -107,11 +107,11 @@ fn fs_main(in : VSOut) -> FragOutColPickDepth
 
     // Final fragment output
     out.color = vec4<f32>(
-        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
     out.depth = depth;
-    out.pick = vec4<u32>(ubo.objectId, 0, in.vertexHandle, bitcast<u32>(depth));
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_VERTEX, in.vertexHandle, bitcast<u32>(depth));
 
     return out;
 }

@@ -41,9 +41,10 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in : VSOut) -> FragmentOutput
+fn fs_main(in : VSOut) -> FragOutColPick
 {
-    var out:FragmentOutput;
+    var out:FragOutColPick;
     out.color = in.color;
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_VECTOR, 0, bitcast<u32>(in.position.z));
     return out;
 }

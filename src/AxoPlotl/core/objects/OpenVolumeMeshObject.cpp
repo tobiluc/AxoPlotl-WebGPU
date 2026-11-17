@@ -391,19 +391,19 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
 
     switch (_p.pixel().entity_type_)
     {
-    case 0:
+    case Picker::EntityType::VERTEX:
         ImGui::Text("Vertex(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Vertex>();
         break;
-    case 1:
+    case Picker::EntityType::EDGE:
         ImGui::Text("Edge(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Edge>();
         break;
-    case 2:
+    case Picker::EntityType::FACE:
         ImGui::Text("Face(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Face>();
         break;
-    case 3:
+    case Picker::EntityType::CELL:
         ImGui::Text("Cell(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Cell>();
         break;

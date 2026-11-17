@@ -128,9 +128,6 @@ void render_ui()
         // Expand Menu
         if (info_object_id_ == obj->id()) {
             obj->render_ui_info();
-            if (ImGui::Button(ICON_FA_TRASH)) {
-                obj->deleted() = true;
-            }
         }
 
         // Settings Popup
@@ -138,6 +135,10 @@ void render_ui()
             && ImGui::BeginPopup("popup_object_settings"))
         {
             AxoPlotl::scene().get_object(settings_object_id_)->render_ui_settings();
+            ImGui::SeparatorText("Danger Zone");
+            if (ImGui::Button(ICON_FA_TRASH)) {
+                obj->deleted() = true;
+            }
             ImGui::EndPopup();
         }
 

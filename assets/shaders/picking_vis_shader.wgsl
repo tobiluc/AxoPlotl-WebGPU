@@ -1,6 +1,13 @@
+
+alias PickMode = u32;
+const PICK_MODE_OBJECT_ID:PickMode = 0u;
+const PICK_MODE_ENTITY_TYPE:PickMode = 1u;
+const PICK_MODE_ENTITY_INDEX:PickMode = 2u;
+const PICK_MODE_DEPTH:PickMode = 3u;
+
 struct Uniforms
 {
-    @align(16) mode: u32
+    @align(16) mode: PickMode
 };
 
 @group(0) @binding(0)
@@ -57,29 +64,20 @@ fn fs_main(
 
     var color = vec3<f32>(0.0);
 
-    switch ubo.mode
-    {
-        case 0u: {
-            // Object Id
+    switch ubo.mode {
+        case PICK_MODE_OBJECT_ID: {
             color = hash_color(data.r);
         }
-
-        case 1u: {
-            // Entity Type
+        case PICK_MODE_ENTITY_TYPE: {
             color = hash_color(data.g);
         }
-
-        case 2u: {
-            // Entity Index
+        case PICK_MODE_ENTITY_INDEX: {
             color = hash_color(data.b);
         }
-
-        case 3u: {
-            // Depth
+        case PICK_MODE_DEPTH: {
             let depth = bitcast<f32>(data.a);
             color = vec3<f32>(depth);
         }
-
         default: {
             color = vec3<f32>(1.0, 0.0, 1.0);
         }

@@ -11,6 +11,13 @@ const VALUE_TYPE_VEC3:ValueType = 2;
 const COLOR_NAN:vec4<f32> = vec4<f32>(0,0,0,1);
 const COLOR_INF:vec4<f32> = vec4<f32>(1,0,0,1);
 
+alias EntityType = u32;
+const ENTITY_TYPE_VERTEX:EntityType = 0;
+const ENTITY_TYPE_EDGE:EntityType = 1;
+const ENTITY_TYPE_FACE:EntityType = 2;
+const ENTITY_TYPE_CELL:EntityType = 3;
+const ENTITY_TYPE_VECTOR:EntityType = 6;
+
 struct ClipBox {
     @align(16) min: vec3<f32>,
     @align(16) max: vec3<f32>,
@@ -56,7 +63,7 @@ fn isOutsideRange(val:f32, range:vec2<f32>) -> bool {
     return val < range.x || val > range.y;
 };
 
-struct FragmentOutput {
+struct FragOutColPick {
     @location(0) color : vec4<f32>,
     @location(1) pick : vec4<u32> // picking
 };

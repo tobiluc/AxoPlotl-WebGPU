@@ -109,7 +109,7 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
 
     // Final color
     out.color = vec4<f32>(
-        out.color.rgb * (lighting + ubo.ambient.rgb),
+        out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
 
@@ -123,6 +123,6 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
     let depth = in.position.z + depthCorrection;
     out.depth = depth;
 
-    out.pick = vec4<u32>(ubo.objectId, 1, in.edgeHandle, bitcast<u32>(depth));
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_EDGE, in.edgeHandle, bitcast<u32>(depth));
     return out;
 }

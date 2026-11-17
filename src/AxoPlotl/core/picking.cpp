@@ -79,7 +79,7 @@ Picker::Pixel Picker::request_pixel(
 
         // For Meshes, we store the entity type and handle index
         // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
-        context->pick_pixel.entity_type_ = data[1];
+        context->pick_pixel.entity_type_ = static_cast<EntityType>(data[1]);
         context->pick_pixel.entity_index_ = data[2];
 
         // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
