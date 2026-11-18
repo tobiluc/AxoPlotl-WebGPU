@@ -18,38 +18,43 @@ namespace AxoPlotl
 IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
 {
     IO::ReadMeshResult res;
-    res.status_ = ReadMeshStatus::READ_ERROR;
+    res.status = ReadMeshStatus::READ_ERROR;
 
     if (_path.extension() == ".obj") {
         const auto& robj = rapidobj::ParseFile(_path);
         if (!robj.error) {
-            rapidobj_to_openvolumemesh(robj, res.mesh_);
-            res.status_ = ReadMeshStatus::OK;
+            rapidobj_to_openvolumemesh(robj, res.mesh);
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::OBJ;
         }
     } else if (_path.extension() == ".ply") {
         try {
             happly::PLYData plyIn(_path);
-            happly_to_openvolumemesh(plyIn, res.mesh_);
-            res.status_ = ReadMeshStatus::OK;
+            happly_to_openvolumemesh(plyIn, res.mesh);
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::PLY;
         } catch (std::runtime_error& _err) {
             std::cerr << _err.what() << std::endl;
         }
     } else if (_path.extension() == ".ovmb") {
         auto codecs = OVM::IO::g_default_property_codecs;
         OVM::IO::register_glm_codecs(codecs);
-        if (OVM::IO::ovmb_read(_path.c_str(), res.mesh_, OVM::IO::ReadOptions(), codecs)
+        if (OVM::IO::ovmb_read(_path.c_str(), res.mesh, OVM::IO::ReadOptions(), codecs)
             ==OVM::IO::ReadResult::Ok) {
-            res.status_ = ReadMeshStatus::OK;
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::OVM;
         }
     } else if (_path.extension() == ".ovm") {
         OVM::IO::FileManager fm;
-        if (fm.readFile(_path, res.mesh_)) {
-            res.status_ = ReadMeshStatus::OK;
+        if (fm.readFile(_path, res.mesh)) {
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::OVM;
         }
     } else if (_path.extension() == ".vtk") {
         OVM::Reader::VtkColorReader fm;
-        if (fm.readFile(_path, res.mesh_, true, true)) {
-            res.status_ = ReadMeshStatus::OK;
+        if (fm.readFile(_path, res.mesh, true, true)) {
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::VTK;
         }
     } else {
         OpenMesh::PolyMesh_ArrayKernelT<OpenMesh::DefaultTraits> mesh;
@@ -63,8 +68,9 @@ IO::ReadMeshResult IO::read_mesh(const std::filesystem::path& _path)
         opt += OpenMesh::IO::Options::VertexTexCoord;
         opt += OpenMesh::IO::Options::Custom;
         if (OpenMesh::IO::read_mesh(mesh, _path, opt)) {
-            openmesh_to_openvolumemesh(mesh, res.mesh_);
-            res.status_ = ReadMeshStatus::OK;
+            openmesh_to_openvolumemesh(mesh, res.mesh);
+            res.status = ReadMeshStatus::OK;
+            res.format = MeshFormat::OM;
         }
     }
     return res;

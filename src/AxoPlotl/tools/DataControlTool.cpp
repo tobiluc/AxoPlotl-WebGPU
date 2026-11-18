@@ -115,15 +115,15 @@ void render_ui()
         ImGui::SameLine();
 
         // Export Button
-        if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
-            IGFD::FileDialogConfig cfg;
-            cfg.path = "..";
-            cfg.userDatas = (void*)(intptr_t)obj->id();
-            ImGuiFileDialog::Instance()->OpenDialog(
-                "SaveMeshDialogKey", "Choose File",
-                "",
-                cfg);
-        }
+        // if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
+        //     IGFD::FileDialogConfig cfg;
+        //     cfg.path = "..";
+        //     cfg.userDatas = (void*)(intptr_t)obj->id();
+        //     ImGuiFileDialog::Instance()->OpenDialog(
+        //         "SaveObjectDialogKey", "Choose File",
+        //         "",
+        //         cfg);
+        // }
 
         // Expand Menu
         if (info_object_id_ == obj->id()) {
@@ -150,16 +150,17 @@ void render_ui()
     }
 
     // Export File Dialog
-    if (ImGuiFileDialog::Instance()->Display("SaveMeshDialogKey")) {
-        if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            intptr_t export_obj_id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
-            if (!scene().get_object(export_obj_id)->export_file(filepath)) {
-                ImGui::OpenPopup("popup_export_error");
-            }
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
+    // if (ImGuiFileDialog::Instance()->Display("SaveObjectDialogKey")) {
+    //     if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+    //         std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+    //         intptr_t export_obj_id = (intptr_t)ImGuiFileDialog::Instance()->GetUserDatas();
+    //         // TODO
+    //         if (!scene().get_object(export_obj_id)->save_to_file(filepath)) {
+    //             ImGui::OpenPopup("popup_export_error");
+    //         }
+    //     }
+    //     ImGuiFileDialog::Instance()->Close();
+    // }
 
     // Export Error Popup
     if (ImGui::BeginPopup("popup_export_error"))

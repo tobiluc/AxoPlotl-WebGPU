@@ -5,15 +5,17 @@
 namespace AxoPlotl::internal
 {
 
-OVM::CellPropertyT<int> calc_cell_boundary_distance(
-    VolMesh& _mesh, std::string _name = "AxoPlotl::boundary_distance");
-
-//OVM::CellPropertyT<double> calc_cell_min_dihedral_angle(OVMVolumeMesh& _mesh);
-
-OVM::VertexPropertyT<OVM::Vec3f> calc_vertex_normalized_position(
-    VolMesh& _mesh, std::string _name = "AxoPlotl::normalized_position");
-
-OVM::FacePropertyT<OVM::Vec3f> calc_face_normal(
+void add_face_normal_prop(
     VolMesh& _mesh, std::string _name = "AxoPlotl::face_normal");
+
+template<typename EntityTag>
+void add_entity_index_prop(VolMesh& _mesh, std::string _name = "AxoPlotl::idx")
+{
+    auto p = _mesh.create_persistent_property<int,EntityTag>(_name);
+    if (!p) {return;}
+    for (const auto& h : _mesh.entities<EntityTag>()) {
+        (*p)[h] = h.idx();
+    }
+}
 
 }

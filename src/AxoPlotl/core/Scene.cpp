@@ -36,10 +36,10 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const VolMesh &&_mesh)
 std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::path& _path)
 {
     auto rr = IO::read_mesh(_path);
-    if (rr.status_ != IO::ReadMeshStatus::OK) {
+    if (rr.status != IO::ReadMeshStatus::OK) {
         return nullptr;
     }
-    return add_object<OpenVolumeMeshObject>(std::move(rr.mesh_), _path);
+    return add_object<OpenVolumeMeshObject>(std::move(rr.mesh), _path);
 }
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
@@ -120,7 +120,25 @@ bool Scene::save_to_file(const std::filesystem::path& _path) const
 
     try
     {
-        file << nlohmann::json(*this).dump(4);
+        nlohmann::json j(*this);
+
+        // std::vector<ObjectIO> out;
+        // out.reserve(num_objects());
+        // for (const auto& obj : objects_) {
+        //     if (obj->deleted()) {continue;}
+        //     ObjectIO o;
+        //     o.path =
+        //         std::to_string(obj->id()) +
+        //         "_" + obj->name() +
+        //         obj->io_traits().file_ext;
+        //     o.traits = obj->io_traits();
+        //     if (obj->save_to_file(o.path)) {
+        //         out.push_back(o);
+        //     }
+        // }
+        // j["objects"] = out;
+
+        file << j.dump(4);
         return true;
     }
     catch (const std::exception& e)
@@ -143,6 +161,18 @@ bool Scene::load_from_file(const std::filesystem::path& _path)
         this->camera_ = scene.camera();
         this->settings = scene.settings;
         this->directional_light = scene.directional_light;
+
+        // for (auto& obj : objects_) {
+        //     obj->deleted() = true;
+        // }
+        // if (j.contains("objects")) {
+        //     for (const ObjectIO& i : j.at("objects")) {
+        //         if (i.traits.type_id == "ovm_obj") {
+        //             this->add_mesh(i.path);
+        //         }
+        //     }
+        // }
+
         return true;
     }
     catch (const std::exception& e)

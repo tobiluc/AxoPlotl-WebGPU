@@ -123,23 +123,29 @@ void OpenVolumeMeshObject::render_ui_properties()
     if (ImGui::BeginMenu("Calculate Property"))
     {
         if (mesh().n_vertices()>0 && ImGui::BeginMenu("Vertices")){
-            if (ImGui::MenuItem("Normalized Position")) {
-                internal::calc_vertex_normalized_position(mesh());
+            if (ImGui::MenuItem("Vertex Index")) {
+                add_entity_index_prop<OpenVolumeMesh::Entity::Vertex>(mesh());
+            }
+            ImGui::EndMenu();
+        }
+        if (mesh().n_edges()>0 && ImGui::BeginMenu("Edges")){
+            if (ImGui::MenuItem("Edge Index")) {
+                add_entity_index_prop<OpenVolumeMesh::Entity::Edge>(mesh());
             }
             ImGui::EndMenu();
         }
         if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
+            if (ImGui::MenuItem("Face Index")) {
+                add_entity_index_prop<OpenVolumeMesh::Entity::Face>(mesh());
+            }
             if (ImGui::MenuItem("Normal")) {
-                internal::calc_face_normal(mesh());
+                add_face_normal_prop(mesh());
             }
             ImGui::EndMenu();
         }
         if (mesh().n_cells()>0 && ImGui::BeginMenu("Cells")) {
-            // if (ImGui::MenuItem("Minimum Dihedral Angle")) {
-            //     calc_cell_min_dihedral_angle(mesh_);
-            // }
-            if (ImGui::MenuItem("Boundary Distance")) {
-                internal::calc_cell_boundary_distance(mesh());
+            if (ImGui::MenuItem("Cell Index")) {
+                add_entity_index_prop<OpenVolumeMesh::Entity::Cell>(mesh());
             }
             ImGui::EndMenu();
         }
@@ -646,12 +652,6 @@ void OpenVolumeMeshObject::recompute_bounding_box()
     for (const auto& p : mesh().vertex_positions()) {
         bbox_.expand_with_point(p);
     }
-}
-
-bool OpenVolumeMeshObject::export_file(const std::filesystem::path& _path) const
-{
-    return OVM::IO::ovmb_write(_path, mesh())
-           == OVM::IO::WriteResult::Ok;
 }
 
 }

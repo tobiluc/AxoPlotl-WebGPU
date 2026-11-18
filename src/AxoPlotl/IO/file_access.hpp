@@ -6,6 +6,15 @@
 namespace AxoPlotl::IO
 {
 
+enum class MeshFormat {
+    UNKNOWN,
+    OVM,
+    OM,
+    OBJ,
+    PLY,
+    VTK
+};
+
 enum class ReadMeshStatus {
     OK = 0,
     READ_ERROR = 1,
@@ -14,8 +23,9 @@ enum class ReadMeshStatus {
 
 struct ReadMeshResult
 {
-    VolMesh mesh_;
-    ReadMeshStatus status_;
+    VolMesh mesh;
+    ReadMeshStatus status;
+    MeshFormat format;
 };
 
 ReadMeshResult read_mesh(

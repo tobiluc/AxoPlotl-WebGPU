@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "webgpu/webgpu.hpp"
+#include <nlohmann/json.hpp>
 
 namespace AxoPlotl
 {
@@ -44,8 +45,6 @@ public:
     virtual void render_ui_properties() = 0;
 
     virtual void render_ui_picking(const Picker& _p) = 0;
-
-    virtual bool export_file(const std::filesystem::path& _path) const;
 
     const BoundingBox& bounding_box() const {return bbox_;}
 

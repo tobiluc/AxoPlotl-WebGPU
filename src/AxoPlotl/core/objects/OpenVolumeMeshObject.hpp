@@ -14,8 +14,7 @@ class OpenVolumeMeshObject : public ObjectBase
 {
 protected:
     VolMeshData mesh_data_;
-
-    std::optional<std::filesystem::path> filepath_;
+    std::optional<std::filesystem::path> filepath_ = std::nullopt;
 
     //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
 
@@ -55,6 +54,7 @@ protected:
         upload_default_cell_property_data();}
 
 public:
+
     OpenVolumeMeshObject(internal::Scene* _scene, VolMesh& _mesh,
                          const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
@@ -82,8 +82,6 @@ public:
 
     void recompute_bounding_box() override;
 
-    bool export_file(const std::filesystem::path& _path) const override;
-
     bool visualize_property(
         const std::string& _property_name,
         std::optional<OVM::EntityType> _entity_type = std::nullopt,
@@ -94,7 +92,7 @@ public:
     VolMesh& mesh() {return mesh_data_.mesh;}
     const VolMesh& mesh() const {return mesh_data_.mesh;}
 
-    std::optional<std::filesystem::path> filepath() const {
+    const std::optional<std::filesystem::path>& filepath() const {
         return filepath_;
     }
 
