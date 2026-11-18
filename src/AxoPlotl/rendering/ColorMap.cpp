@@ -210,6 +210,8 @@ void ColorMap::create(wgpu::Device _device)
 
 void ColorMap::update(const std::vector<f16>& _data)
 {
+    if (!device_) {return;}
+
     static wgpu::TexelCopyTextureInfo destination;
     //static wgpu::ImageCopyTexture destination;
     destination.texture = texture_;
