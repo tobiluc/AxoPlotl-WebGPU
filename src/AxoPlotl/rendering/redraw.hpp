@@ -5,7 +5,7 @@
 namespace AxoPlotl::internal
 {
 
-void trigger_redraw(uint32_t _n_frames = 8);
+void trigger_redraw(uint32_t _n_frames = 10);
 
 bool on_draw();
 
