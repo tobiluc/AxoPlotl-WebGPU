@@ -81,11 +81,6 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
         orientation_ * (-FORWARD * orbit_distance);
 }
 
-void Camera::set_default()
-{
-    *this = Camera();
-}
-
 void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max)
 {
     float required_distance = 0.0f;

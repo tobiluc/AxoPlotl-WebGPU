@@ -33,7 +33,7 @@ public:
 
     void render_settings_ui();
 
-    inline void destroy() {
+    void destroy() {
         destroy_buffer(origin_position_buffer_);
         unit_frame_renderer_.clear();
         objects_.clear();
@@ -55,7 +55,7 @@ public:
         return std::static_pointer_cast<Object>(objects_.back());
     }
 
-    inline size_t num_objects() const {
+    size_t num_objects() const {
         size_t n(0);
         for (const auto& obj : objects_) {
             n += !obj->deleted();
@@ -63,15 +63,15 @@ public:
         return n;
     }
 
-    inline auto get_objects() const {
+    auto get_objects() const {
         return objects_ | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return !_obj->deleted();});;
     }
 
-    inline auto get_target_objects() const {
+    auto get_target_objects() const {
         return get_objects() | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return _obj->target();});
     }
 
-    inline std::shared_ptr<ObjectBase> get_object(int _id) const {
+    std::shared_ptr<ObjectBase> get_object(int _id) const {
         for (auto obj : objects_) {
             if (!obj->deleted() && obj->id() == _id) {
                 return obj;
@@ -81,7 +81,7 @@ public:
     }
 
     template <typename Object>
-    inline std::shared_ptr<Object> get_object(int _id) const {
+    std::shared_ptr<Object> get_object(int _id) const {
         for (auto const& obj : objects_) {
             if (!obj->deleted() && obj->id() == _id) {
                 return std::dynamic_pointer_cast<Object>(obj);
@@ -90,7 +90,7 @@ public:
         return nullptr;
     }
 
-    inline void sort_objects(
+    void sort_objects(
         std::function<bool(
             const std::shared_ptr<ObjectBase>&,
             const std::shared_ptr<ObjectBase>&)> _comp)
@@ -98,7 +98,7 @@ public:
         std::sort(objects_.begin(), objects_.end(), _comp);
     }
 
-    inline void zoom_to_box(const BoundingBox& _bbox) {
+    void zoom_to_box(const BoundingBox& _bbox) {
         camera_.zoom_to_box(_bbox.min(),_bbox.max());
         trigger_redraw();
     }
@@ -124,6 +124,10 @@ public:
             show_orbit_target_cross);
     } settings;
 
+    bool save_to_file(const std::filesystem::path& _path) const;
+
+    bool load_from_file(const std::filesystem::path& _path);
+
 protected:
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
@@ -138,7 +142,7 @@ public:
     DirectionalLight directional_light;
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Scene,
-        camera_, settings);
+        camera_, settings, directional_light);
 };
 
 }

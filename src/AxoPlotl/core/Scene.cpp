@@ -2,6 +2,7 @@
 #include "AxoPlotl/IO/file_access.hpp"
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include <AxoPlotl/core/Application.hpp>
+#include <fstream>
 
 namespace AxoPlotl::internal
 {
@@ -110,6 +111,45 @@ void Scene::render_settings_ui()
     ImGui::Checkbox("Axis Cross", &settings.show_axis_cross);
     ImGui::Checkbox("Orbit Cross", &settings.show_orbit_target_cross);
     ImGui::Checkbox("Zoom to New Object", &settings.zoom_to_new_object);
+}
+
+bool Scene::save_to_file(const std::filesystem::path& _path) const
+{
+    std::ofstream file(_path);
+    if (!file) {return false;}
+
+    try
+    {
+        file << nlohmann::json(*this).dump(4);
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error saving Scene: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool Scene::load_from_file(const std::filesystem::path& _path)
+{
+    std::ifstream file(_path);
+    if (!file) {return false;}
+
+    try
+    {
+        nlohmann::json j;
+        file >> j;
+        auto scene = j.get<Scene>();
+        this->camera_ = scene.camera();
+        this->settings = scene.settings;
+        this->directional_light = scene.directional_light;
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error loading Scene: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 }

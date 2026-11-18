@@ -42,7 +42,9 @@ public:
 
     void update(GLFWwindow* window, bool _allow_input = true);
 
-    void set_default();
+    void set_default() {
+        *this = Camera();
+    }
 
     void zoom_to_box(const Vec3& min, const Vec3& max);
 

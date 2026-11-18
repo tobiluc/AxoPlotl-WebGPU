@@ -381,7 +381,24 @@ void Application::render_main_menu_bar_ui()
         // File menu
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Load", "Ctrl+O")) {
+            if (ImGui::MenuItem("Load Scene", "Ctrl+O")) {
+                IGFD::FileDialogConfig config;
+                config.path = "..";
+                ImGuiFileDialog::Instance()->OpenDialog(
+                    "LoadSceneDialogKey", "Choose File",
+                    "(*.json){.json}",
+                    config);
+            }
+            if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
+                IGFD::FileDialogConfig config;
+                config.path = "..";
+                ImGuiFileDialog::Instance()->OpenDialog(
+                    "SaveSceneDialogKey", "Choose File",
+                    "(*.json){.json}",
+                    config);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Load Mesh")) {
                 IGFD::FileDialogConfig config;
                 config.path = "..";
                 ImGuiFileDialog::Instance()->OpenDialog(
@@ -456,6 +473,24 @@ void Application::render_main_menu_bar_ui()
             ImGui::EndMenu(); // !Settings
         }
         ImGui::EndMainMenuBar();
+    }
+
+    // Load Scene File Dialog
+    if (ImGuiFileDialog::Instance()->Display("LoadSceneDialogKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            scene().load_from_file(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Save Scene File Dialog
+    if (ImGuiFileDialog::Instance()->Display("SaveSceneDialogKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            scene().save_to_file(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
     }
 
     // Load Mesh File Dialog
