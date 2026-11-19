@@ -142,6 +142,12 @@ Picker::Pixel Picker::request_pixel(
     }
 
     this->pixel_ = context.pick_pixel;
+
+#if 0
+    std::cerr << "Object Id: " << pixel_.object_id_ << std::endl;
+    std::cerr << "Entity Index: " << pixel_.entity_index_ << std::endl;
+#endif
+
     return pixel_;
 }
 

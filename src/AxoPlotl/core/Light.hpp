@@ -15,6 +15,8 @@ struct DirectionalLight
        color, direction, strength
        );
 };
+static_assert(sizeof(DirectionalLight) == 48);
+static_assert(alignof(DirectionalLight) == 16);
 
 struct PointLight
 {
@@ -26,5 +28,7 @@ struct PointLight
        color, position, strength
        );
 };
+static_assert(sizeof(PointLight) == 48);
+static_assert(alignof(PointLight) == 16);
 
 }

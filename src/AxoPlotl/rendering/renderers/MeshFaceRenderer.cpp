@@ -63,11 +63,13 @@ void ColoredFaceRenderer::create_buffers()
     // Uniform Buffer
     {
         compute_uniform_stride<Uniforms>(device);
-        uniform_buffer_ = create_bufferT<Uniforms>(
-            device, max_draw_calls_,
-            wgpu::BufferUsage::Uniform |
-                wgpu::BufferUsage::CopyDst,
-            "Mesh Face Uniform Buffer");
+        wgpu::BufferDescriptor desc;
+        desc.size = uniform_stride_ * std::max(max_draw_calls_, 1u);
+        desc.usage = wgpu::BufferUsage::Uniform |
+                     wgpu::BufferUsage::CopyDst;
+        desc.mappedAtCreation = false;
+        desc.label = wgpu::StringView("Face Uniform Buffer");
+        uniform_buffer_ = device.createBuffer(desc);
     }
 }
 

@@ -1,4 +1,5 @@
 #include "PropertyRendererSettingsBool.hpp"
+#include "AxoPlotl/gui/widgets/draw_histogram.hpp"
 
 namespace AxoPlotl::internal
 {
@@ -14,7 +15,13 @@ void PropertySettingsBool::render_ui()
 {
     auto& cm = renderer_->color_map();
 
-    int b = hist_.render_ui(cm);
+    int b = draw_histogram(hist_,
+               DrawHistogramOptions{
+                   .colormap=&cm,
+                   .pm_buttons=false
+               }
+            );
+
     if (b==0) {
         show_false_ = true;
         show_true_ = false;
@@ -35,7 +42,7 @@ void PropertySettingsBool::render_ui()
 
     if (changed_) {
         // Update Range
-        renderer_->property_filter().range_ = {
+        renderer_->property_filter_options().scalar_range = {
             !show_false_, show_true_
         };
 
@@ -52,6 +59,8 @@ void PropertySettingsBool::render_ui()
 }
 
 void PropertySettingsBool::set_default_settings() {
+    renderer_->property_filter_options().filter_mode = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+    renderer_->property_filter_options().scalar_range = {false, true};
     color_true_ = {0,1,0};
     color_false_ = {1,0,0};
     show_true_ = true;

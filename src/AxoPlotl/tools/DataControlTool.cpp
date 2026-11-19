@@ -112,8 +112,7 @@ void render_ui()
             settings_object_id_ = obj->id();
         }
 
-        ImGui::SameLine();
-
+        // ImGui::SameLine();
         // Export Button
         // if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
         //     IGFD::FileDialogConfig cfg;
@@ -170,8 +169,7 @@ void render_ui()
     }
 
     // Property Visualization
-    ImGui::SeparatorText("Properties");
-    if (ImGui::BeginMenu("Object")) {
+    if (ImGui::BeginMenu("View Object Properties")) {
         for (const auto& obj : AxoPlotl::scene().get_objects()) {
             ImGui::PushID(obj->id());
             if (ImGui::MenuItem(obj->name().c_str())) {
@@ -185,10 +183,13 @@ void render_ui()
         }
         ImGui::EndMenu();
     }
-    if (auto obj = AxoPlotl::scene().get_object(properties_object_id_)) {
-        ImGui::SeparatorText(obj->name().c_str());
-        obj->render_ui_properties();
-    } else {properties_object_id_ = -1;}
+
+    if (auto propObj = AxoPlotl::scene().get_object(properties_object_id_)) {
+        ImGui::SeparatorText(("Properties of "+propObj->name()).c_str());
+        propObj->render_ui_properties();
+    } else {
+        properties_object_id_ = -1;
+    }
 }
 
 }

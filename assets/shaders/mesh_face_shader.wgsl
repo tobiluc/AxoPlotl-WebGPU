@@ -4,13 +4,12 @@ struct Uniforms {
     @align(16) mvp : mat4x4<f32>,
     @align(16) viewportSize: vec2<f32>,
     @align(16) clipBox: ClipBox,
-    @align(16) valueType:ValueType,
-    @align(16) valueFilter: vec2<f32>,
     @align(16) objectId:u32,
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
-    @align(16) flipNormals: u32
+    @align(16) flipNormals: u32,
+    @align(16) propFilter: PropFilterOptions
 };
 
 @group(0) @binding(0) var<uniform> ubo : Uniforms;
@@ -46,7 +45,8 @@ fn vs_main(
 
     let value = props[face_index];
     if (isOutsideClipBox(pos, ubo.clipBox)
-        || isOutsideValueFilter(value, ubo.valueType, ubo.valueFilter)) {
+        || !propertyValueMatchesFilter(value, ubo.propFilter))
+    {
         out.position = clippedPosition();
     }
     out.value = value;
@@ -62,7 +62,7 @@ fn fs_main(in:V2F) -> FragOutColPick
     var out: FragOutColPick;
 
     out.color = getFragmentColorFromPropertyValue(
-        in.value, ubo.valueType, ubo.valueFilter, colorMap, colorSampler
+        in.value, ubo.propFilter, colorMap, colorSampler
         );
 
     let lighting = getLightContribution(ubo.dirLight, in.normal);

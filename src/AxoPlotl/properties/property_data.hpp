@@ -90,16 +90,20 @@ std::optional<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(co
 }
 
 template<typename T>
-constexpr PropertyRendererBase::Prop::Mode get_buffer_property_type()
+constexpr PropertyRendererBase::PropValueMode get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
-        return PropertyRendererBase::Prop::Mode::SCALAR;
+        return PropertyRendererBase::PropValueMode::SCALAR;
     } else if constexpr(is_vector<T>) {
         if constexpr(vector_dim<T> == 3) {
-            return PropertyRendererBase::Prop::Mode::VEC3;
+            return PropertyRendererBase::PropValueMode::VEC3;
+        }
+    } else if constexpr(is_matrix<T>) {
+        if constexpr(has_rows_and_cols<T,3,3>) {
+            return PropertyRendererBase::PropValueMode::MAT3x3;
         }
     }
-    return PropertyRendererBase::Prop::Mode::COLOR;
+    return PropertyRendererBase::PropValueMode::COLOR;
 }
 
 template<typename T, typename EntityTag>

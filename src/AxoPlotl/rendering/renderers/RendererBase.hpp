@@ -41,6 +41,7 @@ public:
     };
     static_assert(sizeof(ClipBox)==3*16);
     static_assert(sizeof(ClipBox)%16==0);
+    static_assert(alignof(ClipBox) == 16);
 
     RendererBase(uint32_t _max_draw_calls = 1)
         : max_draw_calls_(std::max(_max_draw_calls, 1u))

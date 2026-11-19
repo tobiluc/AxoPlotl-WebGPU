@@ -10,9 +10,6 @@
 
 namespace AxoPlotl
 {
-
-using PropMode = PropertyRendererBase::Prop::Mode;
-
 OpenVolumeMeshObject::OpenVolumeMeshObject(
     internal::Scene* _scene,
     VolMesh &_mesh,
@@ -100,58 +97,6 @@ void OpenVolumeMeshObject::render_ui_info()
 
 void OpenVolumeMeshObject::render_ui_properties()
 {
-    if (ImGui::BeginMenu("Mesh Properties")) {
-        static constexpr OVM::MeshHandle mh(0);
-        for (auto p  = mesh().persistent_props_begin<OVM::Entity::Mesh>();
-             p != mesh().persistent_props_end<OVM::Entity::Mesh>(); ++p)
-        {
-            // std::cerr << (*p)->name() << std::endl;
-            if ((*p)->typeNameWrapper() == "double") {
-                auto prop = mesh().get_property<double,OVM::Entity::Mesh>((*p)->name()).value();
-                ImGui::Text("%s = %f", (*p)->name().c_str(), static_cast<float>(prop[mh]));
-            } else if ((*p)->typeNameWrapper() == "float") {
-                auto prop = mesh().get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
-                ImGui::Text("%s = %f", (*p)->name().c_str(), prop[mh]);
-            } else if ((*p)->typeNameWrapper() == "string") {
-                auto prop = mesh().get_property<std::string,OVM::Entity::Mesh>((*p)->name()).value();
-                ImGui::Text("%s = %s", (*p)->name().c_str(), prop[mh].c_str());
-            }
-        }
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Calculate Property"))
-    {
-        if (mesh().n_vertices()>0 && ImGui::BeginMenu("Vertices")){
-            if (ImGui::MenuItem("Vertex Index")) {
-                add_entity_index_prop<OpenVolumeMesh::Entity::Vertex>(mesh());
-            }
-            ImGui::EndMenu();
-        }
-        if (mesh().n_edges()>0 && ImGui::BeginMenu("Edges")){
-            if (ImGui::MenuItem("Edge Index")) {
-                add_entity_index_prop<OpenVolumeMesh::Entity::Edge>(mesh());
-            }
-            ImGui::EndMenu();
-        }
-        if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
-            if (ImGui::MenuItem("Face Index")) {
-                add_entity_index_prop<OpenVolumeMesh::Entity::Face>(mesh());
-            }
-            if (ImGui::MenuItem("Normal")) {
-                add_face_normal_prop(mesh());
-            }
-            ImGui::EndMenu();
-        }
-        if (mesh().n_cells()>0 && ImGui::BeginMenu("Cells")) {
-            if (ImGui::MenuItem("Cell Index")) {
-                add_entity_index_prop<OpenVolumeMesh::Entity::Cell>(mesh());
-            }
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenu(); //!Calculate
-    }
-
     auto render_property_selection_menu = [&]<typename EntityTag>(const std::string& _prefix)
     {
         ImGui::PushID(_prefix.c_str());
@@ -197,8 +142,7 @@ void OpenVolumeMeshObject::render_ui_properties()
         // Clear
         if (ImGui::Button("Unselect Property")) {
             upload_default_property_data<EntityTag>();
-            colored_entity_renderer<EntityTag>().property_mode()
-                = PropMode::COLOR;
+            colored_entity_renderer<EntityTag>().property_filter_options().set_default();
             selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
             scene_->app()->call_deferred([&]() {
@@ -210,17 +154,76 @@ void OpenVolumeMeshObject::render_ui_properties()
         }
     };
 
-    if (ImGui::BeginMenu("Select Property")) {
-        render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
-        render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
-        render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
-        render_property_selection_menu.operator()<OVM::Entity::Cell>(" C");
-        ImGui::EndMenu();
+    if (ImGui::BeginTabBar("##xx"))
+    {
+        if (ImGui::BeginTabItem(ICON_FA_EYE_DROPPER))
+        {
+            if (ImGui::BeginMenu("Select Property")) {
+                render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
+                render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
+                render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
+                render_property_selection_menu.operator()<OVM::Entity::Cell>(" C");
+                ImGui::EndMenu();
+            }
+            render_property_visualization_settings_menu.operator()<OVM::Entity::Vertex>();
+            render_property_visualization_settings_menu.operator()<OVM::Entity::Edge>();
+            render_property_visualization_settings_menu.operator()<OVM::Entity::Face>();
+            render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
+            ImGui::EndTabItem();
+        }
+        if (mesh().n_persistent_props<OVM::Entity::Mesh>() && ImGui::BeginTabItem(ICON_FA_GLOBE))
+        {
+            static constexpr OVM::MeshHandle mh(0);
+            for (auto p  = mesh().persistent_props_begin<OVM::Entity::Mesh>();
+                 p != mesh().persistent_props_end<OVM::Entity::Mesh>(); ++p)
+            {
+                // std::cerr << (*p)->name() << std::endl;
+                if ((*p)->typeNameWrapper() == "double") {
+                    auto prop = mesh().get_property<double,OVM::Entity::Mesh>((*p)->name()).value();
+                    ImGui::Text("%s = %f", (*p)->name().c_str(), static_cast<float>(prop[mh]));
+                } else if ((*p)->typeNameWrapper() == "float") {
+                    auto prop = mesh().get_property<float,OVM::Entity::Mesh>((*p)->name()).value();
+                    ImGui::Text("%s = %f", (*p)->name().c_str(), prop[mh]);
+                } else if ((*p)->typeNameWrapper() == "string") {
+                    auto prop = mesh().get_property<std::string,OVM::Entity::Mesh>((*p)->name()).value();
+                    ImGui::Text("%s = %s", (*p)->name().c_str(), prop[mh].c_str());
+                }
+            }
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem(ICON_FA_CALCULATOR))
+        {
+            if (mesh().n_vertices()>0 && ImGui::BeginMenu("Vertices")){
+                if (ImGui::MenuItem("Vertex Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::Vertex>(mesh());
+                }
+                ImGui::EndMenu();
+            }
+            if (mesh().n_edges()>0 && ImGui::BeginMenu("Edges")){
+                if (ImGui::MenuItem("Edge Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::Edge>(mesh());
+                }
+                ImGui::EndMenu();
+            }
+            if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
+                if (ImGui::MenuItem("Face Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::Face>(mesh());
+                }
+                if (ImGui::MenuItem("Normal")) {
+                    add_face_normal_prop(mesh());
+                }
+                ImGui::EndMenu();
+            }
+            if (mesh().n_cells()>0 && ImGui::BeginMenu("Cells")) {
+                if (ImGui::MenuItem("Cell Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::Cell>(mesh());
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
-    render_property_visualization_settings_menu.operator()<OVM::Entity::Vertex>();
-    render_property_visualization_settings_menu.operator()<OVM::Entity::Edge>();
-    render_property_visualization_settings_menu.operator()<OVM::Entity::Face>();
-    render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
 }
 
 void OpenVolumeMeshObject::init()
@@ -303,10 +306,10 @@ void OpenVolumeMeshObject::render(
     edge_renderer_.render(_view_size, _render_pass, mvp);
     vertex_renderer_.render(_view_size, _render_pass, mvp);
 
-    vector3_renderer_.enabled() = vertex_renderer_.property_mode() == PropMode::VEC3
-        || edge_renderer_.property_mode() == PropMode::VEC3
-        || face_renderer_.property_mode() == PropMode::VEC3
-        || cell_renderer_.property_mode() == PropMode::VEC3;
+    vector3_renderer_.enabled() = vertex_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
+        || edge_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
+        || face_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
+        || cell_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3;
 
     vector3_renderer_.render(_view_size, _render_pass, mvp_mat);
 
@@ -320,7 +323,9 @@ void OpenVolumeMeshObject::render(
 
 void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
 {
-    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;} // error
+    if (_p.pixel().object_id_ != id()) [[unlikely]] {
+        return;
+    } // error
 
     auto squared_distance = [](const Vec3 _p0, const OVM::Vec3f& _p1) -> float {
         float dx = _p0[0] - _p1[0];
@@ -491,7 +496,7 @@ bool OpenVolumeMeshObject::visualize_property(
             const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
                 mesh(), _pp);
             col_rend.update_property_data(data);
-            col_rend.property_mode() = get_buffer_property_type<T>();
+            col_rend.property_filter_options().value_mode = get_buffer_property_type<T>();
         }
 
         // Upload Data to Vector Renderer

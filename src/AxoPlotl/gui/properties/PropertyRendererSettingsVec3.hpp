@@ -12,10 +12,6 @@ public:
 
     void render_ui() override;
 
-    std::string name() const override {
-        return "Vec3";
-    }
-
     void set_default_settings() override;
 private:
     Vector3Renderer& renderer_;

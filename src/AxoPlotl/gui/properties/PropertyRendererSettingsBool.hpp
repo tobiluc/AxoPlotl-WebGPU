@@ -14,10 +14,6 @@ public:
 
     void render_ui() override;
 
-    std::string name() const override {
-        return "Bool Filter";
-    }
-
     void set_default_settings() override;
 
 private:

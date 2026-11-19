@@ -13,10 +13,6 @@ public:
 
     void render_ui() override;
 
-    std::string name() const override {
-        return "Mat3x3";
-    }
-
     void set_default_settings() override;
 private:
     Matrix3x3Renderer& renderer_;

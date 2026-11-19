@@ -354,6 +354,7 @@ void Application::render_viewport_ui()
         requests_.pick_result = false;
     }
     if (picker_.pixel().object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+        // std::cerr << picker_.pixel().object_id_ << std::endl;
         auto obj = scene().get_object(picker_.pixel().object_id_);
         if (obj) [[likely]] {obj->render_ui_picking(picker_);}
         ImGui::EndPopup();

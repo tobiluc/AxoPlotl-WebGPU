@@ -9,18 +9,106 @@
 namespace AxoPlotl::internal
 {
 
+// template<typename T>
+// requires(std::is_scalar_v<T>)
+// struct BucketT
+// {
+//     size_t n_elements = 0;
+//     T min = 0;
+//     bool min_inclusive = true;
+//     T max = 0;
+//     bool max_inclusive = true;
+//     double percentage(size_t _total_n_elements) const {
+//         return static_cast<double>(n_elements)/static_cast<double>(_total_n_elements);
+//     }
+//     bool contains(const T& _v) const {
+//         bool bmin = min_inclusive? (_v >= min) : (_v > min);
+//         bool bmax = max_inclusive? (_v <= max) : (_v < max);
+//         return bmin && bmax;
+//     }
+// };
+
+// template<typename T>
+// class HistogramT
+// {
+// protected:
+//     const std::vector<T>& data_;
+//     std::vector<BucketT<T>> buckets_;
+//     size_t n_inf_ = 0;
+//     size_t n_nan_ = 0;
+//     T global_min_inclusive;
+//     T global_max_inclusive;
+// public:
+//     HistogramT(const std::vector<T>& _data, size_t _n_buckets = 10)
+//         : data_(_data)
+//     {
+//         recompute(_n_buckets);
+//     }
+
+//     virtual void recompute(size_t _n_buckets) = 0;
+
+//     std::optional<int> find_bucket_index(const T& _v) const {
+//         for (int i = 0; i < buckets_.size(); ++i) {
+//             if (buckets_[i].contains(_v)) {
+//                 return i;
+//             }
+//         }
+//         return std::nullopt;
+//     }
+// };
+
+// class NewHistogramBool : public HistogramT<bool>
+// {
+//     void recompute(size_t _n_buckets) override
+//     {
+//         buckets_.clear();
+//         n_nan_ = n_inf_ = 0;
+//         global_min_inclusive = false;
+//         global_max_inclusive = true;
+//         buckets_.resize(2);
+//         buckets_[0].n_elements = std::count(data_.begin(), data_.end(), false);
+//         buckets_[0].min = false;
+//         buckets_[0].max = false;
+//         buckets_[0].min_inclusive = true;
+//         buckets_[0].max_inclusive = true;
+//         buckets_[1].n_elements = data_.size() - buckets_[0].n_elements;
+//         buckets_[1].min = true;
+//         buckets_[1].max = true;
+//         buckets_[1].min_inclusive = true;
+//         buckets_[1].max_inclusive = true;
+//     }
+// };
+
+// template<typename FT>
+// class NewHistogramFloat : public HistogramT<FT>
+// {
+//     void recompute(size_t _n_buckets) override
+//     {
+//         buckets_.clear();
+//         n_nan_ = n_inf_ = 0;
+//         global_min_inclusive = std::numeric_limits<FT>::max();
+//         global_max_inclusive = std::numeric_limits<FT>::min();
+//         for (uint32_t i = 0; i < data_.size(); ++i) {
+//             const FT& v = data_[i];
+//             if (std::isnan(v)) {++n_nan_;}
+//             else if (std::isinf(v)) {++n_inf_;}
+//             else {
+//                 global_min_inclusive = std::min(global_min_inclusive, v);
+//                 global_max_inclusive = std::max(global_max_inclusive, v);
+//             }
+//         }
+//         if (n_nan_ + n_inf_ == data_.size()) {
+//             // NO VALID VALUE EXISTS
+//             return;
+//         }
+//         buckets_.resize(get_optimal_n_buckets(_n_buckets));
+//     }
+// };
+
 struct HistogramBase
 {
 public:
     virtual void recompute(size_t _n_buckets) = 0;
-
-    int render_ui(
-        int b_begin, int b_end,
-        const ColorMap& _cm);
-
-    int render_ui(const ColorMap& _cm) {
-        return render_ui(0, n_buckets_, _cm);
-    }
 
     const size_t& n_buckets() const {return n_buckets_;}
 
@@ -43,8 +131,6 @@ public:
     virtual std::string bucket_tooltip(int _b) const {return "";};
 
 protected:
-    virtual bool render_ui_begin() {return true;};
-
     size_t n_buckets_ = 1;
     std::vector<size_t> bucket_counts_;
 };
@@ -171,19 +257,10 @@ public:
     }
 
 protected:
-    std::vector<IT> bucket_max_; // <=
+    std::vector<IT> bucket_max_;
     OVM::PropertyStorageT<IT>* prop_;
     IT min_;
     IT max_;
-
-    bool render_ui_begin() override {
-        // Set Number of Buckets
-        int n_buckets = n_buckets_;
-        if (ImGui::InputInt("##", &n_buckets, 1)) {
-            recompute(n_buckets);
-        }
-        return true;
-    }
 };
 
 template <typename FT> requires std::floating_point<FT>
@@ -276,20 +353,6 @@ protected:
     OVM::PropertyStorageT<FT>* prop_;
     FT min_;
     FT max_;
-
-    bool render_ui_begin() override {
-        if (n_nan_ > 0) {ImGui::Text("#NAN = %zu", n_nan_);}
-        if (n_nan_ && n_inf_) {ImGui::SameLine();}
-        if (n_nan_ > 0) {ImGui::Text("#INF = %zu", n_inf_);}
-
-        // Set Number of Buckets
-        int n_buckets = n_buckets_;
-        if (ImGui::InputInt("##", &n_buckets, 1)) {
-            recompute(n_buckets);
-        }
-
-        return has_valid_values();
-    }
 };
 
 }

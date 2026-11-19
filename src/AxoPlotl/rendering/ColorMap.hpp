@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <arm_neon.h>
+#include <nlohmann/json.hpp>
 
 namespace AxoPlotl::internal
 {

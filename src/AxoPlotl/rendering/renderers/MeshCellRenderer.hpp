@@ -17,30 +17,21 @@ protected:
         alignas(16) Vec2 viewport_size_;
         alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;
-        alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4 ambient_ = {0.7,0.5,0.5,1};
         alignas(16) DirectionalLight dir_light_ ;
+        alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
-    static_assert(offsetof(Uniforms,mvp_)%16==0);
-    static_assert(offsetof(Uniforms,type_)%16==0);
-    static_assert(offsetof(Uniforms,cell_scale_)%16==0);
-    static_assert(offsetof(Uniforms,viewport_size_)%16==0);
-    static_assert(offsetof(Uniforms,clip_box_)%16==0);
-    static_assert(sizeof(Uniforms)%16==0);
+    static_assert(offsetof(Uniforms, clip_box_) == 96);
+    static_assert(sizeof(Uniforms) == 304);
 
 public:
     float& cell_scale() {
         return uniforms_.cell_scale_;
     }
 
-    Prop::Mode& property_mode() override {
-        return uniforms_.type_;
-    }
-
-    Prop::Filter& property_filter() override {
-        return uniforms_.value_filter_;
+    PropFilterOptions& property_filter_options() override {
+        return uniforms_.filter_options_;
     }
 
     ClipBox& clip_box() {

@@ -1,8 +1,11 @@
 #pragma once
+#include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include "AxoPlotl/properties/Histogram.hpp"
 #include "AxoPlotl/rendering/renderers/PropertyRendererBase.hpp"
+#include "IconsFontAwesome7.h"
 #include "PropertyRendererSettingsBase.hpp"
 #include <AxoPlotl/gui/widgets/draw_range_sliders.hpp>
+#include <AxoPlotl/gui/widgets/draw_histogram.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -12,8 +15,8 @@ template<typename IT> requires(std::is_integral_v<IT>)
 struct PropertySettingsInt : public PropertySettingsBase
 {
 public:
-    enum class Mode : int {
-        RANGE, EXACT
+    enum class Mode {
+       RANGE, EXACT
     };
 
     PropertySettingsInt(OVM::PropertyStorageT<IT>* _prop,
@@ -25,29 +28,64 @@ public:
 
     void render_ui() override
     {
-        static const char* modes[]{"Range","Exact"};
+        // Mode
+        static const char* modes[]{"Value Range", "Exact Value"};
         int mode = static_cast<int>(mode_);
-        if (ImGui::Combo("Mode", &mode, modes, 2)) {
+        if (ImGui::Combo(ICON_FA_FILTER, &mode, modes, 2)) {
             mode_ = static_cast<Mode>(mode);
         }
+        ImGui::SetItemTooltip("Filter Mode");
+        ImGui::SameLine();
+        bool invert = renderer_->property_filter_options().invert;
+        if (ImGui::Checkbox(ICON_FA_ARROW_RIGHT_ARROW_LEFT, &invert)) {
+            renderer_->property_filter_options().invert = invert;
+        }
+        ImGui::SetItemTooltip("Invert");
 
-        Vec2& rangef = renderer_->property_filter().range_;
+        Vec2& rangef = renderer_->property_filter_options().scalar_range;
         ColorMap& cm = renderer_->color_map();
 
         switch (mode_) {
         case Mode::RANGE:
         {
-            int b = hist_.render_ui(cm);
+            // Draw Histogram
+            int b = draw_histogram(hist_,
+                    DrawHistogramOptions{
+                        .colormap=&cm,
+                        .pm_buttons=true
+                    }
+            );
+
+            // When selecting bucket, set range
+            // to bucket range
             if (b >= 0) {
                 rangef.x = hist_.bucket_min(b);
                 rangef.y = hist_.bucket_max(b);
             }
+
+            // Colormap Menu
             cm.render_menu();
-            if (ImGui::InputFloat2("Range", &rangef.x)) {
+
+            // Range Setting
+            draw_range_sliders(
+                rangef.x, rangef.y,
+                DrawRangeSliderOptions{
+                    .min = static_cast<float>(hist_.min()),
+                    .max = static_cast<float>(hist_.max()),
+                    .integer = true,
+                    .colormap = &cm
+                }
+                );
+            if (InputSlider2(ICON_FA_RULER_HORIZONTAL, &rangef.x, InputSliderOptions{
+                      .step = 1,
+                      .min = static_cast<float>(hist_.min()),
+                      .max = static_cast<float>(hist_.max()),
+                      .display_name=false,
+                      .integer = true
+                  })) {
                 rangef.x = std::clamp<float>(rangef.x, hist_.min(), hist_.max());
                 rangef.y = std::clamp<float>(rangef.y, rangef.x, hist_.max());
             }
-            draw_range_sliders(rangef.x, rangef.y, hist_.min(), hist_.max(), cm);
             break;
         }
         case Mode::EXACT:
@@ -56,7 +94,7 @@ public:
             cm.render_menu();
             ImGui::InputInt("Value", &val);
             val = std::clamp(static_cast<IT>(val), hist_.min(), hist_.max());
-            renderer_->property_filter().range_ = {val,val};
+            renderer_->property_filter_options().scalar_range = {val,val};
             break;
         }
         default:
@@ -64,14 +102,12 @@ public:
         }
     }
 
-    std::string name() const override {
-        return "Int";
-    }
-
     void set_default_settings() override {
         mode_ = Mode::RANGE;
+        renderer_->property_filter_options().filter_mode = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+        renderer_->property_filter_options().invert = 0;
         renderer_->color_map().set_coolwarm();
-        renderer_->property_filter().range_ = {
+        renderer_->property_filter_options().scalar_range = {
             hist_.min(), hist_.max()
     };
 }
@@ -79,46 +115,7 @@ public:
 private:
     HistogramIT<IT> hist_;
     PropertyRendererBase* renderer_;
-    Mode mode_;
+    Mode mode_ = Mode::RANGE;
 };
-
-// template<typename IT>
-//     requires(std::is_integral_v<IT>)
-// struct PropertySettingsIntValue : public PropertySettingsBase
-// {
-// public:
-//     PropertySettingsIntValue(OVM::PropertyStorageT<IT>* _prop,
-//                              PropertyRendererBase* _renderer)
-//         : hist_(_prop), renderer_(_renderer)
-//     {
-//         set_default_settings();
-//     }
-
-//     void render_ui() override
-//     {
-//         ColorMap& cm = renderer_->color_map();
-//         cm.render_menu();
-//         ImGui::InputInt("Value", &vali_);
-//         vali_ = std::clamp(static_cast<IT>(vali_), hist_.min(), hist_.max());
-//         renderer_->property_filter().range_ = {vali_,vali_};
-//     }
-
-//     std::string name() const override {
-//         return "Int Value";
-//     }
-
-//     void set_default_settings() override {
-//         vali_ = hist_.min();
-//         renderer_->property_filter().range_ = {
-//             vali_, vali_
-//         };
-//         renderer_->color_map().set_coolwarm();
-//     }
-
-// private:
-//     int vali_;
-//     PropertyRendererBase* renderer_;
-//     HistogramIT<IT> hist_;
-// };
 
 }

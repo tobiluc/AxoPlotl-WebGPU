@@ -30,8 +30,14 @@ bool InputSlider(
     if (window->SkipItems) {return false;}
 
     if (_opt.max <= _opt.min) {
-        std::cerr << "max <= min for InputSlider" << std::endl;
+        if (_opt.max < _opt.min) {
+            std::cerr << "max < min for InputSlider" << std::endl;
+        }
         return false;
+    }
+
+    if (_opt.integer) {
+        _opt.fmt = "%.0f";
     }
 
     ImGuiContext& g = *GImGui;
@@ -48,6 +54,16 @@ bool InputSlider(
     const ImRect bb(pos, ImVec2(pos.x + width, pos.y + height));
 
     bool changed = false;
+
+    auto normalize_value = [&](float _value) -> float
+    {
+        _value = std::clamp(_value, _opt.min, _opt.max);
+        if (_opt.integer) {
+            _value = std::round(_value);
+            _value = std::clamp(_value, _opt.min, _opt.max);
+        }
+        return _value;
+    };
 
     // =========================================================
     // TEXT EDITING
@@ -114,7 +130,7 @@ bool InputSlider(
             }
 
             if (valid) {
-                result = std::clamp(result, _opt.min, _opt.max);
+                result = normalize_value(result);
 
                 if (result != *_value) {
                     *_value = result;
@@ -189,11 +205,9 @@ bool InputSlider(
 
         const float delta = g.IO.MouseDelta.x;
 
-        const float newValue = std::clamp(
-            *_value + delta * sensitivity / 5.0f,
-            _opt.min,
-            _opt.max
-            );
+        const float newValue = normalize_value(
+            *_value + delta * sensitivity / 5.0f
+        );
 
         if (newValue != *_value) {
             *_value = newValue;
@@ -207,11 +221,9 @@ bool InputSlider(
 
     if (hovered && !held && g.IO.MouseWheel != 0.0f)
     {
-        const float newValue = std::clamp(
-            *_value + g.IO.MouseWheel * _opt.step,
-            _opt.min,
-            _opt.max
-            );
+        const float newValue = normalize_value(
+            *_value + g.IO.MouseWheel * _opt.step
+        );
 
         if (newValue != *_value)
         {

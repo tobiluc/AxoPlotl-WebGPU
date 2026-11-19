@@ -16,17 +16,16 @@ protected:
         alignas(16) Mat4x4 projection_;
         alignas(16) Mat4x4 mvp_;
         alignas(16) Vec2 viewport_size_;
-        alignas(16) float point_size_ = 8.0f;
+        alignas(16) float point_size_ = 12.0f;
         alignas(16) ClipBox clip_box_;
-        alignas(16) Prop::Mode type_ = Prop::Mode::COLOR;;
-        alignas(16) Prop::Filter value_filter_;
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4 ambient_ = {0.5,0.5,0.5,1};
         alignas(16) float depth_offset_ = 0.00003;
         alignas(16) DirectionalLight dir_light_;
+        alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
-    static_assert(offsetof(Uniforms,type_)%16==0);
+    static_assert(offsetof(Uniforms,filter_options_)%16==0);
     static_assert(offsetof(Uniforms,viewport_size_)%16==0);
     static_assert(offsetof(Uniforms,point_size_)%16==0);
     static_assert(offsetof(Uniforms,clip_box_)%16==0);
@@ -37,12 +36,8 @@ public:
         return uniforms_.point_size_;
     }
 
-    Prop::Mode& property_mode() override {
-        return uniforms_.type_;
-    }
-
-    Prop::Filter& property_filter() override {
-        return uniforms_.value_filter_;
+    PropFilterOptions& property_filter_options() override {
+        return uniforms_.filter_options_;
     }
 
     ClipBox& clip_box() {
