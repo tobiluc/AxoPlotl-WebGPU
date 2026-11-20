@@ -18,7 +18,7 @@ protected:
         alignas(16) float point_size_ = 12.0f;
         alignas(16) ClipBox clip_box_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4 ambient_ = {0.5,0.5,0.5,1};
+        alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) float depth_offset_ = 0.00003;
         alignas(16) DirectionalLight dir_light_;
         alignas(16) PropFilterOptions filter_options_;

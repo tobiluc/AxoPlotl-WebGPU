@@ -17,7 +17,7 @@ protected:
         alignas(16) float cell_scale_ = 0.9f;
         alignas(16) ClipBox clip_box_;
         alignas(16) uint32_t object_id_ = 0;
-        alignas(16) Vec4 ambient_ = {0.7,0.5,0.5,1};
+        alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) DirectionalLight dir_light_ ;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
