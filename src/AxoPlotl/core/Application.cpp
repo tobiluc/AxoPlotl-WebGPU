@@ -204,7 +204,7 @@ void Application::frame_tick()
     //------------------
     // Update
     //------------------
-    if (!on_draw()) {
+    if (!should_redraw()) {
         return;
     }
 
@@ -362,6 +362,8 @@ void Application::on_window_resize(float width, float height)
     render_context_.configure_surface(gpu_context_, width, height);
 
     wgpuPollEvents(gpu_context_.device, true);
+
+    trigger_redraw();
 }
 
 void Application::clear()

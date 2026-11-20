@@ -82,14 +82,8 @@ void render_ui()
 
         ImGui::SameLine();
 
-        // Selectable Name
-        if (ImGui::Selectable((obj->name()).c_str())) {
-            if (info_object_id_ == obj->id()) {
-                info_object_id_ = -1;
-            } else {
-                info_object_id_ = obj->id();
-            }
-        }
+        // Name
+        ImGui::SeparatorText((obj->name()).c_str());
 
         // Visible Toggle
         if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
@@ -112,6 +106,14 @@ void render_ui()
             settings_object_id_ = obj->id();
         }
 
+        ImGui::SameLine();
+
+        // Info Button
+        if (ImGui::Button(ICON_FA_CIRCLE_INFO)) {
+            ImGui::OpenPopup("popup_object_info");
+            info_object_id_ = obj->id();
+        }
+
         // ImGui::SameLine();
         // Export Button
         // if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
@@ -124,9 +126,12 @@ void render_ui()
         //         cfg);
         // }
 
-        // Expand Menu
-        if (info_object_id_ == obj->id()) {
-            obj->render_ui_info();
+        // Info Popup
+        if (info_object_id_ >= 0
+            && ImGui::BeginPopup("popup_object_info"))
+        {
+            AxoPlotl::scene().get_object(info_object_id_)->render_ui_info();
+            ImGui::EndPopup();
         }
 
         // Settings Popup
@@ -162,11 +167,11 @@ void render_ui()
     // }
 
     // Export Error Popup
-    if (ImGui::BeginPopup("popup_export_error"))
-    {
-        ImGui::Text("Failed to export object. Maybe exporting is not supported?");
-        ImGui::EndPopup();
-    }
+    // if (ImGui::BeginPopup("popup_export_error"))
+    // {
+    //     ImGui::Text("Failed to export object. Maybe exporting is not supported?");
+    //     ImGui::EndPopup();
+    // }
 
     // Property Visualization
     const char* selected_name = "None";

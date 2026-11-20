@@ -7,7 +7,7 @@ void AxoPlotl::internal::trigger_redraw(uint32_t _n_frames)
     n_frames_ = _n_frames;
 }
 
-bool AxoPlotl::internal::on_draw()
+bool AxoPlotl::internal::should_redraw()
 {
     n_frames_ -= (n_frames_>0);
     return (n_frames_>0);
