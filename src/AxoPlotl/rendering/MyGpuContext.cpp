@@ -20,19 +20,21 @@ void GpuContext::init(wgpu::Instance _instance,
     //------------------
     // Device
     //------------------
+    wgpu::Limits requiredLimits{};
+    adapter.getLimits(&requiredLimits);
 
     wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.label = wgpu::StringView("My Device");
+    deviceDesc.label = wgpu::StringView("AxoPlotl Device");
     deviceDesc.requiredFeatureCount = 0;
-    deviceDesc.requiredLimits = nullptr;
+    deviceDesc.requiredLimits = &requiredLimits;
     deviceDesc.defaultQueue.nextInChain = nullptr;
-    deviceDesc.defaultQueue.label = wgpu::StringView("The default queue");
+    deviceDesc.defaultQueue.label = wgpu::StringView("AxoPlotl Default Queue");
 
     deviceDesc.deviceLostCallbackInfo.callback = [](
-                                                     WGPUDevice const* _device,
-                                                     WGPUDeviceLostReason _reason,
-                                                     WGPUStringView _message,
-                                                     void* _userdata1, void* _userdata2)
+         WGPUDevice const* _device,
+         WGPUDeviceLostReason _reason,
+         WGPUStringView _message,
+         void* _userdata1, void* _userdata2)
     {
         std::cerr << "Device lost: " << static_cast<uint32_t>(_reason);
 

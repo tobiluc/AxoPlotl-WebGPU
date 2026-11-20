@@ -49,11 +49,13 @@ void ColoredVertexRenderer::create_buffers()
 
     // Property Buffer
     {
-        property_buffer_ = create_bufferT<PropContainer>(
-            device, n_positions_,
-            wgpu::BufferUsage::Storage |
-                wgpu::BufferUsage::CopyDst,
-            "Mesh Vertex Property Buffer");
+        wgpu::BufferDescriptor desc{};
+        desc.usage = wgpu::BufferUsage::Storage |
+                     wgpu::BufferUsage::CopyDst;
+        desc.size = sizeof(PropContainer)*n_positions_;
+        desc.mappedAtCreation = false;
+        desc.label = wgpu::StringView("Mesh Vertex Property Buffer");
+        property_buffer_ = device.createBuffer(desc);
     }
 
     // Uniform Buffer

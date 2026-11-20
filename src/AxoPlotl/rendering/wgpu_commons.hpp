@@ -9,9 +9,9 @@ namespace AxoPlotl::internal
 {
 
 template<typename T>
-wgpu::Buffer create_bufferT(
-    wgpu::Device _device,
-    const size_t _size,
+wgpu::Buffer create_and_write_bufferT(
+    const wgpu::Device& _device,
+    const std::vector<T>& _data,
     const WGPUBufferUsage _usage =
     wgpu::BufferUsage::Storage |
     wgpu::BufferUsage::CopyDst |
@@ -20,24 +20,10 @@ wgpu::Buffer create_bufferT(
 {
     wgpu::BufferDescriptor desc{};
     desc.usage =_usage;
-    desc.size = sizeof(T) * std::max(_size, 1lu);
+    desc.size = sizeof(T)*std::max(_data.size(), 1lu);
     desc.mappedAtCreation = false;
     desc.label = wgpu::StringView(_name);
     wgpu::Buffer buffer = _device.createBuffer(desc);
-    return buffer;
-}
-
-template<typename T>
-wgpu::Buffer create_bufferT(
-    wgpu::Device _device,
-    const std::vector<T>& _data,
-    const WGPUBufferUsage _usage =
-    wgpu::BufferUsage::Storage |
-    wgpu::BufferUsage::CopyDst |
-    wgpu::BufferUsage::Vertex,
-    const std::string& _name = "Buffer T")
-{
-    auto buffer = create_bufferT<T>(_device, _data.size(), _usage, _name);
     if (!_data.empty()) [[likely]] {
         _device.getQueue().writeBuffer(buffer, 0, _data.data(), buffer.getSize());
     }
@@ -57,9 +43,9 @@ struct BufferData {
     wgpu::Buffer buffer;
     std::vector<T> data;
     ~BufferData() {destroy();}
-    void create_buffer(const wgpu::Device& _device) {
+    void create_and_write(const wgpu::Device& _device) {
         destroy_buffer(buffer);
-        buffer = create_bufferT<T>(_device, data);
+        buffer = create_and_write_bufferT<T>(_device, data);
     }
     void destroy() {
         destroy_buffer(buffer);

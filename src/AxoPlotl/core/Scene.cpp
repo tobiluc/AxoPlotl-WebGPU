@@ -13,7 +13,7 @@ void Scene::init(Application *_app)
 
     // Coordinate Axes Cross
 
-    origin_position_buffer_ = create_bufferT<Vec4>(
+    origin_position_buffer_ = create_and_write_bufferT<Vec4>(
         app_->gpu_context().device, {Vec4(0,0,0,1)});
 
     unit_frame_renderer_.init(UINT32_MAX,

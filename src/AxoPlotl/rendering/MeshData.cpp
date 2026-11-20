@@ -11,7 +11,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
         for (OVM::VH vh : mesh.vertices()) {
             vertices_positions.data[vh.idx()] = position(vh);
         }
-        vertices_positions.create_buffer(_device);
+        vertices_positions.create_and_write(_device);
     }
 
     // Edges Barycenters
@@ -21,7 +21,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
             const auto& p = mesh.barycenter(eh);
             edges_centers.data[eh.idx()] = {p[0], p[1], p[2], 1};
         }
-        edges_centers.create_buffer(_device);
+        edges_centers.create_and_write(_device);
     }
 
     // Faces Barycenters
@@ -31,7 +31,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
             const auto& p = mesh.barycenter(fh);
             faces_centers.data[fh.idx()] = {p[0], p[1], p[2], 1};
         }
-        faces_centers.create_buffer(_device);
+        faces_centers.create_and_write(_device);
     }
 
     // Cells Barycenters
@@ -41,7 +41,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
             const auto& p = mesh.barycenter(ch);
             cells_centers.data[ch.idx()] = {p[0], p[1], p[2], 1};
         }
-        cells_centers.create_buffer(_device);
+        cells_centers.create_and_write(_device);
     }
 
     // HalfFaces Normals
@@ -51,7 +51,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
             const auto& n = mesh.normal(hfh);
             halffaces_normals.data[hfh.idx()] = {n[0], n[1], n[2], 0};
         }
-        halffaces_normals.create_buffer(_device);
+        halffaces_normals.create_and_write(_device);
     }
 
     // Edge Instances
@@ -66,7 +66,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
                 .eh = eh.uidx()
             };
         }
-        edges_instances.create_buffer(_device);
+        edges_instances.create_and_write(_device);
     }
 
     // Face Indices - Triangulated
@@ -81,7 +81,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
                 faces_indices_.data.push_back({.vh = vhs[i+1].uidx(), .fh = fh.uidx()});
             }
         }
-        faces_indices_.create_buffer(_device);
+        faces_indices_.create_and_write(_device);
     }
 
     // Cell Indices
@@ -98,7 +98,7 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
                 }
             }
         }
-        cells_indices_.create_buffer(_device);
+        cells_indices_.create_and_write(_device);
     }
 }
 

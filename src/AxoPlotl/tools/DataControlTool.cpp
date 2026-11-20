@@ -169,19 +169,30 @@ void render_ui()
     }
 
     // Property Visualization
-    if (ImGui::BeginMenu("View Object Properties")) {
+    const char* selected_name = "None";
+    for (const auto& obj : AxoPlotl::scene().get_objects()) {
+        if (obj->id() == properties_object_id_) {
+            selected_name = obj->name().c_str();
+            break;
+        }
+    }
+    if (ImGui::BeginCombo("Object", selected_name)) {
         for (const auto& obj : AxoPlotl::scene().get_objects()) {
             ImGui::PushID(obj->id());
-            if (ImGui::MenuItem(obj->name().c_str())) {
-                if (properties_object_id_ == obj->id()) {
-                    properties_object_id_ = -1;
-                } else {
-                    properties_object_id_ = obj->id();
-                }
+
+            const bool selected = (properties_object_id_ == obj->id());
+
+            if (ImGui::Selectable(obj->name().c_str(), selected)) {
+                properties_object_id_ = selected ? -1 : obj->id();
             }
+
+            if (selected) {
+                ImGui::SetItemDefaultFocus();
+            }
+
             ImGui::PopID();
         }
-        ImGui::EndMenu();
+        ImGui::EndCombo();
     }
 
     if (auto propObj = AxoPlotl::scene().get_object(properties_object_id_)) {
