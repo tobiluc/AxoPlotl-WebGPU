@@ -86,10 +86,6 @@ void draw_basic_renderer_settings(
                    .min = -0.5f,
                    .max = 0.5f,
                    .fmt = "%.5f"});
-
-    bool b = _r.flip_normals();
-    ImGui::Checkbox("Flip Normals", &b);
-    _r.flip_normals() = b;
 }
 
 void draw_basic_renderer_settings(

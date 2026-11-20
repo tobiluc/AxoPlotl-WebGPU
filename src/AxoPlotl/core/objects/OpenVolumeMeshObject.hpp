@@ -27,6 +27,7 @@ protected:
     Property<OVM::Entity::Vertex> v_prop_;
     Property<OVM::Entity::Edge> e_prop_;
     Property<OVM::Entity::Face> f_prop_;
+    Property<OVM::Entity::HalfFace> hf_prop_;
     Property<OVM::Entity::Cell> c_prop_;
     std::optional<OVM::EntityType> selected_prop_entity_type_ = std::nullopt;
 
@@ -34,24 +35,25 @@ protected:
     template<> Property<OVM::Entity::Vertex>& prop<OVM::Entity::Vertex>() {return v_prop_;}
     template<> Property<OVM::Entity::Edge>& prop<OVM::Entity::Edge>() {return e_prop_;}
     template<> Property<OVM::Entity::Face>& prop<OVM::Entity::Face>() {return f_prop_;}
+    template<> Property<OVM::Entity::HalfFace>& prop<OVM::Entity::HalfFace>() {return hf_prop_;}
     template<> Property<OVM::Entity::Cell>& prop<OVM::Entity::Cell>() {return c_prop_;}
 
     std::vector<OVM::PropertyStorageBase*> visualized_props() const;
 
-    void upload_default_vertex_property_data();
-    void upload_default_edge_property_data();
-    void upload_default_face_property_data();
-    void upload_default_cell_property_data();
+    // void upload_default_vertex_property_data();
+    // void upload_default_edge_property_data();
+    // void upload_default_face_property_data();
+    // void upload_default_cell_property_data();
 
-    template<typename EntityTag> void upload_default_property_data();
-    template<> void upload_default_property_data<OVM::Entity::Vertex>() {
-        upload_default_vertex_property_data();}
-    template<> void upload_default_property_data<OVM::Entity::Edge>() {
-        upload_default_edge_property_data();}
-    template<> void upload_default_property_data<OVM::Entity::Face>() {
-        upload_default_face_property_data();}
-    template<> void upload_default_property_data<OVM::Entity::Cell>() {
-        upload_default_cell_property_data();}
+    // template<typename EntityTag> void upload_default_property_data();
+    // template<> void upload_default_property_data<OVM::Entity::Vertex>() {
+    //     upload_default_vertex_property_data();}
+    // template<> void upload_default_property_data<OVM::Entity::Edge>() {
+    //     upload_default_edge_property_data();}
+    // template<> void upload_default_property_data<OVM::Entity::Face>() {
+    //     upload_default_face_property_data();}
+    // template<> void upload_default_property_data<OVM::Entity::Cell>() {
+    //     upload_default_cell_property_data();}
 
 public:
 
@@ -101,6 +103,7 @@ protected:
     auto& colored_entity_renderer();
     template<> auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
+    template<> auto& colored_entity_renderer<OVM::Entity::HalfFace>() {return face_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
@@ -108,6 +111,7 @@ protected:
     wgpu::Buffer& entity_center_buffer();
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return mesh_data_.cells_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return mesh_data_.faces_centers.buffer;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfFace>() {return mesh_data_.faces_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return mesh_data_.edges_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return mesh_data_.vertices_positions.buffer;}
 

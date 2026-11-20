@@ -211,6 +211,10 @@ void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, cons
 void ColoredVertexRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
+    if (_data.size() != n_positions_) {
+        std::cerr << "ERROR: #Props != #Vertices" << std::endl;
+        return;
+    }
 
     pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,

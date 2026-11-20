@@ -181,6 +181,10 @@ void Vector3Renderer::create_pipeline(const GpuContext& _gpu_context, const Rend
 void Vector3Renderer::update_vector_data(const std::vector<Vec4> &_data)
 {
     if (!initialized_) {return;}
+    if (_data.size() != n_positions_) {
+        std::cerr << "ERROR: #Vectors != #Positions" << std::endl;
+        return;
+    }
 
     pipeline_state_.device_.getQueue().writeBuffer(
         vector_buffer_,

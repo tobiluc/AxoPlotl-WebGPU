@@ -69,36 +69,36 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
         edges_instances.create_and_write(_device);
     }
 
-    // Face Indices - Triangulated
+    // HalfFace Indices - Triangulated
     if (mesh.n_faces()) {
-        faces_indices_.data.clear();
-        faces_indices_.data.reserve(3*mesh.n_faces());
-        for (OVM::FH fh : mesh.faces()) {
-            std::vector<OVM::VH> vhs = mesh.get_halfface_vertices(fh.halfface_handle(0));
+        halffaces_indices.data.clear();
+        halffaces_indices.data.reserve(6*mesh.n_faces());
+        for (OVM::HFH hfh : mesh.halffaces()) {
+            std::vector<OVM::VH> vhs = mesh.get_halfface_vertices(hfh);
             for (int i = 1; i < vhs.size()-1; ++i) {
-                faces_indices_.data.push_back({.vh = vhs[0].uidx(), .fh = fh.uidx()});
-                faces_indices_.data.push_back({.vh = vhs[i].uidx(), .fh = fh.uidx()});
-                faces_indices_.data.push_back({.vh = vhs[i+1].uidx(), .fh = fh.uidx()});
+                halffaces_indices.data.push_back({.vh = vhs[0].uidx(), .hfh = hfh.uidx()});
+                halffaces_indices.data.push_back({.vh = vhs[i].uidx(), .hfh = hfh.uidx()});
+                halffaces_indices.data.push_back({.vh = vhs[i+1].uidx(), .hfh = hfh.uidx()});
             }
         }
-        faces_indices_.create_and_write(_device);
+        halffaces_indices.create_and_write(_device);
     }
 
     // Cell Indices
     if (mesh.n_cells()) {
-        cells_indices_.data.clear();
-        cells_indices_.data.reserve(12*mesh.n_cells());
+        cells_indices.data.clear();
+        cells_indices.data.reserve(12*mesh.n_cells());
         for (OVM::CH ch : mesh.cells()) {
             for (OVM::HFH hfh : mesh.cell_halffaces(ch)) {
                 std::vector<OVM::VH> vhs = mesh.get_halfface_vertices(hfh);
                 for (int i = 1; i < vhs.size()-1; ++i) {
-                    cells_indices_.data.push_back({.vh = vhs[0].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
-                    cells_indices_.data.push_back({.vh = vhs[i].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
-                    cells_indices_.data.push_back({.vh = vhs[i+1].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
+                    cells_indices.data.push_back({.vh = vhs[0].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
+                    cells_indices.data.push_back({.vh = vhs[i].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
+                    cells_indices.data.push_back({.vh = vhs[i+1].uidx(), .ch=ch.uidx(), .hfh = hfh.uidx()});
                 }
             }
         }
-        cells_indices_.create_and_write(_device);
+        cells_indices.create_and_write(_device);
     }
 }
 

@@ -26,7 +26,7 @@ void ColoredCellRenderer::init(uint32_t _object_id,
     n_cells_ = _data.mesh.n_cells();
     n_positions_ = _data.vertices_positions.data.size();
     n_normals_ = _data.halffaces_normals.data.size();
-    n_triangle_indices_ = _data.cells_indices_.data.size();
+    n_triangle_indices_ = _data.cells_indices.data.size();
 
     if (n_triangle_indices_ == 0) {
         initialized_ = false;
@@ -34,7 +34,7 @@ void ColoredCellRenderer::init(uint32_t _object_id,
     }
 
     vertices_position_buffer_ = _data.vertices_positions.buffer;
-    triangle_index_buffer_ = _data.cells_indices_.buffer;
+    triangle_index_buffer_ = _data.cells_indices.buffer;
     cells_center_buffer_ = _data.cells_centers.buffer;
     halfface_normal_buffer_ = _data.halffaces_normals.buffer;
 
@@ -271,6 +271,10 @@ void ColoredCellRenderer::create_triangle_pipeline(
 void ColoredCellRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
+    if (_data.size() != n_cells_) {
+        std::cerr << "ERROR: #Props != #Cells" << std::endl;
+        return;
+    }
 
     triangle_pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,

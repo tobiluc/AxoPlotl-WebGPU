@@ -29,7 +29,7 @@ add_library(AxoPlotlCore
 
     AxoPlotl/rendering/renderers/MeshVertexRenderer.cpp
     AxoPlotl/rendering/renderers/MeshEdgeRenderer.cpp
-    AxoPlotl/rendering/renderers/MeshFaceRenderer.cpp
+    AxoPlotl/rendering/renderers/MeshHalfFaceRenderer.cpp
     AxoPlotl/rendering/renderers/MeshCellRenderer.cpp
     AxoPlotl/rendering/renderers/Vector3Renderer.cpp
     AxoPlotl/rendering/renderers/Matrix3x3Renderer.cpp

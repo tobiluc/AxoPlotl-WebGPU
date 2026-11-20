@@ -1,7 +1,7 @@
-alias PropertyValue = vec4<f32>;
+alias PropValue = vec4<f32>;
 
 alias PropValueMode = u32;
-const PROP_VALUE_MODE_COLOR:PropValueMode = 0u;
+const PROP_VALUE_MODE_NOPROP:PropValueMode = 0u;
 const PROP_VALUE_MODE_SCALAR:PropValueMode = 1u;
 const PROP_VALUE_MODE_VEC3:PropValueMode = 2u;
 const PROP_VALUE_MODE_MAT3x3:PropValueMode = 3u;
@@ -21,7 +21,7 @@ struct PropFilterOptions
     @align(16) scalarIncl: vec2<u32>
 };
 
-fn propertyValueMatchesFilter(_val:PropertyValue, _filter:PropFilterOptions) -> bool
+fn propertyValueMatchesFilter(_val:PropValue, _filter:PropFilterOptions) -> bool
 {
     if (_filter.filterMode == PROP_FILTER_MODE_NONE) {
         return true;
@@ -61,7 +61,7 @@ fn propertyValueMatchesFilter(_val:PropertyValue, _filter:PropFilterOptions) -> 
 }
 
 //fn isOutsideValueFilter(
-//    value:PropertyValue,
+//    value:PropValue,
 //    valueType:ValueMode,
 //    valueFilter:vec2<f32>) -> bool
 //{
@@ -71,7 +71,7 @@ fn propertyValueMatchesFilter(_val:PropertyValue, _filter:PropFilterOptions) -> 
 //};
 
 fn getFragmentColorFromPropertyValue(
-    _val:PropertyValue,
+    _val:PropValue,
     _filter:PropFilterOptions,
     _colorMap : texture_2d<f32>,
     _colorMapSampler: sampler
@@ -80,9 +80,9 @@ fn getFragmentColorFromPropertyValue(
     var color = vec4<f32>(1,0.9,0.9,0);
 
     // Interpret Value based on Property Mode
-    if (_filter.valueMode == PROP_VALUE_MODE_COLOR)
+    if (_filter.valueMode == PROP_VALUE_MODE_NOPROP)
     {
-        color = abs(_val);
+        color = vec4<f32>(1.0);
     }
     else if (_filter.valueMode == PROP_VALUE_MODE_SCALAR)
     {

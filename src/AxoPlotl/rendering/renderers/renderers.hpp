@@ -2,7 +2,7 @@
 
 #include "MeshVertexRenderer.hpp"
 #include "MeshEdgeRenderer.hpp"
-#include "MeshFaceRenderer.hpp"
+#include "MeshHalfFaceRenderer.hpp"
 #include "MeshCellRenderer.hpp"
 #include "SphericalHarmonicsRenderer.hpp"
 #include "Vector3Renderer.hpp"

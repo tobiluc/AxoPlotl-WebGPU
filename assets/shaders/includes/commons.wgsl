@@ -9,7 +9,7 @@ const COLOR_INF:vec4<f32> = vec4<f32>(1,0,0,1);
 alias EntityType = u32;
 const ENTITY_TYPE_VERTEX:EntityType = 0;
 const ENTITY_TYPE_EDGE:EntityType = 1;
-const ENTITY_TYPE_FACE:EntityType = 2;
+const ENTITY_TYPE_HALFFACE:EntityType = 2;
 const ENTITY_TYPE_CELL:EntityType = 3;
 const ENTITY_TYPE_VECTOR:EntityType = 6;
 

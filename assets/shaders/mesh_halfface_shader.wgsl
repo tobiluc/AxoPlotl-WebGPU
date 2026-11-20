@@ -8,7 +8,6 @@ struct Uniforms {
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
-    @align(16) flipNormals: u32,
     @align(16) propFilter: PropFilterOptions
 };
 
@@ -16,20 +15,20 @@ struct Uniforms {
 @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
 @group(0) @binding(2) var colorMap : texture_2d<f32>;
 @group(0) @binding(3) var colorSampler : sampler;
-@group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
+@group(0) @binding(4) var<storage, read> halffaceProps : array<PropValue>;
 @group(0) @binding(5) var<storage, read> halffaceNormals : array<vec3<f32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
-    @location(1) @interpolate(flat) faceHandle: u32,
+    @location(1) @interpolate(flat) halfFaceHandle: u32,
     @location(2) @interpolate(flat) normal: vec3<f32>
 };
 
 @vertex
 fn vs_main(
     @location(0) vertex_index : u32,
-    @location(1) face_index : u32
+    @location(1) halfface_index : u32
 ) -> V2F {
 
     var out : V2F;
@@ -37,20 +36,20 @@ fn vs_main(
     let pos = positions[vertex_index];
 
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
-    out.normal = halffaceNormals[(face_index<<1u) + min(ubo.flipNormals,1u)];
+    out.normal = halffaceNormals[halfface_index];
 
     // Subtract Depth Offset to render on top
     // of cells
     out.position.z -= ubo.depthOffset;
 
-    let value = props[face_index];
+    let value = halffaceProps[halfface_index];
     if (isOutsideClipBox(pos, ubo.clipBox)
         || !propertyValueMatchesFilter(value, ubo.propFilter))
     {
         out.position = clippedPosition();
     }
     out.value = value;
-    out.faceHandle = face_index;
+    out.halfFaceHandle = halfface_index;
 
     return out;
 }
@@ -72,6 +71,6 @@ fn fs_main(in:V2F) -> FragOutColPick
         out.color.a
         );
 
-    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_FACE, in.faceHandle, bitcast<u32>(in.position.z));
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_HALFFACE, in.halfFaceHandle, bitcast<u32>(in.position.z));
     return out;
 }

@@ -142,7 +142,7 @@ void OpenVolumeMeshObject::render_ui_properties()
 
         // Clear
         if (ImGui::Button("Unselect Property")) {
-            upload_default_property_data<EntityTag>();
+            // upload_default_property_data<EntityTag>();
             colored_entity_renderer<EntityTag>().property_filter_options().set_default();
             selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
@@ -163,12 +163,14 @@ void OpenVolumeMeshObject::render_ui_properties()
                 render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
                 render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
                 render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
+                render_property_selection_menu.operator()<OVM::Entity::HalfFace>(" HF");
                 render_property_selection_menu.operator()<OVM::Entity::Cell>(" C");
                 ImGui::EndMenu();
             }
             render_property_visualization_settings_menu.operator()<OVM::Entity::Vertex>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Edge>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Face>();
+            render_property_visualization_settings_menu.operator()<OVM::Entity::HalfFace>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
             ImGui::EndTabItem();
         }
@@ -215,6 +217,16 @@ void OpenVolumeMeshObject::render_ui_properties()
                 }
                 ImGui::EndMenu();
             }
+            if (mesh().n_halffaces()>0 && ImGui::BeginMenu("Halffaces")){
+                if (ImGui::MenuItem("Halfface Boundary")) {
+                    auto p = mesh().request_halfface_property<bool>("AxoPlotl::Boundary");
+                    mesh().set_persistent(p);
+                    for (OVM::HFH hfh : mesh().halffaces()) {
+                        p[hfh] = mesh().is_boundary(hfh);
+                    }
+                }
+                ImGui::EndMenu();
+            }
             if (mesh().n_cells()>0 && ImGui::BeginMenu("Cells")) {
                 if (ImGui::MenuItem("Cell Index")) {
                     add_entity_index_prop<OpenVolumeMesh::Entity::Cell>(mesh());
@@ -250,10 +262,10 @@ void OpenVolumeMeshObject::init()
     // vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
     // vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
 
-    upload_default_property_data<OVM::Entity::Vertex>();
-    upload_default_property_data<OVM::Entity::Edge>();
-    upload_default_property_data<OVM::Entity::Face>();
-    upload_default_property_data<OVM::Entity::Cell>();
+    // upload_default_property_data<OVM::Entity::Vertex>();
+    // upload_default_property_data<OVM::Entity::Edge>();
+    // upload_default_property_data<OVM::Entity::Face>();
+    // upload_default_property_data<OVM::Entity::Cell>();
 
     vertex_renderer_.enabled() = false;
     edge_renderer_.enabled() = false;
@@ -411,9 +423,20 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         ImGui::Text("Edge(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Edge>();
         break;
-    case Picker::EntityType::FACE:
-        ImGui::Text("Face(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Face>();
+    case Picker::EntityType::HALFFACE:
+        if (ImGui::BeginTabBar("##xx")) {
+            if (ImGui::BeginTabItem("Face")) {
+                ImGui::Text("Face(%u)", _p.pixel().entity_index_>>1u);
+                show_prop_list.operator()<OVM::Entity::Face>();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Halfface")) {
+                ImGui::Text("Halfface(%u)", _p.pixel().entity_index_);
+                show_prop_list.operator()<OVM::Entity::HalfFace>();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
         break;
     case Picker::EntityType::CELL:
         ImGui::Text("Cell(%u)", _p.pixel().entity_index_);
@@ -455,17 +478,17 @@ bool OpenVolumeMeshObject::visualize_property(
         if constexpr(is_vector<T>) {
             if constexpr(vector_dim<T> == 3) {
                 vector3_renderer_.init(id(),
-                                       scene_->app()->gpu_context(),
-                                       scene()->app()->render_context(),
-                                       entity_center_buffer<EntityTag>());
+                   scene_->app()->gpu_context(),
+                   scene()->app()->render_context(),
+                   entity_center_buffer<EntityTag>());
             }
         }
         if constexpr(is_matrix<T>) {
             if constexpr(has_rows_and_cols<T,3,3>) {
                 mat3x3_renderer_.init(id(),
-                                      scene_->app()->gpu_context(),
-                                      scene()->app()->render_context(),
-                                      entity_center_buffer<EntityTag>());
+                  scene_->app()->gpu_context(),
+                  scene()->app()->render_context(),
+                  entity_center_buffer<EntityTag>());
             }
         }
 
@@ -496,7 +519,13 @@ bool OpenVolumeMeshObject::visualize_property(
         if constexpr(!is_matrix<T>) {
             const auto& data = get_buffer_property_data_vec4<T,EntityTag>(
                 mesh(), _pp);
-            col_rend.update_property_data(data);
+            if constexpr(std::is_same_v<EntityTag,OVM::Entity::Face>) {
+                col_rend.update_face_property_data(data);
+            } else if constexpr(std::is_same_v<EntityTag,OVM::Entity::HalfFace>) {
+                col_rend.update_halfface_property_data(data);
+            } else {
+                col_rend.update_property_data(data);
+            }
             col_rend.property_filter_options().value_mode = get_buffer_property_type<T>();
         }
 
@@ -580,6 +609,7 @@ bool OpenVolumeMeshObject::visualize_property(
     search_and_select_property.template operator()<OVM::Entity::Vertex>();
     search_and_select_property.template operator()<OVM::Entity::Edge>();
     search_and_select_property.template operator()<OVM::Entity::Face>();
+    search_and_select_property.template operator()<OVM::Entity::HalfFace>();
     search_and_select_property.template operator()<OVM::Entity::Cell>();
 
     return uploaded_property;
@@ -611,46 +641,46 @@ std::vector<OVM::PropertyStorageBase*> OpenVolumeMeshObject::visualized_props() 
     return props;
 }
 
-void OpenVolumeMeshObject::upload_default_vertex_property_data()
-{
-    using D = PropContainer;
-    std::vector<D> props;
-    props.reserve(mesh().n_vertices());
-    for (uint32_t i = 0; i < mesh().n_vertices(); ++i) {
-        props.push_back(D(1,1,1,1));
-    }
-    vertex_renderer_.update_property_data(props);
-}
-void OpenVolumeMeshObject::upload_default_edge_property_data()
-{
-    using D = PropContainer;
-    std::vector<D> props;
-    props.reserve(mesh().n_edges());
-    for (uint32_t i = 0; i < mesh().n_edges(); ++i) {
-        props.push_back(D(1,1,1,1));
-    }
-    edge_renderer_.update_property_data(props);
-}
-void OpenVolumeMeshObject::upload_default_face_property_data()
-{
-    using D = PropContainer;
-    std::vector<D> props;
-    props.reserve(mesh().n_faces());
-    for (OVM::FH fh : mesh().faces()) {
-        props.emplace_back(1,1,1,1);
-    }
-    face_renderer_.update_property_data(props);
-}
-void OpenVolumeMeshObject::upload_default_cell_property_data()
-{
-    using D = PropContainer;
-    std::vector<D> props;
-    props.reserve(mesh().n_cells());
-    for (OVM::CH ch : mesh().cells()) {
-        props.emplace_back(1,1,1,1);
-    }
-    cell_renderer_.update_property_data(props);
-}
+// void OpenVolumeMeshObject::upload_default_vertex_property_data()
+// {
+//     using D = PropContainer;
+//     std::vector<D> props;
+//     props.reserve(mesh().n_vertices());
+//     for (uint32_t i = 0; i < mesh().n_vertices(); ++i) {
+//         props.push_back(D(1,1,1,1));
+//     }
+//     vertex_renderer_.update_property_data(props);
+// }
+// void OpenVolumeMeshObject::upload_default_edge_property_data()
+// {
+//     using D = PropContainer;
+//     std::vector<D> props;
+//     props.reserve(mesh().n_edges());
+//     for (uint32_t i = 0; i < mesh().n_edges(); ++i) {
+//         props.push_back(D(1,1,1,1));
+//     }
+//     edge_renderer_.update_property_data(props);
+// }
+// void OpenVolumeMeshObject::upload_default_face_property_data()
+// {
+//     using D = PropContainer;
+//     std::vector<D> props;
+//     props.reserve(mesh().n_faces());
+//     for (OVM::FH fh : mesh().faces()) {
+//         props.emplace_back(1,1,1,1);
+//     }
+//     face_renderer_.update_property_data(props);
+// }
+// void OpenVolumeMeshObject::upload_default_cell_property_data()
+// {
+//     using D = PropContainer;
+//     std::vector<D> props;
+//     props.reserve(mesh().n_cells());
+//     for (OVM::CH ch : mesh().cells()) {
+//         props.emplace_back(1,1,1,1);
+//     }
+//     cell_renderer_.update_property_data(props);
+// }
 
 void OpenVolumeMeshObject::recompute_bounding_box()
 {

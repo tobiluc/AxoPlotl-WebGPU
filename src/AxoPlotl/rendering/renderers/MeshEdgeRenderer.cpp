@@ -234,6 +234,10 @@ void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const 
 void ColoredEdgeRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
+    if (_data.size() != n_edges_) {
+        std::cerr << "ERROR: #Props != #Edges" << std::endl;
+        return;
+    }
 
     pipeline_state_.device_.getQueue().writeBuffer(
         property_buffer_,

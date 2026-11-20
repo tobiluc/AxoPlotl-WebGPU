@@ -15,7 +15,7 @@ struct Uniforms {
 @group(0) @binding(1) var<storage, read> positions : array<vec3<f32>>;
 @group(0) @binding(2) var colorMap : texture_2d<f32>;
 @group(0) @binding(3) var colorSampler : sampler;
-@group(0) @binding(4) var<storage, read> props : array<PropertyValue>;
+@group(0) @binding(4) var<storage, read> cellProps : array<PropValue>;
 @group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
 @group(0) @binding(6) var<storage, read> halffaceNormals : array<vec3<f32>>;
 
@@ -41,7 +41,7 @@ fn vs_main(
 + ubo.cellScale * (positions[vertex_index]-cellCenters[cell_index]);
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
-    let value = props[cell_index];
+    let value = cellProps[cell_index];
     if (isOutsideClipBox(pos, ubo.clipBox)
         || !propertyValueMatchesFilter(value, ubo.propFilter))
     {

@@ -10,7 +10,7 @@ namespace AxoPlotl::internal
 
 enum class PropValueMode : uint32_t
 {
-    COLOR = 0u,
+    NOPROP = 0u,
     SCALAR = 1u,
     VEC3 = 2u,
     MAT3x3 = 3u
@@ -28,7 +28,7 @@ static_assert(sizeof(PropFilterMode) == 4);
 
 struct PropFilterOptions
 {
-    alignas(16) PropValueMode value_mode = PropValueMode::COLOR;
+    alignas(16) PropValueMode value_mode = PropValueMode::NOPROP;
     alignas(16) PropFilterMode filter_mode = PropFilterMode::NONE;
     alignas(16) uint32_t invert = 0;
     alignas(16) Vec2 scalar_range = {-1,1};

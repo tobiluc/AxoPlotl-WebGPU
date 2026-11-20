@@ -103,7 +103,7 @@ constexpr PropValueMode get_buffer_property_type()
             return PropValueMode::MAT3x3;
         }
     }
-    return PropValueMode::COLOR;
+    return PropValueMode::NOPROP;
 }
 
 template<typename T, typename EntityTag>

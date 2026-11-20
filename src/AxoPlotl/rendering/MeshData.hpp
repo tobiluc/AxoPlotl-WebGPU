@@ -23,9 +23,9 @@ public:
         uint32_t eh; // points to EdgePropertyData
     };
 
-    struct FaceIndex {
+    struct HalfFaceIndex {
         uint32_t vh;
-        uint32_t fh;
+        uint32_t hfh;
     };
 
     struct CellIndex {
@@ -56,8 +56,8 @@ public:
     BufferData<Vec4> cells_centers;
     BufferData<Vec4> halffaces_normals;
     BufferData<EdgeInstance> edges_instances;
-    BufferData<FaceIndex> faces_indices_;
-    BufferData<CellIndex> cells_indices_;
+    BufferData<HalfFaceIndex> halffaces_indices;
+    BufferData<CellIndex> cells_indices;
 };
 
 }

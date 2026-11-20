@@ -18,7 +18,6 @@ protected:
         alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) float depth_offset_ = 0.00001;
         alignas(16) DirectionalLight dir_light_ ;
-        alignas(16) uint32_t flip_normals_ = 0;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -45,10 +44,6 @@ public:
         return uniforms_.dir_light_;
     }
 
-    uint32_t& flip_normals() {
-        return uniforms_.flip_normals_;
-    }
-
     // Value used in the shader as a
     // negative depth bias. A higher value
     // renders the fragment on top.
@@ -72,7 +67,9 @@ public:
               const RenderContext& _render_context,
               const VolMeshData& _data);
 
-    void update_property_data(const std::vector<PropContainer>& _data);
+    void update_face_property_data(const std::vector<PropContainer>& _data);
+
+    void update_halfface_property_data(const std::vector<PropContainer>& _data);
 
     void render(
         const ViewSize& _size,
@@ -91,7 +88,7 @@ public:
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;
-    size_t n_faces_ = 0;
+    size_t n_halffaces_ = 0;
     size_t n_indices_ = 0;
 
     void create_buffers();
@@ -103,7 +100,7 @@ private:
     void create_pipeline(const GpuContext& _gpu_context,
                          const RenderContext& _render_context);
 
-    wgpu::Buffer face_index_buffer_;
+    wgpu::Buffer halfface_index_buffer_;
     wgpu::Buffer property_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
