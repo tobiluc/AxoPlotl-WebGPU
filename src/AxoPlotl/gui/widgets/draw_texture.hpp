@@ -2,10 +2,10 @@
 
 #include <webgpu/webgpu.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl::gui
 {
 
-void draw_texture(const wgpu::TextureView& _view,
-                  float _width = 0, float _height = 0);
+void Texture(const wgpu::TextureView& _view,
+        float _width = 0, float _height = 0);
 
 }

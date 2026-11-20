@@ -1,10 +1,10 @@
 #include "draw_texture.hpp"
 #include <imgui.h>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl::gui
 {
 
-void draw_texture(const wgpu::TextureView &_view, float _width, float _height)
+void Texture(const wgpu::TextureView &_view, float _width, float _height)
 {
     if (!_view) {return;}
     ImVec2 size = {_width, _height};

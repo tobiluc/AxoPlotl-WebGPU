@@ -1,10 +1,10 @@
 #pragma once
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::gui
 {
 
-struct DrawRangeSliderOptions
+struct RangeSlidersOptions
 {
     float min = 0;
     float max = 1000;
@@ -12,8 +12,8 @@ struct DrawRangeSliderOptions
     const internal::ColorMap* colormap = nullptr;
 };
 
-bool draw_range_sliders(
+bool RangeSliders(
     float& _l, float& _r,
-    const DrawRangeSliderOptions& _opt = DrawRangeSliderOptions());
+    const RangeSlidersOptions& _opt = RangeSlidersOptions());
 
 }

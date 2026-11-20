@@ -5,12 +5,12 @@
 #include <string>
 #include <AxoPlotl/rendering/ColorMap.hpp>
 
-namespace AxoPlotl
+namespace AxoPlotl::gui
 {
 
-bool draw_range_sliders(
+bool RangeSliders(
     float& _l, float& _r,
-    const DrawRangeSliderOptions& _opt)
+    const RangeSlidersOptions& _opt)
 {
     auto normalize_value = [&](float _value) -> float {
         _value = std::clamp(_value, _opt.min, _opt.max);
@@ -45,7 +45,7 @@ bool draw_range_sliders(
     draw_list->AddRectFilled(top_left, bot_right, ImGui::GetColorU32(ImGuiCol_FrameBg));
     ImGui::SetCursorScreenPos(ImVec2(visible_left, top_left.y));
     if (_opt.colormap) {
-        internal::draw_texture(_opt.colormap->view_, visible_right-visible_left, total_size.y);
+        gui::Texture(_opt.colormap->view_, visible_right-visible_left, total_size.y);
     }
     ImGui::SetCursorScreenPos(top_left);
 

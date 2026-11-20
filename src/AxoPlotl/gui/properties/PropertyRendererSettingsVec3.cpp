@@ -12,7 +12,7 @@ PropertySettingsVec3::PropertySettingsVec3(Vector3Renderer& _renderer) :
 
 void PropertySettingsVec3::render_ui()
 {
-    draw_basic_renderer_settings(renderer_);
+    gui::draw_basic_renderer_settings(renderer_);
 }
 
 void PropertySettingsVec3::set_default_settings() {

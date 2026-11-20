@@ -6,7 +6,7 @@
 #include <iostream>
 #include <ostream>
 
-namespace AxoPlotl
+namespace AxoPlotl::gui
 {
 
 struct InputSliderState

@@ -211,7 +211,7 @@ void DebugVis_PickingTextureRenderer::render_ui()
 
     float draw_width = ImGui::GetContentRegionAvail().x;
     float draw_height = draw_width / width_ * height_;
-    draw_texture(output_view, draw_width, draw_height);
+    gui::Texture(output_view, draw_width, draw_height);
 }
 
 }

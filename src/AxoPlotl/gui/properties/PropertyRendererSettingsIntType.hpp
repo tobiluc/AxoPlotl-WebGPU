@@ -49,8 +49,8 @@ public:
         case Mode::RANGE:
         {
             // Draw Histogram
-            int b = draw_histogram(hist_,
-                    DrawHistogramOptions{
+            int b = gui::Histogram(hist_,
+                    gui::HistogramOptions{
                         .colormap=&cm,
                         .pm_buttons=true
                     }
@@ -67,16 +67,16 @@ public:
             cm.render_menu();
 
             // Range Setting
-            draw_range_sliders(
+            gui::RangeSliders(
                 rangef.x, rangef.y,
-                DrawRangeSliderOptions{
+                gui::RangeSlidersOptions{
                     .min = static_cast<float>(hist_.min()),
                     .max = static_cast<float>(hist_.max()),
                     .integer = true,
                     .colormap = &cm
                 }
                 );
-            if (InputSlider2(ICON_FA_RULER_HORIZONTAL, &rangef.x, InputSliderOptions{
+            if (gui::InputSlider2(ICON_FA_RULER_HORIZONTAL, &rangef.x, gui::InputSliderOptions{
                       .step = 1,
                       .min = static_cast<float>(hist_.min()),
                       .max = static_cast<float>(hist_.max()),

@@ -1,3 +1,5 @@
+// This Shader is used for debug purposes,
+// to visualize the Picking Texture.
 
 alias PickMode = u32;
 const PICK_MODE_OBJECT_ID:PickMode = 0u;

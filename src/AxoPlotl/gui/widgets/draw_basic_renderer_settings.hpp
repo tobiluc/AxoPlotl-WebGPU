@@ -4,30 +4,30 @@
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl::gui
 {
 
-bool RendererVisibilityToggle(RendererBase* _r);
+// bool RendererVisibilityToggle(internal::RendererBase* _r);
 
-void draw_clipbox_settings(ClipBox& _cb,
+void draw_clipbox_settings(internal::ClipBox& _cb,
     const BoundingBox& _bb);
 
 void draw_basic_renderer_settings(
-    ColoredVertexRenderer& _r);
+    internal::ColoredVertexRenderer& _r);
 
 void draw_basic_renderer_settings(
-    ColoredEdgeRenderer& _r);
+    internal::ColoredEdgeRenderer& _r);
 
 void draw_basic_renderer_settings(
-    ColoredFaceRenderer& _r);
+    internal::ColoredFaceRenderer& _r);
 
 void draw_basic_renderer_settings(
-    ColoredCellRenderer& _r);
+    internal::ColoredCellRenderer& _r);
 
 void draw_basic_renderer_settings(
-    Vector3Renderer& _r);
+    internal::Vector3Renderer& _r);
 
 void draw_basic_renderer_settings(
-    Matrix3x3Renderer& _r);
+    internal::Matrix3x3Renderer& _r);
 
 }

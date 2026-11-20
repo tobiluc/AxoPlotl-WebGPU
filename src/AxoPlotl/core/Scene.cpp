@@ -101,7 +101,7 @@ void Scene::render_settings_ui()
     if (ImGui::BeginMenu("Light")) {
         ImGui::ColorEdit3("Color", &directional_light.color[0]);
         ImGui::InputFloat3("Direction", &directional_light.direction[0]);
-        InputSlider("Strength", &directional_light.strength);
+        gui::InputSlider("Strength", &directional_light.strength);
         ImGui::Checkbox("From Camera", &settings.light_from_camera);
         ImGui::EndMenu();
     }

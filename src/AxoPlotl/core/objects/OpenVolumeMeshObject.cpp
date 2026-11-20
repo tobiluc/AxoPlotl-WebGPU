@@ -1,5 +1,6 @@
 #include "OpenVolumeMeshObject.hpp"
 #include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
+#include "AxoPlotl/gui/widgets/draw_toggle.hpp"
 #include "AxoPlotl/properties/property_calculations.hpp"
 #include "AxoPlotl/properties/property_data.hpp"
 #include "AxoPlotl/rendering/MeshData.hpp"
@@ -36,37 +37,37 @@ void OpenVolumeMeshObject::render_ui_settings()
     input_name();
 
     ImGui::PushID(0);
-    RendererVisibilityToggle(&vertex_renderer_);
+    gui::Toggle(vertex_renderer_.enabled());
     ImGui::SameLine();
     if (ImGui::BeginMenu("Vertices")) {
-        draw_basic_renderer_settings(vertex_renderer_);
+        gui::draw_basic_renderer_settings(vertex_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(1);
-    RendererVisibilityToggle(&edge_renderer_);
+    gui::Toggle(edge_renderer_.enabled());
     ImGui::SameLine();
     if (ImGui::BeginMenu("Edges")) {
-        draw_basic_renderer_settings(edge_renderer_);
+        gui::draw_basic_renderer_settings(edge_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(2);
-    RendererVisibilityToggle(&face_renderer_);
+    gui::Toggle(face_renderer_.enabled());
     ImGui::SameLine();
     if (ImGui::BeginMenu("Faces")) {
-        draw_basic_renderer_settings(face_renderer_);
+        gui::draw_basic_renderer_settings(face_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
 
     ImGui::PushID(3);
-    RendererVisibilityToggle(&cell_renderer_);
+    gui::Toggle(cell_renderer_.enabled());
     ImGui::SameLine();
     if (ImGui::BeginMenu("Cells")) {
-        draw_basic_renderer_settings(cell_renderer_);
+        gui::draw_basic_renderer_settings(cell_renderer_);
         ImGui::EndMenu();
     }
     ImGui::PopID();
@@ -76,7 +77,7 @@ void OpenVolumeMeshObject::render_ui_settings()
     // just modify all at once.
     const auto& bbox = bounding_box();
     ClipBox& cb = vertex_renderer_.clip_box();
-    draw_clipbox_settings(cb, bbox);
+    gui::draw_clipbox_settings(cb, bbox);
     edge_renderer_.clip_box() = cb;
     face_renderer_.clip_box() = cb;
     cell_renderer_.clip_box() = cb;

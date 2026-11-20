@@ -15,8 +15,8 @@ void PropertySettingsBool::render_ui()
 {
     auto& cm = renderer_->color_map();
 
-    int b = draw_histogram(hist_,
-               DrawHistogramOptions{
+    int b = gui::Histogram(hist_,
+               gui::HistogramOptions{
                    .colormap=&cm,
                    .pm_buttons=false
                }

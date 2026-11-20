@@ -15,7 +15,7 @@ PropertySettingsMat3x3::PropertySettingsMat3x3(Matrix3x3Renderer& _renderer) :
 
 void PropertySettingsMat3x3::render_ui()
 {
-    draw_basic_renderer_settings(renderer_);
+    gui::draw_basic_renderer_settings(renderer_);
 }
 
 void PropertySettingsMat3x3::set_default_settings() {

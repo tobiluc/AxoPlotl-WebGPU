@@ -5,3 +5,4 @@
 #include "draw_texture.hpp"
 #include "draw_basic_renderer_settings.hpp"
 #include "draw_histogram.hpp"
+#include "draw_toggle.hpp"

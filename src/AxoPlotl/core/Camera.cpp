@@ -126,20 +126,20 @@ bool Camera::render_settings_ui(GLFWwindow* _window)
 
     changed |= ImGui::Checkbox("Orthographic", &use_ortho_);
 
-    changed |= InputSlider(
+    changed |= gui::InputSlider(
         "Sensitivity", &sensitivity_,
-        InputSliderOptions{.step=0.001f, .min=0.001f, .max=0.02f});
+        gui::InputSliderOptions{.step=0.001f, .min=0.001f, .max=0.02f});
 
-    changed |= InputSlider(
+    changed |= gui::InputSlider(
         "Pan Speed", &pan_speed_,
-        InputSliderOptions{.step=0.025f, .min=0.5f, .max=4.0f});
+        gui::InputSliderOptions{.step=0.025f, .min=0.5f, .max=4.0f});
 
-    changed |= InputSlider3(
+    changed |= gui::InputSlider3(
         "Orbit Center", &orbit_target_[0]);
 
-    changed |= InputSlider(
+    changed |= gui::InputSlider(
         "FOV", &fov_,
-        InputSliderOptions{.step=M_PI/100.0f, .min=0.1*M_PI, .max=0.9*M_PI});
+        gui::InputSliderOptions{.step=M_PI/100.0f, .min=0.1*M_PI, .max=0.9*M_PI});
 
     if (ImGui::InputFloat2("Near/Far Plane", &near_plane_)) {
         near_plane_ = std::clamp<float>(near_plane_, 1.f/256.0f, 1.f/16.0f);

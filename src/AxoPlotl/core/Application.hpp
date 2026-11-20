@@ -132,8 +132,10 @@ private:
 
     bool init_imgui();
 
+     // Build Viewport UI
     void render_viewport_ui();
 
+    // Build Editor UI
     void render_editor_ui();
 
     void render_scene(

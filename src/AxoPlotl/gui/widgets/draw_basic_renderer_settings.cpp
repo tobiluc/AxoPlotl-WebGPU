@@ -4,17 +4,19 @@
 #include <AxoPlotl/rendering/renderers/renderers.hpp>
 #include <imgui.h>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl::gui
 {
 
-bool RendererVisibilityToggle(RendererBase* _r)
-{
-    if (ImGui::Button(_r->enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
-        _r->enabled() = !_r->enabled();
-        return true;
-    }
-    return false;
-}
+using namespace AxoPlotl::internal;
+
+// bool RendererVisibilityToggle(RendererBase* _r)
+// {
+//     if (ImGui::Button(_r->enabled() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
+//         _r->enabled() = !_r->enabled();
+//         return true;
+//     }
+//     return false;
+// }
 
 void draw_clipbox_settings(ClipBox& _cb, const BoundingBox &_bb)
 {

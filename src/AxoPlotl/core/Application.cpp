@@ -23,10 +23,8 @@
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 #include <imgui_internal.h>
 #include <AxoPlotl/IO/texture_io.hpp>
+#include <AxoPlotl/utils/ScopeExit.hpp>
 
-#ifdef __EMSCRIPTEN__
-#  include <emscripten.h>
-#endif // __EMSCRIPTEN__
 #ifdef WEBGPU_BACKEND_WGPU
 #  include <webgpu/wgpu.h>
 #endif // WEBGPU_BACKEND_WGPU
@@ -38,10 +36,6 @@ void wgpuPollEvents(
     _device.tick();
 #elif defined(WEBGPU_BACKEND_WGPU)
     _device.poll(false, nullptr);
-#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
-    if (_yield_to_browser) {
-        emscripten_sleep(100);
-    }
 #endif
 }
 
@@ -174,28 +168,85 @@ bool Application::init()
 
 void Application::frame_tick()
 {
+    //------------------
+    // Frame Update
+    //------------------
     time_.update();
     Mouse::update(window_);
     glfwPollEvents();
 
+    //------------------
+    // Frame Maintenance
+    //------------------
+    auto frame_cleanup = ScopeExit([&]() noexcept {
+
+        // We take a snapshot of deferred calls such
+        // that one deferred call can schedule another one
+        // without a concurrent modification exception.
+        auto deferred = std::exchange(deferred_calls_, {});
+        for (auto& fn : deferred) {
+            try {fn();}
+            catch (const std::exception& e) {
+                std::cerr << "Deferred call failed: "
+                          << e.what() << '\n';
+            } catch (...) {
+                std::cerr << "Deferred call failed: unknown exception\n";
+            }
+        }
+
+        try {
+            wgpuPollEvents(gpu_context_.device, false);
+        } catch (...) {
+            std::cerr << "GPU polling failed\n";
+        }
+    });
+
+    //------------------
+    // Update
+    //------------------
     if (!on_draw()) {
         return;
     }
 
-    // Acquire surface texture.
-    wgpu::SurfaceTexture surface_texture;
-    render_context_.surface.getCurrentTexture(&surface_texture);
+    //------------------
+    // Acquire Surface
+    //------------------
+    wgpu::SurfaceTexture surface_texture{};
+
+    render_context_.surface.getCurrentTexture(
+        &surface_texture
+        );
 
     if (surface_texture.status !=
-        wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) {
+        wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal)
+    {
+        // No rendering this frame.
+        // Frame maintenance still runs through ScopeExit.
         return;
     }
 
-    // Build the ImGui interface FIRST.
+    //------------------
+    // Surface Texture Cleanup
+    //------------------
+// #ifndef WEBGPU_BACKEND_WGPU
+    auto surface_texture_cleanup = ScopeExit([&]() noexcept {
+        if (surface_texture.texture) {
+            wgpuTextureRelease(surface_texture.texture);
+            surface_texture.texture = nullptr;
+        }
+    });
+// #endif
+
+    //------------------
+    // Build UI
+    //------------------
     render_editor_ui();
 
-    // Create surface view.
+    //------------------
+    // Surface View
+    //------------------
     wgpu::TextureViewDescriptor view_desc{};
+
     view_desc.format = render_context_.surface_format;
     view_desc.dimension = wgpu::TextureViewDimension::_2D;
     view_desc.baseMipLevel = 0;
@@ -206,84 +257,106 @@ void Application::frame_tick()
 
     auto target_view =
         static_cast<wgpu::TextureView>(
-            wgpuTextureCreateView(surface_texture.texture, &view_desc));
+            wgpuTextureCreateView(
+                surface_texture.texture,
+                &view_desc
+                )
+            );
 
-    // Create command encoder.
+    auto target_view_cleanup = ScopeExit([&]() noexcept {
+        target_view.release();
+    });
+
+    //------------------
+    // Command Encoder
+    //------------------
     auto encoder = gpu_context_.device.createCommandEncoder();
 
-    // Render scene only if viewport is visible.
+    auto encoder_cleanup = ScopeExit([&]() noexcept {
+        encoder.release();
+    });
+
+    //------------------
+    // Render Scene
+    //------------------
     if (viewport_.visible() && viewport_.valid())
     {
         render_scene(
             encoder,
-            viewport_);
+            viewport_
+            );
 
         //------------------
         // Click to Pick
         //------------------
-        if (Mouse::RIGHT_JUST_PRESSED) {
+        if (Mouse::RIGHT_JUST_PRESSED)
+        {
             const auto pos = viewport().mouse_to_local();
-            if (pos.has_value()) {
-                picker_.request_pixel(viewport(), scene().camera(), pos->x, pos->y);
+
+            if (pos.has_value())
+            {
+                picker_.request_pixel(
+                    viewport(),
+                    scene().camera(),
+                    pos->x,
+                    pos->y
+                    );
+
                 if (picker_.pixel().object_id_ < UINT32_MAX) {
                     requests_.pick_result = true;
                 }
             }
         }
 
-        // Render to Debug Picking Visualization
+        //------------------
+        // Picking Debug
+        //------------------
         debug.picking_renderer_.render(
-            encoder, viewport_.picking_view());
+            encoder,
+            viewport_.picking_view()
+            );
     }
 
-    // Render editor UI onto surface.
-    render_gui(encoder, target_view);
+    //------------------
+    // Render GUI
+    //------------------
+    render_gui(
+        encoder,
+        target_view
+        );
 
-    // Submit.
+    //------------------
+    // Submit
+    //------------------
     auto cmd_buffer = encoder.finish();
-    gpu_context_.device.getQueue().submit(1, &cmd_buffer);
 
-#ifndef __EMSCRIPTEN__
+    auto cmd_buffer_cleanup = ScopeExit([&]() noexcept {
+        cmd_buffer.release();
+    });
+
+    gpu_context_.device.getQueue().submit(
+        1,
+        &cmd_buffer
+        );
+
+    //------------------
+    // Present
+    //------------------
     render_context_.surface.present();
-#endif
-
-    // Release resources as in your original implementation.
-    target_view.release();
-    cmd_buffer.release();
-    encoder.release();
-
-#ifndef WEBGPU_BACKEND_WGPU
-    wgpuTextureRelease(surface_texture.texture);
-#endif
-
-    wgpuPollEvents(gpu_context_.device, false);
-
-    for (auto& fn : deferred_calls_) {
-        fn();
-    }
-    deferred_calls_.clear();
 }
 
 void Application::run()
 {
-#ifdef __EMSCRIPTEN__
-    auto callback = [](void *arg) {
-        Application* app_ptr = reinterpret_cast<Application*>(arg);
-        app_ptr->run();
-    };
-    emscripten_set_main_loop_arg(callback, this, 0, true);
-#else // __EMSCRIPTEN__
     while (!glfwWindowShouldClose(window())) {
         frame_tick();
     }
-#endif // __EMSCRIPTEN__
     clear();
     init(); // prepare for next run
 }
 
 void Application::on_window_resize(float width, float height)
 {
-    if (width == 0|| height == 0) {return;} // window minimized
+    if (width <= 0|| height <= 0) {return;} // window minimized
 
     //const auto fb_size = framebuffer_size();
     render_context_.configure_surface(gpu_context_, width, height);
@@ -513,9 +586,9 @@ void Application::render_main_menu_bar_ui()
                 "Screenshot",
                 &debug.show_screenshot_window_))
         {
-            InputSlider2("Size",
+            gui::InputSlider2("Size",
                          &debug.screenshot_size_.width,
-                         InputSliderOptions{
+                         gui::InputSliderOptions{
                             .step=1,.min=1,.max=8000,
                             .display_name=true});
             if (ImGui::Button("Keep Aspect Ratio")) {
@@ -529,7 +602,7 @@ void Application::render_main_menu_bar_ui()
             const float preview_width = ImGui::GetItemRectSize().x;
             const float preview_height = preview_width / debug.screenshot_size_.aspect_ratio();
 
-            draw_texture(viewport().color_view(), preview_width, preview_height);
+            gui::Texture(viewport().color_view(), preview_width, preview_height);
 
             ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
 
@@ -788,8 +861,10 @@ bool Application::save_viewport_screenshot(
     gpu_context_.device.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
-    return save_texture_to_file(_path, gpu_context_.device,
+    bool res = save_texture_to_file(_path, gpu_context_.device,
         newViewport.color_texture(), _size.width, _size.height);
+    newViewport.release();
+    return res;
 }
 
 }

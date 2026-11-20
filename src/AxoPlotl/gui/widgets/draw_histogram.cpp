@@ -3,11 +3,13 @@
 #include <imgui.h>
 #include <AxoPlotl/properties/Histogram.hpp>
 
-namespace AxoPlotl::internal
+namespace AxoPlotl::gui
 {
 
-int draw_histogram(HistogramBase &_hist,
-                   const DrawHistogramOptions& _opt)
+using namespace AxoPlotl::internal;
+
+int Histogram(HistogramBase &_hist,
+                   const HistogramOptions &_opt)
 {
     if (_opt.pm_buttons) {
         if (ImGui::Button(ICON_FA_MINUS)) {

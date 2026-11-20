@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <limits>
 
-namespace AxoPlotl
+namespace AxoPlotl::gui
 {
 
 using InputSliderParser = bool(*)(const char*, float&);
