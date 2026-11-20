@@ -1,6 +1,7 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
+#include <AxoPlotl/rendering/shader_mirrors/ClipBox.hpp>
 
 namespace AxoPlotl::internal
 {

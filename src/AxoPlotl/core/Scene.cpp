@@ -12,7 +12,6 @@ void Scene::init(Application *_app)
     app_ = _app;
 
     // Coordinate Axes Cross
-    using D = ColoredEdgeRenderer::Prop::Data;
 
     origin_position_buffer_ = create_bufferT<Vec4>(
         app_->gpu_context().device, {Vec4(0,0,0,1)});

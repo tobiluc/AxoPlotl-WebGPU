@@ -1,6 +1,5 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
-#include "AxoPlotl/core/Light.hpp"
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
 #include "AxoPlotl/rendering/MeshData.hpp"
 
@@ -75,7 +74,7 @@ public:
               const RenderContext& _render_context,
               const VolMeshData& _data);
 
-    void update_property_data(const std::vector<Prop::Data>& _data);
+    void update_property_data(const std::vector<PropContainer>& _data);
 
     void render(
         const ViewSize& _size,

@@ -53,7 +53,7 @@ void ColoredFaceRenderer::create_buffers()
 
     // Property Buffer
     {
-        property_buffer_ = create_bufferT<Prop::Data>(
+        property_buffer_ = create_bufferT<PropContainer>(
             device, n_faces_,
             wgpu::BufferUsage::Storage |
                 wgpu::BufferUsage::CopyDst,
@@ -107,7 +107,7 @@ void ColoredFaceRenderer::create_bind_group_layout()
     entries[4].binding = 4;
     entries[4].visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
     entries[4].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
-    entries[4].buffer.minBindingSize = sizeof(Prop::Data);
+    entries[4].buffer.minBindingSize = sizeof(PropContainer);
 
     // 5 - Normals
     entries[5].binding = 5;
@@ -151,7 +151,7 @@ void ColoredFaceRenderer::create_bind_group()
     groupEntries[4].binding = 4;
     groupEntries[4].buffer = property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(Prop::Data) * std::max(n_faces_,1lu);
+    groupEntries[4].size = sizeof(PropContainer) * std::max(n_faces_,1lu);
 
     // 5 - Normals
     groupEntries[5].binding = 5;
@@ -241,7 +241,7 @@ void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredFaceRenderer::update_property_data(const std::vector<Prop::Data>& _data)
+void ColoredFaceRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
 
@@ -249,7 +249,7 @@ void ColoredFaceRenderer::update_property_data(const std::vector<Prop::Data>& _d
         property_buffer_,
         0,
         _data.data(),
-        sizeof(Prop::Data) * _data.size()
+        sizeof(PropContainer) * _data.size()
         );
 }
 

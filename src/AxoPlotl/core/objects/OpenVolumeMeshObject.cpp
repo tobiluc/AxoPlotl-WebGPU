@@ -75,7 +75,7 @@ void OpenVolumeMeshObject::render_ui_settings()
     // Each entity technically has their own, but we
     // just modify all at once.
     const auto& bbox = bounding_box();
-    RendererBase::ClipBox& cb = vertex_renderer_.clip_box();
+    ClipBox& cb = vertex_renderer_.clip_box();
     draw_clipbox_settings(cb, bbox);
     edge_renderer_.clip_box() = cb;
     face_renderer_.clip_box() = cb;
@@ -306,10 +306,10 @@ void OpenVolumeMeshObject::render(
     edge_renderer_.render(_view_size, _render_pass, mvp);
     vertex_renderer_.render(_view_size, _render_pass, mvp);
 
-    vector3_renderer_.enabled() = vertex_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
-        || edge_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
-        || face_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3
-        || cell_renderer_.property_filter_options().value_mode == PropertyRendererBase::PropValueMode::VEC3;
+    vector3_renderer_.enabled() = vertex_renderer_.property_filter_options().value_mode == PropValueMode::VEC3
+        || edge_renderer_.property_filter_options().value_mode == PropValueMode::VEC3
+        || face_renderer_.property_filter_options().value_mode == PropValueMode::VEC3
+        || cell_renderer_.property_filter_options().value_mode == PropValueMode::VEC3;
 
     vector3_renderer_.render(_view_size, _render_pass, mvp_mat);
 
@@ -612,7 +612,7 @@ std::vector<OVM::PropertyStorageBase*> OpenVolumeMeshObject::visualized_props() 
 
 void OpenVolumeMeshObject::upload_default_vertex_property_data()
 {
-    using D = ColoredVertexRenderer::Prop::Data;
+    using D = PropContainer;
     std::vector<D> props;
     props.reserve(mesh().n_vertices());
     for (uint32_t i = 0; i < mesh().n_vertices(); ++i) {
@@ -622,7 +622,7 @@ void OpenVolumeMeshObject::upload_default_vertex_property_data()
 }
 void OpenVolumeMeshObject::upload_default_edge_property_data()
 {
-    using D = ColoredEdgeRenderer::Prop::Data;
+    using D = PropContainer;
     std::vector<D> props;
     props.reserve(mesh().n_edges());
     for (uint32_t i = 0; i < mesh().n_edges(); ++i) {
@@ -632,7 +632,7 @@ void OpenVolumeMeshObject::upload_default_edge_property_data()
 }
 void OpenVolumeMeshObject::upload_default_face_property_data()
 {
-    using D = ColoredFaceRenderer::Prop::Data;
+    using D = PropContainer;
     std::vector<D> props;
     props.reserve(mesh().n_faces());
     for (OVM::FH fh : mesh().faces()) {
@@ -642,7 +642,7 @@ void OpenVolumeMeshObject::upload_default_face_property_data()
 }
 void OpenVolumeMeshObject::upload_default_cell_property_data()
 {
-    using D = ColoredCellRenderer::Prop::Data;
+    using D = PropContainer;
     std::vector<D> props;
     props.reserve(mesh().n_cells());
     for (OVM::CH ch : mesh().cells()) {

@@ -1,5 +1,6 @@
 #pragma once
 #include "AxoPlotl/geometry/BoundingBox.hpp"
+#include "AxoPlotl/rendering/shader_mirrors/ClipBox.hpp"
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 
@@ -8,7 +9,7 @@ namespace AxoPlotl::internal
 
 bool RendererVisibilityToggle(RendererBase* _r);
 
-void draw_clipbox_settings(RendererBase::ClipBox& _cb,
+void draw_clipbox_settings(ClipBox& _cb,
     const BoundingBox& _bb);
 
 void draw_basic_renderer_settings(

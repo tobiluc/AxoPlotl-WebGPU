@@ -9,7 +9,6 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/core/objects/OpenVolumeMeshObject.hpp>
 #include <filesystem>
-#include <AxoPlotl/core/Light.hpp>
 
 namespace AxoPlotl::internal
 {

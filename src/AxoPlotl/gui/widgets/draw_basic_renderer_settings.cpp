@@ -16,7 +16,7 @@ bool RendererVisibilityToggle(RendererBase* _r)
     return false;
 }
 
-void draw_clipbox_settings(RendererBase::ClipBox& _cb, const BoundingBox &_bb)
+void draw_clipbox_settings(ClipBox& _cb, const BoundingBox &_bb)
 {
     bool clip_box_enabled = _cb.enabled_;
     if (ImGui::Checkbox("Enable Clip Box", &clip_box_enabled)) {
@@ -100,22 +100,27 @@ void draw_basic_renderer_settings(
 void draw_basic_renderer_settings(
     Vector3Renderer& _r)
 {
-    InputSlider("Vector Scale", &_r.vector_scale());
+    InputSlider(ICON_FA_ARROW_UP_WIDE_SHORT, &_r.vector_scale(), InputSliderOptions{.scale_width=0.4f});
+    ImGui::SetItemTooltip("Scale");
 }
 
 void draw_basic_renderer_settings(
     Matrix3x3Renderer& _r)
 {
     bool b = _r.normalize();
-    ImGui::Checkbox("Normalize", &b);
+    ImGui::Checkbox(ICON_FA_BULLSEYE, &b);
     _r.normalize() = b;
-
+    ImGui::SetItemTooltip("Normalize");
+    ImGui::SameLine();
     b = _r.draw_symmetric();
-    ImGui::Checkbox("Symmetric", &b);
+    ImGui::Checkbox(ICON_FA_ARROW_RIGHT_ARROW_LEFT, &b);
     _r.draw_symmetric() = b;
+    ImGui::SetItemTooltip("Symmetric");
 
-    InputSlider("Vector Scale", &_r.vector_scale());
-    InputSlider("Line Width", &_r.line_width());
+    InputSlider(ICON_FA_ARROW_UP_WIDE_SHORT, &_r.vector_scale(), InputSliderOptions{.scale_width=0.4f});
+    ImGui::SetItemTooltip("Scale");
+    InputSlider(ICON_FA_GRIP_LINES, &_r.line_width(), InputSliderOptions{.scale_width=0.4f});
+    ImGui::SetItemTooltip("Line Width");
 
     ImGui::ColorEdit3("Color 1", &_r.axis_colors()[0][0]);
     ImGui::ColorEdit3("Color 2", &_r.axis_colors()[1][0]);

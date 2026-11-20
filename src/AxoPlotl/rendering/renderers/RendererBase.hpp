@@ -28,21 +28,6 @@ class RendererBase
 public:
     using Position = Vec4; // ensure 16 byte alignment with 4f vector
 
-    struct alignas(16) ClipBox {
-        alignas(16) Vec3 min_;
-        alignas(16) Vec3 max_;
-        alignas(16) int32_t enabled_ = false;
-
-        // void set(const Vec3f& _min, const Vec3f& _max) {
-        //     enabled_ = true;
-        //     min_ = _min;
-        //     max_ = _max;
-        // }
-    };
-    static_assert(sizeof(ClipBox)==3*16);
-    static_assert(sizeof(ClipBox)%16==0);
-    static_assert(alignof(ClipBox) == 16);
-
     RendererBase(uint32_t _max_draw_calls = 1)
         : max_draw_calls_(std::max(_max_draw_calls, 1u))
     {}

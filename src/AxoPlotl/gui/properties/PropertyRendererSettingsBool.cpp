@@ -59,7 +59,7 @@ void PropertySettingsBool::render_ui()
 }
 
 void PropertySettingsBool::set_default_settings() {
-    renderer_->property_filter_options().filter_mode = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+    renderer_->property_filter_options().filter_mode = PropFilterMode::INSIDE_RANGE;
     renderer_->property_filter_options().scalar_range = {false, true};
     color_true_ = {0,1,0};
     color_false_ = {1,0,0};

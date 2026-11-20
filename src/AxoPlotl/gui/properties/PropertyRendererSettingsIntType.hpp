@@ -104,7 +104,7 @@ public:
 
     void set_default_settings() override {
         mode_ = Mode::RANGE;
-        renderer_->property_filter_options().filter_mode = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+        renderer_->property_filter_options().filter_mode = PropFilterMode::INSIDE_RANGE;
         renderer_->property_filter_options().invert = 0;
         renderer_->color_map().set_coolwarm();
         renderer_->property_filter_options().scalar_range = {

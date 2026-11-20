@@ -30,20 +30,20 @@ public:
     void render_ui() override
     {
         // Modes
-        static const char* modes[]{"Range", "NaN", "Inf"};
+        static const char* modes[]{"Value Range", "NaN", "Inf"};
         int mode = static_cast<int>(mode_);
         if (ImGui::Combo(ICON_FA_FILTER, &mode, modes, 3)) {
             mode_ = static_cast<Mode>(mode);
             auto& fm = renderer_->property_filter_options().filter_mode;
             switch(mode_) {
             case Mode::RANGE:
-                fm = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+                fm = PropFilterMode::INSIDE_RANGE;
                 break;
             case Mode::SHOW_NAN:
-                fm = PropertyRendererBase::PropFilterMode::IS_NAN;
+                fm = PropFilterMode::IS_NAN;
                 break;
             case Mode::SHOW_INF:
-                fm = PropertyRendererBase::PropFilterMode::IS_INF;
+                fm = PropFilterMode::IS_INF;
                 break;
             default:
                 break;
@@ -116,7 +116,7 @@ public:
 
     void set_default_settings() override {
         mode_ = Mode::RANGE;
-        renderer_->property_filter_options().filter_mode = PropertyRendererBase::PropFilterMode::INSIDE_RANGE;
+        renderer_->property_filter_options().filter_mode = PropFilterMode::INSIDE_RANGE;
         renderer_->property_filter_options().invert = 0;
         renderer_->color_map().set_coolwarm();
         renderer_->property_filter_options().scalar_range = {

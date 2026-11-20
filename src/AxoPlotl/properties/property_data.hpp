@@ -7,23 +7,23 @@
 namespace AxoPlotl::internal
 {
 
-template<typename T, typename EntityTag>
-std::pair<T,T> get_scalar_property_range(
-    const VolMesh& _mesh,
-    const OpenVolumeMesh::PropertyPtr<T,EntityTag>& _prop)
-{
-    if (_mesh.n<EntityTag>()==0) {return {0,0};}
-    if constexpr(std::is_same_v<T,bool>) {return {false,true};}
-    else {
-        auto h0 = OVM::handle_for_tag_t<EntityTag>(0);
-        std::pair<T,T> r = {_prop[h0], _prop[h0]};
-        for (auto h : _mesh.entities<EntityTag>()) {
-            r.first = std::min(r.first, _prop[h]);
-            r.second = std::max(r.second, _prop[h]);
-        }
-        return r;
-    }
-};
+// template<typename T, typename EntityTag>
+// std::pair<T,T> get_scalar_property_range(
+//     const VolMesh& _mesh,
+//     const OpenVolumeMesh::PropertyPtr<T,EntityTag>& _prop)
+// {
+//     if (_mesh.n<EntityTag>()==0) {return {0,0};}
+//     if constexpr(std::is_same_v<T,bool>) {return {false,true};}
+//     else {
+//         auto h0 = OVM::handle_for_tag_t<EntityTag>(0);
+//         std::pair<T,T> r = {_prop[h0], _prop[h0]};
+//         for (auto h : _mesh.entities<EntityTag>()) {
+//             r.first = std::min(r.first, _prop[h]);
+//             r.second = std::max(r.second, _prop[h]);
+//         }
+//         return r;
+//     }
+// };
 
 template<typename T>
 static std::string value_to_string(const T& _val)
@@ -56,9 +56,9 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-std::optional<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(const T& _val)
+std::optional<PropContainer> get_buffer_property_data_vec4(const T& _val)
 {
-    using D = PropertyRendererBase::Prop::Data;
+    using D = PropContainer;
 
     if constexpr(std::is_floating_point_v<T>) {
         if (std::isnan(_val)) {
@@ -90,30 +90,30 @@ std::optional<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(co
 }
 
 template<typename T>
-constexpr PropertyRendererBase::PropValueMode get_buffer_property_type()
+constexpr PropValueMode get_buffer_property_type()
 {
     if constexpr(std::is_integral_v<T> || std::is_floating_point_v<T>) {
-        return PropertyRendererBase::PropValueMode::SCALAR;
+        return PropValueMode::SCALAR;
     } else if constexpr(is_vector<T>) {
         if constexpr(vector_dim<T> == 3) {
-            return PropertyRendererBase::PropValueMode::VEC3;
+            return PropValueMode::VEC3;
         }
     } else if constexpr(is_matrix<T>) {
         if constexpr(has_rows_and_cols<T,3,3>) {
-            return PropertyRendererBase::PropValueMode::MAT3x3;
+            return PropValueMode::MAT3x3;
         }
     }
-    return PropertyRendererBase::PropValueMode::COLOR;
+    return PropValueMode::COLOR;
 }
 
 template<typename T, typename EntityTag>
-std::vector<PropertyRendererBase::Prop::Data> get_buffer_property_data_vec4(
+std::vector<PropContainer> get_buffer_property_data_vec4(
     const VolMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
 {
     auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
-    std::vector<PropertyRendererBase::Prop::Data> data;
+    std::vector<PropContainer> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
         auto d = get_buffer_property_data_vec4(static_cast<T>(prop[h]));

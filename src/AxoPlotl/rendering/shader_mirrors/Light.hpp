@@ -2,6 +2,10 @@
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <AxoPlotl/IO/json_glm.hpp>
 
+/**
+ * Mirrors assets/shaders/includes/light.wgsl
+ */
+
 namespace AxoPlotl
 {
 
