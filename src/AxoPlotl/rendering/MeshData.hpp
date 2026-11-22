@@ -17,10 +17,10 @@ public:
     // using Face = std::vector<Index>;
     // using Cell = std::vector<Face>;
 
-    struct EdgeInstance {
+    struct HalfEdgeInstance {
         uint32_t vh0; // used to lookup position
         uint32_t vh1; // used to lookup position
-        uint32_t eh; // points to EdgePropertyData
+        uint32_t heh; // points to HalfEdgePropertyData
     };
 
     struct HalfFaceIndex {
@@ -55,7 +55,7 @@ public:
     BufferData<Vec4> faces_centers;
     BufferData<Vec4> cells_centers;
     BufferData<Vec4> halffaces_normals;
-    BufferData<EdgeInstance> edges_instances;
+    BufferData<HalfEdgeInstance> halfedges_instances;
     BufferData<HalfFaceIndex> halffaces_indices;
     BufferData<CellIndex> cells_indices;
 };

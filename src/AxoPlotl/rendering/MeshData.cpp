@@ -54,19 +54,19 @@ void VolMeshData::create_buffers(const wgpu::Device& _device)
         halffaces_normals.create_and_write(_device);
     }
 
-    // Edge Instances
-    if (mesh.n_edges()) {
-        edges_instances.data.resize(mesh.n_edges());
-        for (OVM::EH eh : mesh.edges()) {
-            OVM::VH vh0 = mesh.from_vertex_handle(eh.halfedge_handle(0));
-            OVM::VH vh1 = mesh.to_vertex_handle(eh.halfedge_handle(0));
-            edges_instances.data[eh.idx()] = EdgeInstance{
+    // Halfedge Instances
+    if (mesh.n_halfedges()) {
+        halfedges_instances.data.resize(mesh.n_halfedges());
+        for (OVM::HEH heh : mesh.halfedges()) {
+            OVM::VH vh0 = mesh.from_vertex_handle(heh);
+            OVM::VH vh1 = mesh.to_vertex_handle(heh);
+            halfedges_instances.data[heh.idx()] = HalfEdgeInstance{
                 .vh0 = vh0.uidx(),
                 .vh1 = vh1.uidx(),
-                .eh = eh.uidx()
+                .heh = heh.uidx()
             };
         }
-        edges_instances.create_and_write(_device);
+        halfedges_instances.create_and_write(_device);
     }
 
     // HalfFace Indices - Triangulated

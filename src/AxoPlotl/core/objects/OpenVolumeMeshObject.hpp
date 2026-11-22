@@ -26,6 +26,7 @@ protected:
 
     Property<OVM::Entity::Vertex> v_prop_;
     Property<OVM::Entity::Edge> e_prop_;
+    Property<OVM::Entity::HalfEdge> he_prop_;
     Property<OVM::Entity::Face> f_prop_;
     Property<OVM::Entity::HalfFace> hf_prop_;
     Property<OVM::Entity::Cell> c_prop_;
@@ -34,6 +35,7 @@ protected:
     template<typename EntityTag> Property<EntityTag>& prop();
     template<> Property<OVM::Entity::Vertex>& prop<OVM::Entity::Vertex>() {return v_prop_;}
     template<> Property<OVM::Entity::Edge>& prop<OVM::Entity::Edge>() {return e_prop_;}
+    template<> Property<OVM::Entity::HalfEdge>& prop<OVM::Entity::HalfEdge>() {return he_prop_;}
     template<> Property<OVM::Entity::Face>& prop<OVM::Entity::Face>() {return f_prop_;}
     template<> Property<OVM::Entity::HalfFace>& prop<OVM::Entity::HalfFace>() {return hf_prop_;}
     template<> Property<OVM::Entity::Cell>& prop<OVM::Entity::Cell>() {return c_prop_;}
@@ -105,6 +107,7 @@ protected:
     template<> auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::HalfFace>() {return face_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
+    template<> auto& colored_entity_renderer<OVM::Entity::HalfEdge>() {return edge_renderer_;}
     template<> auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
     template<typename EntityTag>
@@ -113,6 +116,7 @@ protected:
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return mesh_data_.faces_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfFace>() {return mesh_data_.faces_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return mesh_data_.edges_centers.buffer;}
+    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfEdge>() {return mesh_data_.edges_centers.buffer;}
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return mesh_data_.vertices_positions.buffer;}
 
 protected:

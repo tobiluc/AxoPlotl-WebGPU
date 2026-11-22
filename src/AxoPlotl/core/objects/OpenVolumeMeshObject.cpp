@@ -162,6 +162,7 @@ void OpenVolumeMeshObject::render_ui_properties()
             if (ImGui::BeginMenu("Select Property")) {
                 render_property_selection_menu.operator()<OVM::Entity::Vertex>(" V");
                 render_property_selection_menu.operator()<OVM::Entity::Edge>(" E");
+                render_property_selection_menu.operator()<OVM::Entity::HalfEdge>(" HE");
                 render_property_selection_menu.operator()<OVM::Entity::Face>(" F");
                 render_property_selection_menu.operator()<OVM::Entity::HalfFace>(" HF");
                 render_property_selection_menu.operator()<OVM::Entity::Cell>(" C");
@@ -169,6 +170,7 @@ void OpenVolumeMeshObject::render_ui_properties()
             }
             render_property_visualization_settings_menu.operator()<OVM::Entity::Vertex>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Edge>();
+            render_property_visualization_settings_menu.operator()<OVM::Entity::HalfEdge>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Face>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::HalfFace>();
             render_property_visualization_settings_menu.operator()<OVM::Entity::Cell>();
@@ -208,6 +210,12 @@ void OpenVolumeMeshObject::render_ui_properties()
                 }
                 ImGui::EndMenu();
             }
+            if (mesh().n_halfedges()>0 && ImGui::BeginMenu("Halfedges")){
+                if (ImGui::MenuItem("Halfedge Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::HalfEdge>(mesh());
+                }
+                ImGui::EndMenu();
+            }
             if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
                 if (ImGui::MenuItem("Face Index")) {
                     add_entity_index_prop<OpenVolumeMesh::Entity::Face>(mesh());
@@ -218,6 +226,9 @@ void OpenVolumeMeshObject::render_ui_properties()
                 ImGui::EndMenu();
             }
             if (mesh().n_halffaces()>0 && ImGui::BeginMenu("Halffaces")){
+                if (ImGui::MenuItem("Halfface Index")) {
+                    add_entity_index_prop<OpenVolumeMesh::Entity::HalfFace>(mesh());
+                }
                 if (ImGui::MenuItem("Halfface Boundary")) {
                     auto p = mesh().request_halfface_property<bool>("AxoPlotl::Boundary");
                     mesh().set_persistent(p);
@@ -419,9 +430,20 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         ImGui::Text("Vertex(%u)", _p.pixel().entity_index_);
         show_prop_list.operator()<OVM::Entity::Vertex>();
         break;
-    case Picker::EntityType::EDGE:
-        ImGui::Text("Edge(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Edge>();
+    case Picker::EntityType::HALFEDGE:
+        if (ImGui::BeginTabBar("##xx")) {
+            if (ImGui::BeginTabItem("Edge")) {
+                ImGui::Text("Edge(%u)", _p.pixel().entity_index_>>1u);
+                show_prop_list.operator()<OVM::Entity::Edge>();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Halfedge")) {
+                ImGui::Text("Halfedge(%u)", _p.pixel().entity_index_);
+                show_prop_list.operator()<OVM::Entity::HalfEdge>();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
         break;
     case Picker::EntityType::HALFFACE:
         if (ImGui::BeginTabBar("##xx")) {
@@ -523,8 +545,10 @@ bool OpenVolumeMeshObject::visualize_property(
                 col_rend.update_face_property_data(data);
             } else if constexpr(std::is_same_v<EntityTag,OVM::Entity::HalfFace>) {
                 col_rend.update_halfface_property_data(data);
-            } else {
-                col_rend.update_property_data(data);
+            } else if constexpr(std::is_same_v<EntityTag,OVM::Entity::Edge>) {
+                col_rend.update_edge_property_data(data);
+            } else if constexpr(std::is_same_v<EntityTag,OVM::Entity::HalfEdge>) {
+                col_rend.update_halfedge_property_data(data);
             }
             col_rend.property_filter_options().value_mode = get_buffer_property_type<T>();
         }
@@ -608,6 +632,7 @@ bool OpenVolumeMeshObject::visualize_property(
 
     search_and_select_property.template operator()<OVM::Entity::Vertex>();
     search_and_select_property.template operator()<OVM::Entity::Edge>();
+    search_and_select_property.template operator()<OVM::Entity::HalfEdge>();
     search_and_select_property.template operator()<OVM::Entity::Face>();
     search_and_select_property.template operator()<OVM::Entity::HalfFace>();
     search_and_select_property.template operator()<OVM::Entity::Cell>();

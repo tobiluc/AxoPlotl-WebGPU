@@ -76,7 +76,9 @@ public:
               const RenderContext& _render_context,
               const VolMeshData& _data);
 
-    void update_property_data(const std::vector<PropContainer>& _data);
+    void update_halfedge_property_data(const std::vector<PropContainer>& _data);
+
+    void update_edge_property_data(const std::vector<PropContainer>& _data);
 
     void render(
         const ViewSize& _size,
@@ -95,7 +97,7 @@ public:
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;
-    size_t n_edges_ = 0;
+    size_t n_halfedges_ = 0;
 
     void create_buffers();
 
@@ -106,8 +108,8 @@ private:
     void create_pipeline(const GpuContext& _gpu_context,
                          const RenderContext& _render_context);
 
-    wgpu::Buffer edge_index_buffer_;
-    wgpu::Buffer property_buffer_;
+    wgpu::Buffer halfedge_index_buffer_;
+    wgpu::Buffer halfedge_property_buffer_;
     wgpu::Buffer position_buffer_;
     wgpu::Buffer uniform_buffer_;
 

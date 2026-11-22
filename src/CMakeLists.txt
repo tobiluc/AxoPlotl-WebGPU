@@ -28,7 +28,7 @@ add_library(AxoPlotlCore
     AxoPlotl/gui/themes.cpp
 
     AxoPlotl/rendering/renderers/MeshVertexRenderer.cpp
-    AxoPlotl/rendering/renderers/MeshEdgeRenderer.cpp
+    AxoPlotl/rendering/renderers/MeshHalfEdgeRenderer.cpp
     AxoPlotl/rendering/renderers/MeshHalfFaceRenderer.cpp
     AxoPlotl/rendering/renderers/MeshCellRenderer.cpp
     AxoPlotl/rendering/renderers/Vector3Renderer.cpp

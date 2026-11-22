@@ -41,7 +41,7 @@ class Picker
 public:
     enum class EntityType : uint32_t {
         VERTEX = 0,
-        EDGE = 1,
+        HALFEDGE = 1,
         HALFFACE = 2,
         CELL = 3,
         VECTOR = 6

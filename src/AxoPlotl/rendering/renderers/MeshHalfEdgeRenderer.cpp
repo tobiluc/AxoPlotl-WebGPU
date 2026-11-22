@@ -1,4 +1,4 @@
-#include "MeshEdgeRenderer.hpp"
+#include "MeshHalfEdgeRenderer.hpp"
 #include "AxoPlotl/rendering/wgpu_commons.hpp"
 
 namespace AxoPlotl::internal
@@ -14,17 +14,17 @@ void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_conte
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
 
-    n_edges_ = _data.mesh.n_edges();
+    n_halfedges_ = _data.mesh.n_halfedges();
     n_positions_ = _data.vertices_positions.data.size();
 
-    if (n_edges_ == 0) {
+    if (n_halfedges_ == 0) {
         initialized_ = false;
         return;
     }
 
     position_buffer_ = _data.vertices_positions.buffer;
 
-    edge_index_buffer_ = _data.edges_instances.buffer;
+    halfedge_index_buffer_ = _data.halfedges_instances.buffer;
     create_buffers();
     create_bind_group_layout();
     create_bind_group();
@@ -35,7 +35,7 @@ void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_conte
 
 void ColoredEdgeRenderer::clear()
 {
-    destroy_buffer(property_buffer_);
+    destroy_buffer(halfedge_property_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
@@ -50,10 +50,10 @@ void ColoredEdgeRenderer::create_buffers()
         wgpu::BufferDescriptor desc{};
         desc.usage = wgpu::BufferUsage::Storage |
                      wgpu::BufferUsage::CopyDst;
-        desc.size = sizeof(PropContainer)*n_edges_;
+        desc.size = sizeof(PropContainer)*n_halfedges_;
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Edge Property Buffer");
-        property_buffer_ = device.createBuffer(desc);
+        halfedge_property_buffer_ = device.createBuffer(desc);
     }
 
     // Uniform Buffer
@@ -139,9 +139,9 @@ void ColoredEdgeRenderer::create_bind_group()
 
     // 4 - Properties
     groupEntries[4].binding = 4;
-    groupEntries[4].buffer = property_buffer_;
+    groupEntries[4].buffer = halfedge_property_buffer_;
     groupEntries[4].offset = 0;
-    groupEntries[4].size = sizeof(PropContainer) * std::max(n_edges_,1lu);
+    groupEntries[4].size = sizeof(PropContainer) * std::max(n_halfedges_,1lu);
 
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = pipeline_state_.bind_group_layout_;
@@ -153,31 +153,31 @@ void ColoredEdgeRenderer::create_bind_group()
 
 void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
 {
-    if (pipeline_state_.pipeline_ || n_edges_==0) {return;}
+    if (pipeline_state_.pipeline_ || n_halfedges_==0) {return;}
 
     wgpu::ShaderModule shaderModule = create_mesh_shader_module_from_file(
         _gpu_context.device,
-        "mesh_edge_shader.wgsl",
+        "mesh_halfedge_shader.wgsl",
         "Mesh Edge Shader");
 
     // 0 -- Vertex Index 0
     wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(VolMeshData::EdgeInstance, vh0);
+    attrs[0].offset = offsetof(VolMeshData::HalfEdgeInstance, vh0);
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Vertex Index 1
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(VolMeshData::EdgeInstance, vh1);
+    attrs[1].offset = offsetof(VolMeshData::HalfEdgeInstance, vh1);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     // 2 -- Edge Index
     attrs[2].shaderLocation = 2;
-    attrs[2].offset = offsetof(VolMeshData::EdgeInstance, eh);
+    attrs[2].offset = offsetof(VolMeshData::HalfEdgeInstance, heh);
     attrs[2].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(VolMeshData::EdgeInstance);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshData::HalfEdgeInstance);
     vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Instance;
@@ -231,20 +231,35 @@ void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredEdgeRenderer::update_property_data(const std::vector<PropContainer>& _data)
+void ColoredEdgeRenderer::update_halfedge_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
-    if (_data.size() != n_edges_) {
-        std::cerr << "ERROR: #Props != #Edges" << std::endl;
+    if (_data.size() != n_halfedges_) {
+        std::cerr << "ERROR: #Props != #Halfedges" << std::endl;
         return;
     }
 
     pipeline_state_.device_.getQueue().writeBuffer(
-        property_buffer_,
+        halfedge_property_buffer_,
         0,
         _data.data(),
         sizeof(PropContainer) * _data.size()
         );
+}
+
+void ColoredEdgeRenderer::update_edge_property_data(const std::vector<PropContainer>& _data)
+{
+    if (!initialized_) {return;}
+    if (_data.size() != n_halfedges_/2u) {
+        std::cerr << "ERROR: #Props != #Edges" << std::endl;
+        return;
+    }
+    std::vector<PropContainer> newData(n_halfedges_);
+    for (size_t i = 0; i < _data.size(); ++i) {
+        newData[(i<<1u)] = _data[i];
+        newData[(i<<1u)+1u] = _data[i];
+    }
+    update_halfedge_property_data(newData);
 }
 
 void ColoredEdgeRenderer::render(
@@ -252,7 +267,7 @@ void ColoredEdgeRenderer::render(
     wgpu::RenderPassEncoder _render_pass,
     const MVP& _mvp)
 {
-    if (!initialized_ || !enabled_ || n_edges_==0) {return;}
+    if (!initialized_ || !enabled_ || n_halfedges_==0) {return;}
 
     const uint32_t offset = draw_index_ * uniform_stride_;
 
@@ -268,10 +283,10 @@ void ColoredEdgeRenderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, edge_index_buffer_, 0, n_edges_*sizeof(VolMeshData::EdgeInstance));
+    _render_pass.setVertexBuffer(0, halfedge_index_buffer_, 0, n_halfedges_*sizeof(VolMeshData::HalfEdgeInstance));
 
     // An Edge Instance is rendered as a quad
-    _render_pass.draw(4, n_edges_, 0, 0);
+    _render_pass.draw(4, n_halfedges_, 0, 0);
 
     set_next_draw_index();
 }

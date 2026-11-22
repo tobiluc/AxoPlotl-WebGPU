@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MeshVertexRenderer.hpp"
-#include "MeshEdgeRenderer.hpp"
+#include "MeshHalfEdgeRenderer.hpp"
 #include "MeshHalfFaceRenderer.hpp"
 #include "MeshCellRenderer.hpp"
 #include "SphericalHarmonicsRenderer.hpp"
