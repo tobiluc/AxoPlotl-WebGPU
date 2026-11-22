@@ -263,10 +263,20 @@ void OpenVolumeMeshObject::init()
     // faces_center_buffer_ = create_position_buffer(device, data.faces_barycenters_);
     // cells_center_buffer_ = create_position_buffer(device, data.cells_barycenters_);
 
-    vertex_renderer_.init(id(), gpu_context, render_context, mesh_data_);
-    edge_renderer_.init(id(), gpu_context, render_context, mesh_data_);
-    face_renderer_.init(id(), gpu_context, render_context, mesh_data_);
-    cell_renderer_.init(id(), gpu_context, render_context, mesh_data_);
+    vertex_renderer_.init(id(), gpu_context, render_context,
+        mesh_data_.vertices_positions);
+    edge_renderer_.init(id(), gpu_context, render_context,
+        mesh_data_.vertices_positions,
+        mesh_data_.halfedges_instances);
+    face_renderer_.init(id(), gpu_context, render_context,
+        mesh_data_.vertices_positions,
+        mesh_data_.halffaces_indices,
+        mesh_data_.halffaces_normals);
+    cell_renderer_.init(id(), gpu_context, render_context,
+        mesh_data_.vertices_positions,
+        mesh_data_.cells_indices,
+        mesh_data_.cells_centers,
+        mesh_data_.halffaces_normals);
 
     // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
     // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);

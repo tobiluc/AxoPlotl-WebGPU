@@ -5,8 +5,10 @@ namespace AxoPlotl::internal
 {
 PipelineState ColoredEdgeRenderer::pipeline_state_;
 
-void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context, const RenderContext &_render_context,
-                               const VolMeshData& _data)
+void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context,
+                               const RenderContext &_render_context,
+                               const BufferData<Position>& _vertices_positions,
+                               const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
@@ -14,17 +16,17 @@ void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_conte
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
 
-    n_halfedges_ = _data.mesh.n_halfedges();
-    n_positions_ = _data.vertices_positions.data.size();
+    n_halfedges_ = _halfedges_instances.data.size();
+    n_positions_ = _vertices_positions.data.size();
 
     if (n_halfedges_ == 0) {
         initialized_ = false;
         return;
     }
 
-    position_buffer_ = _data.vertices_positions.buffer;
+    position_buffer_ = _vertices_positions.buffer;
+    halfedge_index_buffer_ = _halfedges_instances.buffer;
 
-    halfedge_index_buffer_ = _data.halfedges_instances.buffer;
     create_buffers();
     create_bind_group_layout();
     create_bind_group();

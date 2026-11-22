@@ -9,7 +9,9 @@ void ColoredFaceRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
-    const VolMeshData &_data)
+    const BufferData<Position>& _vertices_positions,
+    const BufferData<VolMeshData::HalfFaceIndex>& _halffaces_triangle_indices,
+    const BufferData<VolMeshData::Normal> &_halffaces_normals)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
@@ -18,18 +20,18 @@ void ColoredFaceRenderer::init(
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
 
-    n_halffaces_ = _data.mesh.n_halffaces();
-    n_positions_ = _data.vertices_positions.data.size();
-    n_indices_ = _data.halffaces_indices.data.size();
+    n_halffaces_ = _halffaces_normals.data.size();
+    n_positions_ = _vertices_positions.data.size();
+    n_indices_ = _halffaces_triangle_indices.data.size();
 
     if (n_indices_ == 0) {
         initialized_ = false;
         return;
     }
 
-    position_buffer_ = _data.vertices_positions.buffer;
-    halfface_normal_buffer_ = _data.halffaces_normals.buffer;
-    halfface_index_buffer_ = _data.halffaces_indices.buffer;
+    position_buffer_ = _vertices_positions.buffer;
+    halfface_normal_buffer_ = _halffaces_normals.buffer;
+    halfface_index_buffer_ = _halffaces_triangle_indices.buffer;
 
     create_buffers();
     create_bind_group_layout();

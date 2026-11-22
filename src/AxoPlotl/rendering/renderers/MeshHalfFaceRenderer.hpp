@@ -65,7 +65,9 @@ public:
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
-              const VolMeshData& _data);
+              const BufferData<Position>& _vertices_positions,
+              const BufferData<VolMeshData::HalfFaceIndex>& _halffaces_triangle_indices,
+              const BufferData<VolMeshData::Normal>& _halffaces_normals);
 
     void update_face_property_data(const std::vector<PropContainer>& _data);
 

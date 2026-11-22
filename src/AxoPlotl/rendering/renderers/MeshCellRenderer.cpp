@@ -11,10 +11,11 @@ PipelineState ColoredCellRenderer::triangle_pipeline_state_;
 void ColoredCellRenderer::init(uint32_t _object_id,
                                const GpuContext& _gpu_context,
                                const RenderContext &_render_context,
-                               const VolMeshData &_data)
+                               const BufferData<Position>& _vertices_positions,
+                               const BufferData<VolMeshData::CellIndex>& _cells_triangle_indices,
+                               const BufferData<Position>& _cells_centers,
+                               const BufferData<VolMeshData::Normal>& _halffaces_normals)
 {
-    if (_data.mesh.n_cells() == 0lu) {return;}
-
     triangle_pipeline_state_.set_device(_gpu_context.device);
     // outline_pipeline_state_.set_device(_gpu_context.device);
 
@@ -23,20 +24,20 @@ void ColoredCellRenderer::init(uint32_t _object_id,
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
 
-    n_cells_ = _data.mesh.n_cells();
-    n_positions_ = _data.vertices_positions.data.size();
-    n_normals_ = _data.halffaces_normals.data.size();
-    n_triangle_indices_ = _data.cells_indices.data.size();
+    n_cells_ = _cells_centers.data.size();
+    n_positions_ = _vertices_positions.data.size();
+    n_normals_ = _halffaces_normals.data.size();
+    n_triangle_indices_ = _cells_triangle_indices.data.size();
 
-    if (n_triangle_indices_ == 0) {
+    if (n_cells_ == 0) {
         initialized_ = false;
         return;
     }
 
-    vertices_position_buffer_ = _data.vertices_positions.buffer;
-    triangle_index_buffer_ = _data.cells_indices.buffer;
-    cells_center_buffer_ = _data.cells_centers.buffer;
-    halfface_normal_buffer_ = _data.halffaces_normals.buffer;
+    vertices_position_buffer_ = _vertices_positions.buffer;
+    triangle_index_buffer_ = _cells_triangle_indices.buffer;
+    cells_center_buffer_ = _cells_centers.buffer;
+    halfface_normal_buffer_ = _halffaces_normals.buffer;
 
     create_buffers();
     create_bind_group_layout();

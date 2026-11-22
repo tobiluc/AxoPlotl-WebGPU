@@ -66,9 +66,13 @@ void TetObject::init()
 
     mesh_data_.create_buffers(device);
 
-    renderer_.init(id_, scene()->app()->gpu_context(),
-                   scene()->app()->render_context(),
-                   mesh_data_);
+    renderer_.init(
+        id_, scene()->app()->gpu_context(),
+        scene()->app()->render_context(),
+        mesh_data_.vertices_positions,
+        mesh_data_.cells_indices,
+        mesh_data_.cells_centers,
+        mesh_data_.halffaces_normals);
     renderer_.update_property_data({{1,1,1,1}}); // white
     renderer_.cell_scale() = 1;
 }

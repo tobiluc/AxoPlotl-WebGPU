@@ -67,7 +67,7 @@ void SegmentObject::init()
     // };
     // vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
     mesh_data_.create_buffers(scene()->app()->gpu_context().device);
-    renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), mesh_data_);
+    renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), mesh_data_.vertices_positions, mesh_data_.halfedges_instances);
     renderer_.update_edge_property_data({{1,1,1,1}}); // white
 }
 

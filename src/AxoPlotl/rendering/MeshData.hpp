@@ -13,9 +13,19 @@ public:
     using Index = uint32_t;
     using Position = RendererBase::Position; // Ensure 16 byte alignment
     using Normal = Position;
-    // using Edge = std::pair<Index,Index>;
-    // using Face = std::vector<Index>;
-    // using Cell = std::vector<Face>;
+
+    enum Flag : uint32_t
+    {
+        NONE = 0,
+        INIT_EDGE_BUFFERS = 1<<0,
+        INIT_NORMAL_BUFFER = 1<<1,
+        INIT_FACE_BUFFERS = 1<<2 | INIT_NORMAL_BUFFER,
+        INIT_CELL_BUFFERS = 1<<3 | INIT_NORMAL_BUFFER,
+        SPLIT_EDGES_IN_HALF = 1<<4 | INIT_EDGE_BUFFERS,
+        SPLIT_FACES_IN_HALF = 1<<5 | INIT_FACE_BUFFERS
+    };
+    using Flags = uint32_t;
+    static constexpr Flags default_flags = UINT32_MAX;
 
     struct HalfEdgeInstance {
         uint32_t vh0; // used to lookup position
@@ -47,14 +57,16 @@ public:
         return Position(p[0], p[1], p[2], 1);
     }
 
-    void create_buffers(const wgpu::Device& _device);
+    void create_buffers(
+        const wgpu::Device& _device,
+        const Flags& _flags = default_flags);
 
     VolMesh mesh;
-    BufferData<Vec4> vertices_positions;
-    BufferData<Vec4> edges_centers;
-    BufferData<Vec4> faces_centers;
-    BufferData<Vec4> cells_centers;
-    BufferData<Vec4> halffaces_normals;
+    BufferData<Position> vertices_positions;
+    BufferData<Position> edges_centers;
+    BufferData<Position> faces_centers;
+    BufferData<Position> cells_centers;
+    BufferData<Normal> halffaces_normals;
     BufferData<HalfEdgeInstance> halfedges_instances;
     BufferData<HalfFaceIndex> halffaces_indices;
     BufferData<CellIndex> cells_indices;

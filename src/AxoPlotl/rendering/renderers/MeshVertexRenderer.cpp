@@ -10,7 +10,7 @@ void ColoredVertexRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
-    const VolMeshData& _data)
+    const BufferData<Position> &_vertices_positions)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
@@ -18,14 +18,14 @@ void ColoredVertexRenderer::init(
     property_color_map_.create(_gpu_context.device);
     property_color_map_.set_coolwarm();
 
-    n_positions_ = _data.vertices_positions.data.size();
+    n_positions_ = _vertices_positions.data.size();
 
     if (n_positions_ == 0u) {
         initialized_ = false;
         return;
     }
 
-    position_buffer_ = _data.vertices_positions.buffer;
+    position_buffer_ = _vertices_positions.buffer;
 
     create_buffers();
     create_bind_group_layout();

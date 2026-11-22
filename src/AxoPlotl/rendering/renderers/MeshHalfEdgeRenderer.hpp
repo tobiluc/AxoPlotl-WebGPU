@@ -74,7 +74,8 @@ public:
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
-              const VolMeshData& _data);
+              const BufferData<Position>& _vertices_positions,
+              const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances);
 
     void update_halfedge_property_data(const std::vector<PropContainer>& _data);
 
