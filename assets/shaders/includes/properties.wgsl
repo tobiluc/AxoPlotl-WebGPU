@@ -23,14 +23,14 @@ struct PropFilterOptions
 
 fn propertyValueMatchesFilter(_val:PropValue, _filter:PropFilterOptions) -> bool
 {
-    if (_filter.filterMode == PROP_FILTER_MODE_NONE) {
+    if (_filter.filterMode == PROP_FILTER_MODE_NONE ||
+        _filter.valueMode == PROP_VALUE_MODE_NOPROP) {
         return true;
     }
 
     if (_filter.valueMode != PROP_VALUE_MODE_SCALAR) {
         return false;
     }
-
 
     let lowerOK = select(
         _val.x > _filter.scalarRange.x,

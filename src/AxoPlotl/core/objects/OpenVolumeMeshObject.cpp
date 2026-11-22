@@ -559,6 +559,8 @@ bool OpenVolumeMeshObject::visualize_property(
                 col_rend.update_edge_property_data(data);
             } else if constexpr(std::is_same_v<EntityTag,OVM::Entity::HalfEdge>) {
                 col_rend.update_halfedge_property_data(data);
+            } else {
+                col_rend.update_property_data(data);
             }
             col_rend.property_filter_options().value_mode = get_buffer_property_type<T>();
         }

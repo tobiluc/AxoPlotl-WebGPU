@@ -51,9 +51,9 @@ public:
         }
         ImGui::SetItemTooltip("Filter Mode");
         ImGui::SameLine();
-        bool invert = renderer_->property_filter_options().invert;
+        bool invert = renderer_->property_filter_options().invert!=0u;
         if (ImGui::Checkbox(ICON_FA_ARROW_RIGHT_ARROW_LEFT, &invert)) {
-            renderer_->property_filter_options().invert = invert;
+            renderer_->property_filter_options().invert = invert? 1u : 0u;
         }
         ImGui::SetItemTooltip("Invert");
 
