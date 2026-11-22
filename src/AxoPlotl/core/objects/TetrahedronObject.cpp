@@ -64,7 +64,8 @@ void TetObject::init()
 {
     const wgpu::Device& device = scene()->app()->gpu_context().device;
 
-    mesh_data_.create_buffers(device);
+    mesh_data_.create_buffers(device,
+        VolMeshData::Flag::INIT_CELL_BUFFERS);
 
     renderer_.init(
         id_, scene()->app()->gpu_context(),

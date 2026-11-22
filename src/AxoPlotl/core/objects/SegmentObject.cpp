@@ -66,7 +66,8 @@ void SegmentObject::init()
     //     {0,0,0,1}, {1,1,1,1}
     // };
     // vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
-    mesh_data_.create_buffers(scene()->app()->gpu_context().device);
+    mesh_data_.create_buffers(scene()->app()->gpu_context().device,
+                VolMeshData::Flag::INIT_EDGE_BUFFERS);
     renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), mesh_data_.vertices_positions, mesh_data_.halfedges_instances);
     renderer_.update_edge_property_data({{1,1,1,1}}); // white
 }
