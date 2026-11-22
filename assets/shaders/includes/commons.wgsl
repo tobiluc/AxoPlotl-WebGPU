@@ -41,3 +41,4 @@ struct FragOutColPickDepth {
     @location(1) pick : vec4<u32>,
     @builtin(frag_depth) depth: f32
 };
+

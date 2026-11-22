@@ -13,6 +13,7 @@ struct Uniforms {
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
+    @align(16) halfedgeScale: f32,
     @align(16) propFilter: PropFilterOptions
 };
 
@@ -47,7 +48,7 @@ fn vs_main(
     out.edgeDirView = normalize(p1View.xyz / p1View.w - p0View.xyz / p0View.w);
 
     let p0 = positions[vh0];
-    let p1 = (p0+positions[vh1])*0.5;
+    let p1 = p0+(positions[vh1]-p0)*ubo.halfedgeScale;
 
     let quadCorner = getLineQuadCorner(
         ubo.mvp * vec4<f32>(p0, 1.0),

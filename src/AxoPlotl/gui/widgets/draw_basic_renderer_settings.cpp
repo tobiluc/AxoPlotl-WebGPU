@@ -65,6 +65,10 @@ void draw_basic_renderer_settings(
                 &_r.line_width(),
                 InputSliderOptions{
                     .step=0.1f, .min= 0.0f, .max=128.0f});
+    InputSlider("Halfedge Scale",
+                &_r.halfedge_scale(),
+                InputSliderOptions{
+                    .step=0.01f, .min= 0.0f, .max=0.5f});
     InputSlider("Depth Offset",
                 &_r.depth_offset(),
                 InputSliderOptions{

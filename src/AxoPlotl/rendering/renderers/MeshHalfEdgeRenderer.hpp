@@ -23,6 +23,7 @@ protected:
         alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) float depth_offset_ = 0.00002;
         alignas(16) DirectionalLight dir_light_ ;
+        alignas(16) float halfedge_scale_ = 0.5;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -35,6 +36,10 @@ protected:
 public:
     float& line_width() {
         return uniforms_.line_width_;
+    };
+
+    float& halfedge_scale() {
+        return uniforms_.halfedge_scale_;
     };
 
     PropFilterOptions& property_filter_options() override {
