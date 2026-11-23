@@ -30,6 +30,8 @@ public:
 
     void release();
 
+    void release_deferred();
+
     const wgpu::TextureView& color_view() const { return resources_.color_view_; }
     const wgpu::TextureView& depth_view() const { return resources_.depth_view_; }
     const wgpu::TextureView& picking_view() const { return resources_.picking_view_; }

@@ -853,19 +853,20 @@ bool Application::save_viewport_screenshot(
         return false;
     }
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
-    Viewport newViewport(this);
-    newViewport.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
+    const auto prev_size = viewport().size();
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
     Scene::Settings sceneSettings = scene().settings;
     scene().settings.show_orbit_target_cross = false;
-    render_scene(encoder, newViewport);
+    render_scene(encoder, viewport_);
     scene().settings = sceneSettings;
     wgpu::CommandBuffer cb = encoder.finish();
     gpu_context_.device.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
+    auto format = viewport_.color_texture().getFormat();
     bool res = save_texture_to_file(_path, gpu_context_.device,
-        newViewport.color_texture(), _size.width, _size.height);
-    newViewport.release();
+        viewport_.color_texture(), _size.width, _size.height);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, prev_size.width, prev_size.height);
     return res;
 }
 

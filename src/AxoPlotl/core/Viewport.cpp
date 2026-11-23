@@ -36,6 +36,17 @@ void Viewport::release()
     height_ = 0;
 }
 
+void Viewport::release_deferred()
+{
+    if (app_) [[likely]] {
+        Resources old_resources = std::move(resources_);
+        app_->call_deferred(
+            [r = std::move(old_resources)]() mutable {
+                r.release();
+            });
+    } else {release();}
+}
+
 std::optional<glm::vec2> Viewport::mouse_to_local() const
 {
     const ImVec2 mouse = ImGui::GetMousePos();
@@ -76,13 +87,7 @@ void Viewport::resize(
     // It is important that we do not directly release Resources
     // here but at the end of the frame since there might
     // still be draws of this texture e.g. Screenshot Preview.
-    if (app_) [[likely]] {
-        Resources old_resources = std::move(resources_);
-        app_->call_deferred(
-            [r = std::move(old_resources)]() mutable {
-                r.release();
-            });
-    } else {release();}
+    release_deferred();
 
     width_ = width;
     height_ = height;

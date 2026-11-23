@@ -10,6 +10,16 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
                             wgpu::Device _device, wgpu::Texture _texture,
                             uint32_t _width, uint32_t _height)
 {
+    auto srgb_to_linear = [](uint8_t value) -> uint8_t {
+        float c = value / 255.0f;
+        float linear = (c <= 0.04045f)
+            ? c / 12.92f
+            : std::pow((c + 0.055f) / 1.055f, 2.4f);
+        return static_cast<uint8_t>(
+            std::round(linear * 255.0f)
+        );
+    };
+
     // std::cerr << _texture.getFormat() << std::endl;
     const uint32_t bytes_per_pixel = 4;
     const uint32_t unpadded_bytes_per_row = _width * bytes_per_pixel;
@@ -106,6 +116,14 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
     // Release the mapping.
     buffer.unmap();
 
+    const auto format = _texture.getFormat();
+    const bool is_bgra =
+        format == wgpu::TextureFormat::BGRA8Unorm ||
+        format == wgpu::TextureFormat::BGRA8UnormSrgb;
+    const bool is_standard = 
+        format == wgpu::TextureFormat::BGRA8UnormSrgb ||
+        format == wgpu::TextureFormat::RGBA8UnormSrgb;
+
     // Remove Padding
     _image_data.resize(_width * _height * 4);
     for (uint32_t y = 0; y < _height; ++y) {
@@ -115,8 +133,18 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
         std::memcpy(dst, src, _width * 4);
 
         // Convert BGRA to RGBA
-        for (uint32_t x = 0; x < _width; ++x) {
-            std::swap(dst[x * 4], dst[x * 4 + 2]);
+        if (is_bgra) {
+            for (uint32_t x = 0; x < _width; ++x) {
+                std::swap(dst[x * 4], dst[x * 4 + 2]);
+            }
+        }
+
+        if (is_standard) {
+            for (uint32_t x = 0; x < _width; ++x) {
+                dst[x * 4 + 0] = srgb_to_linear(dst[x * 4 + 0]);
+                dst[x * 4 + 1] = srgb_to_linear(dst[x * 4 + 1]);
+                dst[x * 4 + 2] = srgb_to_linear(dst[x * 4 + 2]);
+            }
         }
     }
     return true;
@@ -128,13 +156,14 @@ bool save_texture_to_file(const std::filesystem::path& _path, wgpu::Device _devi
     if (!extract_texture_data(data, _device, _texture, _width, _height)) {
         return false;
     }
-    return stbi_write_png(
+    bool res = stbi_write_png(
         _path.string().c_str(),
         _width,
         _height,
         4,
         data.data(),
         _width * 4);
+    return res;
 }
 
 }

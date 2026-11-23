@@ -117,3 +117,28 @@ case WGPUDeviceLostReason_CallbackCancelled: return "CallbackCancelled"; -> Comm
 
 These modified files are within AxoPlotl/files.
 (18.04.2026)
+
+
+### Building
+
+MacOS
+```
+cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+```
+
+.vscode/settings.json
+```
+{
+    "clangd.path": "/opt/homebrew/opt/llvm/bin/clangd",
+    "editor.inlayHints.enabled": "off",
+
+    "cmake.buildDirectory": "${workspaceFolder}/build/debug",
+    "cmake.buildType": "Debug",
+    "cmake.generator": "Ninja",
+
+    "cmake.debugConfig": {
+        "args": []
+    }
+}
+```

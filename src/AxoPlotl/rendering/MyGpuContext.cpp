@@ -101,6 +101,16 @@ void RenderContext::configure_surface(const GpuContext& _gpu_context, const int 
     config.usage = wgpu::TextureUsage::RenderAttachment;
     auto capabilities = get_surface_capabilities(_gpu_context);
     config.format = capabilities.formats[0];
+    for (size_t i = 0; i < capabilities.formatCount; ++i) {
+        auto format = capabilities.formats[i];
+        if (format == wgpu::TextureFormat::BGRA8UnormSrgb) {
+            config.format = format;
+            break;
+        }
+        if (format == wgpu::TextureFormat::RGBA8UnormSrgb) {
+            config.format = format;
+        }
+}
     surface_format = config.format;
 
     // And we do not need any particular view format:
