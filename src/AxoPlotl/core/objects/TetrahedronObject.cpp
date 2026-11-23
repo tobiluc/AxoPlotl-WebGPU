@@ -51,7 +51,7 @@ void TetObject::render_ui_properties()
 
 void TetObject::render_ui_picking(const Picker& _p)
 {
-    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;}
+    if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
 
     ImGui::SeparatorText(name_.c_str());
     ImGui::Text("(x, y, z) = (%f, %f, %f)",

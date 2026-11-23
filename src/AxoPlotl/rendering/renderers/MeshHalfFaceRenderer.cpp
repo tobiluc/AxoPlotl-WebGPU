@@ -283,7 +283,8 @@ void MeshHalfFaceRenderer::update_face_property_data(const std::vector<PropConta
 void MeshHalfFaceRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const Mat4x4& _mvp)
+    const Mat4x4& _mvp,
+    const Picker::Entity &_selected_entity)
 {
     if (!initialized_ || !enabled_ || n_halffaces_==0) {return;}
 
@@ -293,6 +294,7 @@ void MeshHalfFaceRenderer::render(
     uniforms_.mvp_ = _mvp;
     uniforms_.viewport_size_ = {_size.width,_size.height};;
     uniforms_.object_id_ = object_id_;
+    uniforms_.selected_entity_ = _selected_entity;
     pipeline_state_.device_.getQueue().writeBuffer(
         uniform_buffer_, offset, &uniforms_, sizeof(Uniforms));
 

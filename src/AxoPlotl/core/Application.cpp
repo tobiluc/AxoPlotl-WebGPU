@@ -302,7 +302,7 @@ void Application::frame_tick()
                     pos->y
                     );
 
-                if (picker_.pixel().object_id_ < UINT32_MAX) {
+                if (picker_.pixel().entity.object_id < UINT32_MAX) {
                     requests_.pick_result = true;
                 }
             }
@@ -428,9 +428,9 @@ void Application::render_viewport_ui()
         ImGui::OpenPopup("PickingPopup");
         requests_.pick_result = false;
     }
-    if (picker_.pixel().object_id_ < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
+    if (picker_.pixel().entity.object_id < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
         // std::cerr << picker_.pixel().object_id_ << std::endl;
-        auto obj = scene().get_object(picker_.pixel().object_id_);
+        auto obj = scene().get_object(picker_.pixel().entity.object_id);
         if (obj) [[likely]] {obj->render_ui_picking(picker_);}
         ImGui::EndPopup();
     }

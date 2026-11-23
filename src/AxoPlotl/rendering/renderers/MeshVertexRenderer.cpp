@@ -227,7 +227,8 @@ void MeshVertexRenderer::update_property_data(const std::vector<PropContainer>& 
 void MeshVertexRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
-    const MVP& _mvp)
+    const MVP& _mvp,
+    const Picker::Entity& _selected_entity)
 {
     if (!initialized_ || !enabled_ || n_positions_==0) {return;}
 
@@ -237,6 +238,7 @@ void MeshVertexRenderer::render(
     uniforms_.view_ = _mvp.view;
     uniforms_.projection_ = _mvp.proj;
     uniforms_.mvp_ = _mvp.modelviewproj();
+    uniforms_.selected_entity_ = _selected_entity;
 
     uniforms_.viewport_size_ = {_size.width,_size.height};
     uniforms_.object_id_ = object_id_;

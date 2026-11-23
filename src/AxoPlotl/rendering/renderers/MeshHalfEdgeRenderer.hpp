@@ -24,6 +24,7 @@ protected:
         alignas(16) float depth_offset_ = 0.00002;
         alignas(16) DirectionalLight dir_light_ ;
         alignas(16) float halfedge_scale_ = 0.5;
+        alignas(16) Picker::Entity selected_entity_;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -89,7 +90,8 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const MVP& _mvp);
+        const MVP& _mvp,
+        const Picker::Entity& _selected_entity = Picker::Entity());
 
     void configure_like(const MeshHalfEdgeRenderer& _r) {
         uniforms_ = _r.uniforms_;

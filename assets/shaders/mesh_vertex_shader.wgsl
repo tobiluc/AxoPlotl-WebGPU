@@ -11,6 +11,7 @@ struct Uniforms {
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
+    @align(16) selectedEntity: Entity,
     @align(16) propFilter: PropFilterOptions
 };
 
@@ -24,7 +25,8 @@ struct VSOut {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
     @location(1) corner : vec2<f32>,
-    @location(2) @interpolate(flat) vertexHandle: u32
+    @location(2) @interpolate(flat) vertexHandle: u32,
+    @location(3) @interpolate(flat) selected: u32
 };
 
 @vertex
@@ -65,6 +67,13 @@ fn vs_main(
     }
     out.value = value;
     out.vertexHandle = iid;
+
+    var myEntity:Entity;
+    myEntity.objectId = ubo.objectId;
+    myEntity.entityType = ENTITY_TYPE_VERTEX;
+    myEntity.entityIndex = iid;
+    out.selected = select(0u, 1u, isSameEntity(myEntity, ubo.selectedEntity));
+
 
     return out;
 }
@@ -110,6 +119,9 @@ fn fs_main(in : VSOut) -> FragOutColPickDepth
         out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
+    if (in.selected != 0u) {
+        out.color = colorSelected(out.color);
+    }
     out.depth = depth;
     out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_VERTEX, in.vertexHandle, bitcast<u32>(depth));
 

@@ -118,7 +118,7 @@ void SHObject::render_ui_properties()
 
 void SHObject::render_ui_picking(const Picker& _p)
 {
-    if (_p.pixel().object_id_ != id()) [[unlikely]] {return;}
+    if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
 
     auto polar_angle = [](const Vec3& _pos) -> float {
         return std::acos(_pos.z/(glm::length(_pos)));

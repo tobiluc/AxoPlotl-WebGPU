@@ -19,10 +19,11 @@ protected:
         alignas(16) uint32_t object_id_ = 0;
         alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) DirectionalLight dir_light_ ;
+        alignas(16) Picker::Entity selected_entity_;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms, clip_box_) == 96);
-    static_assert(sizeof(Uniforms) == 304);
+    static_assert(sizeof(Uniforms) == 320);
 
 public:
     float& cell_scale() {
@@ -69,7 +70,8 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4& _mvp);
+        const Mat4x4& _mvp,
+        const Picker::Entity& _selected_entity = Picker::Entity());
 
     void configure_like(const MeshCellRenderer& _r) {
         uniforms_ = _r.uniforms_;

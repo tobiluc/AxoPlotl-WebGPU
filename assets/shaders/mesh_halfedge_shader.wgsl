@@ -14,6 +14,7 @@ struct Uniforms {
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
     @align(16) halfedgeScale: f32,
+    @align(16) selectedEntity: Entity,
     @align(16) propFilter: PropFilterOptions
 };
 
@@ -29,7 +30,8 @@ struct V2F {
     @location(1) quadCorner: vec2<f32>,
     @location(2) @interpolate(flat) quadSize: vec2<f32>,
     @location(3) @interpolate(flat) halfedgeHandle: u32,
-    @location(4) @interpolate(flat) edgeDirView: vec3<f32>
+    @location(4) @interpolate(flat) edgeDirView: vec3<f32>,
+    @location(5) @interpolate(flat) selected: u32
 };
 
 @vertex
@@ -77,6 +79,12 @@ fn vs_main(
     out.value = value;
     out.halfedgeHandle = heh;
 
+    var myEntity:Entity;
+    myEntity.objectId = ubo.objectId;
+    myEntity.entityType = ENTITY_TYPE_HALFEDGE;
+    myEntity.entityIndex = heh;
+    out.selected = select(0u, 1u, isSameEntity(myEntity, ubo.selectedEntity));
+
     return out;
 }
 
@@ -116,6 +124,9 @@ fn fs_main(in:V2F) -> FragOutColPickDepth
         out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
+    if (in.selected != 0u) {
+        out.color = colorSelected(out.color);
+    }
 
     // Depth correction for 3d imposter
     let depthCorrection = getImposterDepthCorrection(

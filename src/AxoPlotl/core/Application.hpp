@@ -103,6 +103,10 @@ public:
         debug.picking_renderer_.render_ui();
     }
 
+    const Picker::Pixel& picked_pixel() const {
+        return picker_.pixel();
+    }
+
 private:
     struct Debugging
     {

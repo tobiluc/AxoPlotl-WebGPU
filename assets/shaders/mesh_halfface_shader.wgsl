@@ -8,6 +8,7 @@ struct Uniforms {
     @align(16) ambient: vec4<f32>,
     @align(16) depthOffset: f32,
     @align(16) dirLight: DirectionalLight,
+    @align(16) selectedEntity: Entity,
     @align(16) propFilter: PropFilterOptions
 };
 
@@ -22,7 +23,8 @@ struct V2F {
     @builtin(position) position : vec4<f32>,
     @location(0) @interpolate(flat) value : vec4<f32>,
     @location(1) @interpolate(flat) halfFaceHandle: u32,
-    @location(2) @interpolate(flat) normal: vec3<f32>
+    @location(2) @interpolate(flat) normal: vec3<f32>,
+    @location(3) @interpolate(flat) selected: u32
 };
 
 @vertex
@@ -51,6 +53,12 @@ fn vs_main(
     out.value = value;
     out.halfFaceHandle = halfface_index;
 
+    var myEntity:Entity;
+    myEntity.objectId = ubo.objectId;
+    myEntity.entityType = ENTITY_TYPE_HALFFACE;
+    myEntity.entityIndex = halfface_index;
+    out.selected = select(0u, 1u, isSameEntity(myEntity, ubo.selectedEntity));
+
     return out;
 }
 
@@ -70,6 +78,9 @@ fn fs_main(in:V2F) -> FragOutColPick
         out.color.rgb * (lighting + ubo.ambient.rgb)*0.5f,
         out.color.a
         );
+    if (in.selected != 0u) {
+        out.color = colorSelected(out.color);
+    }
 
     out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_HALFFACE, in.halfFaceHandle, bitcast<u32>(in.position.z));
     return out;

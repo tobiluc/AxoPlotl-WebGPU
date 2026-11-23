@@ -18,6 +18,7 @@ protected:
         alignas(16) Vec4 ambient_ = {0.8,0.8,0.8,1};
         alignas(16) float depth_offset_ = 0.00001;
         alignas(16) DirectionalLight dir_light_ ;
+        alignas(16) Picker::Entity selected_entity_;
         alignas(16) PropFilterOptions filter_options_;
     } uniforms_;
     static_assert(offsetof(Uniforms,mvp_)%16==0);
@@ -84,7 +85,8 @@ public:
     void render(
         const ViewSize& _size,
         wgpu::RenderPassEncoder _render_pass,
-        const Mat4x4& _mvp);
+        const Mat4x4& _mvp,
+        const Picker::Entity& _selected_entity = Picker::Entity());
 
     void configure_like(const MeshHalfFaceRenderer& _r) {
         uniforms_ = _r.uniforms_;

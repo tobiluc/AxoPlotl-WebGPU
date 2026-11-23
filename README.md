@@ -57,15 +57,15 @@ int main()
 - [ ] Transparency. Allow rendering of meshes with transparency to better inspect them.
 For example, for property visualization, colors would be in RGBA to make cell
 more transparent, the larger/smaller a property value is.
-- [ ] Visualization of Halfedges and Halffaces and their properties.
+- [x] Visualization of Halfedges and Halffaces and their properties.
 - [x] Visualization of vector properties as lines (see VectorRenderer).
-- [ ] Visualization of matrix properties as frames/cubes
+- [x] Visualization of matrix properties as frames/cubes
+- [x] Highlight selected entity
 - [ ] Warning Popup when input mesh contains no vertices or any position with NaN or INF.
 - [ ] Handle BIIIGGG Meshes where normally we exceed the webgpu buffer limit.
 
 ### Bugs
 - [x] When enabling fullscreen, the screen starts flickering before turning pink. (No visible error messages) => Solved by updating dawn (see below)
-- [ ] For some model, when selecting the computed dihedral angle property, the range filter seems posessed by a ghost (could not reproduce).  
 - [x] Application crashes when loading a mesh with no vertices (size of position buffer = 0)
 - [x] When selecting a face/cell scalar property,
 it is visualized as expected, but when

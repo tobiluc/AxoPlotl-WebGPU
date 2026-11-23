@@ -95,12 +95,12 @@ Picker::Pixel Picker::request_pixel(
         // Index 0 stores the Object ID, so we know which
         // Objects we clicked. The corresponding object's
         // render_picking_ui function is called.
-        context->pick_pixel.object_id_ = data[0];
+        context->pick_pixel.entity.object_id = data[0];
 
         // For Meshes, we store the entity type and handle index
         // (Type 0:Vertex, 1:Edge, 2:Face, 3:Cell)
-        context->pick_pixel.entity_type_ = static_cast<EntityType>(data[1]);
-        context->pick_pixel.entity_index_ = data[2];
+        context->pick_pixel.entity.entity_type = static_cast<EntityType>(data[1]);
+        context->pick_pixel.entity.entity_index = data[2];
 
         // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
         // are both stored at index 2 of the pixel

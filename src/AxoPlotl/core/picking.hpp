@@ -47,15 +47,19 @@ public:
         VECTOR = 6
     };
 
+    struct Entity
+    {
+        uint32_t object_id = 0;
+        EntityType entity_type;
+        uint32_t entity_index;
+    };
+
     struct Settings {
     } settings;
 
     struct Pixel
     {
-        uint32_t object_id_ = 0;
-
-        EntityType entity_type_;
-        uint32_t entity_index_ = 2;
+        Entity entity;
 
         float function_value_ = 0;
 

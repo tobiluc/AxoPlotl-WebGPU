@@ -335,10 +335,11 @@ void OpenVolumeMeshObject::render(
     edge_renderer_.directional_light() = scene()->directional_light;
     vertex_renderer_.directional_light() = scene()->directional_light;
 
-    cell_renderer_.render(_view_size, _render_pass, mvp_mat);
-    face_renderer_.render(_view_size, _render_pass, mvp_mat);
-    edge_renderer_.render(_view_size, _render_pass, mvp);
-    vertex_renderer_.render(_view_size, _render_pass, mvp);
+    const auto& selected_entity = scene()->app()->picked_pixel().entity;
+    cell_renderer_.render(_view_size, _render_pass, mvp_mat, selected_entity);
+    face_renderer_.render(_view_size, _render_pass, mvp_mat, selected_entity);
+    edge_renderer_.render(_view_size, _render_pass, mvp, selected_entity);
+    vertex_renderer_.render(_view_size, _render_pass, mvp, selected_entity);
 
     vector3_renderer_.enabled() = vertex_renderer_.property_filter_options().value_mode == PropValueMode::VEC3
         || edge_renderer_.property_filter_options().value_mode == PropValueMode::VEC3
@@ -357,7 +358,7 @@ void OpenVolumeMeshObject::render(
 
 void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
 {
-    if (_p.pixel().object_id_ != id()) [[unlikely]] {
+    if (_p.pixel().entity.object_id != id()) [[unlikely]] {
         return;
     } // error
 
@@ -432,11 +433,11 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         _p.pixel().position_[1],
         _p.pixel().position_[2]);
 
-    switch (_p.pixel().entity_type_)
+    switch (_p.pixel().entity.entity_type)
     {
     case Picker::EntityType::VERTEX:
     {
-        const OVM::VH vh(_p.pixel().entity_index_);
+        const OVM::VH vh(_p.pixel().entity.entity_index);
         ImGui::Text("Vertex(%u)", vh.uidx());
         show_prop_list.operator()<OVM::Entity::Vertex>(vh);
         break;
@@ -444,7 +445,7 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     case Picker::EntityType::HALFEDGE:
     {
         if (ImGui::BeginTabBar("##xx")) {
-            const OVM::HEH heh(_p.pixel().entity_index_);
+            const OVM::HEH heh(_p.pixel().entity.entity_index);
             if (ImGui::BeginTabItem("Edge")) {
                 const OVM::EH eh = heh.edge_handle();
                 ImGui::Text("Edge(%u)", eh.uidx());
@@ -463,7 +464,7 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     case Picker::EntityType::HALFFACE:
     {
         if (ImGui::BeginTabBar("##xx")) {
-            const OVM::HFH hfh(_p.pixel().entity_index_);
+            const OVM::HFH hfh(_p.pixel().entity.entity_index);
             if (ImGui::BeginTabItem("Face")) {
                 const OVM::FH fh = hfh.face_handle();
                 ImGui::Text("Face(%u)", fh.uidx());
@@ -481,7 +482,7 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     }
     case Picker::EntityType::CELL:
     {
-        const OVM::CH ch(_p.pixel().entity_index_);
+        const OVM::CH ch(_p.pixel().entity.entity_index);
         ImGui::Text("Cell(%u)", ch.uidx());
         show_prop_list.operator()<OVM::Entity::Cell>(ch);
         break;

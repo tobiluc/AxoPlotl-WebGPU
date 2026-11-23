@@ -4,6 +4,7 @@
 #include <webgpu/webgpu.hpp>
 #include "AxoPlotl/typedefs/glm.hpp"
 #include <AxoPlotl/rendering/ColorMap.hpp>
+#include <AxoPlotl/core/picking.hpp>
 
 namespace AxoPlotl::internal
 {
