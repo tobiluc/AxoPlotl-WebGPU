@@ -6,7 +6,7 @@
 namespace AxoPlotl::internal
 {
 
-class ColoredFaceRenderer : public PropertyRendererBase
+class MeshHalfFaceRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -51,11 +51,11 @@ public:
         return uniforms_.depth_offset_;
     }
 
-    ColoredFaceRenderer(uint32_t _max_draw_calls = 1)
+    MeshHalfFaceRenderer(uint32_t _max_draw_calls = 1)
         : PropertyRendererBase(_max_draw_calls)
     {}
 
-    ~ColoredFaceRenderer()
+    ~MeshHalfFaceRenderer()
     {
         clear();
     }
@@ -86,7 +86,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4& _mvp);
 
-    void configure_like(const ColoredFaceRenderer& _r) {
+    void configure_like(const MeshHalfFaceRenderer& _r) {
         uniforms_ = _r.uniforms_;
         enabled_ = _r.enabled_;
     }

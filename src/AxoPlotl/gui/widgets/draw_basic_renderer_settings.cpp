@@ -41,7 +41,7 @@ void draw_clipbox_settings(ClipBox& _cb, const BoundingBox &_bb)
 }
 
 void draw_basic_renderer_settings(
-    ColoredVertexRenderer& _r)
+    MeshVertexRenderer &_r)
 {
     ImGui::ColorEdit3("Vertex Ambient", &_r.ambient()[0]);
     InputSlider("Point Size",
@@ -58,7 +58,7 @@ void draw_basic_renderer_settings(
 }
 
 void draw_basic_renderer_settings(
-    ColoredEdgeRenderer& _r)
+    MeshHalfEdgeRenderer &_r)
 {
     ImGui::ColorEdit3("Edge Ambient", &_r.ambient()[0]);
     InputSlider("Line Width",
@@ -80,7 +80,7 @@ void draw_basic_renderer_settings(
 }
 
 void draw_basic_renderer_settings(
-    ColoredFaceRenderer& _r)
+    MeshHalfFaceRenderer& _r)
 {
     ImGui::ColorEdit3("Face Ambient", &_r.ambient()[0]);
     InputSlider("Depth Offset",
@@ -93,7 +93,7 @@ void draw_basic_renderer_settings(
 }
 
 void draw_basic_renderer_settings(
-    ColoredCellRenderer& _r)
+    MeshCellRenderer& _r)
 {
     ImGui::ColorEdit3("Cell Ambient", &_r.ambient()[0]);
     InputSlider("Cell Scale", &_r.cell_scale(), InputSliderOptions{.min= 0.0f, .max=2.0f});

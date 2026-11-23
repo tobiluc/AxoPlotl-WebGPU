@@ -14,10 +14,10 @@ class HistogramBase;
 class Viewport;
 
 class RendererBase;
-class ColoredCellRenderer;
-class ColoredFaceRenderer;
-class ColoredEdgeRenderer;
-class ColoredVertexRenderer;
+class MeshCellRenderer;
+class MeshHalfFaceRenderer;
+class MeshHalfEdgeRenderer;
+class MeshVertexRenderer;
 class Vector3Renderer;
 class Matrix3x3Renderer;
 

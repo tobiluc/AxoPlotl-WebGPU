@@ -143,7 +143,7 @@ void OpenVolumeMeshObject::render_ui_properties()
         // Clear
         if (ImGui::Button("Unselect Property")) {
             // upload_default_property_data<EntityTag>();
-            colored_entity_renderer<EntityTag>().property_filter_options().set_default();
+            entity_renderer<EntityTag>().property_filter_options().set_default();
             selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
             scene_->app()->call_deferred([&]() {
@@ -496,7 +496,7 @@ bool OpenVolumeMeshObject::visualize_property(
 
     auto select_property = [&]<typename EntityTag,typename T>(OVM::PropertyStorageBase* _pp)
     {
-        auto& col_rend = colored_entity_renderer<EntityTag>();
+        auto& col_rend = entity_renderer<EntityTag>();
 
         prop<EntityTag>().prop_ = _pp;
 
@@ -584,10 +584,10 @@ bool OpenVolumeMeshObject::visualize_property(
 
         // Visibility Settings
         selected_prop_entity_type_ = EntityTag::type();
-        colored_entity_renderer<OVM::Entity::Vertex>().enabled() = false;
-        colored_entity_renderer<OVM::Entity::Edge>().enabled() = false;
-        colored_entity_renderer<OVM::Entity::Face>().enabled() = false;
-        colored_entity_renderer<OVM::Entity::Cell>().enabled() = false;
+        entity_renderer<OVM::Entity::Vertex>().enabled() = false;
+        entity_renderer<OVM::Entity::Edge>().enabled() = false;
+        entity_renderer<OVM::Entity::Face>().enabled() = false;
+        entity_renderer<OVM::Entity::Cell>().enabled() = false;
         col_rend.enabled() = true;
         uploaded_property = true;
     };

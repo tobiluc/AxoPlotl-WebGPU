@@ -10,7 +10,7 @@ namespace AxoPlotl
 class SegmentObject : public ObjectBase
 {
 private:
-    ColoredEdgeRenderer renderer_;
+    MeshHalfEdgeRenderer renderer_;
     VolMeshData mesh_data_;
     std::array<std::array<float,4>,2> input_;
 

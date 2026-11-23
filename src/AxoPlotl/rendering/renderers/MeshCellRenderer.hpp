@@ -7,7 +7,7 @@
 namespace AxoPlotl::internal
 {
 
-class ColoredCellRenderer : public PropertyRendererBase
+class MeshCellRenderer : public PropertyRendererBase
 {
 protected:
     // Mirrors Shader Unfiforms. the 16byte alignment is important!
@@ -45,11 +45,11 @@ public:
         return uniforms_.dir_light_;
     }
 
-    ColoredCellRenderer(uint32_t _max_draw_calls = 1)
+    MeshCellRenderer(uint32_t _max_draw_calls = 1)
         : PropertyRendererBase(_max_draw_calls)
     {}
 
-    ~ColoredCellRenderer()
+    ~MeshCellRenderer()
     {
         clear();
     }
@@ -71,7 +71,7 @@ public:
         wgpu::RenderPassEncoder _render_pass,
         const Mat4x4& _mvp);
 
-    void configure_like(const ColoredCellRenderer& _r) {
+    void configure_like(const MeshCellRenderer& _r) {
         uniforms_ = _r.uniforms_;
         enabled_ = _r.enabled_;
     }

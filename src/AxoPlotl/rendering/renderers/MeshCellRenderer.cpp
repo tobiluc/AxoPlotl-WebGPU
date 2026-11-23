@@ -5,10 +5,10 @@
 namespace AxoPlotl::internal
 {
 
-PipelineState ColoredCellRenderer::triangle_pipeline_state_;
+PipelineState MeshCellRenderer::triangle_pipeline_state_;
 
 
-void ColoredCellRenderer::init(uint32_t _object_id,
+void MeshCellRenderer::init(uint32_t _object_id,
                                const GpuContext& _gpu_context,
                                const RenderContext &_render_context,
                                const BufferData<Position>& _vertices_positions,
@@ -47,7 +47,7 @@ void ColoredCellRenderer::init(uint32_t _object_id,
     initialized_ = true;
 }
 
-void ColoredCellRenderer::clear()
+void MeshCellRenderer::clear()
 {
     // We only delete the buffers that were created by this
     // renderer
@@ -56,7 +56,7 @@ void ColoredCellRenderer::clear()
     initialized_ = false;
 }
 
-void ColoredCellRenderer::create_buffers()
+void MeshCellRenderer::create_buffers()
 {
     wgpu::Device device = triangle_pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
@@ -85,7 +85,7 @@ void ColoredCellRenderer::create_buffers()
     }
 }
 
-void ColoredCellRenderer::create_bind_group_layout()
+void MeshCellRenderer::create_bind_group_layout()
 {
     if (triangle_pipeline_state_.bind_group_layout_) {return;}
 
@@ -141,7 +141,7 @@ void ColoredCellRenderer::create_bind_group_layout()
     triangle_pipeline_state_.bind_group_layout_ = triangle_pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredCellRenderer::create_bind_group(const GpuContext &_gpu_context)
+void MeshCellRenderer::create_bind_group(const GpuContext &_gpu_context)
 {
     wgpu::BindGroupEntry groupEntries[7]{};
 
@@ -191,7 +191,7 @@ void ColoredCellRenderer::create_bind_group(const GpuContext &_gpu_context)
     bind_group_ = _gpu_context.device.createBindGroup(bgDesc);
 }
 
-void ColoredCellRenderer::create_triangle_pipeline(
+void MeshCellRenderer::create_triangle_pipeline(
     const GpuContext &_gpu_context,
     const RenderContext& _render_context)
 {
@@ -269,7 +269,7 @@ void ColoredCellRenderer::create_triangle_pipeline(
     triangle_pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredCellRenderer::update_property_data(const std::vector<PropContainer>& _data)
+void MeshCellRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size() != n_cells_) {
@@ -285,7 +285,7 @@ void ColoredCellRenderer::update_property_data(const std::vector<PropContainer>&
         );
 }
 
-void ColoredCellRenderer::render(
+void MeshCellRenderer::render(
     const ViewSize &_size,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4& _mvp)

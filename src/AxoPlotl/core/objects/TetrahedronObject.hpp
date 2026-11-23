@@ -10,7 +10,7 @@ namespace AxoPlotl
 class TetObject : public ObjectBase
 {
 private:
-    ColoredCellRenderer renderer_;
+    MeshCellRenderer renderer_;
     VolMeshData mesh_data_;
 
     std::array<std::array<float,4>,4> input_;

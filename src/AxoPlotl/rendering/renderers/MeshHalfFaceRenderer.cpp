@@ -3,9 +3,9 @@
 
 namespace AxoPlotl::internal
 {
-PipelineState ColoredFaceRenderer::pipeline_state_;
+PipelineState MeshHalfFaceRenderer::pipeline_state_;
 
-void ColoredFaceRenderer::init(
+void MeshHalfFaceRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
@@ -42,14 +42,14 @@ void ColoredFaceRenderer::init(
     initialized_ = true;
 }
 
-void ColoredFaceRenderer::clear()
+void MeshHalfFaceRenderer::clear()
 {
     destroy_buffer(property_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
 
-void ColoredFaceRenderer::create_buffers()
+void MeshHalfFaceRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
@@ -78,7 +78,7 @@ void ColoredFaceRenderer::create_buffers()
     }
 }
 
-void ColoredFaceRenderer::create_bind_group_layout()
+void MeshHalfFaceRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -128,7 +128,7 @@ void ColoredFaceRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredFaceRenderer::create_bind_group()
+void MeshHalfFaceRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[6]{};
 
@@ -172,7 +172,7 @@ void ColoredFaceRenderer::create_bind_group()
     bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void ColoredFaceRenderer::create_pipeline(
+void MeshHalfFaceRenderer::create_pipeline(
     const GpuContext& _gpu_context,
     const RenderContext &_render_context,
     const Options& _opt)
@@ -249,7 +249,7 @@ void ColoredFaceRenderer::create_pipeline(
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredFaceRenderer::update_halfface_property_data(const std::vector<PropContainer>& _data)
+void MeshHalfFaceRenderer::update_halfface_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size() != n_halffaces_) {
@@ -265,7 +265,7 @@ void ColoredFaceRenderer::update_halfface_property_data(const std::vector<PropCo
         );
 }
 
-void ColoredFaceRenderer::update_face_property_data(const std::vector<PropContainer>& _data)
+void MeshHalfFaceRenderer::update_face_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size()*2u != n_halffaces_) {
@@ -280,7 +280,7 @@ void ColoredFaceRenderer::update_face_property_data(const std::vector<PropContai
     update_halfface_property_data(newData);
 }
 
-void ColoredFaceRenderer::render(
+void MeshHalfFaceRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
     const Mat4x4& _mvp)

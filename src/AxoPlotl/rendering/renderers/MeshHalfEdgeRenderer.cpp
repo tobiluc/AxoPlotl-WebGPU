@@ -3,9 +3,9 @@
 
 namespace AxoPlotl::internal
 {
-PipelineState ColoredEdgeRenderer::pipeline_state_;
+PipelineState MeshHalfEdgeRenderer::pipeline_state_;
 
-void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context,
+void MeshHalfEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context,
                                const RenderContext &_render_context,
                                const BufferData<Position>& _vertices_positions,
                                const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances)
@@ -35,14 +35,14 @@ void ColoredEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_conte
     initialized_ = true;
 }
 
-void ColoredEdgeRenderer::clear()
+void MeshHalfEdgeRenderer::clear()
 {
     destroy_buffer(halfedge_property_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
 
-void ColoredEdgeRenderer::create_buffers()
+void MeshHalfEdgeRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
@@ -71,7 +71,7 @@ void ColoredEdgeRenderer::create_buffers()
     }
 }
 
-void ColoredEdgeRenderer::create_bind_group_layout()
+void MeshHalfEdgeRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -115,7 +115,7 @@ void ColoredEdgeRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredEdgeRenderer::create_bind_group()
+void MeshHalfEdgeRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -153,7 +153,7 @@ void ColoredEdgeRenderer::create_bind_group()
     bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
+void MeshHalfEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
 {
     if (pipeline_state_.pipeline_ || n_halfedges_==0) {return;}
 
@@ -233,7 +233,7 @@ void ColoredEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredEdgeRenderer::update_halfedge_property_data(const std::vector<PropContainer>& _data)
+void MeshHalfEdgeRenderer::update_halfedge_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size() != n_halfedges_) {
@@ -249,7 +249,7 @@ void ColoredEdgeRenderer::update_halfedge_property_data(const std::vector<PropCo
         );
 }
 
-void ColoredEdgeRenderer::update_edge_property_data(const std::vector<PropContainer>& _data)
+void MeshHalfEdgeRenderer::update_edge_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size() != n_halfedges_/2u) {
@@ -264,7 +264,7 @@ void ColoredEdgeRenderer::update_edge_property_data(const std::vector<PropContai
     update_halfedge_property_data(newData);
 }
 
-void ColoredEdgeRenderer::render(
+void MeshHalfEdgeRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
     const MVP& _mvp)

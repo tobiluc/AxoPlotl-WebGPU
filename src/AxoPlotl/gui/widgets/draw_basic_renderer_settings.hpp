@@ -13,16 +13,16 @@ void draw_clipbox_settings(internal::ClipBox& _cb,
     const BoundingBox& _bb);
 
 void draw_basic_renderer_settings(
-    internal::ColoredVertexRenderer& _r);
+    internal::MeshVertexRenderer& _r);
 
 void draw_basic_renderer_settings(
-    internal::ColoredEdgeRenderer& _r);
+    internal::MeshHalfEdgeRenderer& _r);
 
 void draw_basic_renderer_settings(
-    internal::ColoredFaceRenderer& _r);
+    internal::MeshHalfFaceRenderer& _r);
 
 void draw_basic_renderer_settings(
-    internal::ColoredCellRenderer& _r);
+    internal::MeshCellRenderer& _r);
 
 void draw_basic_renderer_settings(
     internal::Vector3Renderer& _r);

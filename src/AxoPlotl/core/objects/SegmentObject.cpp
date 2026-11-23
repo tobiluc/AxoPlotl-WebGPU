@@ -1,5 +1,6 @@
 #include "SegmentObject.hpp"
 #include "AxoPlotl/core/Application.hpp"
+#include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
 #include <AxoPlotl/core/Scene.hpp>
 #include <AxoPlotl/rendering/MeshData.hpp>
 
@@ -14,6 +15,8 @@ void SegmentObject::render(
 
 {
     if (deleted() || !visible()) {return;}
+
+    renderer_.directional_light() = scene()->directional_light;
 
     const auto& mvp = MVP{
         .model=transform_,
@@ -31,7 +34,7 @@ void SegmentObject::render_ui_info()
 void SegmentObject::render_ui_settings()
 {
     input_name();
-    ImGui::ColorEdit3("Color", &renderer_.ambient()[0]);
+    gui::draw_basic_renderer_settings(renderer_);
 }
 
 void SegmentObject::render_ui_properties()

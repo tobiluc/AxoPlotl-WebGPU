@@ -102,13 +102,13 @@ public:
 
 protected:
     template<typename EntityTag>
-    auto& colored_entity_renderer();
-    template<> auto& colored_entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
-    template<> auto& colored_entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
-    template<> auto& colored_entity_renderer<OVM::Entity::HalfFace>() {return face_renderer_;}
-    template<> auto& colored_entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
-    template<> auto& colored_entity_renderer<OVM::Entity::HalfEdge>() {return edge_renderer_;}
-    template<> auto& colored_entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
+    auto& entity_renderer();
+    template<> auto& entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
+    template<> auto& entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
+    template<> auto& entity_renderer<OVM::Entity::HalfFace>() {return face_renderer_;}
+    template<> auto& entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
+    template<> auto& entity_renderer<OVM::Entity::HalfEdge>() {return edge_renderer_;}
+    template<> auto& entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
 
     template<typename EntityTag>
     wgpu::Buffer& entity_center_buffer();
@@ -120,10 +120,10 @@ protected:
     template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return mesh_data_.vertices_positions.buffer;}
 
 protected:
-    ColoredVertexRenderer vertex_renderer_;
-    ColoredEdgeRenderer edge_renderer_;
-    ColoredFaceRenderer face_renderer_;
-    ColoredCellRenderer cell_renderer_;
+    MeshVertexRenderer vertex_renderer_;
+    MeshHalfEdgeRenderer edge_renderer_;
+    MeshHalfFaceRenderer face_renderer_;
+    MeshCellRenderer cell_renderer_;
 
     Vector3Renderer vector3_renderer_;
     Matrix3x3Renderer mat3x3_renderer_;

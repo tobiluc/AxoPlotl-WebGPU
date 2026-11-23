@@ -4,9 +4,9 @@
 namespace AxoPlotl::internal
 {
 
-PipelineState ColoredVertexRenderer::pipeline_state_;
+PipelineState MeshVertexRenderer::pipeline_state_;
 
-void ColoredVertexRenderer::init(
+void MeshVertexRenderer::init(
     uint32_t _object_id,
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
@@ -35,14 +35,14 @@ void ColoredVertexRenderer::init(
     initialized_ = true;
 }
 
-void ColoredVertexRenderer::clear()
+void MeshVertexRenderer::clear()
 {
     destroy_buffer(property_buffer_);
     destroy_buffer(uniform_buffer_);
     initialized_ = false;
 }
 
-void ColoredVertexRenderer::create_buffers()
+void MeshVertexRenderer::create_buffers()
 {
     wgpu::Device device = pipeline_state_.device_;
     wgpu::Queue queue = device.getQueue();
@@ -71,7 +71,7 @@ void ColoredVertexRenderer::create_buffers()
     }
 }
 
-void ColoredVertexRenderer::create_bind_group_layout()
+void MeshVertexRenderer::create_bind_group_layout()
 {
     if (pipeline_state_.bind_group_layout_) {return;}
 
@@ -115,7 +115,7 @@ void ColoredVertexRenderer::create_bind_group_layout()
     pipeline_state_.bind_group_layout_ = pipeline_state_.device_.createBindGroupLayout(layoutDesc);
 }
 
-void ColoredVertexRenderer::create_bind_group()
+void MeshVertexRenderer::create_bind_group()
 {
     wgpu::BindGroupEntry groupEntries[5]{};
 
@@ -153,7 +153,7 @@ void ColoredVertexRenderer::create_bind_group()
     bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, const RenderContext &_render_context)
+void MeshVertexRenderer::create_pipeline(const GpuContext &_gpu_context, const RenderContext &_render_context)
 {
     if (pipeline_state_.pipeline_ || n_positions_==0) {return;}
 
@@ -208,7 +208,7 @@ void ColoredVertexRenderer::create_pipeline(const GpuContext &_gpu_context, cons
     pipeline_state_.pipeline_ = _gpu_context.device.createRenderPipeline(pipelineDesc);
 }
 
-void ColoredVertexRenderer::update_property_data(const std::vector<PropContainer>& _data)
+void MeshVertexRenderer::update_property_data(const std::vector<PropContainer>& _data)
 {
     if (!initialized_) {return;}
     if (_data.size() != n_positions_) {
@@ -224,7 +224,7 @@ void ColoredVertexRenderer::update_property_data(const std::vector<PropContainer
         );
 }
 
-void ColoredVertexRenderer::render(
+void MeshVertexRenderer::render(
     const ViewSize& _size,
     wgpu::RenderPassEncoder _render_pass,
     const MVP& _mvp)
