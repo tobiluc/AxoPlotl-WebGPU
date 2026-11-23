@@ -62,12 +62,20 @@ public:
 
     void clear() override;
 
+    struct Options
+    {
+        wgpu::CullMode cull_mode;
+        Options() : cull_mode(wgpu::CullMode::Back)
+        {}
+    };
+
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
               const BufferData<Position>& _vertices_positions,
               const BufferData<VolMeshData::HalfFaceIndex>& _halffaces_triangle_indices,
-              const BufferData<VolMeshData::Normal>& _halffaces_normals);
+              const BufferData<VolMeshData::Normal>& _halffaces_normals,
+              const Options& _opt = Options());
 
     void update_face_property_data(const std::vector<PropContainer>& _data);
 
@@ -100,7 +108,8 @@ private:
     void create_bind_group();
 
     void create_pipeline(const GpuContext& _gpu_context,
-                         const RenderContext& _render_context);
+                         const RenderContext& _render_context,
+                         const Options &_opt);
 
     wgpu::Buffer halfface_index_buffer_;
     wgpu::Buffer property_buffer_;

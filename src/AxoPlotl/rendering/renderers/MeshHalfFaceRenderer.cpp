@@ -11,7 +11,8 @@ void ColoredFaceRenderer::init(
     const RenderContext& _render_context,
     const BufferData<Position>& _vertices_positions,
     const BufferData<VolMeshData::HalfFaceIndex>& _halffaces_triangle_indices,
-    const BufferData<VolMeshData::Normal> &_halffaces_normals)
+    const BufferData<VolMeshData::Normal> &_halffaces_normals,
+    const Options &_opt)
 {
     pipeline_state_.set_device(_gpu_context.device);
 
@@ -36,7 +37,7 @@ void ColoredFaceRenderer::init(
     create_buffers();
     create_bind_group_layout();
     create_bind_group();
-    create_pipeline(_gpu_context, _render_context);
+    create_pipeline(_gpu_context, _render_context, _opt);
 
     initialized_ = true;
 }
@@ -171,7 +172,10 @@ void ColoredFaceRenderer::create_bind_group()
     bind_group_ = pipeline_state_.device_.createBindGroup(bgDesc);
 }
 
-void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const RenderContext &_render_context)
+void ColoredFaceRenderer::create_pipeline(
+    const GpuContext& _gpu_context,
+    const RenderContext &_render_context,
+    const Options& _opt)
 {
     if (pipeline_state_.pipeline_ || n_halffaces_==0) {return;}
 
@@ -214,7 +218,7 @@ void ColoredFaceRenderer::create_pipeline(const GpuContext& _gpu_context, const 
     wgpu::PrimitiveState primitive{};
     primitive.topology = wgpu::PrimitiveTopology::TriangleList;
     primitive.frontFace = wgpu::FrontFace::CCW;
-    primitive.cullMode = wgpu::CullMode::Back;
+    primitive.cullMode = _opt.cull_mode;
 
     // Multisample
     wgpu::MultisampleState multisample{};
