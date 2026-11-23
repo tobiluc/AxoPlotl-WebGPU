@@ -368,15 +368,14 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         return dx*dx + dy*dy + dz*dz;
     };
 
-    auto show_prop_list = [&]<typename EntityTag>(const uint32_t _index) {
+    auto show_prop_list = [&]<typename EntityTag>(const OVM::handle_for_tag_t<EntityTag> _handle) {
         for (auto pp = mesh().persistent_props_begin<EntityTag>();
              pp != mesh().persistent_props_end<EntityTag>(); ++pp)
         {
             auto show_item = [&]<typename T>() {
                 auto prop = mesh().get_property<T,EntityTag>((*pp)->name()).value();
-                auto h = OVM::handle_for_tag_t<EntityTag>(_index);
-                if (h.is_valid() && h.uidx() < mesh().n<EntityTag>()) {
-                    const T& val = prop[h];
+                if (_handle.is_valid() && _handle.uidx() < mesh().n<EntityTag>()) {
+                    const T& val = prop.at(_handle);
                     ImGui::Text("%s: %s",
                         (*pp)->name().c_str(),
                         value_to_string(val).c_str()
@@ -427,12 +426,8 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     // clicked entity (TODO)
 
     ImGui::SeparatorText(name().c_str());
-    if (ImGui::BeginMenu("Settings")) {
-        render_ui_settings();
-        ImGui::EndMenu();
-    }
 
-    ImGui::Text("Position = (%f, %f, %f)",
+    ImGui::Text("Clicked at (%f, %f, %f)",
         _p.pixel().position_[0],
         _p.pixel().position_[1],
         _p.pixel().position_[2]);
@@ -440,47 +435,57 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     switch (_p.pixel().entity_type_)
     {
     case Picker::EntityType::VERTEX:
-        ImGui::Text("Vertex(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Vertex>(_p.pixel().entity_index_);
+    {
+        const OVM::VH vh(_p.pixel().entity_index_);
+        ImGui::Text("Vertex(%u)", vh.uidx());
+        show_prop_list.operator()<OVM::Entity::Vertex>(vh);
         break;
+    }
     case Picker::EntityType::HALFEDGE:
+    {
         if (ImGui::BeginTabBar("##xx")) {
+            const OVM::HEH heh(_p.pixel().entity_index_);
             if (ImGui::BeginTabItem("Edge")) {
-                OVM::EH eh(_p.pixel().entity_index_>>1u);
+                const OVM::EH eh = heh.edge_handle();
                 ImGui::Text("Edge(%u)", eh.uidx());
-                show_prop_list.operator()<OVM::Entity::Edge>(eh.uidx());
+                show_prop_list.operator()<OVM::Entity::Edge>(eh);
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Halfedge")) {
-                OVM::HEH heh(_p.pixel().entity_index_);
                 ImGui::Text("Halfedge(%u)", heh.uidx());
-                show_prop_list.operator()<OVM::Entity::HalfEdge>(heh.uidx());
+                show_prop_list.operator()<OVM::Entity::HalfEdge>(heh);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
         }
         break;
+    }
     case Picker::EntityType::HALFFACE:
+    {
         if (ImGui::BeginTabBar("##xx")) {
+            const OVM::HFH hfh(_p.pixel().entity_index_);
             if (ImGui::BeginTabItem("Face")) {
-                OVM::FH fh(_p.pixel().entity_index_>>1u);
+                const OVM::FH fh = hfh.face_handle();
                 ImGui::Text("Face(%u)", fh.uidx());
-                show_prop_list.operator()<OVM::Entity::Face>(fh.uidx());
+                show_prop_list.operator()<OVM::Entity::Face>(fh);
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Halfface")) {
-                OVM::HFH hfh(_p.pixel().entity_index_);
                 ImGui::Text("Halfface(%u)", hfh.uidx());
-                show_prop_list.operator()<OVM::Entity::HalfFace>(hfh.uidx());
+                show_prop_list.operator()<OVM::Entity::HalfFace>(hfh);
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
         }
         break;
+    }
     case Picker::EntityType::CELL:
-        ImGui::Text("Cell(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Cell>(_p.pixel().entity_index_);
+    {
+        const OVM::CH ch(_p.pixel().entity_index_);
+        ImGui::Text("Cell(%u)", ch.uidx());
+        show_prop_list.operator()<OVM::Entity::Cell>(ch);
         break;
+    }
     default: break;
     }
 
