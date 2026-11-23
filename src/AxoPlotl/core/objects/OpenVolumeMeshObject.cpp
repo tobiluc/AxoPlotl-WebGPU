@@ -368,17 +368,20 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         return dx*dx + dy*dy + dz*dz;
     };
 
-    auto show_prop_list = [&]<typename EntityTag>() {
+    auto show_prop_list = [&]<typename EntityTag>(const uint32_t _index) {
         for (auto pp = mesh().persistent_props_begin<EntityTag>();
              pp != mesh().persistent_props_end<EntityTag>(); ++pp)
         {
             auto show_item = [&]<typename T>() {
                 auto prop = mesh().get_property<T,EntityTag>((*pp)->name()).value();
-                const T& val = prop[OVM::handle_for_tag_t<EntityTag>(_p.pixel().entity_index_)];
-                ImGui::Text("%s: %s",
-                    (*pp)->name().c_str(),
-                    value_to_string(val).c_str()
-                );
+                auto h = OVM::handle_for_tag_t<EntityTag>(_index);
+                if (h.is_valid() && h.uidx() < mesh().n<EntityTag>()) {
+                    const T& val = prop[h];
+                    ImGui::Text("%s: %s",
+                        (*pp)->name().c_str(),
+                        value_to_string(val).c_str()
+                    );
+                }
             };
 
             ImGui::PushID((*pp)->name().c_str());
@@ -438,18 +441,20 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     {
     case Picker::EntityType::VERTEX:
         ImGui::Text("Vertex(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Vertex>();
+        show_prop_list.operator()<OVM::Entity::Vertex>(_p.pixel().entity_index_);
         break;
     case Picker::EntityType::HALFEDGE:
         if (ImGui::BeginTabBar("##xx")) {
             if (ImGui::BeginTabItem("Edge")) {
-                ImGui::Text("Edge(%u)", _p.pixel().entity_index_>>1u);
-                show_prop_list.operator()<OVM::Entity::Edge>();
+                OVM::EH eh(_p.pixel().entity_index_>>1u);
+                ImGui::Text("Edge(%u)", eh.uidx());
+                show_prop_list.operator()<OVM::Entity::Edge>(eh.uidx());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Halfedge")) {
-                ImGui::Text("Halfedge(%u)", _p.pixel().entity_index_);
-                show_prop_list.operator()<OVM::Entity::HalfEdge>();
+                OVM::HEH heh(_p.pixel().entity_index_);
+                ImGui::Text("Halfedge(%u)", heh.uidx());
+                show_prop_list.operator()<OVM::Entity::HalfEdge>(heh.uidx());
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -458,13 +463,15 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
     case Picker::EntityType::HALFFACE:
         if (ImGui::BeginTabBar("##xx")) {
             if (ImGui::BeginTabItem("Face")) {
-                ImGui::Text("Face(%u)", _p.pixel().entity_index_>>1u);
-                show_prop_list.operator()<OVM::Entity::Face>();
+                OVM::FH fh(_p.pixel().entity_index_>>1u);
+                ImGui::Text("Face(%u)", fh.uidx());
+                show_prop_list.operator()<OVM::Entity::Face>(fh.uidx());
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("Halfface")) {
-                ImGui::Text("Halfface(%u)", _p.pixel().entity_index_);
-                show_prop_list.operator()<OVM::Entity::HalfFace>();
+                OVM::HFH hfh(_p.pixel().entity_index_);
+                ImGui::Text("Halfface(%u)", hfh.uidx());
+                show_prop_list.operator()<OVM::Entity::HalfFace>(hfh.uidx());
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -472,7 +479,7 @@ void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
         break;
     case Picker::EntityType::CELL:
         ImGui::Text("Cell(%u)", _p.pixel().entity_index_);
-        show_prop_list.operator()<OVM::Entity::Cell>();
+        show_prop_list.operator()<OVM::Entity::Cell>(_p.pixel().entity_index_);
         break;
     default: break;
     }

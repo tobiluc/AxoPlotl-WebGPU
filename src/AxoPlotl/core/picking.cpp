@@ -1,6 +1,7 @@
 #include "picking.hpp"
 #include "AxoPlotl/core/Camera.hpp"
 #include <AxoPlotl/core/Viewport.hpp>
+#include <atomic>
 
 namespace AxoPlotl::internal
 {
@@ -22,6 +23,15 @@ Picker::Pixel Picker::request_pixel(
     const Camera &_camera,
     float _x, float _y)
 {
+    if (!std::isfinite(_x) || !std::isfinite(_y)
+        || _x < 0 || _y < 0 ||
+        _x >= _viewport.size().width ||
+        _y >= _viewport.size().height)
+    {
+        std::cerr << "ERROR: Trying to access pick result outside viewport" << std::endl;
+        return {};
+    }
+
     wgpu::CommandEncoder encoder = device_.createCommandEncoder();
 
     // We copy FROM the picking texture
@@ -50,7 +60,8 @@ Picker::Pixel Picker::request_pixel(
     encoder.release();
 
     struct Context {
-        bool ready;
+        std::atomic_bool ready = false;
+        bool success = false;
         wgpu::Buffer buffer;
         Picker::Pixel pick_pixel;
         const Camera* camera;
@@ -63,14 +74,23 @@ Picker::Pixel Picker::request_pixel(
                                 void* _user_data, void*)
     {
         Context* context = reinterpret_cast<Context*>(_user_data);
-        context->ready = true;
+
         //std::cout << "Buffer mapped with status " << status << std::endl;
-        if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {return;}
+        if (status != WGPUMapAsyncStatus::WGPUMapAsyncStatus_Success) {
+            context->success = false;
+            context->ready.store(true, std::memory_order_release);
+            return;
+        }
 
         // Extract Info from Picking Result
         // and Map clicked position back to world space
+        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(uint32_t)*4u);
 
-        uint32_t* data = (uint32_t*)context->buffer.getConstMappedRange(0, sizeof(Picker::Pixel));
+        if (!data) {
+            context->success = false;
+            context->ready.store(true, std::memory_order_release);
+            return;
+        }
 
         // Index 0 stores the Object ID, so we know which
         // Objects we clicked. The corresponding object's
@@ -104,6 +124,9 @@ Picker::Pixel Picker::request_pixel(
 
         // unmap the memory
         context->buffer.unmap();
+
+        context->success = true;
+        context->ready.store(true, std::memory_order_release);
     };
 
     // The context contains everyhting that is required
@@ -137,17 +160,21 @@ Picker::Pixel Picker::request_pixel(
         0, sizeof(Picker::Pixel),
         callback_info
         );
-    while (!context.ready) {
+
+    while (!context.ready.load(std::memory_order_acquire)) {
         device_.poll(false, nullptr);
     }
 
-    this->pixel_ = context.pick_pixel;
+    // Failed to read data
+    if (!context.success) {
+        return {};
+    }
 
+    this->pixel_ = context.pick_pixel;
 #if 0
     std::cerr << "Object Id: " << pixel_.object_id_ << std::endl;
     std::cerr << "Entity Index: " << pixel_.entity_index_ << std::endl;
 #endif
-
     return pixel_;
 }
 
