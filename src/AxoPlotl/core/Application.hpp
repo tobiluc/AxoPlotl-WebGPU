@@ -23,8 +23,6 @@ namespace AxoPlotl::internal
 class Application
 {
 private:
-    // PickConfig picking_config_;
-    // PickingTextureRenderer picking_visualizer_;
 
     struct Time {
         float delta_time_ = 0;
@@ -36,7 +34,7 @@ private:
 
     struct Inspector {
         bool enabled = true;
-        std::function<void()> callback = [](){}; // cursed stuff...
+        std::function<void()> callback = [](){}; // yeah...
     } inspector_;
 
     struct Requests {
@@ -47,8 +45,26 @@ private:
     GpuContext gpu_context_;
     RenderContext render_context_;
 
-    // Draw a frame and handle events
-    void frame_tick();
+    struct ScreenshotOptions
+    {
+        std::string filename = "AxoPlotl_Screenshot.png";
+        static constexpr ViewSize MAX_SIZE = {8000,8000};
+        ViewSize size = {512, 512};
+        bool show_popup = false;
+        bool transparent_background = false;
+    } screenshot_options_;
+    PickingTextureVis picking_renderer_;
+
+    Picker picker_;
+
+    // Processed at the end of a frame and then removed
+    std::vector<std::function<void()>> deferred_calls_;
+
+    GLFWwindow* window_;
+    Viewport viewport_;
+
+    std::vector<Scene> scenes_;
+    uint32_t current_scene_index_ = 0;
 
 public:
     Application();
@@ -108,29 +124,8 @@ public:
     }
 
 private:
-    struct ScreenshotOptions
-    {
-        std::string filename = "AxoPlotl_Screenshot.png";
-        static constexpr ViewSize MAX_SIZE = {8000,8000};
-        ViewSize size = {512, 512};
-        bool show_popup = false;
-        bool transparent_background = false;
-    } screenshot_options_;
-    PickingTextureVis picking_renderer_;
-
-    Picker picker_;
-
-    // Processed at the end of a frame and then removed
-    std::vector<std::function<void()>> deferred_calls_;
-
-    GLFWwindow* window_;
-    Viewport viewport_;
-
-    // wgpu::RenderPassEncoder gui_render_pass_;
-    // wgpu::RenderPassEncoder scene_render_pass_;
-
-    std::vector<Scene> scenes_;
-    uint32_t current_scene_index_ = 0;
+    // Draw a frame and handle events
+    void frame_tick();
 
     void clear();
 

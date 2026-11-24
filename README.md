@@ -92,31 +92,9 @@ Additionally, there are a few manual changes necessary
 in the fetched dependencies listed below.
 The original version of AxoPlotl for apple clang 15 is found under the clang15 tag.
 
-In glfw3webgpu.c - This works now (16.11.2026)?
-```
-WGPUSurfaceDescriptorFromMetalLayer ->	WGPUSurfaceSourceMetalLayer
-WGPUSType_SurfaceDescriptorFromMetalLayer -> WGPUSType_SurfaceSourceMetalLayer
-surfaceDescriptor.label = NULL; -> surfaceDescriptor.label = (WGPUStringView){0};
-```
+1. Replace the file "external/imgui/backends/imgui_impl_webgpu.cpp" with "files/imgui_impl_webgpu.cpp".
+2. (seems no longer necessary) Replace the file "external/glfw3webgpu/glfw3webgpu.c" with "files/glfw3webgpu.c".
 
-In imgui/backends/imgui_impl_webgpu.cpp
-```
-using WGPUProgrammableStageDescriptor = WGPUComputeState;
--> 
-#ifndef WGPUComputeState
-typedef WGPUProgrammableStageDescriptor WGPUComputeState;
-#endif //  - This works now (16.11.2026)?
-
-{ nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, pos), 0 },
-{ nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, uv),  1 },
-{ nullptr, WGPUVertexFormat_Unorm8x4,  (uint64_t)offsetof(ImDrawVert, col), 2 },
-->
-{ .format = WGPUVertexFormat_Float32x2, .offset = (uint64_t)offsetof(ImDrawVert, pos), .shaderLocation = 0 },
-{ .format = WGPUVertexFormat_Float32x2, .offset = (uint64_t)offsetof(ImDrawVert, uv), .shaderLocation = 1 },
-{ .format = WGPUVertexFormat_Unorm8x4, .offset = (uint64_t)offsetof(ImDrawVert, col), .shaderLocation = 2 },
-
-case WGPUDeviceLostReason_CallbackCancelled: return "CallbackCancelled"; -> Comment out line
-```
 
 These modified files are within AxoPlotl/files.
 (18.04.2026)
