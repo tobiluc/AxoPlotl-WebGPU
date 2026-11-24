@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/PickingTextureVis.hpp"
 #include <webgpu/webgpu.hpp>
 #include <AxoPlotl/rendering/MyGpuContext.hpp>
+#include <AxoPlotl/gui/ScreenshotPanel.hpp>
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -45,14 +46,7 @@ private:
     GpuContext gpu_context_;
     RenderContext render_context_;
 
-    struct ScreenshotOptions
-    {
-        std::string filename = "AxoPlotl_Screenshot.png";
-        static constexpr ViewSize MAX_SIZE = {8000,8000};
-        ViewSize size = {512, 512};
-        bool show_popup = false;
-        bool transparent_background = false;
-    } screenshot_options_;
+    ScreenshotPanel screenshot_panel_;
     PickingTextureVis picking_renderer_;
 
     Picker picker_;

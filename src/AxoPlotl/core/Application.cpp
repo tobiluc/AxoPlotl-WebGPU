@@ -482,7 +482,7 @@ void Application::render_main_menu_bar_ui()
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Save Screenshot")) {
-                screenshot_options_.show_popup = true;
+                screenshot_panel_.enable();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
@@ -565,52 +565,7 @@ void Application::render_main_menu_bar_ui()
     }
 
     // Screenshot Popup
-    if (screenshot_options_.show_popup) {
-        ImGui::SetNextWindowSize(
-            ImVec2(480, 320),
-            ImGuiCond_FirstUseEver
-            );
-        if (ImGui::Begin(
-                "Screenshot",
-                &screenshot_options_.show_popup))
-        {
-            gui::InputSlider2("Size",
-                         &screenshot_options_.size.width,
-                         gui::InputSliderOptions{
-                            .step=1,.min=1,.max=8000,
-                            .display_name=true});
-            if (ImGui::Button("Keep Aspect Ratio")) {
-                if (screenshot_options_.size.height > screenshot_options_.size.width) {
-                    screenshot_options_.size.width = screenshot_options_.size.height * viewport().size().aspect_ratio();
-                } else {
-                    screenshot_options_.size.height = screenshot_options_.size.width / viewport().size().aspect_ratio();
-                }
-            }
-            ImGui::SameLine();
-            ImGui::Checkbox("Transparent Background", &screenshot_options_.transparent_background);
-
-            const float preview_width = ImGui::GetItemRectSize().x;
-            const float preview_height = preview_width / screenshot_options_.size.aspect_ratio();
-
-            gui::Texture(viewport().color_view(), preview_width, preview_height);
-
-            ImGui::InputText("File", screenshot_options_.filename.data(), screenshot_options_.filename.size());
-
-            if (screenshot_options_.size.width <= 8000
-                && screenshot_options_.size.height <= 8000)
-            {
-                if (ImGui::Button("Save")) {
-                    save_viewport_screenshot(
-                        screenshot_options_.filename,
-                        screenshot_options_.size,
-                        screenshot_options_.transparent_background);
-                }
-            } else {
-                ImGui::Text("Size too big! (Max. 8000 x 8000)");
-            }
-        }
-        ImGui::End(); //!Screenshot
-    }
+    screenshot_panel_.render_ui(this);
 
     ImGui::End(); //!MenuBar
 }
@@ -838,7 +793,7 @@ bool Application::save_viewport_screenshot(
     const ViewSize _size,
     bool _transparent_background)
 {
-    if (_size.width > screenshot_options_.MAX_SIZE.width || _size.height > screenshot_options_.MAX_SIZE.height) {
+    if (_size.width > screenshot_panel_.MAX_SIZE.width || _size.height > screenshot_panel_.MAX_SIZE.height) {
         std::cerr << "Screenshot Size too big! (Max. 8000 x 8000)";
         return false;
     }

@@ -170,7 +170,7 @@ bool save_texture_to_file(const std::filesystem::path& _path,
         // Apply mask -> If mask.rgb = (0,0,0) then set final.alpha=0
         std::vector<uint8_t> mask_data;
         if (!extract_texture_data(mask_data, _device, _mask.value(), _width, _height)) {return false;}
-        std::cerr << _mask->getFormat() << '\n';
+        // std::cerr << _mask->getFormat() << '\n';
         assert(data.size() == mask_data.size());
         for (size_t i = 0; i < data.size()/4lu; ++i) {
             if (mask_data[i*4lu+0lu] == 0u &&
