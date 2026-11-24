@@ -3,7 +3,7 @@
 #include <AxoPlotl/core/Scene.hpp>
 #include <AxoPlotl/core/Viewport.hpp>
 #include "AxoPlotl/core/picking.hpp"
-#include "AxoPlotl/rendering/debug/PickingTextureVis.hpp"
+#include "AxoPlotl/rendering/PickingTextureVis.hpp"
 #include <webgpu/webgpu.hpp>
 #include <AxoPlotl/rendering/MyGpuContext.hpp>
 
@@ -80,7 +80,7 @@ public:
     const Viewport& viewport() const {return viewport_;}
     Viewport& viewport() {return viewport_;}
 
-    bool save_viewport_screenshot(const std::filesystem::path& _path, const ViewSize _size);
+    bool save_viewport_screenshot(const std::filesystem::path& _path, const ViewSize _size, bool _transparent_background = false);
 
     void call_deferred(std::function<void()> _f) {
         deferred_calls_.push_back(_f);
@@ -99,8 +99,8 @@ public:
     }
 
     void render_picking_texture_ui() {
-        debug.picking_renderer_.resize(viewport_.width(), viewport_.height());
-        debug.picking_renderer_.render_ui();
+        picking_renderer_.resize(viewport_.width(), viewport_.height());
+        picking_renderer_.render_ui();
     }
 
     const Picker::Pixel& picked_pixel() const {
@@ -108,13 +108,15 @@ public:
     }
 
 private:
-    struct Debugging
+    struct ScreenshotOptions
     {
-        DebugVis_PickingTextureRenderer picking_renderer_;
-        std::string screenshot_filename_ = "AxoPlotl_Screenshot.png";
-        ViewSize screenshot_size_ = {512, 512};
-        bool show_screenshot_window_ = false;
-    } debug;
+        std::string filename = "AxoPlotl_Screenshot.png";
+        static constexpr ViewSize MAX_SIZE = {8000,8000};
+        ViewSize size = {512, 512};
+        bool show_popup = false;
+        bool transparent_background = false;
+    } screenshot_options_;
+    PickingTextureVis picking_renderer_;
 
     Picker picker_;
 

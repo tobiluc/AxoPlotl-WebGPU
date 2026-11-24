@@ -5,11 +5,14 @@
 namespace AxoPlotl::internal
 {
 
-void add_face_normal_prop(
-    VolMesh& _mesh, std::string _name = "AxoPlotl::face_normal");
+void add_halfface_boundary_prop(VolMesh& _mesh, const std::string& _name = "AxoPlotl::halfface_is_boundary");
+
+void add_vertex_valence_prop(VolMesh& _mesh, const std::string& _name = "AxoPlotl::vertex_valence");
+
+void add_edge_valence_prop(VolMesh& _mesh, const std::string& _name = "AxoPlotl::edge_valence");
 
 template<typename EntityTag>
-void add_entity_index_prop(VolMesh& _mesh, std::string _name = "AxoPlotl::idx")
+void add_entity_index_prop(VolMesh& _mesh, const std::string& _name = "AxoPlotl::idx")
 {
     auto p = _mesh.create_persistent_property<int,EntityTag>(_name);
     if (!p) {return;}

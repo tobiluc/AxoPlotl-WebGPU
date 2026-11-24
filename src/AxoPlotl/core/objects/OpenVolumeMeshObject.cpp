@@ -202,11 +202,17 @@ void OpenVolumeMeshObject::render_ui_properties()
                 if (ImGui::MenuItem("Vertex Index")) {
                     add_entity_index_prop<OpenVolumeMesh::Entity::Vertex>(mesh());
                 }
+                if (ImGui::MenuItem("Vertex Valence")) {
+                    add_vertex_valence_prop(mesh());
+                }
                 ImGui::EndMenu();
             }
             if (mesh().n_edges()>0 && ImGui::BeginMenu("Edges")){
                 if (ImGui::MenuItem("Edge Index")) {
                     add_entity_index_prop<OpenVolumeMesh::Entity::Edge>(mesh());
+                }
+                if (ImGui::MenuItem("Edge Valence")) {
+                    add_edge_valence_prop(mesh());
                 }
                 ImGui::EndMenu();
             }
@@ -219,9 +225,6 @@ void OpenVolumeMeshObject::render_ui_properties()
             if (mesh().n_faces()>0 && ImGui::BeginMenu("Faces")){
                 if (ImGui::MenuItem("Face Index")) {
                     add_entity_index_prop<OpenVolumeMesh::Entity::Face>(mesh());
-                }
-                if (ImGui::MenuItem("Normal")) {
-                    add_face_normal_prop(mesh());
                 }
                 ImGui::EndMenu();
             }
@@ -258,11 +261,6 @@ void OpenVolumeMeshObject::init()
 
     mesh_data_.create_buffers(device);
 
-    // vertices_position_buffer_ = create_position_buffer(device, data.positions_);
-    // edges_center_buffer_ = create_position_buffer(device, data.edges_barycenters_);
-    // faces_center_buffer_ = create_position_buffer(device, data.faces_barycenters_);
-    // cells_center_buffer_ = create_position_buffer(device, data.cells_barycenters_);
-
     vertex_renderer_.init(id(), gpu_context, render_context,
         mesh_data_.vertices_positions);
     edge_renderer_.init(id(), gpu_context, render_context,
@@ -277,16 +275,6 @@ void OpenVolumeMeshObject::init()
         mesh_data_.cells_indices,
         mesh_data_.cells_centers,
         mesh_data_.halffaces_normals);
-
-    // vectors_on_vertices_renderer_.init(id(), scene_->app(), vertices_position_buffer_);
-    // vectors_on_edges_renderer_.init(id(), scene_->app(), edges_center_buffer_);
-    // vectors_on_faces_renderer_.init(id(), scene_->app(), faces_center_buffer_);
-    // vectors_on_cells_renderer_.init(id(), scene_->app(), cells_center_buffer_);
-
-    // upload_default_property_data<OVM::Entity::Vertex>();
-    // upload_default_property_data<OVM::Entity::Edge>();
-    // upload_default_property_data<OVM::Entity::Face>();
-    // upload_default_property_data<OVM::Entity::Cell>();
 
     vertex_renderer_.enabled() = false;
     edge_renderer_.enabled() = false;

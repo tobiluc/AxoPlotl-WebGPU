@@ -34,6 +34,6 @@ fn fs_main(in : VSOut) -> FragOutColPick
     let t:f32 = clamp((in.value - ubo.valueRange.x) / (ubo.valueRange.y - ubo.valueRange.x), 0.0, 1.0);
     var out:FragOutColPick;
     out.color = textureSample(colorMap, colorMapSampler, vec2<f32>(t,0.5));
-    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_FACE, bitcast<u32>(in.value), bitcast<u32>(in.position.z / in.position.w));
+    out.pick = vec4<u32>(ubo.objectId, ENTITY_TYPE_HALFFACE, bitcast<u32>(in.value), bitcast<u32>(in.position.z / in.position.w));
     return out;
 }

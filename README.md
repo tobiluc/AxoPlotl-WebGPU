@@ -14,7 +14,10 @@ This is the currently developed WebGPU version of
 int main()
 {
     // Always call init() first!
-    AxoPlotl::init();
+    if (AxoPlotl::init()) {
+        std::cerr << "ERROR: Failed to initialize AxoPlotl" << std::endl;
+        std::exit(1);
+    }
     
     // You can add custom UI code via the inspector callback.
     // This is shown in a side panel

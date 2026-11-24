@@ -68,7 +68,12 @@ fn fs_main(
 
     switch ubo.mode {
         case PICK_MODE_OBJECT_ID: {
-            color = hash_color(data.r);
+            let object_id = data.r;
+            if (object_id == 0u || object_id == 0xFFFFFFFFu) {
+                color = vec3<f32>(0.0);
+            } else {
+                color = hash_color(data.r);
+            }
         }
         case PICK_MODE_ENTITY_TYPE: {
             color = hash_color(data.g);

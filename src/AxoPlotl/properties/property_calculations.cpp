@@ -3,12 +3,30 @@
 namespace AxoPlotl::internal
 {
 
-void add_face_normal_prop(VolMesh& _mesh, std::string _name)
+void add_halfface_boundary_prop(VolMesh& _mesh, const std::string& _name)
 {
-    auto f_normal = _mesh.request_face_property<OVM::Vec3f>(_name);
-    _mesh.set_persistent(f_normal);
-    for (auto fh : _mesh.faces()) {
-        f_normal[fh] = _mesh.normal(fh.halfface_handle(0));
+    auto hf_b = _mesh.request_halfface_property<bool>(_name);
+    _mesh.set_persistent(hf_b);
+    for (OVM::HFH hfh : _mesh.halffaces()) {
+        hf_b[hfh] = _mesh.is_boundary(hfh);
+    }
+}
+
+void add_vertex_valence_prop(VolMesh& _mesh, const std::string& _name)
+{
+    auto v_v = _mesh.request_vertex_property<int>(_name);
+    _mesh.set_persistent(v_v);
+    for (OVM::VH vh : _mesh.vertices()) {
+        v_v[vh] = _mesh.valence(vh);
+    }
+}
+
+void add_edge_valence_prop(VolMesh& _mesh, const std::string& _name)
+{
+    auto e_v = _mesh.request_edge_property<int>(_name);
+    _mesh.set_persistent(e_v);
+    for (OVM::EH eh : _mesh.edges()) {
+        e_v[eh] = _mesh.valence(eh);
     }
 }
 

@@ -4,7 +4,7 @@
 #include <AxoPlotl/core/Scene.hpp>
 #include <mach/task_info.h>
 #include <mach/mach.h>
-#include <AxoPlotl/rendering/debug/PickingTextureVis.hpp>
+#include <AxoPlotl/rendering/PickingTextureVis.hpp>
 #include <AxoPlotl/core/Application.hpp>
 #include <AxoPlotl/gui/fonts.hpp>
 #include <AxoPlotl/input/Mouse.hpp>

@@ -1,9 +1,7 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "AxoPlotl/gui/widgets/draw_texture.hpp"
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
-#define IMGUI_DEFINE_MATH_OPERATORS
-
 #include "Application.hpp"
-#include "AxoPlotl/debug/meshes.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
@@ -161,7 +159,7 @@ bool Application::init()
     // Picker
     //----------
     picker_.init(gpu_context_.device);
-    debug.picking_renderer_.init(gpu_context_.device, 256, 256);
+    picking_renderer_.init(gpu_context_.device, 256, 256);
 
     return true;
 }
@@ -311,7 +309,7 @@ void Application::frame_tick()
         //------------------
         // Picking Debug
         //------------------
-        debug.picking_renderer_.render(
+        picking_renderer_.render(
             encoder,
             viewport_.picking_view()
             );
@@ -484,7 +482,7 @@ void Application::render_main_menu_bar_ui()
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Save Screenshot")) {
-                debug.show_screenshot_window_ = true;
+                screenshot_options_.show_popup = true;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
@@ -519,8 +517,6 @@ void Application::render_main_menu_bar_ui()
                 ImGui::EndMenu(); //!Inspector Settings
             }
 
-            //ImGui::SliderFloat("Font Scale", &font_scale_, 0.2f, 2.0f);
-
             if (ImGui::BeginMenu("Scene")) {
                 scene().render_settings_ui();
                 ImGui::EndMenu(); //!Scene Settings
@@ -535,16 +531,6 @@ void Application::render_main_menu_bar_ui()
 
                 ImGui::EndMenu(); //!Theme Settings
             }
-
-            // ImGui::SeparatorText("Picking");
-            // ImGui::Checkbox("Vertices", &picking_config_.enable_vertex_picking_);
-            // ImGui::SameLine();
-            // ImGui::Checkbox("Edges", &picking_config_.enable_edge_picking_);
-            // ImGui::SameLine();
-            // ImGui::Checkbox("Faces", &picking_config_.enable_face_picking_);
-            // ImGui::SameLine();
-            // ImGui::Checkbox("Cells", &picking_config_.enable_cell_picking_);
-            // ImGui::SameLine();
 
             ImGui::EndMenu(); // !Settings
         }
@@ -579,42 +565,45 @@ void Application::render_main_menu_bar_ui()
     }
 
     // Screenshot Popup
-    if (debug.show_screenshot_window_) {
+    if (screenshot_options_.show_popup) {
         ImGui::SetNextWindowSize(
             ImVec2(480, 320),
             ImGuiCond_FirstUseEver
             );
         if (ImGui::Begin(
                 "Screenshot",
-                &debug.show_screenshot_window_))
+                &screenshot_options_.show_popup))
         {
             gui::InputSlider2("Size",
-                         &debug.screenshot_size_.width,
+                         &screenshot_options_.size.width,
                          gui::InputSliderOptions{
                             .step=1,.min=1,.max=8000,
                             .display_name=true});
             if (ImGui::Button("Keep Aspect Ratio")) {
-                if (debug.screenshot_size_.height > debug.screenshot_size_.width) {
-                    debug.screenshot_size_.width = debug.screenshot_size_.height * viewport().size().aspect_ratio();
+                if (screenshot_options_.size.height > screenshot_options_.size.width) {
+                    screenshot_options_.size.width = screenshot_options_.size.height * viewport().size().aspect_ratio();
                 } else {
-                    debug.screenshot_size_.height = debug.screenshot_size_.width / viewport().size().aspect_ratio();
+                    screenshot_options_.size.height = screenshot_options_.size.width / viewport().size().aspect_ratio();
                 }
             }
+            ImGui::SameLine();
+            ImGui::Checkbox("Transparent Background", &screenshot_options_.transparent_background);
 
             const float preview_width = ImGui::GetItemRectSize().x;
-            const float preview_height = preview_width / debug.screenshot_size_.aspect_ratio();
+            const float preview_height = preview_width / screenshot_options_.size.aspect_ratio();
 
             gui::Texture(viewport().color_view(), preview_width, preview_height);
 
-            ImGui::InputText("File", debug.screenshot_filename_.data(), debug.screenshot_filename_.size());
+            ImGui::InputText("File", screenshot_options_.filename.data(), screenshot_options_.filename.size());
 
-            if (debug.screenshot_size_.width <= 8000
-                && debug.screenshot_size_.height <= 8000)
+            if (screenshot_options_.size.width <= 8000
+                && screenshot_options_.size.height <= 8000)
             {
                 if (ImGui::Button("Save")) {
                     save_viewport_screenshot(
-                        debug.screenshot_filename_,
-                        debug.screenshot_size_);
+                        screenshot_options_.filename,
+                        screenshot_options_.size,
+                        screenshot_options_.transparent_background);
                 }
             } else {
                 ImGui::Text("Size too big! (Max. 8000 x 8000)");
@@ -846,27 +835,56 @@ void Application::render_scene(wgpu::CommandEncoder& encoder, Viewport& _viewpor
 
 bool Application::save_viewport_screenshot(
     const std::filesystem::path& _path,
-    const ViewSize _size)
+    const ViewSize _size,
+    bool _transparent_background)
 {
-    if (_size.width > 8000 || _size.height > 8000) {
+    if (_size.width > screenshot_options_.MAX_SIZE.width || _size.height > screenshot_options_.MAX_SIZE.height) {
         std::cerr << "Screenshot Size too big! (Max. 8000 x 8000)";
         return false;
     }
+    assert(render_context_.surface_format == viewport_.color_texture().getFormat());
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
-    const auto prev_size = viewport().size();
+    const auto prev_scene_size = viewport().size();
+    const auto prev_pick_size = ViewSize{
+        .width=static_cast<float>(picking_renderer_.width()),
+        .height=static_cast<float>(picking_renderer_.height())
+    };
+    const auto prev_scene_settings = scene().settings;
+
+    // Resize to desired size
+    if (_transparent_background) {
+        picking_renderer_.resize(_size.width, _size.height);
+        picking_renderer_.mode() = PickingTextureVis::Mode::ObjectID;
+    }
     viewport_.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
-    Scene::Settings sceneSettings = scene().settings;
+
+    // Render
     scene().settings.show_orbit_target_cross = false;
+    scene().settings.show_axis_cross = false;
     render_scene(encoder, viewport_);
-    scene().settings = sceneSettings;
+    if (_transparent_background) {
+        picking_renderer_.render(encoder, viewport_.picking_view());
+    }
+    scene().settings = prev_scene_settings;
+
     wgpu::CommandBuffer cb = encoder.finish();
     gpu_context_.device.getQueue().submit(1, &cb);
     cb.release();
     encoder.release();
-    auto format = viewport_.color_texture().getFormat();
+
+    // Save Texture
+    std::optional<wgpu::Texture> mask_texture = std::nullopt;
+    if (_transparent_background) {mask_texture = picking_renderer_.texture();}
     bool res = save_texture_to_file(_path, gpu_context_.device,
-        viewport_.color_texture(), _size.width, _size.height);
-    viewport_.resize(gpu_context_.device, render_context_.surface_format, prev_size.width, prev_size.height);
+        viewport_.color_texture(), _size.width, _size.height,
+        mask_texture
+    );
+
+    // Reset Size
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, prev_scene_size.width, prev_scene_size.height);
+    if (_transparent_background) {
+        picking_renderer_.resize(prev_pick_size.width, prev_pick_size.height);
+    }
     return res;
 }
 

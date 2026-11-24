@@ -6,7 +6,11 @@
 namespace AxoPlotl::internal
 {
 
-class DebugVis_PickingTextureRenderer
+/*
+Responsible for rendering the picking texture to a visually interpretable texture.
+This is used for debugging purposes or also to set the mask for transparent background in screenshots.s
+*/
+class PickingTextureVis
 {
 public:
 
@@ -32,10 +36,18 @@ public:
 
     void render_ui();
 
+    const wgpu::Texture& texture() const {return output_texture;}
+    const wgpu::TextureView& texture_view() const {return output_view;}
+
+    uint32_t width() const {return width_;}
+    uint32_t height() const {return height_;}
+
+    Mode& mode() {return uniforms_.mode;}
+
 private:
 
     struct Uniforms {
-        alignas(16) uint32_t mode = static_cast<uint32_t>(Mode::ObjectID);
+        alignas(16) Mode mode = Mode::ObjectID;
     } uniforms_;
 
     wgpu::Texture output_texture;

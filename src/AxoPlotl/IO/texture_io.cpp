@@ -12,12 +12,8 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
 {
     auto srgb_to_linear = [](uint8_t value) -> uint8_t {
         float c = value / 255.0f;
-        float linear = (c <= 0.04045f)
-            ? c / 12.92f
-            : std::pow((c + 0.055f) / 1.055f, 2.4f);
-        return static_cast<uint8_t>(
-            std::round(linear * 255.0f)
-        );
+        float linear = (c <= 0.04045f)? (c / 12.92f) : std::pow((c + 0.055f) / 1.055f, 2.4f);
+        return static_cast<uint8_t>(std::round(linear * 255.0f));
     };
 
     // std::cerr << _texture.getFormat() << std::endl;
@@ -101,8 +97,7 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
         return false;
     }
 
-    const void* mapped_data =
-        buffer.getConstMappedRange(0, buffer_size);
+    const void* mapped_data = buffer.getConstMappedRange(0, buffer_size);
 
     if (!mapped_data) {
         buffer.unmap();
@@ -150,20 +145,43 @@ bool extract_texture_data(std::vector<uint8_t>& _image_data,
     return true;
 }
 
-bool save_texture_to_file(const std::filesystem::path& _path, wgpu::Device _device, wgpu::Texture _texture, uint32_t _width, uint32_t _height)
+bool save_texture_data_to_file(const std::filesystem::path& _path,
+                            const std::vector<uint8_t>& _data,
+                            const uint32_t _width, const uint32_t _height)
 {
-    std::vector<uint8_t> data;
-    if (!extract_texture_data(data, _device, _texture, _width, _height)) {
-        return false;
-    }
-    bool res = stbi_write_png(
+    return stbi_write_png(
         _path.string().c_str(),
         _width,
         _height,
         4,
-        data.data(),
+        _data.data(),
         _width * 4);
-    return res;
+}
+
+bool save_texture_to_file(const std::filesystem::path& _path,
+    wgpu::Device _device,
+    wgpu::Texture _texture,
+    uint32_t _width, uint32_t _height,
+    std::optional<wgpu::Texture> _mask)
+{
+    std::vector<uint8_t> data;
+    if (!extract_texture_data(data, _device, _texture, _width, _height)) {return false;}
+    if (_mask) {
+        // Apply mask -> If mask.rgb = (0,0,0) then set final.alpha=0
+        std::vector<uint8_t> mask_data;
+        if (!extract_texture_data(mask_data, _device, _mask.value(), _width, _height)) {return false;}
+        std::cerr << _mask->getFormat() << '\n';
+        assert(data.size() == mask_data.size());
+        for (size_t i = 0; i < data.size()/4lu; ++i) {
+            if (mask_data[i*4lu+0lu] == 0u &&
+                mask_data[i*4lu+1lu] == 0u &&
+                mask_data[i*4lu+2lu] == 0u)
+            {
+                data[i*4lu+3] = 0;
+            }
+        }
+    }
+    return save_texture_data_to_file(_path, data, _width, _height);
 }
 
 }

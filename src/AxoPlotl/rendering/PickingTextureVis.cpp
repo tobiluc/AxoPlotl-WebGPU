@@ -6,9 +6,9 @@
 namespace AxoPlotl::internal
 {
 
-PipelineState DebugVis_PickingTextureRenderer::pipeline_state_;
+PipelineState PickingTextureVis::pipeline_state_;
 
-bool DebugVis_PickingTextureRenderer::init(
+bool PickingTextureVis::init(
     const wgpu::Device &device,
     uint32_t _width,
     uint32_t _height)
@@ -22,7 +22,7 @@ bool DebugVis_PickingTextureRenderer::init(
     wgpu::TextureDescriptor texture_desc{};
     texture_desc.label = wgpu::StringView("Picking visualization texture");
     texture_desc.size = {
-                         _width,
+        _width,
         _height,
         1
     };
@@ -118,7 +118,7 @@ bool DebugVis_PickingTextureRenderer::init(
     return initialized;
 }
 
-void DebugVis_PickingTextureRenderer::render(
+void PickingTextureVis::render(
     wgpu::CommandEncoder& encoder,
     const wgpu::TextureView &picking_texture)
 {
@@ -176,7 +176,7 @@ void DebugVis_PickingTextureRenderer::render(
     pass.end();
 }
 
-void DebugVis_PickingTextureRenderer::resize(uint32_t width, uint32_t height)
+void PickingTextureVis::resize(uint32_t width, uint32_t height)
 {
     if (this->width_ == width && this->height_ == height) {
         return;
@@ -195,18 +195,19 @@ void DebugVis_PickingTextureRenderer::resize(uint32_t width, uint32_t height)
     desc.format = wgpu::TextureFormat::RGBA8Unorm;
     desc.usage =
         wgpu::TextureUsage::RenderAttachment |
-        wgpu::TextureUsage::TextureBinding;
+        wgpu::TextureUsage::TextureBinding |
+        wgpu::TextureUsage::CopySrc;
 
     output_texture = pipeline_state_.device_.createTexture(desc);
     output_view = output_texture.createView();
 }
 
-void DebugVis_PickingTextureRenderer::render_ui()
+void PickingTextureVis::render_ui()
 {
     static const char* modes[]{"Object Id","Entity Type","Entity Index", "Depth"};
-    int mode = uniforms_.mode;
+    int mode = static_cast<int>(uniforms_.mode);
     if (ImGui::Combo("Mode", &mode, modes, 4)) {
-        uniforms_.mode = mode;
+        uniforms_.mode = static_cast<Mode>(mode);
     }
 
     float draw_width = ImGui::GetContentRegionAvail().x;
