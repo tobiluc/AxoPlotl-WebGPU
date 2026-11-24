@@ -481,10 +481,6 @@ void Application::render_main_menu_bar_ui()
                     config);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Save Screenshot")) {
-                screenshot_panel_.enable();
-            }
-            ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
             }
@@ -563,9 +559,6 @@ void Application::render_main_menu_bar_ui()
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
-    // Screenshot Popup
-    screenshot_panel_.render_ui(this);
 
     ImGui::End(); //!MenuBar
 }
@@ -793,10 +786,6 @@ bool Application::save_viewport_screenshot(
     const ViewSize _size,
     bool _transparent_background)
 {
-    if (_size.width > screenshot_panel_.MAX_SIZE.width || _size.height > screenshot_panel_.MAX_SIZE.height) {
-        std::cerr << "Screenshot Size too big! (Max. 8000 x 8000)";
-        return false;
-    }
     assert(render_context_.surface_format == viewport_.color_texture().getFormat());
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
     const auto prev_scene_size = viewport().size();

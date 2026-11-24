@@ -49,6 +49,7 @@ add_library(AxoPlotlCore
 
     AxoPlotl/tools/PlottingTool.cpp
     AxoPlotl/tools/DataControlTool.cpp
+    AxoPlotl/tools/ScreenshotTool.cpp
     AxoPlotl/tools/DebugTool.cpp
 
     AxoPlotl/IO/rapidobj_to_ovm.cpp
@@ -60,7 +61,6 @@ add_library(AxoPlotlCore
 
     AxoPlotl/rendering/MyGpuContext.cpp
     AxoPlotl/rendering/PickingTextureVis.cpp
-    AxoPlotl/gui/ScreenshotPanel.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
