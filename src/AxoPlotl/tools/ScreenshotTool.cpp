@@ -44,11 +44,11 @@ void render_ui()
 
     if (ImGui::Button("Save")) {
         IGFD::FileDialogConfig config;
-            config.path = filepath;
-            ImGuiFileDialog::Instance()->OpenDialog(
-                "SaveScreenshotDialogKey", "Choose File",
-                "(*.png){.png}",
-                config);
+        config.path = filepath;
+        ImGuiFileDialog::Instance()->OpenDialog(
+            "SaveScreenshotDialogKey", "Choose File",
+            "(*.png){.png}",
+            config);
     }
 
     if (ImGuiFileDialog::Instance()->Display("SaveScreenshotDialogKey")) {
