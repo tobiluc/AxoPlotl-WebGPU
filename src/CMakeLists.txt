@@ -121,12 +121,6 @@ if (XCODE)
     )
 endif()
 
-if (EMSCRIPTEN)
-    set_target_properties(AxoPlotlCore PROPERTIES SUFFIX ".html")
-    # Enable the use of emscripten_sleep()
-    target_link_options(App PRIVATE -sASYNCIFY)
-endif()
-
 include(GNUInstallDirs)
 install(TARGETS AxoPlotlCore
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

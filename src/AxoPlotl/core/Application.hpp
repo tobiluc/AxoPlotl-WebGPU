@@ -43,6 +43,8 @@ private:
         bool pick_result = false;
     } requests_;
 
+    bool scenes_tab_bar_enabled_ = true;
+
     GpuContext gpu_context_;
     RenderContext render_context_;
 
@@ -56,7 +58,7 @@ private:
     GLFWwindow* window_;
     Viewport viewport_;
 
-    std::vector<Scene> scenes_;
+    std::vector<std::unique_ptr<Scene>> scenes_;
     uint32_t current_scene_index_ = 0;
 
     bool initialized_ = false;
@@ -75,7 +77,7 @@ public:
 
     void on_window_resize(float width, float height);
 
-    Scene& scene() {return scenes_.at(current_scene_index_);}
+    Scene& scene() {return *scenes_.at(current_scene_index_);}
 
     Scene& add_scene();
 

@@ -44,7 +44,8 @@ Application::Application() :
 current_scene_index_(0),
 viewport_(this)
 {
-    scenes_.emplace_back();
+    auto default_scene = std::make_unique<Scene>();
+    scenes_.push_back(std::move(default_scene));
 }
 
 Application::~Application()
@@ -56,15 +57,16 @@ Application::~Application()
 Scene& Application::add_scene()
 {
     current_scene_index_ = scenes_.size();
-    scenes_.emplace_back();
-    scenes_.back().init(this);
-    return scenes_.back();
+    auto new_scene = std::make_unique<Scene>();
+    new_scene->init(this);
+    scenes_.push_back(std::move(new_scene));
+    return *scenes_.back();
 }
 
 bool Application::set_scene(const Scene& _scene)
 {
     for (uint32_t scene_idx = 0; scene_idx < scenes_.size(); ++scene_idx) {
-        if (&scenes_.at(scene_idx) == &_scene) {
+        if (scenes_.at(scene_idx).get() == &_scene) {
             return set_scene(scene_idx);
         }
     }
@@ -173,7 +175,7 @@ bool Application::init()
     // Scenes
     //----------
     for (auto& scene : scenes_) {
-        scene.init(this);
+        scene->init(this);
     }
 
     //----------
@@ -411,7 +413,7 @@ void Application::cleanup()
     ImGui::DestroyContext();
 
     for (auto& scene : scenes_) {
-        scene.destroy();
+        scene->destroy();
     }
 
     viewport_.release();
@@ -535,7 +537,7 @@ void Application::draw_main_menu_bar_ui()
 
         if (ImGui::BeginMenu("Edit"))
         {
-            if (ImGui::BeginMenu("Add"))
+            if (ImGui::BeginMenu("Add Object"))
             {
                 if (ImGui::MenuItem("Spherical Harmonics")) {
                     scene().add_object<SHObject>();
@@ -546,7 +548,23 @@ void Application::draw_main_menu_bar_ui()
                 if (ImGui::MenuItem("Segment")) {
                     scene().add_object<SegmentObject>();
                 }
-                ImGui::EndMenu(); //!Add
+                ImGui::EndMenu(); //!Add Object
+            }
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Scene")) {
+                if (ImGui::MenuItem("Add Scene")) {
+                    add_scene();
+                }
+                if (ImGui::MenuItem("Delete Scene")) {
+                    if (scenes_.size() > 1lu) {
+                        scene().delete_objects();
+                        call_deferred([&]() {
+                            scenes_.erase(scenes_.begin()+current_scene_index_);
+                            current_scene_index_ = 0lu;
+                        });
+                    }
+                }
+                ImGui::EndMenu(); //!Scene
             }
             ImGui::EndMenu(); //!Edit
         }
@@ -555,6 +573,7 @@ void Application::draw_main_menu_bar_ui()
         {
             if (ImGui::BeginMenu("Layout")) {
                 ImGui::Checkbox("Enable Inspector", &inspector_.enabled);
+                ImGui::Checkbox("Enable Scenes Bar", &scenes_tab_bar_enabled_);
                 requests_.reset_layout |= ImGui::Button("Reset Layout");
                 ImGui::EndMenu(); //!Inspector Settings
             }
@@ -611,6 +630,8 @@ void Application::draw_main_menu_bar_ui()
 
 void Application::draw_scenes_tab_bar_ui()
 {
+    if (!scenes_tab_bar_enabled_) {return;}
+
     ImGui::Begin("Scenes");
 
     if (ImGui::BeginTabBar("Scenes")) {
@@ -620,12 +641,19 @@ void Application::draw_scenes_tab_bar_ui()
             std::string name = "Scene " + std::to_string(i);
 
             if (ImGui::BeginTabItem(name.c_str())) {
-                current_scene_index_ = i;
+                set_scene(i);
                 ImGui::EndTabItem();
             }
 
             ImGui::PopID();
         }
+
+        // Add a Scene Button
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_PLUS)) {
+            add_scene();
+        }
+        ImGui::SetItemTooltip("Add Scene");
 
         ImGui::EndTabBar();
     }
@@ -722,11 +750,12 @@ void Application::draw_editor_ui()
     // Rebuild the layout when requested.
     if (requests_.reset_layout) {
         inspector_.enabled = true;
+        scenes_tab_bar_enabled_ = true;
         build_default_layout(dockspace_id);
         requests_.reset_layout = false;
     }
 
-    // render_scenes_tab_bar_ui();
+    draw_scenes_tab_bar_ui();
 
     draw_viewport_ui();
 
