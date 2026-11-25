@@ -1,6 +1,5 @@
 #include "ScenesControlTool.hpp"
 #include "AxoPlotl/AxoPlotl.hpp"
-#include "ImGuiFileDialog.h"
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/gui/fonts.hpp>
@@ -80,7 +79,6 @@ void draw_ui()
         if (ImGui::TabItemButton(ICON_FA_PLUS, ImGuiTabItemFlags_Trailing)) {
             app().add_scene("New Scene");
         }
-
         ImGui::SetItemTooltip("Add Scene");
 
         ImGui::EndTabBar();
