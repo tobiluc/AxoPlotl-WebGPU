@@ -32,6 +32,8 @@ public:
 
     void render_settings_ui();
 
+    void delete_objects();
+
     void destroy() {
         destroy_buffer(origin_position_buffer_);
         unit_frame_renderer_.clear();

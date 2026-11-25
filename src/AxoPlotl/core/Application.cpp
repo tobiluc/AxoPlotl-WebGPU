@@ -351,11 +351,12 @@ void Application::frame_tick(bool _headless)
 
 int Application::run(RunConfig _cfg)
 {
-    if (!initialized_) {
+    if (!initialized_) { // safety measure
         if (!init()) {
             return 1;
         }
     }
+    glfwSetWindowShouldClose(window(), GLFW_FALSE); // reopen window
     if (_cfg.num_ticks.has_value()) {
         *_cfg.num_ticks = std::max(*_cfg.num_ticks, 1llu);
     }
@@ -386,14 +387,15 @@ void Application::cleanup()
 
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
+    ImGui::DestroyContext();
 
     for (auto& scene : scenes_) {
         scene.destroy();
     }
 
-    gpu_context_.release();
-    render_context_.release();
     viewport_.release();
+    render_context_.release();
+    gpu_context_.release();
 
     if (window_) {
         glfwDestroyWindow(window_);
@@ -401,6 +403,7 @@ void Application::cleanup()
     }
 
     std::cout << "AxoPlotlApp cleared." << std::endl;
+
     initialized_ = false;
 }
 

@@ -1,5 +1,4 @@
 #define WEBGPU_CPP_IMPLEMENTATION
-
 #include "AxoPlotl/AxoPlotl.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/tools/DataControlTool.hpp"

@@ -10,7 +10,11 @@ include("${PROJECT_SOURCE_DIR}/cmake/dependencies.cmake")
 
 add_subdirectory(src)
 
-add_subdirectory(examples/screenshot)
+option(AXOPLOTL_BUILD_EXAMPLES "Build Examples" ON)
+if (AXOPLOTL_BUILD_EXAMPLES)
+    add_subdirectory(examples/screenshot)
+    add_subdirectory(examples/multirun)
+endif()
 
 target_include_directories(AxoPlotlCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>

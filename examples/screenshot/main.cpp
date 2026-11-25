@@ -1,5 +1,4 @@
 #define WEBGPU_CPP_IMPLEMENTATION
-
 #include <AxoPlotl/AxoPlotl.hpp>
 
 int main(int argc, char* argv[])

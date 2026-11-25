@@ -27,6 +27,11 @@ void Scene::init(Application *_app)
     unit_frame_renderer_.update_matrix_data({m});
 }
 
+void Scene::delete_objects()
+{
+    for (auto& obj : objects_) {obj->deleted() = true;}
+}
+
 std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const VolMesh &&_mesh)
 {
     return add_object<OpenVolumeMeshObject>(std::move(_mesh));
