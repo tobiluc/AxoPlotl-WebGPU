@@ -14,7 +14,7 @@ This is the currently developed WebGPU version of
 int main()
 {
     // Always call init() first!
-    if (AxoPlotl::init()) {
+    if (AxoPlotl::app().init()) {
         std::cerr << "ERROR: Failed to initialize AxoPlotl" << std::endl;
         std::exit(1);
     }
@@ -23,30 +23,30 @@ int main()
     // This is shown in a side panel
     // There are some predefined "tools" that should be used here
     // like the DataContolTool
-    AxoPlotl::set_inspector_callback([&]() {
+    AxoPlotl::app().inspector_callback() = {[&]() {
         ImGui::Text("Hello World");
         AxoPlotl::DataControlTool::render_ui();
-    });
+    }};
   
     // Add an OpenVolumeMesh from a file
     // The scene holds an object collection that is automatically
     // rendered. In this case, we want to visualize an existing property
-    auto obj = AxoPlotl::scene().add_mesh("coolmesh.ovmb");
+    auto obj = AxoPlotl::app().scene().add_mesh("coolmesh.ovmb");
     obj->visualize_property("v_weights");
 
     // Show the application window. While running, you can still add new meshes, visualize properties,
     // and more. If the window is closed, the program continues and the app is reset can be used again.
-    AxoPlotl::run();
+    AxoPlotl::app().run();
     
     // Visualize another mesh in a new window
     // This time we only show the scene and no inspector.
     // Note that this and other UI settings can also be set in the window
     // under Settings -> UI
-    AxoPlotl::show_inspector(false);
+    AxoPlotl::app().inspectore_enabled() = false;
   
-    obj = AxoPlotl::scene().add_mesh("anothercoolmesh.obj");
+    obj = AxoPlotl::app().scene().add_mesh("anothercoolmesh.obj");
   
-    AxoPlotl::run();
+    AxoPlotl::app().run();
     
     return 0;
 }

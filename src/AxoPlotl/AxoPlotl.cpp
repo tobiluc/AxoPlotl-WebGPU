@@ -11,41 +11,6 @@ internal::Application& app() {
     return app_instance;
 }
 
-bool init()
-{
-    return app().init();
-}
-
-void run(RunConfig _cfg)
-{
-    app().run(_cfg);
-}
-
-void cleanup()
-{
-    app().clear();
-}
-
-internal::Scene& scene()
-{
-    return app().scene();
-}
-
-void set_inspector_callback(const std::function<void()>& _callback)
-{
-    app().inspector_callback() = _callback;
-}
-
-void show_inspector(bool _show)
-{
-    app().inspector_enabled() = _show;
-}
-
-float frames_per_second()
-{
-    return app().fps();
-}
-
 float memory_usage_mb()
 {
     mach_task_basic_info info;

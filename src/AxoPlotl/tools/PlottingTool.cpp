@@ -28,7 +28,7 @@ const char* icon() {
 void render_ui()
 {
     if (ImGui::BeginMenu("Modify")) {
-        for (auto& obj : AxoPlotl::scene().get_objects()) {
+        for (auto& obj : AxoPlotl::app().scene().get_objects()) {
             if (objects_.contains(obj->id())) {
                 ImGui::PushID(obj->id());
                 if (ImGui::MenuItem(obj->name().c_str())) {
@@ -42,7 +42,7 @@ void render_ui()
     }
 
     if (selected_id_ >= 0 && objects_.contains(selected_id_)) {
-        ImGui::SeparatorText(AxoPlotl::scene().get_object(selected_id_)->name().c_str());
+        ImGui::SeparatorText(AxoPlotl::app().scene().get_object(selected_id_)->name().c_str());
     }
 
     ImGui::InputText("x(u,v)", input_.x_, sizeof(input_.x_));
@@ -96,7 +96,7 @@ void render_ui()
                     mesh.add_face({vh0,vh1,vh2,vh3});
                 }
             }
-            auto obj = AxoPlotl::scene().add_mesh(std::move(mesh));
+            auto obj = AxoPlotl::app().scene().add_mesh(std::move(mesh));
             objects_[obj->id()] = input_;
         }
     }

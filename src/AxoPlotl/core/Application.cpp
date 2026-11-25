@@ -70,7 +70,7 @@ Application::Application() :
 
 Application::~Application()
 {
-    clear();
+    cleanup();
     glfwTerminate();
 }
 
@@ -359,7 +359,7 @@ int Application::run(RunConfig _cfg)
         frame_tick();
     }
     if (!_cfg.manual_cleanup) {
-        clear();
+        cleanup();
     }
     return 0;
 }
@@ -376,7 +376,7 @@ void Application::on_window_resize(float width, float height)
     trigger_redraw();
 }
 
-void Application::clear()
+void Application::cleanup()
 {
     if (!initialized_) {return;}
 

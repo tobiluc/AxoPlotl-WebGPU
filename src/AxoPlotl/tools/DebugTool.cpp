@@ -19,19 +19,19 @@ void render_ui()
     if (ImGui::CollapsingHeader("Performance"))
     {
         ImGui::Text("%f MB", AxoPlotl::memory_usage_mb());
-        ImGui::Text("%f FPS", AxoPlotl::frames_per_second());
+        ImGui::Text("%f FPS", AxoPlotl::app().frames_per_second());
         ImGui::Text("Draw Frames %d", internal::n_draw_frames());
     }
 
     if (ImGui::CollapsingHeader("Scene"))
     {
-        ImGui::Text("#Objects: %zu", AxoPlotl::scene().num_objects());
+        ImGui::Text("#Objects: %zu", AxoPlotl::app().scene().num_objects());
         if (ImGui::BeginMenu("Add")) {
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
-                scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
+                AxoPlotl::app().scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());
             }
             if (ImGui::MenuItem("Add empty Mesh")) {
-                scene().add_object<OpenVolumeMeshObject>(VolMesh());
+                AxoPlotl::app().scene().add_object<OpenVolumeMeshObject>(VolMesh());
             }
             ImGui::EndMenu();
         }

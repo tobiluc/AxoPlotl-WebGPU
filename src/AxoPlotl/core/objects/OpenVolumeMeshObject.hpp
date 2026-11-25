@@ -100,7 +100,6 @@ public:
         return filepath_;
     }
 
-protected:
     template<typename EntityTag>
     auto& entity_renderer();
     template<> auto& entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
@@ -109,6 +108,8 @@ protected:
     template<> auto& entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
     template<> auto& entity_renderer<OVM::Entity::HalfEdge>() {return edge_renderer_;}
     template<> auto& entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
+
+protected:
 
     template<typename EntityTag>
     wgpu::Buffer& entity_center_buffer();

@@ -9,12 +9,12 @@
 
 int main()
 {
-    if (!AxoPlotl::init()) {
+    if (!AxoPlotl::app().init()) {
       std::cerr << "Failed to initialize AxoPlotl" << std::endl;
       return 1;
     }
 
-    AxoPlotl::set_inspector_callback([&]()
+    AxoPlotl::app().inspector_callback() = {[&]()
     {
         if (ImGui::BeginTabBar("")) {
             if (ImGui::BeginTabItem(AxoPlotl::DataControlTool::icon())) {
@@ -35,11 +35,11 @@ int main()
             }
             ImGui::EndTabBar();
         }
-    });
+    }};
 
     AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);
 
-    AxoPlotl::run();
+    AxoPlotl::app().run();
 
     return 0;
 }

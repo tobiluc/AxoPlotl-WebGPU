@@ -69,9 +69,9 @@ public:
     // init everything and return true if it went all right
     bool init();
 
-    int run(RunConfig _cfg);
+    int run(RunConfig _cfg = RunConfig());
 
-    void clear();
+    void cleanup();
 
     void on_window_resize(float width, float height);
 
@@ -107,7 +107,7 @@ public:
         return inspector_.enabled;
     }
 
-    constexpr float fps() const {
+    constexpr float frames_per_second() const {
         return time_.frames_per_second_;
     }
 
