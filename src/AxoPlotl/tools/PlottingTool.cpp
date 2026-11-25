@@ -25,7 +25,7 @@ const char* icon() {
     return ICON_FA_CHART_LINE;
 }
 
-void render_ui()
+void draw_ui()
 {
     if (ImGui::BeginMenu("Modify")) {
         for (auto& obj : AxoPlotl::app().scene().get_objects()) {

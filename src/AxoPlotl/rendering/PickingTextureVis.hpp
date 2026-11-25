@@ -34,7 +34,7 @@ public:
 
     void resize(uint32_t width, uint32_t height);
 
-    void render_ui();
+    void draw_ui();
 
     const wgpu::Texture& texture() const {return output_texture;}
     const wgpu::TextureView& texture_view() const {return output_view;}

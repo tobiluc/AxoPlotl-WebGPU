@@ -40,12 +40,46 @@ void wgpuPollEvents(
 namespace AxoPlotl::internal
 {
 
+Application::Application() :
+current_scene_index_(0),
+viewport_(this)
+{
+    scenes_.emplace_back();
+}
+
+Application::~Application()
+{
+    cleanup();
+    glfwTerminate();
+}
+
 Scene& Application::add_scene()
 {
     current_scene_index_ = scenes_.size();
     scenes_.emplace_back();
     scenes_.back().init(this);
     return scenes_.back();
+}
+
+bool Application::set_scene(const Scene& _scene)
+{
+    for (uint32_t scene_idx = 0; scene_idx < scenes_.size(); ++scene_idx) {
+        if (&scenes_.at(scene_idx) == &_scene) {
+            return set_scene(scene_idx);
+        }
+    }
+    return false;
+}
+
+bool Application::set_scene(uint32_t _scene_index)
+{
+    if (_scene_index >= scenes_.size()) {return false;}
+    current_scene_index_ = _scene_index;
+    return true;
+}
+
+constexpr bool Application::has_scene() const {
+    return current_scene_index_ < scenes_.size();
 }
 
 void Application::Time::update()
@@ -59,19 +93,6 @@ void Application::Time::update()
         seconds_since_last_frame_ -= 1.0f;
         frames_per_second_ = 1.0f / delta_time_;
     }
-}
-
-Application::Application() :
-    current_scene_index_(0),
-    viewport_(this)
-{
-    scenes_.emplace_back();
-}
-
-Application::~Application()
-{
-    cleanup();
-    glfwTerminate();
 }
 
 bool Application::init_glfw()
@@ -241,7 +262,7 @@ void Application::frame_tick(bool _headless)
     // Build UI
     //------------------
     if (!_headless) {
-        render_editor_ui();
+        draw_editor_ui();
     }
 
     //------------------
@@ -442,9 +463,9 @@ bool Application::init_imgui()
     return true;
 }
 
-void Application::render_viewport_ui()
+void Application::draw_viewport_ui()
 {
-    viewport_.render_ui(gpu_context_.device, render_context_.surface_format);
+    viewport_.draw_ui(gpu_context_.device, render_context_.surface_format);
 
     // Clicking on an Object
     if (requests_.pick_result) [[unlikely]] {
@@ -454,12 +475,12 @@ void Application::render_viewport_ui()
     if (picker_.pixel().entity.object_id < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
         // std::cerr << picker_.pixel().object_id_ << std::endl;
         auto obj = scene().get_object(picker_.pixel().entity.object_id);
-        if (obj) [[likely]] {obj->render_ui_picking(picker_);}
+        if (obj) [[likely]] {obj->draw_picking_ui(picker_);}
         ImGui::EndPopup();
     }
 }
 
-void Application::render_main_menu_bar_ui()
+void Application::draw_main_menu_bar_ui()
 {
     //--------------------
     // Top Menu Bar
@@ -539,7 +560,7 @@ void Application::render_main_menu_bar_ui()
             }
 
             if (ImGui::BeginMenu("Scene")) {
-                scene().render_settings_ui();
+                scene().draw_settings_ui();
                 ImGui::EndMenu(); //!Scene Settings
             }
 
@@ -588,7 +609,7 @@ void Application::render_main_menu_bar_ui()
     ImGui::End(); //!MenuBar
 }
 
-void Application::render_scenes_tab_bar_ui()
+void Application::draw_scenes_tab_bar_ui()
 {
     ImGui::Begin("Scenes");
 
@@ -612,7 +633,7 @@ void Application::render_scenes_tab_bar_ui()
     ImGui::End();
 }
 
-void Application::render_inspector_ui()
+void Application::draw_inspector_ui()
 {
     if (!inspector_.enabled) {return;}
 
@@ -683,13 +704,13 @@ void Application::build_default_layout(ImGuiID dockspace_id)
     ImGui::DockBuilderFinish(dockspace_id);
 }
 
-void Application::render_editor_ui()
+void Application::draw_editor_ui()
 {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    render_main_menu_bar_ui();
+    draw_main_menu_bar_ui();
 
     ImGuiID dockspace_id = ImHashStr("AxoPlotlDockSpace");
 
@@ -707,9 +728,9 @@ void Application::render_editor_ui()
 
     // render_scenes_tab_bar_ui();
 
-    render_viewport_ui();
+    draw_viewport_ui();
 
-    render_inspector_ui();
+    draw_inspector_ui();
 
     ImGui::Render();
 }

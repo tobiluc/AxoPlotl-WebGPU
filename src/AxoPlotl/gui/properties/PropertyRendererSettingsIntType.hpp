@@ -64,7 +64,7 @@ public:
             }
 
             // Colormap Menu
-            cm.render_menu();
+            cm.draw_menu_ui();
 
             // Range Setting
             gui::RangeSliders(
@@ -91,7 +91,7 @@ public:
         case Mode::EXACT:
         {
             int val = rangef.x;
-            cm.render_menu();
+            cm.draw_menu_ui();
             ImGui::InputInt("Value", &val);
             val = std::clamp(static_cast<IT>(val), hist_.min(), hist_.max());
             renderer_->property_filter_options().scalar_range = {val,val};

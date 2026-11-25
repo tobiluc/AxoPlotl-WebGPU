@@ -30,7 +30,7 @@ public:
                 const ViewSize _view_size,
                 bool _allow_input = true);
 
-    void render_settings_ui();
+    void draw_settings_ui();
 
     void delete_objects();
 
@@ -122,7 +122,8 @@ public:
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(Settings,
             zoom_to_new_object,
             clear_color, show_axis_cross,
-            show_orbit_target_cross);
+            show_orbit_target_cross,
+            light_from_camera);
     } settings;
 
     bool save_to_file(const std::filesystem::path& _path) const;

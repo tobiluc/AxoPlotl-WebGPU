@@ -202,7 +202,7 @@ void PickingTextureVis::resize(uint32_t width, uint32_t height)
     output_view = output_texture.createView();
 }
 
-void PickingTextureVis::render_ui()
+void PickingTextureVis::draw_ui()
 {
     static const char* modes[]{"Object Id","Entity Type","Entity Index", "Depth"};
     int mode = static_cast<int>(uniforms_.mode);

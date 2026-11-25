@@ -46,7 +46,7 @@ public:
         *this = Camera();
     }
 
-    void zoom_to_box(const Vec3& min, const Vec3& max);
+    void zoom_to_box(const Vec3& min, const Vec3& max, const float _padding = 0.1);
 
     bool render_settings_ui(GLFWwindow* _window);
 

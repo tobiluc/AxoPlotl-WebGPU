@@ -19,7 +19,7 @@ const char* icon()
     return ICON_FA_IMAGE;
 }
 
-void render_ui()
+void draw_ui()
 {
     const auto& viewport = AxoPlotl::app().viewport();
     gui::InputSlider2("Size",

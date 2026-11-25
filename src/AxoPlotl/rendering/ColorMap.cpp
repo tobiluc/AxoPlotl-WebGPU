@@ -234,7 +234,7 @@ void ColorMap::update(const std::vector<f16>& _data)
     );
 }
 
-void ColorMap::render_menu()
+void ColorMap::draw_menu_ui()
 {
     if (ImGui::BeginMenu(("Colormap ("+name_+")").c_str())) {
         if (ImGui::MenuItem("Viridis")) {

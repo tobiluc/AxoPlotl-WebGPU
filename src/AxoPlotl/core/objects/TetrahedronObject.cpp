@@ -21,18 +21,26 @@ void TetObject::render(
     renderer_.render(_view_size, _render_pass, mvp);
 }
 
-void TetObject::render_ui_info()
+void TetObject::draw_info_ui()
 {
+    Mat3x3 m;
+    for (int i = 0; i < 3; ++i) {
+        m[i][0] = input_[i][0] - input_[3][0];
+        m[i][1] = input_[i][1] - input_[3][1];
+        m[i][2] = input_[i][2] - input_[3][2];
+    }
+    float det = glm::determinant(m);
+    ImGui::Text("det(A-D, B-D, C-D) = %f", det);
 }
 
-void TetObject::render_ui_settings()
+void TetObject::draw_settings_ui()
 {
     input_name();
 
     ImGui::ColorEdit3("Color", &renderer_.ambient()[0]);
 }
 
-void TetObject::render_ui_properties()
+void TetObject::draw_properties_ui()
 {
     bool changed = false;
     changed |= ImGui::InputFloat3("A", input_[0].data());
@@ -49,7 +57,7 @@ void TetObject::render_ui_properties()
     }
 }
 
-void TetObject::render_ui_picking(const Picker& _p)
+void TetObject::draw_picking_ui(const Picker& _p)
 {
     if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
 

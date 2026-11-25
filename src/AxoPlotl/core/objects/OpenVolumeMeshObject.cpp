@@ -32,7 +32,7 @@ OpenVolumeMeshObject::OpenVolumeMeshObject(
     }
 }
 
-void OpenVolumeMeshObject::render_ui_settings()
+void OpenVolumeMeshObject::draw_settings_ui()
 {
     input_name();
 
@@ -85,7 +85,7 @@ void OpenVolumeMeshObject::render_ui_settings()
     mat3x3_renderer_.clip_box() = cb;
 }
 
-void OpenVolumeMeshObject::render_ui_info()
+void OpenVolumeMeshObject::draw_info_ui()
 {
     ImGui::Text("V/E/F/C = %zu/%zu/%zu/%zu",
         mesh().n_vertices(), mesh().n_edges(),
@@ -96,7 +96,7 @@ void OpenVolumeMeshObject::render_ui_info()
         bbox_.max()[0], bbox_.max()[1], bbox_.max()[2]);
 }
 
-void OpenVolumeMeshObject::render_ui_properties()
+void OpenVolumeMeshObject::draw_properties_ui()
 {
     auto render_property_selection_menu = [&]<typename EntityTag>(const std::string& _prefix)
     {
@@ -344,7 +344,7 @@ void OpenVolumeMeshObject::render(
     //     mvp);
 }
 
-void OpenVolumeMeshObject::render_ui_picking(const Picker &_p)
+void OpenVolumeMeshObject::draw_picking_ui(const Picker &_p)
 {
     if (_p.pixel().entity.object_id != id()) [[unlikely]] {
         return;

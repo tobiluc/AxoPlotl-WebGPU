@@ -79,6 +79,12 @@ public:
 
     Scene& add_scene();
 
+    bool set_scene(const Scene& _scene);
+
+    bool set_scene(uint32_t _scene_index);
+
+    constexpr bool has_scene() const;
+
     GLFWwindow* window() {return window_;}
 
     glm::vec<2,int> framebuffer_size() const {
@@ -113,7 +119,7 @@ public:
 
     void render_picking_texture_ui() {
         picking_renderer_.resize(viewport_.width(), viewport_.height());
-        picking_renderer_.render_ui();
+        picking_renderer_.draw_ui();
     }
 
     const Picker::Pixel& picked_pixel() const {
@@ -128,11 +134,16 @@ private:
 
     bool init_imgui();
 
-     // Build Viewport UI
-    void render_viewport_ui();
+    void draw_viewport_ui();
 
-    // Build Editor UI
-    void render_editor_ui();
+    void draw_scenes_tab_bar_ui();
+
+    void draw_inspector_ui();
+
+    void draw_main_menu_bar_ui();
+
+    // Calls the individual ui functions (Viewport/Scenes Tab/Inspector/...)
+    void draw_editor_ui();
 
     void render_scene(
         wgpu::CommandEncoder& _encoder,
@@ -141,17 +152,7 @@ private:
     void render_gui(wgpu::CommandEncoder& _encoder,
                     wgpu::TextureView& _target_view);
 
-    void render_main_menu_bar_ui();
-
-    void render_scenes_tab_bar_ui();
-
-    void render_inspector_ui();
-
     void build_default_layout(ImGuiID dockspace_id);
-
-    constexpr bool has_scene() const {
-        return current_scene_index_ < scenes_.size();
-    }
 };
 
 }

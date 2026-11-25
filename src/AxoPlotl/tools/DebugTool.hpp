@@ -3,7 +3,7 @@
 namespace AxoPlotl::DebugTool
 {
 
-void render_ui();
+void draw_ui();
 const char* icon();
 
 }

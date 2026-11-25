@@ -73,7 +73,7 @@ public:
     wgpu::Sampler sampler_;
     wgpu::Device device_;
 
-    void render_menu();
+    void draw_menu_ui();
 };
 
 }

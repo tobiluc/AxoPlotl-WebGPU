@@ -16,7 +16,7 @@ static int properties_object_id_ = -1;
 
 const char* icon() {return ICON_FA_SLIDERS;}
 
-void render_ui()
+void draw_ui()
 {
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
@@ -130,7 +130,7 @@ void render_ui()
         if (info_object_id_ >= 0
             && ImGui::BeginPopup("popup_object_info"))
         {
-            AxoPlotl::app().scene().get_object(info_object_id_)->render_ui_info();
+            AxoPlotl::app().scene().get_object(info_object_id_)->draw_info_ui();
             ImGui::EndPopup();
         }
 
@@ -138,7 +138,7 @@ void render_ui()
         if (settings_object_id_ >= 0
             && ImGui::BeginPopup("popup_object_settings"))
         {
-            AxoPlotl::app().scene().get_object(settings_object_id_)->render_ui_settings();
+            AxoPlotl::app().scene().get_object(settings_object_id_)->draw_settings_ui();
             ImGui::SeparatorText("Danger Zone");
             if (ImGui::Button(ICON_FA_TRASH)) {
                 obj->deleted() = true;
@@ -202,7 +202,7 @@ void render_ui()
 
     if (auto propObj = AxoPlotl::app().scene().get_object(properties_object_id_)) {
         ImGui::SeparatorText(("Properties of "+propObj->name()).c_str());
-        propObj->render_ui_properties();
+        propObj->draw_properties_ui();
     } else {
         properties_object_id_ = -1;
     }

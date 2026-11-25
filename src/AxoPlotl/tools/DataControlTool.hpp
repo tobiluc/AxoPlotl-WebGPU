@@ -3,7 +3,7 @@
 namespace AxoPlotl::DataControlTool
 {
 
-void render_ui();
+void draw_ui();
 const char* icon();
 
 }

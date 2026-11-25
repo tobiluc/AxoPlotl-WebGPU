@@ -178,7 +178,7 @@ void Viewport::resize(
     resources_.picking_view_ = resources_.picking_texture_.createView();
 }
 
-bool Viewport::render_ui(
+bool Viewport::draw_ui(
     wgpu::Device _device, wgpu::TextureFormat _color_format)
 {
     visible_ = false;

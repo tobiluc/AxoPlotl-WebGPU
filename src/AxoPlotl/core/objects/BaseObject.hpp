@@ -38,13 +38,13 @@ public:
         const Mat4x4& _view,
         const Mat4x4& _proj) = 0;
 
-    virtual void render_ui_info() = 0;
+    virtual void draw_info_ui() = 0;
 
-    virtual void render_ui_settings() = 0;
+    virtual void draw_settings_ui() = 0;
 
-    virtual void render_ui_properties() = 0;
+    virtual void draw_properties_ui() = 0;
 
-    virtual void render_ui_picking(const Picker& _p) = 0;
+    virtual void draw_picking_ui(const Picker& _p) = 0;
 
     const BoundingBox& bounding_box() const {return bbox_;}
 

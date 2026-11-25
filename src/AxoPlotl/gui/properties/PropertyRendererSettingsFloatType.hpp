@@ -86,7 +86,7 @@ public:
             }
 
             // Colormap Menu
-            cm.render_menu();
+            cm.draw_menu_ui();
 
             // Range setting
             gui::RangeSliders(

@@ -27,17 +27,17 @@ void SegmentObject::render(
     renderer_.render(_view_size, _render_pass, mvp);
 }
 
-void SegmentObject::render_ui_info()
+void SegmentObject::draw_info_ui()
 {
 }
 
-void SegmentObject::render_ui_settings()
+void SegmentObject::draw_settings_ui()
 {
     input_name();
     gui::draw_basic_renderer_settings(renderer_);
 }
 
-void SegmentObject::render_ui_properties()
+void SegmentObject::draw_properties_ui()
 {
     bool changed = false;
 
@@ -53,7 +53,7 @@ void SegmentObject::render_ui_properties()
     }
 }
 
-void SegmentObject::render_ui_picking(const Picker& _p)
+void SegmentObject::draw_picking_ui(const Picker& _p)
 {
     if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
     ImGui::SeparatorText(name_.c_str());

@@ -46,13 +46,13 @@ public:
         const Mat4x4& _view,
         const Mat4x4& _proj) override;
 
-    void render_ui_info() override;
+    void draw_info_ui() override;
 
-    void render_ui_settings() override;
+    void draw_settings_ui() override;
 
-    void render_ui_properties() override;
+    void draw_properties_ui() override;
 
-    void render_ui_picking(const Picker& _p) override;
+    void draw_picking_ui(const Picker& _p) override;
 
     void init() override;
 

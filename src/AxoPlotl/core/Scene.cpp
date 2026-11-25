@@ -96,7 +96,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     });
 }
 
-void Scene::render_settings_ui()
+void Scene::draw_settings_ui()
 {
     if (ImGui::BeginMenu("Camera")) {
         camera().render_settings_ui(app_->window());

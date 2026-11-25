@@ -21,11 +21,11 @@ void SHObject::render(
     renderer_.render(_view_size, _render_pass, mvp);
 }
 
-void SHObject::render_ui_info()
+void SHObject::draw_info_ui()
 {
 }
 
-void SHObject::render_ui_settings()
+void SHObject::draw_settings_ui()
 {
     input_name();
 
@@ -44,10 +44,10 @@ void SHObject::render_ui_settings()
         if (ImGui::MenuItem("Custom")) {type_ = Type::CUSTOM;}
         ImGui::EndMenu();
     }
-    renderer_.color_map().render_menu();
+    renderer_.color_map().draw_menu_ui();
 }
 
-void SHObject::render_ui_properties()
+void SHObject::draw_properties_ui()
 {
     if (type_ == Type::CUSTOM)
     {
@@ -116,7 +116,7 @@ void SHObject::render_ui_properties()
     }
 }
 
-void SHObject::render_ui_picking(const Picker& _p)
+void SHObject::draw_picking_ui(const Picker& _p)
 {
     if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
 

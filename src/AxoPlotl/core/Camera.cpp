@@ -81,7 +81,7 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
         orientation_ * (-FORWARD * orbit_distance);
 }
 
-void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max)
+void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max, const float _padding)
 {
     float required_distance = 0.0f;
     orbit_target_ = (min + max) * 0.5f;
@@ -114,7 +114,7 @@ void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max)
         }
     }
 
-    required_distance *= 1.2f; // padding
+    required_distance *= (1.0f + _padding);
 
     eye_position_ = orbit_target_ +
         orientation_ * (-FORWARD * required_distance);

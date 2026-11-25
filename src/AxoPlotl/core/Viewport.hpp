@@ -19,7 +19,7 @@ public:
     Viewport(const Viewport&) = delete;
     Viewport& operator=(const Viewport&) = delete;
 
-    bool render_ui(    wgpu::Device _device,
+    bool draw_ui(    wgpu::Device _device,
                    wgpu::TextureFormat _color_format);
 
     void resize(
