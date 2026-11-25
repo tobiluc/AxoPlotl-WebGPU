@@ -10,6 +10,8 @@ include("${PROJECT_SOURCE_DIR}/cmake/dependencies.cmake")
 
 add_subdirectory(src)
 
+add_subdirectory(examples/screenshot)
+
 target_include_directories(AxoPlotlCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>

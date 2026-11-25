@@ -16,9 +16,14 @@ bool init()
     return app().init();
 }
 
-void run()
+void run(RunConfig _cfg)
 {
-    app().run();
+    app().run(_cfg);
+}
+
+void cleanup()
+{
+    app().clear();
 }
 
 internal::Scene& scene()

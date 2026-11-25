@@ -6,6 +6,7 @@
 #include "AxoPlotl/rendering/PickingTextureVis.hpp"
 #include <webgpu/webgpu.hpp>
 #include <AxoPlotl/rendering/MyGpuContext.hpp>
+#include <AxoPlotl/core/RunConfig.hpp>
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -58,6 +59,8 @@ private:
     std::vector<Scene> scenes_;
     uint32_t current_scene_index_ = 0;
 
+    bool initialized_ = false;
+
 public:
     Application();
 
@@ -66,7 +69,9 @@ public:
     // init everything and return true if it went all right
     bool init();
 
-    void run();
+    int run(RunConfig _cfg);
+
+    void clear();
 
     void on_window_resize(float width, float height);
 
@@ -118,8 +123,6 @@ public:
 private:
     // Draw a frame and handle events
     void frame_tick();
-
-    void clear();
 
     bool init_glfw();
 

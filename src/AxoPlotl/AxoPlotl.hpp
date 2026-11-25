@@ -1,13 +1,16 @@
 #pragma once
 #include <AxoPlotl/core/Scene.hpp>
 #include <functional>
+#include <AxoPlotl/core/RunConfig.hpp>
 
 namespace AxoPlotl
 {
 
 bool init();
 
-void run();
+void run(RunConfig _cfg = RunConfig());
+
+void cleanup();
 
 internal::Application& app();
 

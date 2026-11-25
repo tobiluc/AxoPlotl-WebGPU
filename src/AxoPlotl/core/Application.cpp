@@ -91,7 +91,7 @@ bool Application::init_glfw()
 bool Application::init()
 {
     // Create Window
-    if (!init_glfw()) {return false;}
+    if (initialized_ || !init_glfw()) {return false;}
 
     //-----------
     // Callbacks
@@ -161,6 +161,8 @@ bool Application::init()
     picker_.init(gpu_context_.device);
     picking_renderer_.init(gpu_context_.device, 256, 256);
 
+    std::cout << "AxoPlotlApp initialized." << std::endl;
+    initialized_ = true;
     return true;
 }
 
@@ -343,13 +345,23 @@ void Application::frame_tick()
     render_context_.surface.present();
 }
 
-void Application::run()
+int Application::run(RunConfig _cfg)
 {
-    while (!glfwWindowShouldClose(window())) {
+    if (!initialized_) {
+        if (!init()) {
+            return 1;
+        }
+    }
+    if (_cfg.num_ticks.has_value()) {
+        *_cfg.num_ticks = std::max(*_cfg.num_ticks, 1llu);
+    }
+    while (!glfwWindowShouldClose(window()) && (!_cfg.num_ticks.has_value() || (--(*_cfg.num_ticks) > 0llu))) {
         frame_tick();
     }
-    clear();
-    init(); // prepare for next run
+    if (!_cfg.manual_cleanup) {
+        clear();
+    }
+    return 0;
 }
 
 void Application::on_window_resize(float width, float height)
@@ -366,6 +378,8 @@ void Application::on_window_resize(float width, float height)
 
 void Application::clear()
 {
+    if (!initialized_) {return;}
+
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplWGPU_Shutdown();
 
@@ -374,12 +388,16 @@ void Application::clear()
     }
 
     gpu_context_.release();
+    render_context_.release();
     viewport_.release();
 
     if (window_) {
         glfwDestroyWindow(window_);
         window_ = nullptr;
     }
+
+    std::cout << "AxoPlotlApp cleared." << std::endl;
+    initialized_ = false;
 }
 
 bool Application::init_imgui()
