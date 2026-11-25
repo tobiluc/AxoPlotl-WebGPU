@@ -43,7 +43,7 @@ private:
         bool pick_result = false;
     } requests_;
 
-    bool scenes_tab_bar_enabled_ = true;
+    bool add_scenes_ui_enabled_ = false;
 
     GpuContext gpu_context_;
     RenderContext render_context_;

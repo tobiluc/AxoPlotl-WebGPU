@@ -551,20 +551,22 @@ void Application::draw_main_menu_bar_ui()
                 ImGui::EndMenu(); //!Add Object
             }
             ImGui::Separator();
-            if (ImGui::BeginMenu("Scene")) {
-                if (ImGui::MenuItem("Add Scene")) {
-                    add_scene();
-                }
-                if (ImGui::MenuItem("Delete Scene")) {
-                    if (scenes_.size() > 1lu) {
-                        scene().delete_objects();
-                        call_deferred([&]() {
-                            scenes_.erase(scenes_.begin()+current_scene_index_);
-                            current_scene_index_ = 0lu;
-                        });
+            if (add_scenes_ui_enabled_) {
+                if (ImGui::BeginMenu("Scene")) {
+                    if (ImGui::MenuItem("Add Scene")) {
+                        add_scene();
                     }
+                    if (ImGui::MenuItem("Delete Scene")) {
+                        if (scenes_.size() > 1lu) {
+                            scene().delete_objects();
+                            call_deferred([&]() {
+                                scenes_.erase(scenes_.begin()+current_scene_index_);
+                                current_scene_index_ = 0lu;
+                            });
+                        }
+                    }
+                    ImGui::EndMenu(); //!Scene
                 }
-                ImGui::EndMenu(); //!Scene
             }
             ImGui::EndMenu(); //!Edit
         }
@@ -573,7 +575,7 @@ void Application::draw_main_menu_bar_ui()
         {
             if (ImGui::BeginMenu("Layout")) {
                 ImGui::Checkbox("Enable Inspector", &inspector_.enabled);
-                ImGui::Checkbox("Enable Scenes Bar", &scenes_tab_bar_enabled_);
+                ImGui::Checkbox("Enable Scenes Bar", &add_scenes_ui_enabled_);
                 requests_.reset_layout |= ImGui::Button("Reset Layout");
                 ImGui::EndMenu(); //!Inspector Settings
             }
@@ -630,7 +632,7 @@ void Application::draw_main_menu_bar_ui()
 
 void Application::draw_scenes_tab_bar_ui()
 {
-    if (!scenes_tab_bar_enabled_) {return;}
+    if (!add_scenes_ui_enabled_) {return;}
 
     ImGui::Begin("Scenes");
 
@@ -750,7 +752,7 @@ void Application::draw_editor_ui()
     // Rebuild the layout when requested.
     if (requests_.reset_layout) {
         inspector_.enabled = true;
-        scenes_tab_bar_enabled_ = true;
+        add_scenes_ui_enabled_ = false;
         build_default_layout(dockspace_id);
         requests_.reset_layout = false;
     }
