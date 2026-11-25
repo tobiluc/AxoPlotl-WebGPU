@@ -27,7 +27,7 @@ void SHObject::draw_info_ui()
 
 void SHObject::draw_settings_ui()
 {
-    input_name();
+    draw_name_input_ui();
 
     std::string str = "Type (";
     switch (type_) {
@@ -151,9 +151,9 @@ void SHObject::init()
     });
 }
 
-void SHObject::destroy()
+void SHObject::cleanup()
 {
-    renderer_.clear();
+    renderer_.cleanup();
 }
 
 void SHObject::recompute_bounding_box()

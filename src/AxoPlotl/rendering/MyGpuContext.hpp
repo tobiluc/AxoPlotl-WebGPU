@@ -15,7 +15,7 @@ struct GpuContext
 
     wgpu::Queue queue() const {return device.getQueue();}
 
-    void release();
+    void cleanup();
 };
 
 struct RenderContext
@@ -28,7 +28,7 @@ struct RenderContext
 
     wgpu::SurfaceCapabilities get_surface_capabilities(const GpuContext& _gpu_context) const;
 
-    void release();
+    void cleanup();
 
     void configure_surface(const GpuContext& _gpu_context, const int _width, const int _height);
 };

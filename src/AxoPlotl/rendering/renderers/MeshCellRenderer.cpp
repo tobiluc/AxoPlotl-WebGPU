@@ -17,7 +17,7 @@ void MeshCellRenderer::init(uint32_t _object_id,
                                const BufferData<VolMeshData::Normal>& _halffaces_normals)
 {
     triangle_pipeline_state_.set_device(_gpu_context.device);
-    // outline_pipeline_state_.set_device(_gpu_context.device);
+    cleanup();
 
     object_id_ = _object_id;
 
@@ -47,12 +47,13 @@ void MeshCellRenderer::init(uint32_t _object_id,
     initialized_ = true;
 }
 
-void MeshCellRenderer::clear()
+void MeshCellRenderer::cleanup()
 {
     // We only delete the buffers that were created by this
     // renderer
-    destroy_buffer(property_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(property_buffer_);
+    save_destroy_release(uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

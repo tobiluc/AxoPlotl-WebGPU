@@ -129,25 +129,49 @@ wgpu::Buffer create_and_write_bufferT(
     return buffer;
 }
 
-inline constexpr void destroy_buffer(wgpu::Buffer& _buffer) {
-    if (_buffer) {
-        _buffer.destroy();
-        _buffer.release();
-        _buffer = nullptr;
-    }
+template<typename... Res>
+constexpr void save_destroy_release(Res&... _res) {
+    ([&] {
+        if (_res) {
+            _res.destroy();
+            _res.release();
+            _res = nullptr;
+        }
+    }(), ...);
+}
+
+template<typename... Res>
+constexpr void save_release(Res&... _res) {
+    ([&] {
+        if (_res) {
+            _res.release();
+            _res = nullptr;
+        }
+    }(), ...);
+}
+
+template<typename... Res>
+constexpr void save_unconfigure_release(Res&... _res) {
+    ([&] {
+        if (_res) {
+            _res.unconfigure();
+            _res.release();
+            _res = nullptr;
+        }
+    }(), ...);
 }
 
 template<typename T>
 struct BufferData {
     wgpu::Buffer buffer;
     std::vector<T> data;
-    ~BufferData() {destroy();}
+    ~BufferData() {cleanup();}
     void create_and_write(const wgpu::Device& _device) {
-        destroy_buffer(buffer);
+        save_destroy_release(buffer);
         buffer = create_and_write_bufferT<T>(_device, data);
     }
-    void destroy() {
-        destroy_buffer(buffer);
+    void cleanup() {
+        save_destroy_release(buffer);
         data.clear();
     }
 };

@@ -11,6 +11,7 @@ void MeshHalfEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_cont
                                const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances)
 {
     pipeline_state_.set_device(_gpu_context.device);
+    cleanup();
 
     object_id_ = _object_id;
     property_color_map_.create(_gpu_context.device);
@@ -35,10 +36,11 @@ void MeshHalfEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_cont
     initialized_ = true;
 }
 
-void MeshHalfEdgeRenderer::clear()
+void MeshHalfEdgeRenderer::cleanup()
 {
-    destroy_buffer(halfedge_property_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(halfedge_property_buffer_);
+    save_destroy_release(uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

@@ -34,7 +34,7 @@ OpenVolumeMeshObject::OpenVolumeMeshObject(
 
 void OpenVolumeMeshObject::draw_settings_ui()
 {
-    input_name();
+    draw_name_input_ui();
 
     ImGui::PushID(0);
     gui::Toggle(vertex_renderer_.enabled());
@@ -147,9 +147,9 @@ void OpenVolumeMeshObject::draw_properties_ui()
             selected_prop_entity_type_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
             scene_->app()->call_deferred([&]() {
-                vector3_renderer_.clear();
+                vector3_renderer_.cleanup();
                 vector3_renderer_.enabled() = false;
-                mat3x3_renderer_.clear();
+                mat3x3_renderer_.cleanup();
                 mat3x3_renderer_.enabled() = false;
             });
         }
@@ -293,14 +293,14 @@ void OpenVolumeMeshObject::init()
     }
 }
 
-void OpenVolumeMeshObject::destroy()
+void OpenVolumeMeshObject::cleanup()
 {
-    vertex_renderer_.clear();
-    edge_renderer_.clear();
-    face_renderer_.clear();
-    cell_renderer_.clear();
-    vector3_renderer_.clear();
-    mat3x3_renderer_.clear();
+    vertex_renderer_.cleanup();
+    edge_renderer_.cleanup();
+    face_renderer_.cleanup();
+    cell_renderer_.cleanup();
+    vector3_renderer_.cleanup();
+    mat3x3_renderer_.cleanup();
 }
 
 void OpenVolumeMeshObject::render(

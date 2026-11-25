@@ -14,6 +14,7 @@ option(AXOPLOTL_BUILD_EXAMPLES "Build Examples" ON)
 if (AXOPLOTL_BUILD_EXAMPLES)
     add_subdirectory(examples/screenshot)
     add_subdirectory(examples/multirun)
+    add_subdirectory(examples/scenes)
 endif()
 
 target_include_directories(AxoPlotlCore PUBLIC

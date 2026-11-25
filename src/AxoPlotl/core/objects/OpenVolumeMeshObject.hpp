@@ -63,7 +63,7 @@ public:
                          const std::optional<std::filesystem::path>& _filepath = std::nullopt);
 
     ~OpenVolumeMeshObject() {
-        destroy();
+        cleanup();
     }
 
     void render(
@@ -82,7 +82,7 @@ public:
 
     void init() override;
 
-    void destroy() override;
+    void cleanup() override;
 
     void recompute_bounding_box() override;
 

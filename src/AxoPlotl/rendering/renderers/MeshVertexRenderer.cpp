@@ -13,6 +13,7 @@ void MeshVertexRenderer::init(
     const BufferData<Position> &_vertices_positions)
 {
     pipeline_state_.set_device(_gpu_context.device);
+    cleanup();
 
     object_id_ = _object_id;
     property_color_map_.create(_gpu_context.device);
@@ -35,10 +36,11 @@ void MeshVertexRenderer::init(
     initialized_ = true;
 }
 
-void MeshVertexRenderer::clear()
+void MeshVertexRenderer::cleanup()
 {
-    destroy_buffer(property_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(property_buffer_);
+    save_destroy_release(uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

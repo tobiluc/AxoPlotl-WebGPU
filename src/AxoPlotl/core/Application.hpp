@@ -41,6 +41,7 @@ private:
     struct Requests {
         bool reset_layout = false;
         bool pick_result = false;
+        bool switch_scene_tab = false;
     } requests_;
 
     bool add_scenes_ui_enabled_ = false;
@@ -79,9 +80,11 @@ public:
 
     Scene& scene() {return *scenes_.at(current_scene_index_);}
 
-    Scene& add_scene();
+    Scene& add_scene(const std::string& _name = "New Scene");
 
     bool set_scene(const Scene& _scene);
+
+    bool set_scene(const std::string& _name);
 
     bool set_scene(uint32_t _scene_index);
 
@@ -113,6 +116,10 @@ public:
 
     bool& inspector_enabled() {
         return inspector_.enabled;
+    }
+
+    bool& scenes_menu_enabled() {
+        return add_scenes_ui_enabled_;
     }
 
     constexpr float frames_per_second() const {

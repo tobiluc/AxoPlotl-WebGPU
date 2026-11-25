@@ -12,7 +12,7 @@ void Matrix3x3Renderer::init(uint32_t _object_id,
                            wgpu::Buffer _position_buffer)
 {
     pipeline_state_.set_device(_gpu_context.device);
-    clear();
+    cleanup();
 
     object_id_ = _object_id;
     position_buffer_ = _position_buffer;
@@ -25,10 +25,10 @@ void Matrix3x3Renderer::init(uint32_t _object_id,
     initialized_ = true;
 }
 
-void Matrix3x3Renderer::clear()
+void Matrix3x3Renderer::cleanup()
 {
-    destroy_buffer(matrix_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(matrix_buffer_, uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

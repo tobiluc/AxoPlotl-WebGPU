@@ -15,36 +15,32 @@ Viewport::Viewport(Application* _app) : app_(_app)
 
 Viewport::~Viewport()
 {
-    release();
+    cleanup();
 }
 
-void Viewport::Resources::release()
+void Viewport::Resources::cleanup()
 {
     // Release views before their parent textures.
-    if (color_view_) {color_view_.release();}
-    if (depth_view_) {depth_view_.release();}
-    if (picking_view_) {picking_view_.release();}
-    if (color_texture_) {color_texture_.release();}
-    if (depth_texture_) {depth_texture_.release();}
-    if (picking_texture_) {picking_texture_.release();}
+    save_release(color_view_, depth_view_, picking_view_);
+    save_destroy_release(color_texture_, depth_texture_, picking_texture_);
 }
 
-void Viewport::release()
+void Viewport::cleanup()
 {
-    resources_.release();
+    resources_.cleanup();
     width_ = 0;
     height_ = 0;
 }
 
-void Viewport::release_deferred()
+void Viewport::deferred_cleanup()
 {
     if (app_) [[likely]] {
         Resources old_resources = std::move(resources_);
         app_->call_deferred(
             [r = std::move(old_resources)]() mutable {
-                r.release();
+                r.cleanup();
             });
-    } else {release();}
+    } else {cleanup();}
 }
 
 std::optional<glm::vec2> Viewport::mouse_to_local() const
@@ -77,6 +73,11 @@ void Viewport::resize(
     uint32_t width,
     uint32_t height)
 {
+    if (!_device) {
+        std::cerr << "Invalid device in Viewport: Can't resize." << std::endl;
+        return;
+    }
+
     width = std::max(width, 1u);
     height = std::max(height, 1u);
 
@@ -87,7 +88,7 @@ void Viewport::resize(
     // It is important that we do not directly release Resources
     // here but at the end of the frame since there might
     // still be draws of this texture e.g. Screenshot Preview.
-    release_deferred();
+    deferred_cleanup();
 
     width_ = width;
     height_ = height;

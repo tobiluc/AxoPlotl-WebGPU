@@ -58,9 +58,9 @@ public:
         return uniforms_.clip_box_;
     }
 
-    ~Matrix3x3Renderer() {clear();}
+    ~Matrix3x3Renderer() {cleanup();}
 
-    void clear() override;
+    void cleanup() override;
 
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,

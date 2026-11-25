@@ -76,7 +76,7 @@ public:
     Picker() {};
 
     ~Picker() {
-        destroy_buffer(buffer_);
+        save_destroy_release(buffer_);
     }
 
     void init(wgpu::Device _device);

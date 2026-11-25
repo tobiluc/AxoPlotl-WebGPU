@@ -33,7 +33,7 @@ void SegmentObject::draw_info_ui()
 
 void SegmentObject::draw_settings_ui()
 {
-    input_name();
+    draw_name_input_ui();
     gui::draw_basic_renderer_settings(renderer_);
 }
 
@@ -75,9 +75,9 @@ void SegmentObject::init()
     renderer_.update_edge_property_data({{1,1,1,1}}); // white
 }
 
-void SegmentObject::destroy()
+void SegmentObject::cleanup()
 {
-    renderer_.clear();
+    renderer_.cleanup();
 }
 
 void SegmentObject::recompute_bounding_box()

@@ -31,7 +31,7 @@ public:
     }
 
     ~SHObject() {
-        destroy();
+        cleanup();
     }
 
     void render(
@@ -50,7 +50,7 @@ public:
 
     void init() override;
 
-    void destroy() override;
+    void cleanup() override;
 
     void recompute_bounding_box() override;
 

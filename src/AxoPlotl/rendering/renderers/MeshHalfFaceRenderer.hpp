@@ -58,10 +58,10 @@ public:
 
     ~MeshHalfFaceRenderer()
     {
-        clear();
+        cleanup();
     }
 
-    void clear() override;
+    void cleanup() override;
 
     struct Options
     {

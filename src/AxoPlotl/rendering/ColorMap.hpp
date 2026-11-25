@@ -26,7 +26,7 @@ public:
     ColorMap() {}
 
     ~ColorMap() {
-        destroy();
+        cleanup();
     }
 
     f16x3 sample_color(float _t) const;
@@ -35,12 +35,15 @@ public:
 
     void create(wgpu::Device _device);
 
-    inline void destroy() {
+    void cleanup() {
         if (texture_) {
             texture_.destroy();
             texture_.release();
             view_.release();
             sampler_.release();
+            sampler_ = nullptr;
+            texture_ = nullptr;
+            view_ = nullptr;
         }
     }
 

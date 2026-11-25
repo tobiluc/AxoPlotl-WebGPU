@@ -1,4 +1,5 @@
 #include "MyGpuContext.hpp"
+#include <AxoPlotl/rendering/wgpu_commons.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -59,20 +60,9 @@ void GpuContext::init(wgpu::Instance _instance,
     device = adapter.requestDevice(deviceDesc);
 }
 
-void GpuContext::release() {
+void GpuContext::cleanup() {
     auto queue = device.getQueue();
-    if (queue) {
-        queue.release();
-        queue = nullptr;
-    }
-    if (adapter) {
-        adapter.release();
-        adapter = nullptr;
-    }
-    if (device) {
-        device.release();
-        device = nullptr;
-    }
+    save_release(queue, adapter, device);
 }
 
 wgpu::SurfaceCapabilities RenderContext::get_surface_capabilities(const GpuContext& _gpu_context) const {
@@ -81,12 +71,8 @@ wgpu::SurfaceCapabilities RenderContext::get_surface_capabilities(const GpuConte
     return surf_caps;
 }
 
-void RenderContext::release() {
-    if (surface) {
-        surface.unconfigure();
-        surface.release();
-        surface = nullptr;
-    }
+void RenderContext::cleanup() {
+    save_unconfigure_release(surface);
     surface_format = wgpu::TextureFormat::Undefined;
 }
 

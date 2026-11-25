@@ -210,7 +210,10 @@ void ColorMap::create(wgpu::Device _device)
 
 void ColorMap::update(const std::vector<f16>& _data)
 {
-    if (!device_) {return;}
+    if (!device_) {
+        std::cerr << "Invalid device in ColorMap: Can't update data." << std::endl;
+        return;
+    }
 
     static wgpu::TexelCopyTextureInfo destination;
     //static wgpu::ImageCopyTexture destination;

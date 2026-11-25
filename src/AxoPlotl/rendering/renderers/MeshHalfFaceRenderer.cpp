@@ -15,6 +15,7 @@ void MeshHalfFaceRenderer::init(
     const Options &_opt)
 {
     pipeline_state_.set_device(_gpu_context.device);
+    cleanup();
 
     object_id_ = _object_id;
 
@@ -42,10 +43,11 @@ void MeshHalfFaceRenderer::init(
     initialized_ = true;
 }
 
-void MeshHalfFaceRenderer::clear()
+void MeshHalfFaceRenderer::cleanup()
 {
-    destroy_buffer(property_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(property_buffer_);
+    save_destroy_release(uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

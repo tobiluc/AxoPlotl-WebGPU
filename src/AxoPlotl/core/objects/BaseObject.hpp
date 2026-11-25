@@ -28,7 +28,7 @@ public:
 
     virtual void init() = 0;
 
-    virtual void destroy() = 0;
+    virtual void cleanup() = 0;
 
     virtual void recompute_bounding_box() = 0;
 
@@ -60,7 +60,7 @@ public:
 
     const Scene* scene() const {return scene_;}
 
-    bool input_name();
+    bool draw_name_input_ui();
 
 protected:
     internal::Scene* scene_;

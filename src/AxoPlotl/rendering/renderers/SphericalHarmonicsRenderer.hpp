@@ -31,13 +31,13 @@ public:
         : RendererBase(_max_draw_calls)
     {}
 
-    ~SHRenderer() {clear();}
+    ~SHRenderer() {cleanup();}
 
     inline ColorMap& color_map() {
         return color_map_;
     }
 
-    void clear() override;
+    void cleanup() override;
 
     void init(uint32_t _object_id,
               const GpuContext& _gpu_context,

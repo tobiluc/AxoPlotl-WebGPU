@@ -35,7 +35,7 @@ void TetObject::draw_info_ui()
 
 void TetObject::draw_settings_ui()
 {
-    input_name();
+    draw_name_input_ui();
 
     ImGui::ColorEdit3("Color", &renderer_.ambient()[0]);
 }
@@ -86,9 +86,9 @@ void TetObject::init()
     renderer_.cell_scale() = 1;
 }
 
-void TetObject::destroy()
+void TetObject::cleanup()
 {
-    renderer_.clear();
+    renderer_.cleanup();
 }
 
 void TetObject::recompute_bounding_box()

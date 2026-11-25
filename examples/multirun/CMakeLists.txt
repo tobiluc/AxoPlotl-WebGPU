@@ -1,8 +1,8 @@
 
-add_executable(AxoPlotl-MultiRun
+add_executable(AxoPlotl-Example-MultiRun
     main.cpp
 )
 
-target_link_libraries(AxoPlotl-MultiRun PUBLIC
+target_link_libraries(AxoPlotl-Example-MultiRun PUBLIC
     AxoPlotlCore   
 )

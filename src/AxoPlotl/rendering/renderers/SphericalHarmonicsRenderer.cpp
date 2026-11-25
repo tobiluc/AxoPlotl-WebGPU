@@ -14,6 +14,7 @@ void SHRenderer::init(
 {
     resolution_ = _resolution;
     pipeline_state_.set_device(_gpu_context.device);
+    cleanup();
 
     color_map_.create(_gpu_context.device);
     color_map_.set_coolwarm();
@@ -31,11 +32,10 @@ void SHRenderer::init(
     initialized_ = true;
 }
 
-void SHRenderer::clear()
+void SHRenderer::cleanup()
 {
-    destroy_buffer(vertex_buffer_);
-    destroy_buffer(index_buffer_);
-    destroy_buffer(uniform_buffer_);
+    save_destroy_release(vertex_buffer_, index_buffer_, uniform_buffer_);
+    save_release(bind_group_);
     initialized_ = false;
 }
 

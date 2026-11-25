@@ -15,16 +15,35 @@ namespace AxoPlotl::internal
 
 class Scene
 {
+    friend class Application;
+
+protected:
+    void init(Application* _app);
+
+    void cleanup() {
+        save_destroy_release(origin_position_buffer_);
+        unit_frame_renderer_.cleanup();
+        objects_.clear();
+    }
+
+    Application* app_ = nullptr;
+    std::vector<std::shared_ptr<ObjectBase>> objects_;
+
+    wgpu::Buffer origin_position_buffer_;
+    Matrix3x3Renderer unit_frame_renderer_;
+
+    Camera camera_;
+
 public:
+    DirectionalLight directional_light;
+    std::string name = "Scene";
 
     Scene() : unit_frame_renderer_(2)
     {};
 
     ~Scene() {
-        destroy();
+        cleanup();
     }
-
-    void init(Application* _app);
 
     void render(wgpu::RenderPassEncoder _render_pass,
                 const ViewSize _view_size,
@@ -33,12 +52,6 @@ public:
     void draw_settings_ui();
 
     void delete_objects();
-
-    void destroy() {
-        destroy_buffer(origin_position_buffer_);
-        unit_frame_renderer_.clear();
-        objects_.clear();
-    }
 
     std::shared_ptr<OpenVolumeMeshObject> add_mesh(const std::filesystem::path& _path);
 
@@ -129,19 +142,6 @@ public:
     bool save_to_file(const std::filesystem::path& _path) const;
 
     bool load_from_file(const std::filesystem::path& _path);
-
-protected:
-    Application* app_ = nullptr;
-    std::vector<std::shared_ptr<ObjectBase>> objects_;
-
-    wgpu::Buffer origin_position_buffer_;
-    Matrix3x3Renderer unit_frame_renderer_;
-
-    Camera camera_;
-
-public:
-
-    DirectionalLight directional_light;
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Scene,
         camera_, settings, directional_light);

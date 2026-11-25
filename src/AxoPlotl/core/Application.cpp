@@ -54,12 +54,13 @@ Application::~Application()
     glfwTerminate();
 }
 
-Scene& Application::add_scene()
+Scene& Application::add_scene(const std::string& _name)
 {
-    current_scene_index_ = scenes_.size();
     auto new_scene = std::make_unique<Scene>();
+    new_scene->name = _name;
     new_scene->init(this);
     scenes_.push_back(std::move(new_scene));
+    set_scene(scenes_.size()-1);
     return *scenes_.back();
 }
 
@@ -73,10 +74,23 @@ bool Application::set_scene(const Scene& _scene)
     return false;
 }
 
+bool Application::set_scene(const std::string& _name)
+{
+    for (uint32_t scene_idx = 0; scene_idx < scenes_.size(); ++scene_idx) {
+        if (scenes_.at(scene_idx)->name == _name) {
+            return set_scene(scene_idx);
+        }
+    }
+    return false;
+}
+
 bool Application::set_scene(uint32_t _scene_index)
 {
     if (_scene_index >= scenes_.size()) {return false;}
-    current_scene_index_ = _scene_index;
+    if (_scene_index != current_scene_index_) {
+        current_scene_index_ = _scene_index;
+        requests_.switch_scene_tab = true;
+    }
     return true;
 }
 
@@ -289,7 +303,7 @@ void Application::frame_tick(bool _headless)
             );
 
     auto target_view_cleanup = ScopeExit([&]() noexcept {
-        target_view.release();
+        save_release(target_view);
     });
 
     //------------------
@@ -298,7 +312,7 @@ void Application::frame_tick(bool _headless)
     auto encoder = gpu_context_.device.createCommandEncoder();
 
     auto encoder_cleanup = ScopeExit([&]() noexcept {
-        encoder.release();
+        save_release(encoder);
     });
 
     //------------------
@@ -358,7 +372,7 @@ void Application::frame_tick(bool _headless)
     auto cmd_buffer = encoder.finish();
 
     auto cmd_buffer_cleanup = ScopeExit([&]() noexcept {
-        cmd_buffer.release();
+        save_release(cmd_buffer);
     });
 
     gpu_context_.device.getQueue().submit(
@@ -413,12 +427,12 @@ void Application::cleanup()
     ImGui::DestroyContext();
 
     for (auto& scene : scenes_) {
-        scene->destroy();
+        scene->cleanup();
     }
 
-    viewport_.release();
-    render_context_.release();
-    gpu_context_.release();
+    viewport_.cleanup();
+    render_context_.cleanup();
+    gpu_context_.cleanup();
 
     if (window_) {
         glfwDestroyWindow(window_);
@@ -637,18 +651,26 @@ void Application::draw_scenes_tab_bar_ui()
     ImGui::Begin("Scenes");
 
     if (ImGui::BeginTabBar("Scenes")) {
+        const uint32_t target_index = current_scene_index_;
+        const bool switch_requested = requests_.switch_scene_tab;
         for (uint32_t i = 0; i < scenes_.size(); ++i) {
             ImGui::PushID(i);
 
-            std::string name = "Scene " + std::to_string(i);
-
-            if (ImGui::BeginTabItem(name.c_str())) {
-                set_scene(i);
+            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
+            if (switch_requested && i == target_index) {
+                flags |= ImGuiTabItemFlags_SetSelected;
+            }
+            
+            if (ImGui::BeginTabItem(scenes_.at(i)->name.c_str(), nullptr, flags)) {
+                if (!switch_requested || i == target_index) {
+                    set_scene(i);
+                }
                 ImGui::EndTabItem();
             }
 
             ImGui::PopID();
         }
+        requests_.switch_scene_tab = false;
 
         // Add a Scene Button
         ImGui::SameLine();
@@ -890,8 +912,7 @@ bool Application::save_viewport_screenshot(
 
     wgpu::CommandBuffer cb = encoder.finish();
     gpu_context_.device.getQueue().submit(1, &cb);
-    cb.release();
-    encoder.release();
+    save_release(cb, encoder);
 
     // Save Texture
     std::optional<wgpu::Texture> mask_texture = std::nullopt;

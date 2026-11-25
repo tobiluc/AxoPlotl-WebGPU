@@ -18,8 +18,8 @@ struct PipelineState
     inline void set_device(wgpu::Device _device) {
         if (device_ != _device) {
             device_ = _device;
-            if (pipeline_) {pipeline_.release(); pipeline_ = nullptr;}
-            if (bind_group_layout_) {bind_group_layout_.release(); bind_group_layout_ = nullptr;}
+            save_release(pipeline_);
+            save_release(bind_group_layout_);
         }
     }
 };
@@ -33,7 +33,7 @@ public:
         : max_draw_calls_(std::max(_max_draw_calls, 1u))
     {}
 
-    virtual void clear() = 0;
+    virtual void cleanup() = 0;
 
 protected:
     using Pad4 = uint32_t[1];

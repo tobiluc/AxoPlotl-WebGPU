@@ -12,6 +12,7 @@ namespace AxoPlotl::internal
 
 class Viewport
 {
+    friend class Application;
 public:
     Viewport(Application* _app);
     ~Viewport();
@@ -19,18 +20,14 @@ public:
     Viewport(const Viewport&) = delete;
     Viewport& operator=(const Viewport&) = delete;
 
-    bool draw_ui(    wgpu::Device _device,
-                   wgpu::TextureFormat _color_format);
+    bool draw_ui(wgpu::Device _device,
+                wgpu::TextureFormat _color_format);
 
     void resize(
         wgpu::Device _device,
         wgpu::TextureFormat _color_format,
         uint32_t width,
         uint32_t height);
-
-    void release();
-
-    void release_deferred();
 
     const wgpu::TextureView& color_view() const { return resources_.color_view_; }
     const wgpu::TextureView& depth_view() const { return resources_.depth_view_; }
@@ -85,7 +82,7 @@ private:
         wgpu::Texture picking_texture_;
         wgpu::TextureView picking_view_;
 
-        void release();
+        void cleanup();
 
     } resources_;
 
@@ -103,6 +100,10 @@ private:
     bool focused_ = false;
     bool right_clicked_ = false;
     bool left_clicked_ = false;
+
+    void cleanup();
+
+    void deferred_cleanup();
 };
 
 }
