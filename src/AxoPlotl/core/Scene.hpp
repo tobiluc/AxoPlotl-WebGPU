@@ -26,6 +26,7 @@ protected:
         objects_.clear();
     }
 
+    bool deleted_ = false;
     Application* app_ = nullptr;
     std::vector<std::shared_ptr<ObjectBase>> objects_;
 
@@ -122,6 +123,10 @@ public:
 
     Camera& camera() {
         return camera_;
+    }
+
+    bool& deleted() {
+        return deleted_;
     }
 
     struct Settings

@@ -22,6 +22,7 @@
 #include <imgui_internal.h>
 #include <AxoPlotl/IO/texture_io.hpp>
 #include <AxoPlotl/utils/ScopeExit.hpp>
+#include "misc/cpp/imgui_stdlib.h"
 
 #ifdef WEBGPU_BACKEND_WGPU
 #  include <webgpu/wgpu.h>
@@ -64,34 +65,46 @@ Scene& Application::add_scene(const std::string& _name)
     return *scenes_.back();
 }
 
-bool Application::set_scene(const Scene& _scene)
-{
-    for (uint32_t scene_idx = 0; scene_idx < scenes_.size(); ++scene_idx) {
-        if (scenes_.at(scene_idx).get() == &_scene) {
-            return set_scene(scene_idx);
-        }
-    }
-    return false;
-}
-
-bool Application::set_scene(const std::string& _name)
+std::optional<int> Application::scene_index(const std::string& _name)
 {
     for (uint32_t scene_idx = 0; scene_idx < scenes_.size(); ++scene_idx) {
         if (scenes_.at(scene_idx)->name == _name) {
-            return set_scene(scene_idx);
+            return scene_idx;
         }
     }
-    return false;
+    return std::nullopt;
 }
 
-bool Application::set_scene(uint32_t _scene_index)
+bool Application::set_scene(int _scene_index)
 {
-    if (_scene_index >= scenes_.size()) {return false;}
+    if (_scene_index < 0 || _scene_index >= scenes_.size()) {return false;}
     if (_scene_index != current_scene_index_) {
         current_scene_index_ = _scene_index;
         requests_.switch_scene_tab = true;
     }
     return true;
+}
+
+bool Application::set_scene(const std::string& _name)
+{
+    auto i = scene_index(_name);
+    if (!i.has_value()) {return false;}
+    return set_scene(i.value());
+}
+
+bool Application::delete_scene(int _scene_index)
+{
+    if (scenes_.size() <= 1lu || _scene_index >= scenes_.size()) {return false;}
+    scenes_[_scene_index]->deleted() = true;
+    set_scene((_scene_index>0)? (_scene_index-1) : 0);
+    return true;
+}
+
+bool Application::delete_scene(const std::string& _name)
+{
+    auto i = scene_index(_name);
+    if (!i.has_value()) {return false;}
+    return delete_scene(i.value());
 }
 
 constexpr bool Application::has_scene() const {
@@ -384,6 +397,17 @@ void Application::frame_tick(bool _headless)
     // Present
     //------------------
     render_context_.surface.present();
+
+    //------------------
+    // Remove marked scenes
+    //------------------
+    call_deferred([this]() {
+        scenes_.erase(
+            std::remove_if(scenes_.begin(), scenes_.end(), [&](const std::unique_ptr<Scene>& _scene) {
+                return _scene->deleted();
+            }), scenes_.end());
+        scenes_.shrink_to_fit();
+    });
 }
 
 int Application::run(RunConfig _cfg)
@@ -564,24 +588,6 @@ void Application::draw_main_menu_bar_ui()
                 }
                 ImGui::EndMenu(); //!Add Object
             }
-            ImGui::Separator();
-            if (add_scenes_ui_enabled_) {
-                if (ImGui::BeginMenu("Scene")) {
-                    if (ImGui::MenuItem("Add Scene")) {
-                        add_scene();
-                    }
-                    if (ImGui::MenuItem("Delete Scene")) {
-                        if (scenes_.size() > 1lu) {
-                            scene().delete_objects();
-                            call_deferred([&]() {
-                                scenes_.erase(scenes_.begin()+current_scene_index_);
-                                current_scene_index_ = 0lu;
-                            });
-                        }
-                    }
-                    ImGui::EndMenu(); //!Scene
-                }
-            }
             ImGui::EndMenu(); //!Edit
         }
 
@@ -654,16 +660,28 @@ void Application::draw_scenes_tab_bar_ui()
         const uint32_t target_index = current_scene_index_;
         const bool switch_requested = requests_.switch_scene_tab;
         for (uint32_t i = 0; i < scenes_.size(); ++i) {
-            ImGui::PushID(i);
+            uintptr_t scene_id = reinterpret_cast<uintptr_t>(scenes_[i].get());
+            ImGui::PushID(scene_id);
 
             ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
             if (switch_requested && i == target_index) {
                 flags |= ImGuiTabItemFlags_SetSelected;
             }
             
-            if (ImGui::BeginTabItem(scenes_.at(i)->name.c_str(), nullptr, flags)) {
+            const std::string tab_label = scenes_[i]->name + "###Scene_" + std::to_string(scene_id);
+            if (ImGui::BeginTabItem(tab_label.c_str(), nullptr, flags)) {
                 if (!switch_requested || i == target_index) {
                     set_scene(i);
+                }
+                ImGui::InputText("Name", &scenes_[i]->name);
+                if (scenes_.size() > 1lu) {
+                    if (ImGui::Button(ICON_FA_TRASH)) {
+                        delete_scene(i);
+                        ImGui::EndTabItem();
+                        ImGui::PopID();
+                        break;
+                    }
+                    ImGui::SetItemTooltip("Delete Scene");
                 }
                 ImGui::EndTabItem();
             }
@@ -673,10 +691,10 @@ void Application::draw_scenes_tab_bar_ui()
         requests_.switch_scene_tab = false;
 
         // Add a Scene Button
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_PLUS)) {
-            add_scene();
+        if (ImGui::TabItemButton(ICON_FA_PLUS, ImGuiTabItemFlags_Trailing)) {
+            add_scene("New Scene");
         }
+
         ImGui::SetItemTooltip("Add Scene");
 
         ImGui::EndTabBar();

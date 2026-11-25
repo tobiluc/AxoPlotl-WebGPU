@@ -48,6 +48,8 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::pat
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
 {
+    if (deleted()) {return;}
+    
     // Get Width and Height
     camera_.update(app_->window(), _allow_input);
     const auto& view = camera_.get_view_matrix();

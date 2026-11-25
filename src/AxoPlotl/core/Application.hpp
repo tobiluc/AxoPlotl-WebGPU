@@ -82,11 +82,15 @@ public:
 
     Scene& add_scene(const std::string& _name = "New Scene");
 
-    bool set_scene(const Scene& _scene);
+    std::optional<int> scene_index(const std::string& _name);
+
+    bool set_scene(int _scene_index);
 
     bool set_scene(const std::string& _name);
 
-    bool set_scene(uint32_t _scene_index);
+    bool delete_scene(int _scene_index);
+
+    bool delete_scene(const std::string& _name);
 
     constexpr bool has_scene() const;
 
