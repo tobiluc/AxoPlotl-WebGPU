@@ -48,9 +48,11 @@ add_library(AxoPlotlCore
     AxoPlotl/gui/properties/PropertyRendererSettingsMat3x3.cpp
 
     AxoPlotl/tools/PlottingTool.cpp
-    AxoPlotl/tools/DataControlTool.cpp
+    AxoPlotl/tools/ObjectsControlTool.cpp
     AxoPlotl/tools/ScreenshotTool.cpp
     AxoPlotl/tools/DebugTool.cpp
+    AxoPlotl/tools/ScenesControlTool.cpp
+    AxoPlotl/tools/tools.cpp
 
     AxoPlotl/IO/rapidobj_to_ovm.cpp
     AxoPlotl/IO/happly_to_ovm.cpp
@@ -61,7 +63,6 @@ add_library(AxoPlotlCore
 
     AxoPlotl/rendering/MyGpuContext.cpp
     AxoPlotl/rendering/PickingTextureVis.cpp
-    AxoPlotl/tools/tools.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

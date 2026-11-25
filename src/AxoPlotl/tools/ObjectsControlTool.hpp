@@ -1,6 +1,6 @@
 #pragma once
 
-namespace AxoPlotl::DataControlTool
+namespace AxoPlotl::ObjectsControlTool
 {
 
 void draw_ui();

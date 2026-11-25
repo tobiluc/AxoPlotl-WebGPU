@@ -6,8 +6,12 @@ namespace AxoPlotl::gui
 
 void render_tools_tab_items_ui()
 {
-    if (ImGui::BeginTabItem(AxoPlotl::DataControlTool::icon())) {
-        AxoPlotl::DataControlTool::draw_ui();
+    if (ImGui::BeginTabItem(AxoPlotl::ScenesControlTool::icon())) {
+        AxoPlotl::ScenesControlTool::draw_ui();
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem(AxoPlotl::ObjectsControlTool::icon())) {
+        AxoPlotl::ObjectsControlTool::draw_ui();
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem(AxoPlotl::PlottingTool::icon())) {

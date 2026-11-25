@@ -1,4 +1,4 @@
-#include "DataControlTool.hpp"
+#include "ObjectsControlTool.hpp"
 #include "AxoPlotl/AxoPlotl.hpp"
 #include "ImGuiFileDialog.h"
 #include <mach/task_info.h>
@@ -6,8 +6,11 @@
 #include <AxoPlotl/gui/fonts.hpp>
 #include <AxoPlotl/core/Scene.hpp>
 #include <AxoPlotl/gui/fonts.hpp>
+#include "AxoPlotl/core/objects/SegmentObject.hpp"
+#include "AxoPlotl/core/objects/SphericalHarmonicsObject.hpp"
+#include "AxoPlotl/core/objects/TetrahedronObject.hpp"
 
-namespace AxoPlotl::DataControlTool
+namespace AxoPlotl::ObjectsControlTool
 {
 
 static int info_object_id_ = -1;
@@ -18,6 +21,36 @@ const char* icon() {return ICON_FA_SLIDERS;}
 
 void draw_ui()
 {
+    // Add new Object
+    if (ImGui::BeginMenu("Add Object")) {
+        if (ImGui::MenuItem("Load Mesh")) {
+                IGFD::FileDialogConfig config;
+                config.path = "..";
+                ImGuiFileDialog::Instance()->OpenDialog(
+                    "LoadMeshDialogKey", "Choose File",
+                    "Mesh files (*.obj *.ovm *.ovmb *ply){.obj,.ovm,.ovmb,.ply}",
+                    config);
+            }
+        if (ImGui::MenuItem("Spherical Harmonics")) {
+            app().scene().add_object<SHObject>();
+        }
+        if (ImGui::MenuItem("Tetrahedron")) {
+            app().scene().add_object<TetObject>();
+        }
+        if (ImGui::MenuItem("Segment")) {
+            app().scene().add_object<SegmentObject>();
+        }
+        ImGui::EndMenu(); //!Add Object
+    }
+    // Load Mesh File Dialog
+    if (ImGuiFileDialog::Instance()->Display("LoadMeshDialogKey")) {
+        if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
+            app().scene().add_mesh(filepath);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
     using ConstObj = const std::shared_ptr<ObjectBase>&;
 
     // Set Object ids to invalid if objects were deleted

@@ -5,9 +5,6 @@
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
-#include "AxoPlotl/core/objects/SegmentObject.hpp"
-#include "AxoPlotl/core/objects/SphericalHarmonicsObject.hpp"
-#include "AxoPlotl/core/objects/TetrahedronObject.hpp"
 #include "AxoPlotl/rendering/redraw.hpp"
 #include "ImGuiFileDialog.h"
 #include <cassert>
@@ -17,7 +14,6 @@
 #include <mach/task_info.h>
 #include <mach/mach.h>
 #include <AxoPlotl/rendering/wgpu_commons.hpp>
-#include <AxoPlotl/tools/DataControlTool.hpp>
 #include <OpenVolumeMesh/IO/ovmb_write.hh>
 #include <imgui_internal.h>
 #include <AxoPlotl/IO/texture_io.hpp>
@@ -105,10 +101,6 @@ bool Application::delete_scene(const std::string& _name)
     auto i = scene_index(_name);
     if (!i.has_value()) {return false;}
     return delete_scene(i.value());
-}
-
-constexpr bool Application::has_scene() const {
-    return current_scene_index_ < scenes_.size();
 }
 
 void Application::Time::update()
@@ -558,51 +550,18 @@ void Application::draw_main_menu_bar_ui()
                     config);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Load Mesh")) {
-                IGFD::FileDialogConfig config;
-                config.path = "..";
-                ImGuiFileDialog::Instance()->OpenDialog(
-                    "LoadMeshDialogKey", "Choose File",
-                    "Mesh files (*.obj *.ovm *.ovmb *ply){.obj,.ovm,.ovmb,.ply}",
-                    config);
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Exit", "Alt+F4")) {
+            if (ImGui::MenuItem("Close Application", "Alt+F4")) {
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
             }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Edit"))
-        {
-            if (ImGui::BeginMenu("Add Object"))
-            {
-                if (ImGui::MenuItem("Spherical Harmonics")) {
-                    scene().add_object<SHObject>();
-                }
-                if (ImGui::MenuItem("Tetrahedron")) {
-                    scene().add_object<TetObject>();
-                }
-                if (ImGui::MenuItem("Segment")) {
-                    scene().add_object<SegmentObject>();
-                }
-                ImGui::EndMenu(); //!Add Object
-            }
-            ImGui::EndMenu(); //!Edit
-        }
-
-        if (ImGui::BeginMenu("Settings"))
+        if (ImGui::BeginMenu("Appearance"))
         {
             if (ImGui::BeginMenu("Layout")) {
                 ImGui::Checkbox("Enable Inspector", &inspector_.enabled);
-                ImGui::Checkbox("Enable Scenes Bar", &add_scenes_ui_enabled_);
                 requests_.reset_layout |= ImGui::Button("Reset Layout");
                 ImGui::EndMenu(); //!Inspector Settings
-            }
-
-            if (ImGui::BeginMenu("Scene")) {
-                scene().draw_settings_ui();
-                ImGui::EndMenu(); //!Scene Settings
             }
 
             if (ImGui::BeginMenu("Theme")) {
@@ -638,69 +597,7 @@ void Application::draw_main_menu_bar_ui()
         ImGuiFileDialog::Instance()->Close();
     }
 
-    // Load Mesh File Dialog
-    if (ImGuiFileDialog::Instance()->Display("LoadMeshDialogKey")) {
-        if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-            std::filesystem::path filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            scene().add_mesh(filepath);
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
-
     ImGui::End(); //!MenuBar
-}
-
-void Application::draw_scenes_tab_bar_ui()
-{
-    if (!add_scenes_ui_enabled_) {return;}
-
-    ImGui::Begin("Scenes");
-
-    if (ImGui::BeginTabBar("Scenes")) {
-        const uint32_t target_index = current_scene_index_;
-        const bool switch_requested = requests_.switch_scene_tab;
-        for (uint32_t i = 0; i < scenes_.size(); ++i) {
-            uintptr_t scene_id = reinterpret_cast<uintptr_t>(scenes_[i].get());
-            ImGui::PushID(scene_id);
-
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
-            if (switch_requested && i == target_index) {
-                flags |= ImGuiTabItemFlags_SetSelected;
-            }
-            
-            const std::string tab_label = scenes_[i]->name + "###Scene_" + std::to_string(scene_id);
-            if (ImGui::BeginTabItem(tab_label.c_str(), nullptr, flags)) {
-                if (!switch_requested || i == target_index) {
-                    set_scene(i);
-                }
-                ImGui::InputText("Name", &scenes_[i]->name);
-                if (scenes_.size() > 1lu) {
-                    if (ImGui::Button(ICON_FA_TRASH)) {
-                        delete_scene(i);
-                        ImGui::EndTabItem();
-                        ImGui::PopID();
-                        break;
-                    }
-                    ImGui::SetItemTooltip("Delete Scene");
-                }
-                ImGui::EndTabItem();
-            }
-
-            ImGui::PopID();
-        }
-        requests_.switch_scene_tab = false;
-
-        // Add a Scene Button
-        if (ImGui::TabItemButton(ICON_FA_PLUS, ImGuiTabItemFlags_Trailing)) {
-            add_scene("New Scene");
-        }
-
-        ImGui::SetItemTooltip("Add Scene");
-
-        ImGui::EndTabBar();
-    }
-
-    ImGui::End();
 }
 
 void Application::draw_inspector_ui()
@@ -747,25 +644,11 @@ void Application::build_default_layout(ImGuiID dockspace_id)
         &viewport_id
         );
 
-    // Scenes tab to the bottom of the central area (20%).
-    ImGuiID scenes_id;
-
-    ImGui::DockBuilderSplitNode(
-        viewport_id,
-        ImGuiDir_Down,
-        0.20f,
-        &scenes_id,
-        &viewport_id
-        );
-
     // Dock the windows.
     ImGui::DockBuilderDockWindow("Inspector", inspector_id);
-    ImGui::DockBuilderDockWindow("Scenes", scenes_id);
     ImGui::DockBuilderDockWindow("Viewport", viewport_id);
 
     // Hide Tab Bar (with node title) as Default
-    ImGui::DockBuilderGetNode(scenes_id)->LocalFlags |=
-        ImGuiDockNodeFlags_HiddenTabBar;
     ImGui::DockBuilderGetNode(inspector_id)->LocalFlags |=
         ImGuiDockNodeFlags_HiddenTabBar;
     ImGui::DockBuilderGetNode(viewport_id)->LocalFlags |=
@@ -792,12 +675,9 @@ void Application::draw_editor_ui()
     // Rebuild the layout when requested.
     if (requests_.reset_layout) {
         inspector_.enabled = true;
-        add_scenes_ui_enabled_ = false;
         build_default_layout(dockspace_id);
         requests_.reset_layout = false;
     }
-
-    draw_scenes_tab_bar_ui();
 
     draw_viewport_ui();
 

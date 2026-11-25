@@ -25,11 +25,6 @@ int main()
         return 1;
     }
 
-    // Since we add several scenes, we enable the Scenes Menu.
-    // This is optional as it only affects the ui and can also be
-    // set in the GUI.
-    AxoPlotl::app().scenes_menu_enabled() = true;
-
     // Let's add the first mesh to the default scene
     AxoPlotl::app().scene().add_mesh(mesh_files[0]);
     AxoPlotl::app().scene().name = "Sphere";

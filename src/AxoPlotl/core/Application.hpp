@@ -44,8 +44,6 @@ private:
         bool switch_scene_tab = false;
     } requests_;
 
-    bool add_scenes_ui_enabled_ = false;
-
     GpuContext gpu_context_;
     RenderContext render_context_;
 
@@ -78,6 +76,13 @@ public:
 
     void on_window_resize(float width, float height);
 
+    Scene* scene(int _index) {
+        if (_index >= 0 && _index < scenes_.size()) {
+            return scenes_[_index]->deleted_? nullptr : scenes_[_index].get();
+        }
+        return nullptr;
+    }
+
     Scene& scene() {return *scenes_.at(current_scene_index_);}
 
     Scene& add_scene(const std::string& _name = "New Scene");
@@ -92,7 +97,15 @@ public:
 
     bool delete_scene(const std::string& _name);
 
-    constexpr bool has_scene() const;
+    const int selected_scene_index() const {return current_scene_index_;}
+
+    constexpr bool has_scene() const {
+        return current_scene_index_ < scenes_.size();
+    }
+
+    constexpr size_t num_scenes() const {
+        return scenes_.size();
+    }
 
     GLFWwindow* window() {return window_;}
 
@@ -122,10 +135,6 @@ public:
         return inspector_.enabled;
     }
 
-    bool& scenes_menu_enabled() {
-        return add_scenes_ui_enabled_;
-    }
-
     constexpr float frames_per_second() const {
         return time_.frames_per_second_;
     }
@@ -148,8 +157,6 @@ private:
     bool init_imgui();
 
     void draw_viewport_ui();
-
-    void draw_scenes_tab_bar_ui();
 
     void draw_inspector_ui();
 

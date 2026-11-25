@@ -49,7 +49,7 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::pat
 void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
 {
     if (deleted()) {return;}
-    
+
     // Get Width and Height
     camera_.update(app_->window(), _allow_input);
     const auto& view = camera_.get_view_matrix();
@@ -96,27 +96,6 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
             }), objects_.end());
         objects_.shrink_to_fit();
     });
-}
-
-void Scene::draw_settings_ui()
-{
-    if (ImGui::BeginMenu("Camera")) {
-        camera().render_settings_ui(app_->window());
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Light")) {
-        ImGui::ColorEdit3("Color", &directional_light.color[0]);
-        ImGui::InputFloat3("Direction", &directional_light.direction[0]);
-        gui::InputSlider("Strength", &directional_light.strength);
-        ImGui::Checkbox("From Camera", &settings.light_from_camera);
-        ImGui::EndMenu();
-    }
-
-    ImGui::ColorEdit3("Background", settings.clear_color);
-    ImGui::Checkbox("Axis Cross", &settings.show_axis_cross);
-    ImGui::Checkbox("Orbit Cross", &settings.show_orbit_target_cross);
-    ImGui::Checkbox("Zoom to New Object", &settings.zoom_to_new_object);
 }
 
 bool Scene::save_to_file(const std::filesystem::path& _path) const
