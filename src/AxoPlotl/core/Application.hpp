@@ -122,7 +122,7 @@ public:
 
 private:
     // Draw a frame and handle events
-    void frame_tick();
+    void frame_tick(bool _headless = false);
 
     bool init_glfw();
 

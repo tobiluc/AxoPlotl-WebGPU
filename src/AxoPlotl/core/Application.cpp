@@ -166,7 +166,7 @@ bool Application::init()
     return true;
 }
 
-void Application::frame_tick()
+void Application::frame_tick(bool _headless)
 {
     //------------------
     // Frame Update
@@ -240,7 +240,9 @@ void Application::frame_tick()
     //------------------
     // Build UI
     //------------------
-    render_editor_ui();
+    if (!_headless) {
+        render_editor_ui();
+    }
 
     //------------------
     // Surface View
@@ -320,10 +322,12 @@ void Application::frame_tick()
     //------------------
     // Render GUI
     //------------------
-    render_gui(
-        encoder,
-        target_view
-        );
+    if (!_headless) {
+        render_gui(
+            encoder,
+            target_view
+            );
+    }
 
     //------------------
     // Submit
@@ -356,7 +360,7 @@ int Application::run(RunConfig _cfg)
         *_cfg.num_ticks = std::max(*_cfg.num_ticks, 1llu);
     }
     while (!glfwWindowShouldClose(window()) && (!_cfg.num_ticks.has_value() || (--(*_cfg.num_ticks) > 0llu))) {
-        frame_tick();
+        frame_tick(_cfg.headless);
     }
     if (!_cfg.manual_cleanup) {
         cleanup();
