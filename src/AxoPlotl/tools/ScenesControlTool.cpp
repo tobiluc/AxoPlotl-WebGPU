@@ -13,8 +13,6 @@ namespace AxoPlotl::ScenesControlTool
 
 static int target_index = -1;
 
-const char* icon() {return ICON_FA_LAYER_GROUP;}
-
 void draw_ui()
 {
     if (ImGui::BeginTabBar("Scenes")) {
@@ -43,18 +41,18 @@ void draw_ui()
                 ImGui::InputText("Name", &(scene->name));
 
                 // Settings
-                if (ImGui::CollapsingHeader(ICON_FA_CAMERA)) {
+                if (ImGui::CollapsingHeader(ICON_FA_CAMERA " Camera")) {
                     scene->camera().render_settings_ui(app().window());
                 }
 
-                if (ImGui::CollapsingHeader(ICON_FA_LIGHTBULB)) {
+                if (ImGui::CollapsingHeader(ICON_FA_LIGHTBULB " Light")) {
                     ImGui::ColorEdit3("Color", &scene->directional_light.color[0]);
                     ImGui::InputFloat3("Direction", &scene->directional_light.direction[0]);
                     gui::InputSlider("Strength", &scene->directional_light.strength);
                     ImGui::Checkbox("From Camera", &scene->settings.light_from_camera);
                 }
 
-                if (ImGui::CollapsingHeader(ICON_FA_PALETTE)) {
+                if (ImGui::CollapsingHeader(ICON_FA_PALETTE " Misc.")) {
                     ImGui::ColorEdit3("Background", scene->settings.clear_color);
                     ImGui::Checkbox("Axis Cross", &scene->settings.show_axis_cross);
                     ImGui::Checkbox("Orbit Cross", &scene->settings.show_orbit_target_cross);

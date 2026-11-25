@@ -17,8 +17,6 @@ static int info_object_id_ = -1;
 static int settings_object_id_ = -1;
 static int properties_object_id_ = -1;
 
-const char* icon() {return ICON_FA_SLIDERS;}
-
 void draw_ui()
 {
     // Add new Object

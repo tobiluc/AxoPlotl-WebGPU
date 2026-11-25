@@ -1,6 +1,5 @@
 #define WEBGPU_CPP_IMPLEMENTATION
 #include "AxoPlotl/AxoPlotl.hpp"
-#include "AxoPlotl/gui/themes.hpp"
 #include <AxoPlotl/tools/tools.hpp>
 
 int main()
@@ -17,8 +16,6 @@ int main()
             ImGui::EndTabBar();
         }
     }};
-
-    AxoPlotl::gui::apply_theme(AxoPlotl::gui::Theme::ModernLight);
 
     AxoPlotl::app().run();
 

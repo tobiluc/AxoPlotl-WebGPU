@@ -21,10 +21,6 @@ static Input input_;
 static std::unordered_map<int,Input> objects_;
 static int selected_id_ = -1;
 
-const char* icon() {
-    return ICON_FA_CHART_LINE;
-}
-
 void draw_ui()
 {
     if (ImGui::BeginMenu("Modify")) {

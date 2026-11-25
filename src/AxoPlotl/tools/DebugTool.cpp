@@ -12,8 +12,6 @@
 namespace AxoPlotl::DebugTool
 {
 
-const char* icon() {return ICON_FA_BUG;}
-
 void draw_ui()
 {
     if (ImGui::CollapsingHeader("Performance"))

@@ -14,11 +14,6 @@ static std::filesystem::path filepath = "AxoPlotl_Screenshot.png";
 static ViewSize size = {512, 512};
 static bool transparent_background = false;
 
-const char* icon()
-{
-    return ICON_FA_IMAGE;
-}
-
 void draw_ui()
 {
     const auto& viewport = AxoPlotl::app().viewport();
