@@ -6,29 +6,15 @@ int main()
 {
     const std::vector<std::filesystem::path> mesh_files = {
         "../../../../assets/meshes/sphere.obj",
-        "../../../../assets/meshes/cube.obj"
+        "../../../../assets/meshes/cube.obj",
+        "../../../../assets/meshes/torus.obj"
     };
 
     // Default Inspector
     AxoPlotl::app().inspector_callback() = {[&]()
     {
         if (ImGui::BeginTabBar("")) {
-            if (ImGui::BeginTabItem(AxoPlotl::DataControlTool::icon())) {
-                AxoPlotl::DataControlTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::PlottingTool::icon())) {
-                AxoPlotl::PlottingTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::ScreenshotTool::icon())) {
-                AxoPlotl::ScreenshotTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::DebugTool::icon())) {
-                AxoPlotl::DebugTool::render_ui();
-                ImGui::EndTabItem();
-            }
+            AxoPlotl::gui::render_tools_tab_items_ui();
             ImGui::EndTabBar();
         }
     }};
@@ -58,6 +44,8 @@ int main()
         // Run the application. Once you close the window, the code continues
         // with the next mesh
         AxoPlotl::app().run(cfg);
+
+        std::cout << "Done with mesh " << mesh_file << std::endl;
     }
 
     AxoPlotl::app().cleanup();

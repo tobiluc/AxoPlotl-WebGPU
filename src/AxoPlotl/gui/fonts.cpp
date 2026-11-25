@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include <filesystem>
 
-void AxoPlotl::GUI::load_fonts(float _font_size)
+void AxoPlotl::gui::load_fonts(float _font_size)
 {
     auto& io = ImGui::GetIO();
     {

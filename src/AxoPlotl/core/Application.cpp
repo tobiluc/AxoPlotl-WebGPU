@@ -437,7 +437,7 @@ bool Application::init_imgui()
     //ImGui_ImplWGPU_Init(device_, 3, surf_caps.formats[0], depthTextureFormat);
 
     // Font
-    GUI::load_fonts();
+    gui::load_fonts();
 
     return true;
 }
@@ -544,11 +544,11 @@ void Application::render_main_menu_bar_ui()
             }
 
             if (ImGui::BeginMenu("Theme")) {
-                if (ImGui::MenuItem("Dark")) {GUI::apply_theme(GUI::Theme::Dark);}
-                if (ImGui::MenuItem("Light")) {GUI::apply_theme(GUI::Theme::Light);}
-                if (ImGui::MenuItem("Classic")) {GUI::apply_theme(GUI::Theme::Classic);}
-                if (ImGui::MenuItem("Modern Dark")) {GUI::apply_theme(GUI::Theme::ModernDark);}
-                if (ImGui::MenuItem("Modern Light")) {GUI::apply_theme(GUI::Theme::ModernLight);}
+                if (ImGui::MenuItem("Dark")) {gui::apply_theme(gui::Theme::Dark);}
+                if (ImGui::MenuItem("Light")) {gui::apply_theme(gui::Theme::Light);}
+                if (ImGui::MenuItem("Classic")) {gui::apply_theme(gui::Theme::Classic);}
+                if (ImGui::MenuItem("Modern Dark")) {gui::apply_theme(gui::Theme::ModernDark);}
+                if (ImGui::MenuItem("Modern Light")) {gui::apply_theme(gui::Theme::ModernLight);}
 
                 ImGui::EndMenu(); //!Theme Settings
             }

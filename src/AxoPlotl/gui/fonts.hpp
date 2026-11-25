@@ -4,7 +4,7 @@
 // #define FONT_ICON_FILE_NAME_FAS AXOPLOTL_FONTS_DIR "fa-solid-900.otf"
 #include "IconsFontAwesome7.h"
 
-namespace AxoPlotl::GUI
+namespace AxoPlotl::gui
 {
 
 void load_fonts(float _font_size = 16.0f);

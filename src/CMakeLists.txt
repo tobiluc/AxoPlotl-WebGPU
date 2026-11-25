@@ -61,6 +61,7 @@ add_library(AxoPlotlCore
 
     AxoPlotl/rendering/MyGpuContext.cpp
     AxoPlotl/rendering/PickingTextureVis.cpp
+    AxoPlotl/tools/tools.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC

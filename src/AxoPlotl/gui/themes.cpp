@@ -1,7 +1,7 @@
 #include "themes.hpp"
 #include "imgui.h"
 
-namespace AxoPlotl::GUI
+namespace AxoPlotl::gui
 {
 
 static void set_modern_dark_theme()

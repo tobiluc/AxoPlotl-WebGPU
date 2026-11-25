@@ -1,6 +1,6 @@
 #pragma once
 
-namespace AxoPlotl::GUI
+namespace AxoPlotl::gui
 {
 
 enum class Theme {

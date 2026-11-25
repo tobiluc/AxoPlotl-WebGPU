@@ -1,10 +1,7 @@
 #define WEBGPU_CPP_IMPLEMENTATION
 #include "AxoPlotl/AxoPlotl.hpp"
 #include "AxoPlotl/gui/themes.hpp"
-#include "AxoPlotl/tools/DataControlTool.hpp"
-#include "AxoPlotl/tools/DebugTool.hpp"
-#include "AxoPlotl/tools/PlottingTool.hpp"
-#include "AxoPlotl/tools/ScreenshotTool.hpp"
+#include <AxoPlotl/tools/tools.hpp>
 
 int main()
 {
@@ -16,27 +13,12 @@ int main()
     AxoPlotl::app().inspector_callback() = {[&]()
     {
         if (ImGui::BeginTabBar("")) {
-            if (ImGui::BeginTabItem(AxoPlotl::DataControlTool::icon())) {
-                AxoPlotl::DataControlTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::PlottingTool::icon())) {
-                AxoPlotl::PlottingTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::ScreenshotTool::icon())) {
-                AxoPlotl::ScreenshotTool::render_ui();
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem(AxoPlotl::DebugTool::icon())) {
-                AxoPlotl::DebugTool::render_ui();
-                ImGui::EndTabItem();
-            }
+            AxoPlotl::gui::render_tools_tab_items_ui();
             ImGui::EndTabBar();
         }
     }};
 
-    AxoPlotl::GUI::apply_theme(AxoPlotl::GUI::Theme::ModernLight);
+    AxoPlotl::gui::apply_theme(AxoPlotl::gui::Theme::ModernLight);
 
     AxoPlotl::app().run();
 
