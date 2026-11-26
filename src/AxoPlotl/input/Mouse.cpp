@@ -1,5 +1,6 @@
 #include "Mouse.hpp"
 #include <AxoPlotl/rendering/redraw.hpp>
+#include <imgui.h>
 
 namespace AxoPlotl::internal
 {

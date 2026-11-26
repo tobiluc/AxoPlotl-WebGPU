@@ -59,21 +59,25 @@ void Camera::update(float _dt)
             float dx = Mouse::POSITION_DELTA[0] * sensitivity_ * _dt;
             float dy = Mouse::POSITION_DELTA[1] * sensitivity_ * _dt;
 
-            bool shift_down = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
-                            ImGui::IsKeyDown(ImGuiKey_RightShift);
+            if (std::abs(dx) > 1e-6 || std::abs(dy) > 1e-6)
+            {
+                const bool shift_down = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
+                                ImGui::IsKeyDown(ImGuiKey_RightShift);
 
-            if (shift_down) {
-                // Shift Move orbit target
-                float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f) * _dt;
+                if (shift_down) {
+                    // Shift Move orbit target
+                    float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f) * _dt;
 
-                orbit_target_ -= (orientation_ * RIGHT) * dx * pan_speed;
-                orbit_target_ += (orientation_ * UP) * dy * pan_speed;
-            }
-            else {
-                // Orbit
-                Quat rot_pitch = glm::angleAxis(dy, RIGHT);
-                Quat rot_yaw = glm::angleAxis(-dx, UP);
-                orientation_ = glm::normalize(orientation_ * rot_yaw * rot_pitch);
+                    orbit_target_ -= (orientation_ * RIGHT) * dx * pan_speed;
+                    orbit_target_ += (orientation_ * UP) * dy * pan_speed;
+                }
+                else {
+                    // Orbit
+                    Quat rot_pitch = glm::angleAxis(dy, RIGHT);
+                    Quat rot_yaw = glm::angleAxis(-dx, UP);
+                    orientation_ = glm::normalize(orientation_ * rot_yaw * rot_pitch);
+                }
+                trigger_redraw();
             }
         }
     }
