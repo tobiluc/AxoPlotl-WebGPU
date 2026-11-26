@@ -589,8 +589,9 @@ bool OpenVolumeMeshObject::visualize_property(
             .entity_type = EntityTag::type(),
             .name = _pp->name(),
             .entity_type_name = OVM::entityTypeName<EntityTag>(),
-            .type_name = OVM::typeName<T>()
+            .type_name = _pp->typeNameWrapper()
         };
+
         entity_renderer<OVM::Entity::Vertex>().enabled() = false;
         entity_renderer<OVM::Entity::Edge>().enabled() = false;
         entity_renderer<OVM::Entity::Face>().enabled() = false;

@@ -67,6 +67,12 @@ public:
 
     bool draw_name_input_ui();
 
+    // Internal Objects can only be accessed by the scene itself and
+    // are not displayed in the inspector.
+    bool is_internal() const {
+        return internal_;
+    }
+
 protected:
     internal::Scene* scene_;
     int id_;
@@ -78,6 +84,7 @@ protected:
     bool deleted_ = false;
     bool target_ = false;
     bool visible_ = true;
+    bool internal_ = false;
 };
 
 };

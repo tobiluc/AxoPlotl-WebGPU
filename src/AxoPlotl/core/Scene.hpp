@@ -73,25 +73,21 @@ public:
         return std::static_pointer_cast<Object>(objects_.back());
     }
 
-    size_t num_objects() const {
-        size_t n(0);
-        for (const auto& obj : objects_) {
-            n += !obj->deleted();
-        }
-        return n;
-    }
-
     auto get_objects() const {
-        return objects_ | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return !_obj->deleted();});;
+        return objects_ | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {
+            return !_obj->deleted() && !_obj->is_internal();
+        });;
     }
 
     auto get_target_objects() const {
-        return get_objects() | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {return _obj->target();});
+        return get_objects() | std::views::filter([&](const std::shared_ptr<ObjectBase> _obj) {
+            return _obj->target();
+        });
     }
 
     std::shared_ptr<ObjectBase> get_object(int _id) const {
-        for (auto obj : objects_) {
-            if (!obj->deleted() && obj->id() == _id) {
+        for (auto obj : get_objects()) {
+            if (obj->id() == _id) {
                 return obj;
             }
         }
@@ -100,8 +96,8 @@ public:
 
     template <typename Object>
     std::shared_ptr<Object> get_object(int _id) const {
-        for (auto const& obj : objects_) {
-            if (!obj->deleted() && obj->id() == _id) {
+        for (auto const& obj : get_objects()) {
+            if (obj->id() == _id) {
                 return std::dynamic_pointer_cast<Object>(obj);
             }
         }

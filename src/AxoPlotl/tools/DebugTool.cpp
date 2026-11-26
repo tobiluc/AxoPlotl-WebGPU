@@ -23,7 +23,6 @@ void draw_ui()
 
     if (ImGui::CollapsingHeader("Scene"))
     {
-        ImGui::Text("#Objects: %zu", AxoPlotl::app().scene().num_objects());
         if (ImGui::BeginMenu("Add")) {
             if (ImGui::MenuItem("Add Mesh with Inf and NaN Properties")) {
                 AxoPlotl::app().scene().add_object<OpenVolumeMeshObject>(mesh_with_nan_and_inf_props());

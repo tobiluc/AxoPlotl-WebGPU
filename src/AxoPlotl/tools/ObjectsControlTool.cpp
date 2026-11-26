@@ -56,36 +56,39 @@ void draw_ui()
     if (!AxoPlotl::app().scene().get_object(settings_object_id_)) {settings_object_id_ = -1;}
 
     // For Convenience, we can apply things to all objects at once
-    if (AxoPlotl::app().scene().num_objects() > 0 && ImGui::BeginMenu("Selection"))
+    auto objects = app().scene().get_objects();
+    auto target_objects = app().scene().get_target_objects();
+    const bool has_objects = !objects.empty();
+    if (has_objects && ImGui::BeginMenu("Selection"))
     {
         ImGui::SeparatorText("Select");
         if (ImGui::Button("Select All")) {
-            for (const auto& obj : AxoPlotl::app().scene().get_objects()) {
+            for (const auto& obj : objects) {
                 obj->target() = true;
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Deselect All")) {
-            for (const auto& obj : AxoPlotl::app().scene().get_objects()) {
+            for (const auto& obj : objects) {
                 obj->target() = false;
             }
         }
         ImGui::SameLine();
         if (ImGui::Button("Invert Selection")) {
-            for (const auto& obj : AxoPlotl::app().scene().get_objects()) {
+            for (const auto& obj : objects) {
                 obj->target() = !obj->target();
             }
         }
 
         ImGui::SeparatorText("Visibility");
         if (ImGui::Button(ICON_FA_EYE)) {
-            for (const auto& obj : AxoPlotl::app().scene().get_target_objects()) {
+            for (const auto& obj : target_objects) {
                 obj->visible() = true;
             }
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_EYE_SLASH)) {
-            for (const auto& obj : AxoPlotl::app().scene().get_target_objects()) {
+            for (const auto& obj : target_objects) {
                 if (obj->target()) {
                     obj->visible() = false;
                 }
@@ -94,7 +97,7 @@ void draw_ui()
 
         ImGui::SeparatorText("Danger Zone");
         if (ImGui::Button(ICON_FA_TRASH)) {
-            for (const auto& obj : AxoPlotl::app().scene().get_target_objects()) {
+            for (const auto& obj : target_objects) {
                 obj->deleted() = true;
             }
             info_object_id_ = -1;
@@ -105,7 +108,7 @@ void draw_ui()
     ImGui::SeparatorText("Objects");
 
     // Data Control per Object
-    for (const auto& obj : AxoPlotl::app().scene().get_objects())
+    for (const auto& obj : objects)
     {
         ImGui::PushID(obj->id());
 
@@ -181,7 +184,7 @@ void draw_ui()
         ImGui::PopID();
         ImGui::Separator();
     }
-    if (AxoPlotl::app().scene().num_objects() == 0lu) {
+    if (!has_objects) {
         ImGui::TextWrapped("Your objects are displayed here, but you don't have any...");
     }
 
