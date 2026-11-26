@@ -4,7 +4,7 @@
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include <webgpu/webgpu.hpp>
 #include <imgui.h>
-#include <cstdint>
+#include <AxoPlotl/utils/ViewSize.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
 
 namespace AxoPlotl::internal
@@ -26,8 +26,7 @@ public:
     void resize(
         wgpu::Device _device,
         wgpu::TextureFormat _color_format,
-        uint32_t width,
-        uint32_t height);
+        const ViewSize& _size);
 
     const wgpu::TextureView& color_view() const { return resources_.color_view_; }
     const wgpu::TextureView& depth_view() const { return resources_.depth_view_; }
@@ -38,17 +37,12 @@ public:
 
     const wgpu::TextureFormat& color_format() const {return resources_.color_format_;}
 
-    uint32_t width() const { return width_; }
-    uint32_t height() const { return height_; }
-
-    ViewSize size() const {
-        return {.width = static_cast<float>(width_),
-                .height = static_cast<float>(height_)};}
+    const ViewSize& size() const {return size_;}
 
     std::optional<glm::vec2> mouse_to_local() const;
 
     bool valid() const {
-        return width_ > 0 && height_ > 0 &&
+        return size_.width > 0 && size_.height > 0 &&
                resources_.color_view_ && resources_.depth_view_ && resources_.picking_view_;
     }
 
@@ -86,8 +80,7 @@ private:
 
     } resources_;
 
-    uint32_t width_ = 0;
-    uint32_t height_ = 0;
+    ViewSize size_ = {0,0};
 
     ImVec2 image_min_{};
     ImVec2 image_size_{};

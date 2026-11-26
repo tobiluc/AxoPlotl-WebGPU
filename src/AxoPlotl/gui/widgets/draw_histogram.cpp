@@ -1,4 +1,3 @@
-#include "IconsFontAwesome7.h"
 #include <AxoPlotl/gui/widgets/draw_histogram.hpp>
 #include <imgui.h>
 #include <AxoPlotl/properties/Histogram.hpp>
@@ -12,7 +11,7 @@ int Histogram(HistogramBase &_hist,
                    const HistogramOptions &_opt)
 {
     if (_opt.pm_buttons) {
-        if (ImGui::Button(ICON_FA_MINUS)) {
+        if (ImGui::Button("-")) {
             _hist.recompute(std::max(2lu,_hist.n_buckets())-1lu);
         }
         ImGui::SetItemTooltip("Reduce #Buckets");
@@ -86,7 +85,7 @@ int Histogram(HistogramBase &_hist,
 
     if (_opt.pm_buttons) {
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_PLUS)) {
+        if (ImGui::Button("+")) {
             _hist.recompute(_hist.n_buckets()+1lu);
         }
         ImGui::SetItemTooltip("Increase #Buckets");

@@ -1,6 +1,4 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "AxoPlotl/gui/widgets/draw_texture.hpp"
-#include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include "Application.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
 #include "AxoPlotl/gui/themes.hpp"
@@ -18,7 +16,6 @@
 #include <imgui_internal.h>
 #include <AxoPlotl/IO/texture_io.hpp>
 #include <AxoPlotl/utils/ScopeExit.hpp>
-#include "misc/cpp/imgui_stdlib.h"
 
 #ifdef WEBGPU_BACKEND_WGPU
 #  include <webgpu/wgpu.h>
@@ -175,13 +172,13 @@ bool Application::init()
     // Render Context
     //----------------
     const auto fb_size = framebuffer_size();
-    render_context_.configure_surface(gpu_context_, fb_size.x, fb_size.y);
+    render_context_.configure_surface(gpu_context_, fb_size.width, fb_size.height);
 
     //-------------------
     // Special Textures
     //-------------------
     wgpu::DepthStencilState depthStencilState = create_default_depth_state();
-    viewport_.resize(gpu_context_.device, render_context_.surface_format, framebuffer_size().x, framebuffer_size().y);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, framebuffer_size());
 
     //----------
     // Gui
@@ -201,7 +198,7 @@ bool Application::init()
     // Picker
     //----------
     picker_.init(gpu_context_.device);
-    picking_renderer_.init(gpu_context_.device, 256, 256);
+    picking_renderer_.init(gpu_context_.device, ViewSize{.width=256, .height=256});
 
     std::cout << "AxoPlotlApp initialized." << std::endl;
     initialized_ = true;
@@ -764,16 +761,13 @@ void Application::render_scene(wgpu::CommandEncoder& encoder, Viewport& _viewpor
 
     pass.setViewport(
         0, 0,
-        _viewport.width(), _viewport.height(),
+        _viewport.size().width, _viewport.size().height,
         0, 1
         );
 
-    pass.setScissorRect(0, 0, _viewport.width(), _viewport.height());
+    pass.setScissorRect(0, 0, _viewport.size().width, _viewport.size().height);
 
-    scene().render(pass, ViewSize{
-        .width=static_cast<float>(_viewport.width()),
-        .height=static_cast<float>(_viewport.height())},
-        viewport().hovered());
+    scene().render(pass, _viewport.size(), viewport().hovered());
 
     pass.end();
 }
@@ -786,18 +780,15 @@ bool Application::save_viewport_screenshot(
     assert(render_context_.surface_format == viewport_.color_texture().getFormat());
     wgpu::CommandEncoder encoder = gpu_context_.device.createCommandEncoder();
     const auto prev_scene_size = viewport().size();
-    const auto prev_pick_size = ViewSize{
-        .width=static_cast<float>(picking_renderer_.width()),
-        .height=static_cast<float>(picking_renderer_.height())
-    };
+    const auto prev_pick_size = picking_renderer_.size();
     const auto prev_scene_settings = scene().settings;
 
     // Resize to desired size
     if (_transparent_background) {
-        picking_renderer_.resize(_size.width, _size.height);
+        picking_renderer_.resize(_size);
         picking_renderer_.mode() = PickingTextureVis::Mode::ObjectID;
     }
-    viewport_.resize(gpu_context_.device, render_context_.surface_format, _size.width, _size.height);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, _size);
 
     // Render
     scene().settings.show_orbit_target_cross = false;
@@ -821,9 +812,9 @@ bool Application::save_viewport_screenshot(
     );
 
     // Reset Size
-    viewport_.resize(gpu_context_.device, render_context_.surface_format, prev_scene_size.width, prev_scene_size.height);
+    viewport_.resize(gpu_context_.device, render_context_.surface_format, prev_scene_size);
     if (_transparent_background) {
-        picking_renderer_.resize(prev_pick_size.width, prev_pick_size.height);
+        picking_renderer_.resize(prev_pick_size);
     }
     return res;
 }

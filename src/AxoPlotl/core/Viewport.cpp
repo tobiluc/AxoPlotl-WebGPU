@@ -28,8 +28,7 @@ void Viewport::Resources::cleanup()
 void Viewport::cleanup()
 {
     resources_.cleanup();
-    width_ = 0;
-    height_ = 0;
+    size_ = {0,0};
 }
 
 void Viewport::deferred_cleanup()
@@ -53,14 +52,14 @@ std::optional<glm::vec2> Viewport::mouse_to_local() const
         const float local_y = mouse.y - image_min_.y;
 
         // Convert from ImGui coordinates to texture pixel coordinates.
-        const float scale_x = width() / image_size_.x;
-        const float scale_y = height() / image_size_.y;
+        const float scale_x = size().fwidth() / image_size_.x;
+        const float scale_y = size().fheight() / image_size_.y;
 
         const float x = local_x * scale_x;
         const float y = local_y * scale_y;
 
         // Check bounds
-        if (x >= 0.0f && y >= 0.0f && x < width() && y < height()) {
+        if (x >= 0.0f && y >= 0.0f && x < size().fwidth() && y < size().fheight()) {
             return glm::vec2(x, y);
         }
     }
@@ -70,28 +69,22 @@ std::optional<glm::vec2> Viewport::mouse_to_local() const
 void Viewport::resize(
     wgpu::Device _device,
     wgpu::TextureFormat _color_format,
-    uint32_t width,
-    uint32_t height)
+    const ViewSize& _size)
 {
     if (!_device) {
         std::cerr << "Invalid device in Viewport: Can't resize." << std::endl;
         return;
     }
 
-    width = std::max(width, 1u);
-    height = std::max(height, 1u);
-
-    if (width == width_ && height == height_ && valid()) {
+    if (size_ == _size && valid()) {
         return;
     }
+    size_ = _size.clamped();
 
     // It is important that we do not directly release Resources
     // here but at the end of the frame since there might
     // still be draws of this texture e.g. Screenshot Preview.
     deferred_cleanup();
-
-    width_ = width;
-    height_ = height;
 
     //----------------------------------
     // Color texture
@@ -101,7 +94,7 @@ void Viewport::resize(
 
     color_desc.label = wgpu::StringView("Viewport Color");
     color_desc.dimension = wgpu::TextureDimension::_2D;
-    color_desc.size = {width, height, 1};
+    color_desc.size = {size_.width, size_.height, 1};
     resources_.color_format_ = _color_format;
     color_desc.format = resources_.color_format_;
     color_desc.mipLevelCount = 1;
@@ -135,7 +128,7 @@ void Viewport::resize(
 
     depth_desc.label = wgpu::StringView("Viewport Depth");
     depth_desc.dimension = wgpu::TextureDimension::_2D;
-    depth_desc.size = {width, height, 1};
+    depth_desc.size = {size_.width, size_.height, 1};
     depth_desc.format = RenderContext::depth_format;
     depth_desc.mipLevelCount = 1;
     depth_desc.sampleCount = 1;
@@ -163,7 +156,7 @@ void Viewport::resize(
 
     picking_desc.label = wgpu::StringView("Viewport Picking");
     picking_desc.dimension = wgpu::TextureDimension::_2D;
-    picking_desc.size = {width, height, 1};
+    picking_desc.size = {size_.width, size_.height, 1};
     picking_desc.format = RenderContext::picking_format;
     picking_desc.mipLevelCount = 1;
     picking_desc.sampleCount = 1;
@@ -203,14 +196,15 @@ bool Viewport::draw_ui(
     // Convert ImGui coordinates to framebuffer pixels.
     const ImGuiIO& io = ImGui::GetIO();
 
-    const uint32_t width = static_cast<uint32_t>(
-        std::round(available.x * io.DisplayFramebufferScale.x));
-
-    const uint32_t height = static_cast<uint32_t>(
-        std::round(available.y * io.DisplayFramebufferScale.y));
+    const ViewSize full_size{
+        .width = static_cast<uint32_t>(
+            std::round(available.x * io.DisplayFramebufferScale.x)),
+        .height = static_cast<uint32_t>(
+            std::round(available.y * io.DisplayFramebufferScale.y))
+    };
 
     // Resize before displaying the texture.
-    resize(_device, _color_format, width, height);
+    resize(_device, _color_format, full_size);
 
     // Dawn C++ handle -> raw WebGPU handle.
     const WGPUTextureView raw_view =
@@ -245,11 +239,11 @@ bool Viewport::draw_ui(
 
         mouse_x_ =
             (mouse.x - image_min_.x) *
-            static_cast<float>(width_) / image_size_.x;
+            static_cast<float>(size_.width) / image_size_.x;
 
         mouse_y_ =
             (mouse.y - image_min_.y) *
-            static_cast<float>(height_) / image_size_.y;
+            static_cast<float>(size_.height) / image_size_.y;
     }
 
     visible_ = true;

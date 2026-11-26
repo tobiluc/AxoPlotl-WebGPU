@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
     AxoPlotl::app().save_viewport_screenshot(
         out_image_path,
-        AxoPlotl::app().viewport().size().scaled(4), // 4 x resolution of actual viewport
+        AxoPlotl::app().viewport().size() * 4.0f, // 4 x resolution of actual viewport
         true); // transparent background = true
 
     // Our manual cleanup.

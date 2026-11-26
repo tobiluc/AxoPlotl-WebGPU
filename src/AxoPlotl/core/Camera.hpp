@@ -3,8 +3,8 @@
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <GLFW/glfw3.h>
 #include <AxoPlotl/IO/json_glm.hpp>
+#include <AxoPlotl/utils/ViewSize.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -40,7 +40,7 @@ public:
 
     Mat4x4 get_projection_matrix(const ViewSize& _viewport_size) const;
 
-    void update(GLFWwindow* window, bool _allow_input = true);
+    void update(bool _allow_input = true);
 
     void set_default() {
         *this = Camera();
@@ -48,7 +48,7 @@ public:
 
     void zoom_to_box(const Vec3& min, const Vec3& max, const float _padding = 0.1);
 
-    bool render_settings_ui(GLFWwindow* _window);
+    bool draw_settings_ui();
 
     float orbit_distance() const {
         return glm::length(orbit_target_ - eye_position_);
@@ -59,6 +59,10 @@ public:
     float& far_plane() {return far_plane_;}
 
     const Quat& orientation() const {return orientation_;}
+
+    void set_orientation(const Quat& _q) {
+        orientation_ = glm::normalize(_q);
+    }
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera,
         sensitivity_, pan_speed_, near_plane_, far_plane_,

@@ -9,7 +9,7 @@
 namespace AxoPlotl::ScreenshotTool
 {
 
-static constexpr ViewSize MAX_SIZE = {8000,8000};
+static constexpr uint32_t MAX_SIZE = 8000;
 static std::filesystem::path filepath = "AxoPlotl_Screenshot.png";
 static ViewSize size = {512, 512};
 static bool transparent_background = false;
@@ -17,11 +17,14 @@ static bool transparent_background = false;
 void draw_ui()
 {
     const auto& viewport = AxoPlotl::app().viewport();
+    Vec2 sizef = size.to_vec2();
     gui::InputSlider2("Size",
-                        &size.width,
-                        gui::InputSliderOptions{
-                        .step=1,.min=1,.max=8000,
-                        .display_name=true});
+        &sizef[0],
+        gui::InputSliderOptions{
+        .step=1,.min=1,.max=MAX_SIZE,
+        .display_name=true,
+        .integer = true});
+    size.from_vec2(sizef);
     if (ImGui::Button("Keep Aspect Ratio")) {
         if (size.height > size.width) {
             size.width = size.height * viewport.size().aspect_ratio();
@@ -29,6 +32,7 @@ void draw_ui()
             size.height = size.width / viewport.size().aspect_ratio();
         }
     }
+    size.clamp({1,1}, {MAX_SIZE,MAX_SIZE});
 
     ImGui::Checkbox("Transparent Background", &transparent_background);
 
@@ -49,12 +53,10 @@ void draw_ui()
     if (ImGuiFileDialog::Instance()->Display("SaveScreenshotDialogKey")) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             filepath = ImGuiFileDialog::Instance()->GetFilePathName();
-            if (size.width <= MAX_SIZE.width && size.height <= MAX_SIZE.height) {
-                AxoPlotl::app().save_viewport_screenshot(
+            AxoPlotl::app().save_viewport_screenshot(
                     filepath,
                     size,
                     transparent_background);
-            }
         }
         ImGuiFileDialog::Instance()->Close();
     }

@@ -30,7 +30,13 @@ protected:
     Property<OVM::Entity::Face> f_prop_;
     Property<OVM::Entity::HalfFace> hf_prop_;
     Property<OVM::Entity::Cell> c_prop_;
-    std::optional<OVM::EntityType> selected_prop_entity_type_ = std::nullopt;
+    struct SelectedPropInfo {
+        OVM::EntityType entity_type;
+        std::string name = "";
+        std::string entity_type_name = "";
+        std::string type_name = "";
+    };
+    std::optional<SelectedPropInfo> selected_prop_info_ = std::nullopt;
 
     template<typename EntityTag> Property<EntityTag>& prop();
     template<> Property<OVM::Entity::Vertex>& prop<OVM::Entity::Vertex>() {return v_prop_;}

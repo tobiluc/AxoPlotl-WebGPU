@@ -61,10 +61,10 @@ public:
     {
         Entity entity;
 
-        float function_value_ = 0;
+        float function_value = 0;
 
-        Vec3 position_;
-        Vec3 ndc_;
+        Vec3 position;
+        Vec3 ndc;
     };
 
 private:

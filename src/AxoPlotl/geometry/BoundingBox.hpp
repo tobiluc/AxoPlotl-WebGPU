@@ -3,7 +3,6 @@
 #include <glm/geometric.hpp>
 #include <AxoPlotl/typedefs/glm.hpp>
 #include <algorithm>
-#include <span>
 
 namespace AxoPlotl
 {

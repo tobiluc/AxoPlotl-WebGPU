@@ -10,20 +10,18 @@ PipelineState PickingTextureVis::pipeline_state_;
 
 bool PickingTextureVis::init(
     const wgpu::Device &device,
-    uint32_t _width,
-    uint32_t _height)
+    const ViewSize& _size)
 {
     this->pipeline_state_.device_ = device;
-    this->width_ = _width;
-    this->height_ = _height;
+    this->size_ = _size;
 
     // Output texture.
 
     wgpu::TextureDescriptor texture_desc{};
     texture_desc.label = wgpu::StringView("Picking visualization texture");
     texture_desc.size = {
-        _width,
-        _height,
+        size_.width,
+        size_.height,
         1
     };
     texture_desc.mipLevelCount = 1;
@@ -176,20 +174,17 @@ void PickingTextureVis::render(
     pass.end();
 }
 
-void PickingTextureVis::resize(uint32_t width, uint32_t height)
+void PickingTextureVis::resize(const ViewSize& _size)
 {
-    if (this->width_ == width && this->height_ == height) {
+    if (this->size_ == _size) {
         return;
     }
-
-    this->width_ = width;
-    this->height_ = height;
 
     output_texture.destroy();
 
     wgpu::TextureDescriptor desc{};
     desc.label = wgpu::StringView("Picking visualization texture");
-    desc.size = { width, height, 1 };
+    desc.size = { _size.width, _size.height, 1 };
     desc.mipLevelCount = 1;
     desc.sampleCount = 1;
     desc.format = wgpu::TextureFormat::RGBA8Unorm;
@@ -211,7 +206,7 @@ void PickingTextureVis::draw_ui()
     }
 
     float draw_width = ImGui::GetContentRegionAvail().x;
-    float draw_height = draw_width / width_ * height_;
+    float draw_height = draw_width / size_.width * size_.height;
     gui::Texture(output_view, draw_width, draw_height);
 }
 

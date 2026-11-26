@@ -130,7 +130,7 @@ void SHObject::draw_picking_ui(const Picker& _p)
 
     // The input position is the direction from the origin
     // (ignore deformed geometry)
-    auto pos = glm::normalize(_p.pixel().position_);
+    auto pos = glm::normalize(_p.pixel().position);
 
     ImGui::SeparatorText(name_.c_str());
     ImGui::Text("(x, y, z) = (%f, %f, %f)",
@@ -138,7 +138,7 @@ void SHObject::draw_picking_ui(const Picker& _p)
     ImGui::Text("(phi, theta) = (%f, %f)·π",
                 polar_angle(pos)/M_PI,
                 azimuth_angle(pos)/M_PI);
-    ImGui::Text("Value = %f", _p.pixel().function_value_);
+    ImGui::Text("Value = %f", _p.pixel().function_value);
 }
 
 void SHObject::init()

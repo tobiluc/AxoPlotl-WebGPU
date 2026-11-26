@@ -51,7 +51,7 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     if (deleted()) {return;}
 
     // Get Width and Height
-    camera_.update(app_->window(), _allow_input);
+    camera_.update(_allow_input);
     const auto& view = camera_.get_view_matrix();
     const auto& proj = camera_.get_projection_matrix(_view_size);
 

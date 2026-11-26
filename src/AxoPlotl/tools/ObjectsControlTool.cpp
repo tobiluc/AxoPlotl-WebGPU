@@ -101,7 +101,8 @@ void draw_ui()
         }
         ImGui::EndMenu();
     }
-    ImGui::Separator();
+
+    ImGui::SeparatorText("Objects");
 
     // Data Control per Object
     for (const auto& obj : AxoPlotl::app().scene().get_objects())

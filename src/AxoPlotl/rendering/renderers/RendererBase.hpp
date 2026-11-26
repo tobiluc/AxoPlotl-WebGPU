@@ -5,6 +5,7 @@
 #include "AxoPlotl/typedefs/glm.hpp"
 #include <AxoPlotl/rendering/ColorMap.hpp>
 #include <AxoPlotl/core/picking.hpp>
+#include <AxoPlotl/utils/ViewSize.hpp>
 
 namespace AxoPlotl::internal
 {

@@ -7,6 +7,7 @@
 #include <webgpu/webgpu.hpp>
 #include <AxoPlotl/rendering/MyGpuContext.hpp>
 #include <AxoPlotl/core/RunConfig.hpp>
+#include <AxoPlotl/utils/ViewSize.hpp>
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -109,10 +110,13 @@ public:
 
     GLFWwindow* window() {return window_;}
 
-    glm::vec<2,int> framebuffer_size() const {
+    ViewSize framebuffer_size() const {
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
-        return {fbWidth, fbHeight};
+        return ViewSize{
+            .width = static_cast<uint32_t>(fbWidth),
+            .height = static_cast<uint32_t>(fbHeight)
+        };
     }
 
     const GpuContext& gpu_context() const {return gpu_context_;}
@@ -140,7 +144,7 @@ public:
     }
 
     void render_picking_texture_ui() {
-        picking_renderer_.resize(viewport_.width(), viewport_.height());
+        picking_renderer_.resize(viewport_.size());
         picking_renderer_.draw_ui();
     }
 

@@ -5,7 +5,7 @@
 namespace AxoPlotl::gui
 {
 
-void render_tools_tab_items_ui()
+void draw_tools_tab_items_ui()
 {
     if (ImGui::BeginTabItem(ICON_FA_LAYER_GROUP)) {
         AxoPlotl::ScenesControlTool::draw_ui();

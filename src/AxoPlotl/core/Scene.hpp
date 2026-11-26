@@ -9,6 +9,7 @@
 #include <AxoPlotl/typedefs/ovm.hpp>
 #include <AxoPlotl/core/objects/OpenVolumeMeshObject.hpp>
 #include <filesystem>
+#include <AxoPlotl/utils/ViewSize.hpp>
 
 namespace AxoPlotl::internal
 {

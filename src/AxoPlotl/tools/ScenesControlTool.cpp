@@ -41,7 +41,7 @@ void draw_ui()
 
                 // Settings
                 if (ImGui::CollapsingHeader(ICON_FA_CAMERA " Camera")) {
-                    scene->camera().render_settings_ui(app().window());
+                    scene->camera().draw_settings_ui();
                 }
 
                 if (ImGui::CollapsingHeader(ICON_FA_LIGHTBULB " Light")) {

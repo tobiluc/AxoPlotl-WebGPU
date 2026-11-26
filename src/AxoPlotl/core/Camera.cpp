@@ -39,7 +39,7 @@ Mat4x4 Camera::get_projection_matrix(const ViewSize& _viewport_size) const {
                       : get_perspective_projection_matrix(_viewport_size);
 }
 
-void Camera::update(GLFWwindow* window, bool _allow_input)
+void Camera::update(bool _allow_input)
 {
     float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
@@ -58,10 +58,10 @@ void Camera::update(GLFWwindow* window, bool _allow_input)
             float dx = Mouse::POSITION_DELTA[0] * sensitivity_;
             float dy = Mouse::POSITION_DELTA[1] * sensitivity_;
 
-            bool shift_pressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                                glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+            bool shift_down = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
+                            ImGui::IsKeyDown(ImGuiKey_RightShift);
 
-            if (shift_pressed) {
+            if (shift_down) {
                 // Shift Move orbit target
                 float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f);
 
@@ -120,7 +120,7 @@ void Camera::zoom_to_box(const Vec3 &min, const Vec3 &max, const float _padding)
         orientation_ * (-FORWARD * required_distance);
 }
 
-bool Camera::render_settings_ui(GLFWwindow* _window)
+bool Camera::draw_settings_ui()
 {
     bool changed = false;
 
@@ -136,6 +136,11 @@ bool Camera::render_settings_ui(GLFWwindow* _window)
 
     changed |= gui::InputSlider3(
         "Orbit Center", &orbit_target_[0]);
+
+    if (ImGui::InputFloat4("Orientation (xyzw)", &orientation_[0])) {
+        orientation_ = glm::normalize(orientation_);
+        changed = true;
+    }
 
     changed |= gui::InputSlider(
         "FOV", &fov_,

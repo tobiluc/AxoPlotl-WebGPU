@@ -6,6 +6,7 @@
 #include "AxoPlotl/typedefs/glm.hpp"
 #include "webgpu/webgpu.hpp"
 #include <nlohmann/json.hpp>
+#include <AxoPlotl/utils/ViewSize.hpp>
 
 namespace AxoPlotl
 {

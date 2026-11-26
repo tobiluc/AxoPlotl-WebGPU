@@ -12,7 +12,7 @@ int main()
     AxoPlotl::app().inspector_callback() = {[&]()
     {
         if (ImGui::BeginTabBar("")) {
-            AxoPlotl::gui::render_tools_tab_items_ui();
+            AxoPlotl::gui::draw_tools_tab_items_ui();
             ImGui::EndTabBar();
         }
     }};

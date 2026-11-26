@@ -105,7 +105,7 @@ Picker::Pixel Picker::request_pixel(
         // Entity Index (u32, for Meshes) and Function Value (f32, for Functions)
         // are both stored at index 2 of the pixel
         // TODO: Maybe we want different PickResult Objects instead?
-        context->pick_pixel.function_value_ = std::bit_cast<glm::float32_t>(data[2]);
+        context->pick_pixel.function_value = std::bit_cast<glm::float32_t>(data[2]);
 
         // At Index 3 we store the fragment's depth value
         // Based on this, we can reconstruct the 3d position
@@ -113,14 +113,14 @@ Picker::Pixel Picker::request_pixel(
         // (normalized devie coords (ndc) x and y value, we already
         // have, it's the normalized viewport position)
         float depth = std::bit_cast<float>(data[3]);
-        context->pick_pixel.ndc_.z = depth;
+        context->pick_pixel.ndc.z = depth;
         const auto& v = context->camera->get_view_matrix();
         const auto& p = context->camera->get_projection_matrix(context->scene_size);
-        Vec4 pos = glm::inverse(p * v) * Vec4(context->pick_pixel.ndc_, 1);
+        Vec4 pos = glm::inverse(p * v) * Vec4(context->pick_pixel.ndc, 1);
         pos /= pos.w;
-        context->pick_pixel.position_[0] = pos[0];
-        context->pick_pixel.position_[1] = pos[1];
-        context->pick_pixel.position_[2] = pos[2];
+        context->pick_pixel.position[0] = pos[0];
+        context->pick_pixel.position[1] = pos[1];
+        context->pick_pixel.position[2] = pos[2];
 
         // unmap the memory
         context->buffer.unmap();
@@ -141,7 +141,7 @@ Picker::Pixel Picker::request_pixel(
     // Get x and y components of Normalized Device Coordinates
     _x -= 0; // topleft of vieport is origin since docking rework
     _y -= 0;
-    context.pick_pixel.ndc_ = {
+    context.pick_pixel.ndc = {
         std::clamp((2.0*_x)/context.scene_size.width - 1.0, -1.0, 1.0),
         std::clamp(1.0-(2.0*_y)/context.scene_size.height, -1.0, 1.0),
         0

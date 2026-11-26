@@ -45,6 +45,11 @@ void draw_ui()
     if (ImGui::CollapsingHeader("Picking Texture"))
     {
         AxoPlotl::app().render_picking_texture_ui();
+        const auto& p = AxoPlotl::app().picked_pixel();
+        ImGui::Text("Entity: (%u, %u, %u)", p.entity.object_id, p.entity.entity_type, p.entity.entity_index);
+        ImGui::Text("Pos: (%f, %f, %f)", p.position.x, p.position.y, p.position.z);
+        ImGui::Text("NDC: (%f, %f, %f)", p.ndc.x, p.ndc.y, p.ndc.z);
+        ImGui::Text("f: %f", p.function_value);
     }
 }
 }

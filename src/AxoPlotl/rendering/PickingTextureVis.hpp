@@ -24,23 +24,21 @@ public:
 
     bool init(
         const wgpu::Device& device,
-        uint32_t _width,
-        uint32_t _height
+        const ViewSize& _size
         );
 
     void render(
         wgpu::CommandEncoder& encoder,
         const wgpu::TextureView& picking_texture);
 
-    void resize(uint32_t width, uint32_t height);
+    void resize(const ViewSize& _size);
 
     void draw_ui();
 
     const wgpu::Texture& texture() const {return output_texture;}
     const wgpu::TextureView& texture_view() const {return output_view;}
 
-    uint32_t width() const {return width_;}
-    uint32_t height() const {return height_;}
+    const ViewSize& size() const {return size_;}
 
     Mode& mode() {return uniforms_.mode;}
 
@@ -59,8 +57,7 @@ private:
 
     static PipelineState pipeline_state_;
 
-    uint32_t width_ = 0;
-    uint32_t height_ = 0;
+    ViewSize size_;
 
     bool initialized = false;
 };

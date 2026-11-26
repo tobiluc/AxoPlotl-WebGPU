@@ -110,11 +110,6 @@ void OpenVolumeMeshObject::draw_properties_ui()
         if (mesh().n_props<EntityTag>()>0 &&
             ImGui::BeginMenu(title.c_str()))
         {
-            // Select an already selected property
-            if (ImGui::IsItemClicked()) {
-                selected_prop_entity_type_ = EntityTag::type();
-            }
-
             for (auto pp = mesh().persistent_props_begin<EntityTag>();
                  pp != mesh().persistent_props_end<EntityTag>(); ++pp)
             {
@@ -132,19 +127,21 @@ void OpenVolumeMeshObject::draw_properties_ui()
 
     auto render_property_visualization_settings_menu = [&]<typename EntityTag>()
     {
-        if (!selected_prop_entity_type_.has_value()
-            || *selected_prop_entity_type_ != EntityTag::type()
+        if (!selected_prop_info_.has_value()
+            || selected_prop_info_->entity_type != EntityTag::type()
             || !prop<EntityTag>().prop_.has_value())
         {return;}
 
-        // Render Property Filter Settings
-        prop<EntityTag>().settings_->render_ui();
+        const std::string title = selected_prop_info_->entity_type_name
+        + "(" + selected_prop_info_->type_name + "): " + selected_prop_info_->name;
+        ImGui::SeparatorText(title.c_str());
+
+        ImGui::SameLine();
 
         // Clear
-        if (ImGui::Button("Unselect Property")) {
-            // upload_default_property_data<EntityTag>();
+        if (ImGui::Button(ICON_FA_XMARK)) {
             entity_renderer<EntityTag>().property_filter_options().set_default();
-            selected_prop_entity_type_ = std::nullopt;
+            selected_prop_info_ = std::nullopt;
             prop<EntityTag>().prop_ = std::nullopt;
             scene_->app()->call_deferred([&]() {
                 vector3_renderer_.cleanup();
@@ -153,6 +150,10 @@ void OpenVolumeMeshObject::draw_properties_ui()
                 mat3x3_renderer_.enabled() = false;
             });
         }
+        ImGui::SetItemTooltip("Unselect Property");
+
+        // Render Property Filter Settings
+        prop<EntityTag>().settings_->render_ui();
     };
 
     if (ImGui::BeginTabBar("##xx"))
@@ -417,9 +418,9 @@ void OpenVolumeMeshObject::draw_picking_ui(const Picker &_p)
     ImGui::SeparatorText(name().c_str());
 
     ImGui::Text("Clicked at (%f, %f, %f)",
-        _p.pixel().position_[0],
-        _p.pixel().position_[1],
-        _p.pixel().position_[2]);
+        _p.pixel().position[0],
+        _p.pixel().position[1],
+        _p.pixel().position[2]);
 
     switch (_p.pixel().entity.entity_type)
     {
@@ -482,8 +483,8 @@ void OpenVolumeMeshObject::draw_picking_ui(const Picker &_p)
     if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
         const float s = std::max<float>(bbox_.diagonal()*0.01f, 0.01f);
         BoundingBox bbox;
-        bbox.expand_with_point(_p.pixel().position_-Vec3(s,s,s));
-        bbox.expand_with_point(_p.pixel().position_+Vec3(s,s,s));
+        bbox.expand_with_point(_p.pixel().position-Vec3(s,s,s));
+        bbox.expand_with_point(_p.pixel().position+Vec3(s,s,s));
         scene_->zoom_to_box(bbox);
     }
 }
@@ -584,7 +585,12 @@ bool OpenVolumeMeshObject::visualize_property(
         }
 
         // Visibility Settings
-        selected_prop_entity_type_ = EntityTag::type();
+        selected_prop_info_ = SelectedPropInfo{
+            .entity_type = EntityTag::type(),
+            .name = _pp->name(),
+            .entity_type_name = OVM::entityTypeName<EntityTag>(),
+            .type_name = OVM::typeName<T>()
+        };
         entity_renderer<OVM::Entity::Vertex>().enabled() = false;
         entity_renderer<OVM::Entity::Edge>().enabled() = false;
         entity_renderer<OVM::Entity::Face>().enabled() = false;

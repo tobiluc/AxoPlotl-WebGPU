@@ -63,9 +63,9 @@ void TetObject::draw_picking_ui(const Picker& _p)
 
     ImGui::SeparatorText(name_.c_str());
     ImGui::Text("(x, y, z) = (%f, %f, %f)",
-        _p.pixel().position_.x,
-        _p.pixel().position_.y,
-        _p.pixel().position_.z);
+        _p.pixel().position.x,
+        _p.pixel().position.y,
+        _p.pixel().position.z);
 }
 
 void TetObject::init()
