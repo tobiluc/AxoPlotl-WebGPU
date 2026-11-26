@@ -17,7 +17,7 @@ void draw_ui()
     if (ImGui::CollapsingHeader("Performance"))
     {
         ImGui::Text("%f MB", AxoPlotl::memory_usage_mb());
-        ImGui::Text("%f FPS", AxoPlotl::app().frames_per_second());
+        ImGui::Text("%f/%f FPS", app().ticks_per_second(), app().fixed_ticks_per_second());
         ImGui::Text("Draw Frames %d", internal::n_draw_frames());
     }
 

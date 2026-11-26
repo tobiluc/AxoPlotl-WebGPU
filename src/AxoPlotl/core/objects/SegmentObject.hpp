@@ -2,7 +2,7 @@
 
 #include "AxoPlotl/rendering/renderers/MeshHalfEdgeRenderer.hpp"
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
-#include <AxoPlotl/core/objects/BaseObject.hpp>
+#include <AxoPlotl/core/objects/ObjectBase.hpp>
 
 namespace AxoPlotl
 {

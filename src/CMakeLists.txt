@@ -11,7 +11,7 @@ add_library(AxoPlotlCore
     AxoPlotl/core/picking.cpp
     AxoPlotl/core/Camera.cpp
 
-    AxoPlotl/core/objects/BaseObject.cpp
+    AxoPlotl/core/objects/ObjectBase.cpp
     AxoPlotl/core/objects/OpenVolumeMeshObject.cpp
     AxoPlotl/core/objects/SphericalHarmonicsObject.cpp
     AxoPlotl/core/objects/TetrahedronObject.cpp

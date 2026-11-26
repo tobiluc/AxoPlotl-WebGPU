@@ -2,7 +2,7 @@
 
 #include <AxoPlotl/rendering/wgpu_commons.hpp>
 #include <AxoPlotl/rendering/redraw.hpp>
-#include <AxoPlotl/core/objects/BaseObject.hpp>
+#include <AxoPlotl/core/objects/ObjectBase.hpp>
 #include <AxoPlotl/core/Camera.hpp>
 #include <AxoPlotl/rendering/renderers/Matrix3x3Renderer.hpp>
 #include <webgpu/webgpu.hpp>
@@ -46,6 +46,8 @@ public:
     ~Scene() {
         cleanup();
     }
+
+    void update(float _dt);
 
     void render(wgpu::RenderPassEncoder _render_pass,
                 const ViewSize _view_size,

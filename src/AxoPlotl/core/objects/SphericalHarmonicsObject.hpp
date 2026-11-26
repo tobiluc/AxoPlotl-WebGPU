@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AxoPlotl/core/objects/BaseObject.hpp"
+#include "AxoPlotl/core/objects/ObjectBase.hpp"
 #include "AxoPlotl/rendering/renderers/SphericalHarmonicsRenderer.hpp"
 
 namespace AxoPlotl

@@ -12,11 +12,6 @@
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
 
-#ifdef __EMSCRIPTEN__
-#  include <emscripten.h>
-#endif // __EMSCRIPTEN__
-
-
 namespace AxoPlotl::internal
 {
 
@@ -28,10 +23,13 @@ private:
 
     struct Time {
         float delta_time_ = 0;
-        float frames_per_second_ = 0;
-        float seconds_since_last_frame_ = 0;
+        float ticks_per_second_ = 0;
+        float seconds_since_last_tick_ = 0;
         float time_of_last_frame_ = 0;
-        void update();
+        float fixed_delta_time_ = 1.0f / 60.0f; // target 60 fps for logic
+        float fixed_time_accumulator_ = 0.0f;
+        void tick();
+        bool should_update_fixed();
     } time_;
 
     struct Inspector {
@@ -139,8 +137,12 @@ public:
         return inspector_.enabled;
     }
 
-    constexpr float frames_per_second() const {
-        return time_.frames_per_second_;
+    constexpr float ticks_per_second() const {
+        return time_.ticks_per_second_;
+    }
+
+    constexpr float fixed_ticks_per_second() const {
+        return 1.0f/time_.fixed_delta_time_;
     }
 
     void render_picking_texture_ui() {

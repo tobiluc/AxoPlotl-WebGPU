@@ -2,7 +2,7 @@
 
 #include "AxoPlotl/gui/properties/property_settings.hpp"
 #include <AxoPlotl/rendering/renderers/renderers.hpp>
-#include "AxoPlotl/core/objects/BaseObject.hpp"
+#include "AxoPlotl/core/objects/ObjectBase.hpp"
 #include "AxoPlotl/rendering/MeshData.hpp"
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>

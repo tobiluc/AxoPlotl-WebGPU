@@ -46,20 +46,41 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::pat
     return add_object<OpenVolumeMeshObject>(std::move(rr.mesh), _path);
 }
 
-void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
+void Scene::update(float _dt)
 {
     if (deleted()) {return;}
 
-    // Get Width and Height
-    camera_.update(_allow_input);
-    const auto& view = camera_.get_view_matrix();
-    const auto& proj = camera_.get_projection_matrix(_view_size);
+    camera_.update(_dt);
 
     // The light can point in the camera forward direction
     if (settings.light_from_camera) {
         directional_light.direction = camera_.orientation() * Camera::FORWARD;
     }
 
+    // Update Scene Objects
+    for (const auto& obj : objects_) {
+        obj->update(_dt);
+    }
+
+    // Remove deleted objects
+    // This is deferred to avoid buffers being destroyed
+    // before the command buffer is submitted
+    app_->call_deferred([this]() {
+        objects_.erase(
+            std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
+                return _obj->deleted();
+            }), objects_.end());
+        objects_.shrink_to_fit();
+    });
+}
+
+void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
+{
+    if (deleted()) {return;}
+
+    // Get View and Projection Matrix
+    const auto& view = camera_.get_view_matrix();
+    const auto& proj = camera_.get_projection_matrix(_view_size);
     const auto view_proj = proj * view;
 
     // Render Coordinate Axis Cross at Origin
@@ -85,17 +106,6 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     for (const auto& obj : objects_) {
         obj->render(_render_pass, _view_size, view, proj);
     }
-
-    // Remove deleted objects
-    // This is deferred to avoid buffers being destroyed
-    // before the command buffer is submitted
-    app_->call_deferred([this]() {
-        objects_.erase(
-            std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
-                return _obj->deleted();
-            }), objects_.end());
-        objects_.shrink_to_fit();
-    });
 }
 
 bool Scene::save_to_file(const std::filesystem::path& _path) const

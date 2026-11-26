@@ -100,17 +100,31 @@ bool Application::delete_scene(const std::string& _name)
     return delete_scene(i.value());
 }
 
-void Application::Time::update()
+void Application::Time::tick()
 {
-    // Compute frames per second
-    float time_of_current_frame = (float)glfwGetTime();
-    delta_time_ = time_of_current_frame - time_of_last_frame_;
-    time_of_last_frame_ = time_of_current_frame;
-    seconds_since_last_frame_ += delta_time_;
-    if (seconds_since_last_frame_ >= 1.0f) {
-        seconds_since_last_frame_ -= 1.0f;
-        frames_per_second_ = 1.0f / delta_time_;
+    const float current_time = static_cast<float>(glfwGetTime());
+
+    delta_time_ = current_time - time_of_last_frame_;
+    time_of_last_frame_ = current_time;
+    delta_time_ = std::min(delta_time_, 0.1f); // Prevent huge time steps after a pause or breakpoint.
+
+    fixed_time_accumulator_ += delta_time_;
+    seconds_since_last_tick_ += delta_time_;
+
+    // FPS counter
+    if (seconds_since_last_tick_ >= 1.0f) {
+        ticks_per_second_ = 1.0f / delta_time_;
+        seconds_since_last_tick_ -= 1.0f;
     }
+}
+
+bool Application::Time::should_update_fixed()
+{
+    if (fixed_time_accumulator_ >= fixed_delta_time_) {
+        fixed_time_accumulator_ -= fixed_delta_time_;
+        return true;
+    }
+    return false;
 }
 
 bool Application::init_glfw()
@@ -210,9 +224,12 @@ void Application::frame_tick(bool _headless)
     //------------------
     // Frame Update
     //------------------
-    time_.update();
+    time_.tick();
     Mouse::update(window_);
     glfwPollEvents();
+    while (time_.should_update_fixed()){
+        scene().update(time_.fixed_delta_time_);
+    }
 
     //------------------
     // Frame Maintenance

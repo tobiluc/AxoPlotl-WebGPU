@@ -33,6 +33,8 @@ public:
 
     virtual void recompute_bounding_box() = 0;
 
+    void update(float _dt);
+
     virtual void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,

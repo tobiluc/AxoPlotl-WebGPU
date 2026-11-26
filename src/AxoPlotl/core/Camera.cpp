@@ -2,6 +2,7 @@
 #include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include "AxoPlotl/input/Mouse.hpp"
 #include "imgui.h"
+#include <AxoPlotl/AxoPlotl.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -39,14 +40,14 @@ Mat4x4 Camera::get_projection_matrix(const ViewSize& _viewport_size) const {
                       : get_perspective_projection_matrix(_viewport_size);
 }
 
-void Camera::update(bool _allow_input)
+void Camera::update(float _dt)
 {
     float orbit_distance = glm::length(orbit_target_ - eye_position_);
 
-    if (_allow_input)
+    if (app().viewport().hovered())
     {
         // Zoom
-        float scroll = Mouse::SCROLL_DELTA[1];
+        float scroll = Mouse::SCROLL_DELTA[1] * _dt;
         if (scroll) {
             scroll *= sensitivity_;
             orbit_distance = glm::clamp(orbit_distance * (1.0f-scroll), near_plane_, far_plane_);
@@ -55,15 +56,15 @@ void Camera::update(bool _allow_input)
         // Pan
         if (Mouse::LEFT_PRESSED)
         {
-            float dx = Mouse::POSITION_DELTA[0] * sensitivity_;
-            float dy = Mouse::POSITION_DELTA[1] * sensitivity_;
+            float dx = Mouse::POSITION_DELTA[0] * sensitivity_ * _dt;
+            float dy = Mouse::POSITION_DELTA[1] * sensitivity_ * _dt;
 
             bool shift_down = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
                             ImGui::IsKeyDown(ImGuiKey_RightShift);
 
             if (shift_down) {
                 // Shift Move orbit target
-                float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f);
+                float pan_speed = pan_speed_ * orbit_distance * std::tan(fov_ * 0.5f) * _dt;
 
                 orbit_target_ -= (orientation_ * RIGHT) * dx * pan_speed;
                 orbit_target_ += (orientation_ * UP) * dy * pan_speed;
@@ -128,11 +129,11 @@ bool Camera::draw_settings_ui()
 
     changed |= gui::InputSlider(
         "Sensitivity", &sensitivity_,
-        gui::InputSliderOptions{.step=0.001f, .min=0.001f, .max=0.02f});
+        gui::InputSliderOptions{.step=0.05f, .min=0.06f, .max=4.0f});
 
     changed |= gui::InputSlider(
         "Pan Speed", &pan_speed_,
-        gui::InputSliderOptions{.step=0.025f, .min=0.5f, .max=4.0f});
+        gui::InputSliderOptions{.step=5.0f, .min=30.0f, .max=300.0f});
 
     changed |= gui::InputSlider3(
         "Orbit Center", &orbit_target_[0]);

@@ -17,8 +17,8 @@ public:
     static constexpr Vec3 FORWARD = {0,0,-1};
 
 private:
-    float sensitivity_ = 0.005f;
-    float pan_speed_ = 2.0f;
+    float sensitivity_ = 1.0f;
+    float pan_speed_ = 160.0f;
 
     float near_plane_ = 1.0f/64.0f;
     float far_plane_ = (1<<11);
@@ -40,7 +40,7 @@ public:
 
     Mat4x4 get_projection_matrix(const ViewSize& _viewport_size) const;
 
-    void update(bool _allow_input = true);
+    void update(float _dt);
 
     void set_default() {
         *this = Camera();
