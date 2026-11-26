@@ -48,20 +48,18 @@ std::shared_ptr<OpenVolumeMeshObject> Scene::add_mesh(const std::filesystem::pat
 
 void Scene::update(float _dt)
 {
-    if (deleted()) {return;}
-
     camera_.update(_dt);
-
-    // The light can point in the camera forward direction
-    if (settings.light_from_camera) {
-        directional_light.direction = camera_.orientation() * Camera::FORWARD;
-    }
 
     // Update Scene Objects
     for (const auto& obj : objects_) {
-        obj->update(_dt);
+        if (!obj->deleted()) {
+            obj->update(_dt);
+        }
     }
+}
 
+void Scene::fixed_update(float _dt)
+{
     // Remove deleted objects
     // This is deferred to avoid buffers being destroyed
     // before the command buffer is submitted
@@ -72,12 +70,22 @@ void Scene::update(float _dt)
             }), objects_.end());
         objects_.shrink_to_fit();
     });
+
+    // The light can point in the camera forward direction
+    if (settings.light_from_camera) {
+        directional_light.direction = camera_.orientation() * Camera::FORWARD;
+    }
+
+    // Update Scene Objects
+    for (const auto& obj : objects_) {
+        if (!obj->deleted()) {
+            obj->fixed_update(_dt);
+        }
+    }
 }
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
 {
-    if (deleted()) {return;}
-
     // Get View and Projection Matrix
     const auto& view = camera_.get_view_matrix();
     const auto& proj = camera_.get_projection_matrix(_view_size);
@@ -104,7 +112,9 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
 
     // Render Scene Objects
     for (const auto& obj : objects_) {
-        obj->render(_render_pass, _view_size, view, proj);
+        if (!obj->deleted()) {
+            obj->render(_render_pass, _view_size, view, proj);
+        }
     }
 }
 

@@ -227,8 +227,13 @@ void Application::frame_tick(bool _headless)
     time_.tick();
     Mouse::update(window_);
     glfwPollEvents();
-    while (time_.should_update_fixed()){
-        scene().update(time_.fixed_delta_time_);
+    while (time_.should_update_fixed()) {
+        if (!scene().deleted()) {
+            scene().fixed_update(time_.fixed_delta_time_);
+        }
+    }
+    if (!scene().deleted()) {
+        scene().update(time_.delta_time_);
     }
 
     //------------------

@@ -35,6 +35,8 @@ public:
 
     void update(float _dt);
 
+    void fixed_update(float _dt);
+
     virtual void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,

@@ -49,6 +49,8 @@ public:
 
     void update(float _dt);
 
+    void fixed_update(float _dt);
+
     void render(wgpu::RenderPassEncoder _render_pass,
                 const ViewSize _view_size,
                 bool _allow_input = true);
