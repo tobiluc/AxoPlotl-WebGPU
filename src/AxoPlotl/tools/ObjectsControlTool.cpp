@@ -114,24 +114,15 @@ void draw_ui()
 
         // Target Toggle
         ImGui::Checkbox("##V", &obj->target());
+        ImGui::SetItemTooltip("Set Target");
 
         ImGui::SameLine();
-
-        // Name
-        ImGui::SeparatorText((obj->name()).c_str());
 
         // Visible Toggle
         if (ImGui::Button(obj->visible() ? ICON_FA_EYE : ICON_FA_EYE_SLASH)) {
             obj->visible() = !obj->visible();
         }
-
-        ImGui::SameLine();
-
-        // Zoom Button
-        if (ImGui::Button(ICON_FA_MAGNIFYING_GLASS)) {
-            AxoPlotl::app().scene().zoom_to_box(obj->bounding_box());
-            obj->visible() = true;
-        }
+        ImGui::SetItemTooltip("Toggle Visibility");
 
         ImGui::SameLine();
 
@@ -140,6 +131,7 @@ void draw_ui()
             ImGui::OpenPopup("popup_object_settings");
             settings_object_id_ = obj->id();
         }
+        ImGui::SetItemTooltip("Object Settings");
 
         ImGui::SameLine();
 
@@ -148,18 +140,16 @@ void draw_ui()
             ImGui::OpenPopup("popup_object_info");
             info_object_id_ = obj->id();
         }
+        ImGui::SetItemTooltip("Object Info");
 
-        // ImGui::SameLine();
-        // Export Button
-        // if (ImGui::Button(ICON_FA_FILE_EXPORT)) {
-        //     IGFD::FileDialogConfig cfg;
-        //     cfg.path = "..";
-        //     cfg.userDatas = (void*)(intptr_t)obj->id();
-        //     ImGuiFileDialog::Instance()->OpenDialog(
-        //         "SaveObjectDialogKey", "Choose File",
-        //         "",
-        //         cfg);
-        // }
+        ImGui::SameLine();
+
+        // Name
+        if (ImGui::Selectable(obj->name().c_str())) {
+            AxoPlotl::app().scene().zoom_to_box(obj->bounding_box());
+            obj->visible() = true;
+        }
+        ImGui::SetItemTooltip("Zoom to Object");
 
         // Info Popup
         if (info_object_id_ >= 0
