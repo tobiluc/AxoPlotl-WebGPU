@@ -206,7 +206,7 @@ void draw_ui()
             break;
         }
     }
-    if (ImGui::BeginCombo("Object", selected_name)) {
+    if (ImGui::BeginCombo(ICON_FA_SLIDERS, selected_name)) {
         for (const auto& obj : AxoPlotl::app().scene().get_objects()) {
             ImGui::PushID(obj->id());
 

@@ -15,7 +15,6 @@ void draw_tools_tab_items_ui()
     }
     ImGui::SetItemTooltip("Scenes");
 
-
     ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
     if (!run_once) {
         flags |= ImGuiTabItemFlags_SetSelected;

@@ -423,9 +423,10 @@ void Application::frame_tick(bool _headless)
 
 int Application::run(RunConfig _cfg)
 {
+    int status = 0;
     if (!initialized_) { // safety measure
         if (!init()) {
-            return 1;
+            return (status = 1);
         }
     }
     glfwSetWindowShouldClose(window(), GLFW_FALSE); // reopen window
@@ -433,12 +434,18 @@ int Application::run(RunConfig _cfg)
         *_cfg.num_ticks = std::max(*_cfg.num_ticks, 1llu);
     }
     while (!glfwWindowShouldClose(window()) && (!_cfg.num_ticks.has_value() || (--(*_cfg.num_ticks) > 0llu))) {
-        frame_tick(_cfg.headless);
+        try {
+            frame_tick(_cfg.headless);
+        } catch (const std::exception& _e) {
+            std::cerr << "AxoPlotl - FATAL ERROR: " << _e.what() << std::endl;
+            status = 1;
+            break;
+        }
     }
     if (!_cfg.manual_cleanup) {
         cleanup();
     }
-    return 0;
+    return status;
 }
 
 void Application::on_window_resize(float width, float height)
