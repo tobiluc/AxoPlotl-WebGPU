@@ -1,6 +1,5 @@
 #include "Scene.hpp"
 #include "AxoPlotl/IO/file_access.hpp"
-#include "AxoPlotl/gui/widgets/input_slider.hpp"
 #include <AxoPlotl/core/Application.hpp>
 #include <fstream>
 
@@ -14,11 +13,11 @@ void Scene::init(Application *_app)
     // Coordinate Axes Cross
 
     origin_position_buffer_ = create_and_write_bufferT<Vec4>(
-        app_->gpu_context().device, {Vec4(0,0,0,1)});
+        _app->gpu_context().device, {Vec4(0,0,0,1)});
 
     unit_frame_renderer_.init(UINT32_MAX,
-                        app()->gpu_context(),
-                        app()->render_context(),
+                        _app->gpu_context(),
+                        _app->render_context(),
                         origin_position_buffer_);
     glm::mat3x4 m;
     m[0] = {1,0,0,1};
@@ -60,17 +59,6 @@ void Scene::update(float _dt)
 
 void Scene::fixed_update(float _dt)
 {
-    // Remove deleted objects
-    // This is deferred to avoid buffers being destroyed
-    // before the command buffer is submitted
-    app_->call_deferred([this]() {
-        objects_.erase(
-            std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
-                return _obj->deleted();
-            }), objects_.end());
-        objects_.shrink_to_fit();
-    });
-
     // The light can point in the camera forward direction
     if (settings.light_from_camera) {
         directional_light.direction = camera_.orientation() * Camera::FORWARD;
@@ -82,6 +70,16 @@ void Scene::fixed_update(float _dt)
             obj->fixed_update(_dt);
         }
     }
+
+    // Remove deleted objects
+    // This is deferred to avoid buffers being destroyed
+    // before the command buffer is submitted
+    app()->call_deferred([this]() {
+        objects_.erase(
+            std::remove_if(objects_.begin(), objects_.end(), [&](const std::shared_ptr<ObjectBase>& _obj) {
+                return _obj->deleted();
+            }), objects_.end());
+    });
 }
 
 void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_size, bool _allow_input)
