@@ -23,7 +23,7 @@ struct Uniforms {
 
 struct VSOut {
     @builtin(position) position : vec4<f32>,
-    @location(0) @interpolate(flat) value : vec4<f32>,
+    @location(0) @interpolate(flat) value : PropValue,
     @location(1) corner : vec2<f32>,
     @location(2) @interpolate(flat) vertexHandle: u32,
     @location(3) @interpolate(flat) selected: u32

@@ -2,7 +2,7 @@
 #include <AxoPlotl/core/AxoPlotl_fwd.hpp>
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
-#include "AxoPlotl/rendering/MeshData.hpp"
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 
 namespace AxoPlotl::internal
 {
@@ -81,7 +81,7 @@ public:
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
               const BufferData<Position>& _vertices_positions,
-              const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances);
+              const BufferData<VolMeshBuffers::HalfEdgeInstance>& _halfedges_instances);
 
     void update_halfedge_property_data(const std::vector<PropContainer>& _data);
 

@@ -9,8 +9,8 @@
 
 namespace OpenVolumeMesh
 {
-    template<> const std::string typeName<glm::mat<3,3,float>>() {return "3x3f";}
-    template<> const std::string typeName<glm::mat<3,3,double>>() {return "3x3d";}
+    template<> inline const std::string typeName<glm::mat<3,3,float>>() {return "3x3f";}
+    template<> inline const std::string typeName<glm::mat<3,3,double>>() {return "3x3d";}
 }
 
 namespace OpenVolumeMesh::IO::Codecs {

@@ -1,5 +1,4 @@
 #include "MeshCellRenderer.hpp"
-#include "AxoPlotl/rendering/MeshData.hpp"
 #include "AxoPlotl/rendering/wgpu_commons.hpp"
 
 namespace AxoPlotl::internal
@@ -12,9 +11,9 @@ void MeshCellRenderer::init(uint32_t _object_id,
                                const GpuContext& _gpu_context,
                                const RenderContext &_render_context,
                                const BufferData<Position>& _vertices_positions,
-                               const BufferData<VolMeshData::CellIndex>& _cells_triangle_indices,
+                               const BufferData<VolMeshBuffers::CellIndex>& _cells_triangle_indices,
                                const BufferData<Position>& _cells_centers,
-                               const BufferData<VolMeshData::Normal>& _halffaces_normals)
+                               const BufferData<VolMeshBuffers::Normal>& _halffaces_normals)
 {
     triangle_pipeline_state_.set_device(_gpu_context.device);
     cleanup();
@@ -39,7 +38,7 @@ void MeshCellRenderer::init(uint32_t _object_id,
     cells_center_buffer_ = _cells_centers.buffer;
     halfface_normal_buffer_ = _halffaces_normals.buffer;
 
-    create_buffers();
+    create_buffers(_gpu_context.device);
     create_bind_group_layout();
     create_bind_group(_gpu_context);
     create_triangle_pipeline(_gpu_context, _render_context);
@@ -54,13 +53,13 @@ void MeshCellRenderer::cleanup()
     save_destroy_release(property_buffer_);
     save_destroy_release(uniform_buffer_);
     save_release(bind_group_);
+    cells_bits_.cleanup();
     initialized_ = false;
 }
 
-void MeshCellRenderer::create_buffers()
+void MeshCellRenderer::create_buffers(const wgpu::Device& _device)
 {
-    wgpu::Device device = triangle_pipeline_state_.device_;
-    wgpu::Queue queue = device.getQueue();
+    wgpu::Queue queue = _device.getQueue();
 
     // Property Buffer
     {
@@ -70,27 +69,32 @@ void MeshCellRenderer::create_buffers()
         desc.size = sizeof(PropContainer)*n_cells_;
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Mesh Cell Property Buffer");
-        property_buffer_ = device.createBuffer(desc);
+        property_buffer_ = _device.createBuffer(desc);
     }
 
     // Uniform Buffer
     {
-        compute_uniform_stride<Uniforms>(device);
+        compute_uniform_stride<Uniforms>(_device);
         wgpu::BufferDescriptor desc;
         desc.size = uniform_stride_ * std::max(max_draw_calls_, 1u);
         desc.usage = wgpu::BufferUsage::Uniform |
                      wgpu::BufferUsage::CopyDst;
         desc.mappedAtCreation = false;
         desc.label = wgpu::StringView("Cell Uniform Buffer");
-        uniform_buffer_ = device.createBuffer(desc);
+        uniform_buffer_ = _device.createBuffer(desc);
     }
+
+    // Bit Buffer
+    cells_bits_.resize(n_cells_);
+    cells_bits_.create_buffer(_device);
+    cells_bits_.write_all_bits(_device, true);
 }
 
 void MeshCellRenderer::create_bind_group_layout()
 {
     if (triangle_pipeline_state_.bind_group_layout_) {return;}
 
-    wgpu::BindGroupLayoutEntry entries[7]{};
+    wgpu::BindGroupLayoutEntry entries[8]{};
 
     // 0 - Uniform
     entries[0].binding = 0;
@@ -134,8 +138,14 @@ void MeshCellRenderer::create_bind_group_layout()
     entries[6].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
     entries[6].buffer.minBindingSize = sizeof(glm::vec4);
 
+    // 7 - Bits
+    entries[7].binding = 7;
+    entries[7].visibility = wgpu::ShaderStage::Vertex;
+    entries[7].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
+    entries[7].buffer.minBindingSize = sizeof(BitBufferData::Word)*BitBufferData::words_per_element;
+
     wgpu::BindGroupLayoutDescriptor layoutDesc{};
-    layoutDesc.entryCount = 7;
+    layoutDesc.entryCount = 8;
     layoutDesc.entries = entries;
     layoutDesc.label = wgpu::StringView("Cell Bind Group Layout");
 
@@ -144,7 +154,7 @@ void MeshCellRenderer::create_bind_group_layout()
 
 void MeshCellRenderer::create_bind_group(const GpuContext &_gpu_context)
 {
-    wgpu::BindGroupEntry groupEntries[7]{};
+    wgpu::BindGroupEntry groupEntries[8]{};
 
     // 0 - Uniform
     groupEntries[0].binding = 0;
@@ -184,9 +194,15 @@ void MeshCellRenderer::create_bind_group(const GpuContext &_gpu_context)
     groupEntries[6].offset = 0;
     groupEntries[6].size = sizeof(glm::vec4) * n_normals_;
 
+    // 7 - Bits
+    groupEntries[7].binding = 7;
+    groupEntries[7].buffer = cells_bits_.buffer();
+    groupEntries[7].offset = 0;
+    groupEntries[7].size = cells_bits_.buffer().getSize();
+
     wgpu::BindGroupDescriptor bgDesc{};
     bgDesc.layout = triangle_pipeline_state_.bind_group_layout_;
-    bgDesc.entryCount = 7;
+    bgDesc.entryCount = 8;
     bgDesc.entries = groupEntries;
 
     bind_group_ = _gpu_context.device.createBindGroup(bgDesc);
@@ -206,21 +222,21 @@ void MeshCellRenderer::create_triangle_pipeline(
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(VolMeshData::CellIndex, vh);;
+    attrs[0].offset = offsetof(VolMeshBuffers::CellIndex, vh);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Cell Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(VolMeshData::CellIndex, ch);
+    attrs[1].offset = offsetof(VolMeshBuffers::CellIndex, ch);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     // 2 -- Halfface Index
     attrs[2].shaderLocation = 2;
-    attrs[2].offset = offsetof(VolMeshData::CellIndex, hfh);
+    attrs[2].offset = offsetof(VolMeshBuffers::CellIndex, hfh);
     attrs[2].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(VolMeshData::CellIndex);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshBuffers::CellIndex);
     vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
@@ -307,7 +323,7 @@ void MeshCellRenderer::render(
 
     _render_pass.setPipeline(triangle_pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, triangle_index_buffer_, 0, n_triangle_indices_*sizeof(VolMeshData::CellIndex));
+    _render_pass.setVertexBuffer(0, triangle_index_buffer_, 0, n_triangle_indices_*sizeof(VolMeshBuffers::CellIndex));
     _render_pass.draw(n_triangle_indices_, 1, 0, 0);
 
     set_next_draw_index();

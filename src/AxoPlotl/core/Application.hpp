@@ -39,9 +39,10 @@ private:
 
     struct Requests {
         bool reset_layout = false;
-        bool pick_result = false;
         bool switch_scene_tab = false;
     } requests_;
+
+    GLFWcursor* cursor_ = nullptr;
 
     GpuContext gpu_context_;
     RenderContext render_context_;

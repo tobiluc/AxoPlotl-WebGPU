@@ -2,7 +2,7 @@
 #include "AxoPlotl/core/Application.hpp"
 #include "AxoPlotl/gui/widgets/draw_basic_renderer_settings.hpp"
 #include <AxoPlotl/core/Scene.hpp>
-#include <AxoPlotl/rendering/MeshData.hpp>
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 
 namespace AxoPlotl
 {
@@ -37,7 +37,7 @@ void SegmentObject::draw_settings_ui()
     gui::draw_basic_renderer_settings(renderer_);
 }
 
-void SegmentObject::draw_properties_ui()
+void SegmentObject::draw_selected_ui()
 {
     bool changed = false;
 
@@ -53,16 +53,6 @@ void SegmentObject::draw_properties_ui()
     }
 }
 
-void SegmentObject::draw_picking_ui(const Picker& _p)
-{
-    if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
-    ImGui::SeparatorText(name_.c_str());
-    ImGui::Text("(x, y, z) = (%f, %f, %f)",
-        _p.pixel().position.x,
-        _p.pixel().position.y,
-        _p.pixel().position.z);
-}
-
 void SegmentObject::init()
 {
     // std::vector<ColoredCellRenderer::Position> positions = {
@@ -70,7 +60,7 @@ void SegmentObject::init()
     // };
     // vertex_position_buffer_ = internal::create_position_buffer(scene()->app()->gpu_context().device, positions);
     mesh_data_.create_buffers(scene()->app()->gpu_context().device,
-                VolMeshData::Flag::INIT_EDGE_BUFFERS);
+                VolMeshBuffers::Flag::INIT_EDGE_BUFFERS);
     renderer_.init(id_, scene()->app()->gpu_context(), scene()->app()->render_context(), mesh_data_.vertices_positions, mesh_data_.halfedges_instances);
     renderer_.update_edge_property_data({{1,1,1,1}}); // white
 }

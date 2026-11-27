@@ -55,6 +55,8 @@ public:
                 const ViewSize _view_size,
                 bool _allow_input = true);
 
+    void draw_viewport_ui();
+
     void delete_objects();
 
     std::shared_ptr<OpenVolumeMeshObject> add_mesh(const std::filesystem::path& _path);

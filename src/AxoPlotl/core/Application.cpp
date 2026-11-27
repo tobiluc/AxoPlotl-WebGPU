@@ -1,3 +1,4 @@
+#include "AxoPlotl/gui/cursors.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "Application.hpp"
 #include "AxoPlotl/gui/fonts.hpp"
@@ -214,6 +215,11 @@ bool Application::init()
     picker_.init(gpu_context_.device);
     picking_renderer_.init(gpu_context_.device, ViewSize{.width=256, .height=256});
 
+    //-----------
+    // Cursors
+    //-----------
+    cursor_ = gui::load_cursor("AxoPlotl-Arrow-24x24.png", 1, 1);
+
     std::cout << "AxoPlotlApp initialized." << std::endl;
     initialized_ = true;
     return true;
@@ -352,21 +358,29 @@ void Application::frame_tick(bool _headless)
         //------------------
         // Click to Pick
         //------------------
-        if (Mouse::RIGHT_JUST_PRESSED)
+        const bool any_just_pressed = Mouse::RIGHT_JUST_PRESSED || Mouse::LEFT_JUST_PRESSED || Mouse::MIDDLE_JUST_PRESSED;
+        const bool any_pressed = Mouse::RIGHT_PRESSED || Mouse::LEFT_PRESSED || Mouse::MIDDLE_PRESSED;
+        std::optional<Mouse::Button> pressed_button = std::nullopt;
+        if (Mouse::RIGHT_JUST_PRESSED || Mouse::RIGHT_PRESSED) {pressed_button = Mouse::Button::RIGHT;}
+        else if (Mouse::LEFT_JUST_PRESSED || Mouse::LEFT_PRESSED) {pressed_button = Mouse::Button::LEFT;}
+        else if (Mouse::MIDDLE_JUST_PRESSED || Mouse::MIDDLE_PRESSED) {pressed_button = Mouse::Button::MIDDLE;}
+        if (pressed_button.has_value())
         {
             const auto pos = viewport().mouse_to_local();
 
             if (pos.has_value())
             {
-                picker_.request_pixel(
+                auto res = picker_.request_pixel(
                     viewport(),
                     scene().camera(),
                     pos->x,
                     pos->y
-                    );
-
-                if (picker_.pixel().entity.object_id < UINT32_MAX) {
-                    requests_.pick_result = true;
+                );
+                if (res.success && picker_.pixel().entity.object_id < UINT32_MAX) {
+                    if (auto obj = scene().get_object(picker_.pixel().entity.object_id)) {
+                        if (any_just_pressed) {obj->on_mouse_just_pressed(res.pixel, pressed_button.value());}
+                        else if (any_pressed) {obj->on_mouse_pressed(res.pixel, pressed_button.value());}
+                    }
                 }
             }
         }
@@ -524,18 +538,8 @@ bool Application::init_imgui()
 void Application::draw_viewport_ui()
 {
     viewport_.draw_ui(gpu_context_.device, render_context_.surface_format);
-
-    // Clicking on an Object
-    if (requests_.pick_result) [[unlikely]] {
-        ImGui::OpenPopup("PickingPopup");
-        requests_.pick_result = false;
-    }
-    if (picker_.pixel().entity.object_id < UINT32_MAX && ImGui::BeginPopup("PickingPopup")) {
-        // std::cerr << picker_.pixel().object_id_ << std::endl;
-        auto obj = scene().get_object(picker_.pixel().entity.object_id);
-        if (obj) [[likely]] {obj->draw_picking_ui(picker_);}
-        ImGui::EndPopup();
-    }
+    scene().draw_viewport_ui();
+    if (cursor_) {glfwSetCursor(window(), cursor_);}
 }
 
 void Application::draw_main_menu_bar_ui()

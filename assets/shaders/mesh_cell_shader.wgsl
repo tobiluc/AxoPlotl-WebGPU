@@ -19,14 +19,21 @@ struct Uniforms {
 @group(0) @binding(4) var<storage, read> cellProps : array<PropValue>;
 @group(0) @binding(5) var<storage, read> cellCenters : array<vec3<f32>>;
 @group(0) @binding(6) var<storage, read> halffaceNormals : array<vec3<f32>>;
+@group(0) @binding(7) var<storage, read> cellBits : array<vec4<u32>>;
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
-    @location(0) @interpolate(flat) value : vec4<f32>,
+    @location(0) @interpolate(flat) value : PropValue,
     @location(1) @interpolate(flat) cellHandle: u32,
     @location(2) @interpolate(flat) normal: vec3<f32>,
     @location(3) @interpolate(flat) selected: u32
 };
+
+fn get_bit(_idx: u32) -> bool {
+    let indices = bit_indices(_idx);
+    let word = cellBits[indices.element_idx][indices.word_idx];
+    return read_bit(word, indices.bit_idx);
+}
 
 @vertex
 fn vs_main(
@@ -44,7 +51,7 @@ fn vs_main(
     out.position = ubo.mvp * vec4<f32>(pos, 1.0);
 
     let value = cellProps[cell_index];
-    if (isOutsideClipBox(pos, ubo.clipBox)
+    if (!get_bit(cell_index) || isOutsideClipBox(pos, ubo.clipBox)
         || !propertyValueMatchesFilter(value, ubo.propFilter))
     {
         out.position = clippedPosition();

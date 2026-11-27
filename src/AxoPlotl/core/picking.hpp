@@ -52,6 +52,12 @@ public:
         uint32_t object_id = 0;
         EntityType entity_type;
         uint32_t entity_index;
+
+        bool operator==(const Entity& _e) const {
+            return object_id == _e.object_id
+                && entity_index == _e.entity_index
+                && entity_type == _e.entity_type;
+        }
     };
 
     struct Settings {
@@ -81,7 +87,14 @@ public:
 
     void init(wgpu::Device _device);
 
-    Picker::Pixel request_pixel(
+    struct PixelRequestResult
+    {
+        Picker::Pixel pixel;
+        bool changed_entity = false;
+        bool success = false;
+    };
+
+    PixelRequestResult request_pixel(
         const Viewport& _viewport,
         const Camera& _camera,
         float _x, float _y);

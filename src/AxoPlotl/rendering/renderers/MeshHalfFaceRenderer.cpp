@@ -10,8 +10,8 @@ void MeshHalfFaceRenderer::init(
     const GpuContext& _gpu_context,
     const RenderContext& _render_context,
     const BufferData<Position>& _vertices_positions,
-    const BufferData<VolMeshData::HalfFaceIndex>& _halffaces_triangle_indices,
-    const BufferData<VolMeshData::Normal> &_halffaces_normals,
+    const BufferData<VolMeshBuffers::HalfFaceIndex>& _halffaces_triangle_indices,
+    const BufferData<VolMeshBuffers::Normal> &_halffaces_normals,
     const Options &_opt)
 {
     pipeline_state_.set_device(_gpu_context.device);
@@ -189,16 +189,16 @@ void MeshHalfFaceRenderer::create_pipeline(
     // 0 -- Vertex Index
     wgpu::VertexAttribute attrs[2]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(VolMeshData::HalfFaceIndex, vh);;
+    attrs[0].offset = offsetof(VolMeshBuffers::HalfFaceIndex, vh);;
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Face Index
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(VolMeshData::HalfFaceIndex, hfh);
+    attrs[1].offset = offsetof(VolMeshBuffers::HalfFaceIndex, hfh);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(VolMeshData::HalfFaceIndex);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshBuffers::HalfFaceIndex);
     vertexBufferLayout.attributeCount = 2;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
@@ -302,7 +302,7 @@ void MeshHalfFaceRenderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, halfface_index_buffer_, 0, n_indices_*sizeof(VolMeshData::HalfFaceIndex));
+    _render_pass.setVertexBuffer(0, halfface_index_buffer_, 0, n_indices_*sizeof(VolMeshBuffers::HalfFaceIndex));
     _render_pass.draw(n_indices_, 1, 0, 0);
 
     set_next_draw_index();

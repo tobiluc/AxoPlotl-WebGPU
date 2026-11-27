@@ -19,7 +19,7 @@ add_library(AxoPlotlCore
 
     AxoPlotl/input/Mouse.cpp
 
-    AxoPlotl/rendering/MeshData.cpp
+    AxoPlotl/core/mesh/VolMeshBuffers.cpp
     AxoPlotl/rendering/redraw.cpp
     AxoPlotl/gui/widgets/draw_histogram.cpp
     AxoPlotl/rendering/ColorMap.cpp
@@ -63,6 +63,8 @@ add_library(AxoPlotlCore
 
     AxoPlotl/rendering/MyGpuContext.cpp
     AxoPlotl/rendering/PickingTextureVis.cpp
+    AxoPlotl/core/mesh/MeshBits.cpp
+    AxoPlotl/gui/cursors.cpp
 )
 
 target_link_libraries(AxoPlotlCore PUBLIC
@@ -113,6 +115,7 @@ target_include_directories(AxoPlotlCore PUBLIC
 target_compile_definitions(AxoPlotlCore PUBLIC
 AXOPLOTL_FONTS_DIR="${CMAKE_SOURCE_DIR}/assets/fonts/"
 AXOPLOTL_SHADERS_DIR="${CMAKE_SOURCE_DIR}/assets/shaders/"
+AXOPLOTL_IMAGES_DIR="${CMAKE_SOURCE_DIR}/assets/images/"
 )
 
 if (XCODE)

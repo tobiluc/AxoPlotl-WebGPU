@@ -226,8 +226,8 @@ void draw_ui()
     }
 
     if (auto propObj = AxoPlotl::app().scene().get_object(properties_object_id_)) {
-        ImGui::SeparatorText(("Properties of "+propObj->name()).c_str());
-        propObj->draw_properties_ui();
+        // ImGui::SeparatorText(("Properties of "+propObj->name()).c_str());
+        propObj->draw_selected_ui();
     } else {
         properties_object_id_ = -1;
     }

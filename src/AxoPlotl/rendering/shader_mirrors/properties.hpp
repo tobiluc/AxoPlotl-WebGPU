@@ -46,6 +46,6 @@ static_assert(offsetof(PropFilterOptions, scalar_range) == 48);
 static_assert(offsetof(PropFilterOptions, scalar_incl) == 64);
 static_assert(alignof(PropFilterOptions) == 16);
 
-using PropContainer = Vec4;
+using PropContainer = float;
 
 }

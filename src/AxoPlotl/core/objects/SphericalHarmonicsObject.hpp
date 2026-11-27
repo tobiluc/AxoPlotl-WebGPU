@@ -21,6 +21,7 @@ private:
         CUSTOM // use vars x/y/z (cartesian) phi/theta (polar)
     } type_;
     std::string custom_input_ = "x^4 + y^4 + z^4";
+    bool request_pick_popup_ = false;
 
 public:
     SHObject(
@@ -40,13 +41,13 @@ public:
         const Mat4x4& _view,
         const Mat4x4& _proj) override;
 
-    void draw_info_ui() override;
-
     void draw_settings_ui() override;
 
-    void draw_properties_ui() override;
+    void draw_selected_ui() override;
 
-    void draw_picking_ui(const Picker& _p) override;
+    bool on_mouse_just_pressed(const Picker::Pixel& _p, const Mouse::Button _button) override;
+
+    void draw_viewport_ui() override;
 
     void init() override;
 

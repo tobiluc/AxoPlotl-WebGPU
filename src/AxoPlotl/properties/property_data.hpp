@@ -56,35 +56,23 @@ static std::string value_to_string(const T& _val)
 
 /// Converts a generic value to a Vec4f to store in the Vertex Buffer as v_data.
 template<typename T>
-std::optional<PropContainer> get_buffer_property_data_vec4(const T& _val)
+std::optional<PropContainer> get_buffer_property_data(const T& _val)
 {
-    using D = PropContainer;
-
     if constexpr(std::is_floating_point_v<T>) {
         if (std::isnan(_val)) {
             constexpr float nanf = std::numeric_limits<float>::signaling_NaN();
-            return D{nanf,0,0,1};
+            return nanf;
         }
         else if (std::isinf(_val)) {
             constexpr float inff = std::numeric_limits<float>::infinity();
-            return D{inff,0,0,1};
+            return inff;
         }
-        else {return D{_val,0,0,1};}
+        else {return _val;}
     } else if constexpr(std::is_integral_v<T>) {
-        return D{_val,0,0,1};
-    } else if constexpr(is_vector<T>) {
-        if constexpr(vector_dim<T> <= 4) {
-            D v;
-            for (int i = 0; i < vector_dim<T>; ++i) {
-                v[i] = _val[i];
-            }
-            return v;
-        } else {
-            std::cerr << "Vector Properties of Dimension > 4 are not supported" << std::endl;
-        }
+        return _val;
     }
 
-    std::cerr << "UNKNOWN PROPERTY DATA TYPE FOR VEC4 CONVERSION: "
+    std::cerr << "UNKNOWN PROPERTY DATA TYPE FOR FLOAT CONVERSION: "
               << std::string(typeid(T).name()) << std::endl;
     return std::nullopt;
 }
@@ -107,7 +95,7 @@ constexpr PropValueMode get_buffer_property_type()
 }
 
 template<typename T, typename EntityTag>
-std::vector<PropContainer> get_buffer_property_data_vec4(
+std::vector<PropContainer> get_buffer_property_data(
     const VolMesh& _mesh,
     OpenVolumeMesh::PropertyStorageBase* _prop
     )
@@ -116,9 +104,9 @@ std::vector<PropContainer> get_buffer_property_data_vec4(
     std::vector<PropContainer> data;
     data.reserve(_mesh.n<EntityTag>());
     for (auto h : _mesh.entities<EntityTag>()) {
-        auto d = get_buffer_property_data_vec4(static_cast<T>(prop[h]));
+        auto d = get_buffer_property_data(static_cast<T>(prop[h]));
         if (d.has_value()) {data.push_back(*d);
-        } else {data.emplace_back(0,0,0,0);}
+        } else {data.emplace_back(0);}
     }
     return data;
 }
@@ -144,5 +132,28 @@ std::vector<glm::mat3x4> get_buffer_property_data_mat3x4(
     }
     return data;
 }
+
+template<typename T, typename EntityTag>
+requires(is_vector<T> && vector_dim<T> <= 4)
+std::vector<Vec4> get_buffer_property_data_vec4(
+    const VolMesh& _mesh,
+    OpenVolumeMesh::PropertyStorageBase* _prop)
+{
+    auto prop = _mesh.get_property<T,EntityTag>((_prop)->name()).value();
+    std::vector<Vec4> data;
+    data.reserve(_mesh.n<EntityTag>());
+    for (auto h : _mesh.entities<EntityTag>()) {
+        const auto& v = prop[h];
+        data.emplace_back();
+        for (int i = 0; i < vector_dim<T>; ++i) {
+            data.back()[i] = v[i];
+        }
+        for (int i = vector_dim<T>; i < 4; ++i) {
+            data.back()[i] = 0.0f;
+        }
+    }
+    return data;
+}
+
 
 }

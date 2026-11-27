@@ -116,6 +116,15 @@ void Scene::render(wgpu::RenderPassEncoder _render_pass, const ViewSize _view_si
     }
 }
 
+void Scene::draw_viewport_ui()
+{
+    for (const auto& obj : objects_) {
+        if (!obj->deleted()) {
+            obj->draw_viewport_ui();
+        }
+    }
+}
+
 bool Scene::save_to_file(const std::filesystem::path& _path) const
 {
     std::ofstream file(_path);

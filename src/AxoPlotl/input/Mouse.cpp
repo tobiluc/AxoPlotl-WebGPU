@@ -10,19 +10,27 @@ float Mouse::POSITION_DELTA[2] = {0,0};
 float Mouse::SCROLL_DELTA[2] = {0,0};
 bool Mouse::LEFT_PRESSED = false;
 bool Mouse::RIGHT_PRESSED = false;
+bool Mouse::MIDDLE_PRESSED = false;
 bool Mouse::LEFT_JUST_PRESSED = false;
 bool Mouse::RIGHT_JUST_PRESSED = false;
+bool Mouse::MIDDLE_JUST_PRESSED = false;
 bool Mouse::LEFT_JUST_RELEASED = false;
 bool Mouse::RIGHT_JUST_RELEASED = false;
+bool Mouse::MIDDLE_JUST_RELEASED = false;
 
 void Mouse::update(GLFWwindow* window)
 {
     Mouse::LEFT_JUST_PRESSED = !Mouse::LEFT_PRESSED && (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
     Mouse::LEFT_PRESSED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
     Mouse::LEFT_JUST_RELEASED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE);
+    
     Mouse::RIGHT_JUST_PRESSED = !Mouse::RIGHT_PRESSED && (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
     Mouse::RIGHT_PRESSED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
     Mouse::RIGHT_JUST_RELEASED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE);
+
+    Mouse::MIDDLE_JUST_PRESSED = !Mouse::MIDDLE_PRESSED && (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS);
+    Mouse::MIDDLE_PRESSED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS);
+    Mouse::MIDDLE_JUST_RELEASED = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_RELEASE);
 
     Mouse::SCROLL_DELTA[0] = 0;
     Mouse::SCROLL_DELTA[1] = 0;

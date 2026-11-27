@@ -7,7 +7,7 @@
 namespace AxoPlotl::internal
 {
 
-struct VolMeshData
+struct VolMeshBuffers
 {
 public:
     using Index = uint32_t;
@@ -43,14 +43,22 @@ public:
         uint32_t ch;
         uint32_t hfh;
     };
+private:
+    bool initialized_ = false;
+    Flags flags_;
 
-    VolMeshData() {}
+public:
+    VolMeshBuffers() {}
 
-    VolMeshData(VolMesh&& _mesh) : mesh(std::move(_mesh))
+    VolMeshBuffers(VolMesh&& _mesh) : mesh(std::move(_mesh))
     {};
 
-    VolMeshData(const VolMeshData&) = delete;
-    VolMeshData& operator=(const VolMeshData&) = delete;
+    VolMeshBuffers(const VolMeshBuffers&) = delete;
+    VolMeshBuffers& operator=(const VolMeshBuffers&) = delete;
+
+    bool is_initialized() const {
+        return initialized_;
+    }
 
     Position position(OVM::VH _vh) const {
         const auto& p = mesh.point(_vh);
@@ -70,6 +78,15 @@ public:
     BufferData<HalfEdgeInstance> halfedges_instances;
     BufferData<HalfFaceIndex> halffaces_indices;
     BufferData<CellIndex> cells_indices;
+
+    template<typename EntityTag>
+    const wgpu::Buffer& entity_center_buffer() const;
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() const {return cells_centers.buffer;}
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() const {return faces_centers.buffer;}
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfFace>() const {return faces_centers.buffer;}
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() const {return edges_centers.buffer;}
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfEdge>() const {return edges_centers.buffer;}
+    template<> const wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() const {return vertices_positions.buffer;}
 };
 
 }

@@ -1,6 +1,5 @@
 #include "AxoPlotl/rendering/wgpu_commons.hpp"
 #include <AxoPlotl/rendering/renderers/SphericalHarmonicsRenderer.hpp>
-#include <AxoPlotl/rendering/MeshData.hpp>
 
 namespace AxoPlotl::internal
 {

@@ -1,4 +1,4 @@
-alias PropValue = vec4<f32>;
+alias PropValue = f32;
 
 alias PropValueMode = u32;
 const PROP_VALUE_MODE_NOPROP:PropValueMode = 0u;
@@ -33,13 +33,13 @@ fn propertyValueMatchesFilter(_val:PropValue, _filter:PropFilterOptions) -> bool
     }
 
     let lowerOK = select(
-        _val.x > _filter.scalarRange.x,
-        _val.x >= _filter.scalarRange.x,
+        _val > _filter.scalarRange.x,
+        _val >= _filter.scalarRange.x,
         _filter.scalarIncl.x != 0u);
 
     let upperOK = select(
-        _val.x < _filter.scalarRange.y,
-        _val.x <= _filter.scalarRange.y,
+        _val < _filter.scalarRange.y,
+        _val <= _filter.scalarRange.y,
         _filter.scalarIncl.y != 0u);
 
     let inRange = lowerOK && upperOK;
@@ -48,9 +48,9 @@ fn propertyValueMatchesFilter(_val:PropValue, _filter:PropFilterOptions) -> bool
     if (_filter.filterMode == PROP_FILTER_MODE_INSIDE_RANGE) {
         result |= inRange;
     } else if (_filter.filterMode == PROP_FILTER_MODE_NAN) {
-        result |= isNan(_val.x);
+        result |= isNan(_val);
     } else if (_filter.filterMode == PROP_FILTER_MODE_INF) {
-        result |= isInf(_val.x);
+        result |= isInf(_val);
     }
 
     if (_filter.invert != 0u) {
@@ -90,7 +90,7 @@ fn getFragmentColorFromPropertyValue(
         var t = 0.5;
         if (rangeSize > 0.0) {
             t = clamp(
-                (_val.x - _filter.scalarRange.x) / rangeSize,
+                (_val - _filter.scalarRange.x) / rangeSize,
                 0.0,
                 1.0
             );
@@ -99,12 +99,12 @@ fn getFragmentColorFromPropertyValue(
     }
     else if (_filter.valueMode == PROP_VALUE_MODE_VEC3)
     {
-        color = vec4<f32>(normalize(abs(_val.xyz)), 1.0);
+        color = vec4<f32>(_val, _val, _val, 1.0);
     }
 
-    if (isNan(_val.x)) {
+    if (isNan(_val)) {
         color = COLOR_NAN;
-    } else if (isInf(_val.x)) {
+    } else if (isInf(_val)) {
         color = COLOR_INF;
     }
 

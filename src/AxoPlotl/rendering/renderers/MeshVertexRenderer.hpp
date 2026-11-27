@@ -1,7 +1,7 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/PropertyRendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
-#include "AxoPlotl/rendering/MeshData.hpp"
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 
 namespace AxoPlotl::internal
 {

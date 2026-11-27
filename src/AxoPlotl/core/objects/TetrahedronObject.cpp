@@ -1,7 +1,7 @@
 #include "TetrahedronObject.hpp"
 #include "AxoPlotl/core/Application.hpp"
 #include <AxoPlotl/core/Scene.hpp>
-#include <AxoPlotl/rendering/MeshData.hpp>
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 
 namespace AxoPlotl
 {
@@ -40,7 +40,7 @@ void TetObject::draw_settings_ui()
     ImGui::ColorEdit3("Color", &renderer_.ambient()[0]);
 }
 
-void TetObject::draw_properties_ui()
+void TetObject::draw_selected_ui()
 {
     bool changed = false;
     changed |= ImGui::InputFloat3("A", input_[0].data());
@@ -57,23 +57,12 @@ void TetObject::draw_properties_ui()
     }
 }
 
-void TetObject::draw_picking_ui(const Picker& _p)
-{
-    if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
-
-    ImGui::SeparatorText(name_.c_str());
-    ImGui::Text("(x, y, z) = (%f, %f, %f)",
-        _p.pixel().position.x,
-        _p.pixel().position.y,
-        _p.pixel().position.z);
-}
-
 void TetObject::init()
 {
     const wgpu::Device& device = scene()->app()->gpu_context().device;
 
     mesh_data_.create_buffers(device,
-        VolMeshData::Flag::INIT_CELL_BUFFERS);
+        VolMeshBuffers::Flag::INIT_CELL_BUFFERS);
 
     renderer_.init(
         id_, scene()->app()->gpu_context(),

@@ -21,10 +21,6 @@ void SHObject::render(
     renderer_.render(_view_size, _render_pass, mvp);
 }
 
-void SHObject::draw_info_ui()
-{
-}
-
 void SHObject::draw_settings_ui()
 {
     draw_name_input_ui();
@@ -47,7 +43,7 @@ void SHObject::draw_settings_ui()
     renderer_.color_map().draw_menu_ui();
 }
 
-void SHObject::draw_properties_ui()
+void SHObject::draw_selected_ui()
 {
     if (type_ == Type::CUSTOM)
     {
@@ -116,29 +112,43 @@ void SHObject::draw_properties_ui()
     }
 }
 
-void SHObject::draw_picking_ui(const Picker& _p)
+bool SHObject::on_mouse_just_pressed(const Picker::Pixel& _p, const Mouse::Button _button)
 {
-    if (_p.pixel().entity.object_id != id()) [[unlikely]] {return;}
+    request_pick_popup_ = (_button == Mouse::Button::RIGHT);
+    return request_pick_popup_;
+}
 
-    auto polar_angle = [](const Vec3& _pos) -> float {
-        return std::acos(_pos.z/(glm::length(_pos)));
-    };
-    auto azimuth_angle = [](const Vec3& _pos) -> float {
-        float a = std::acos(_pos.x/(std::sqrt(_pos.x*_pos.x+_pos.y*_pos.y)));
-        return (_pos.y<0)? -a : a;
-    };
+void SHObject::draw_viewport_ui()
+{
+    if (request_pick_popup_) {
+        ImGui::OpenPopup("PickObjectPopup");
+        request_pick_popup_ = false;
+    }
+    const auto& p = scene()->app()->picked_pixel();
+    if (p.entity.object_id == id() && ImGui::BeginPopup("PickObjectPopup"))
+    {
+        auto polar_angle = [](const Vec3& _pos) -> float {
+            return std::acos(_pos.z/(glm::length(_pos)));
+        };
+        auto azimuth_angle = [](const Vec3& _pos) -> float {
+            float a = std::acos(_pos.x/(std::sqrt(_pos.x*_pos.x+_pos.y*_pos.y)));
+            return (_pos.y<0)? -a : a;
+        };
 
-    // The input position is the direction from the origin
-    // (ignore deformed geometry)
-    auto pos = glm::normalize(_p.pixel().position);
+        // The input position is the direction from the origin
+        // (ignore deformed geometry)
+        auto pos = glm::normalize(p.position);
 
-    ImGui::SeparatorText(name_.c_str());
-    ImGui::Text("(x, y, z) = (%f, %f, %f)",
-        pos.x, pos.y, pos.z);
-    ImGui::Text("(phi, theta) = (%f, %f)·π",
-                polar_angle(pos)/M_PI,
-                azimuth_angle(pos)/M_PI);
-    ImGui::Text("Value = %f", _p.pixel().function_value);
+        ImGui::SeparatorText(name_.c_str());
+        ImGui::Text("(x, y, z) = (%f, %f, %f)",
+            pos.x, pos.y, pos.z);
+        ImGui::Text("(phi, theta) = (%f, %f)·π",
+                    polar_angle(pos)/M_PI,
+                    azimuth_angle(pos)/M_PI);
+        ImGui::Text("Value = %f", p.function_value);
+
+        ImGui::EndPopup();
+    }
 }
 
 void SHObject::init()

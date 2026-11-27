@@ -7,6 +7,7 @@
 #include "webgpu/webgpu.hpp"
 #include <nlohmann/json.hpp>
 #include <AxoPlotl/utils/ViewSize.hpp>
+#include <AxoPlotl/input/Mouse.hpp>
 
 namespace AxoPlotl
 {
@@ -36,6 +37,10 @@ public:
     void update(float _dt);
 
     void fixed_update(float _dt);
+    
+    virtual bool on_mouse_just_pressed(const Picker::Pixel& _p, const Mouse::Button _button);
+
+    virtual bool on_mouse_pressed(const Picker::Pixel& _p, const Mouse::Button _button);
 
     virtual void render(
         wgpu::RenderPassEncoder _render_pass,
@@ -43,13 +48,13 @@ public:
         const Mat4x4& _view,
         const Mat4x4& _proj) = 0;
 
-    virtual void draw_info_ui() = 0;
+    virtual void draw_viewport_ui();
+
+    virtual void draw_info_ui();
 
     virtual void draw_settings_ui() = 0;
 
-    virtual void draw_properties_ui() = 0;
-
-    virtual void draw_picking_ui(const Picker& _p) = 0;
+    virtual void draw_selected_ui() = 0;
 
     const BoundingBox& bounding_box() const {return bbox_;}
 

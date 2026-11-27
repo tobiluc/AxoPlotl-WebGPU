@@ -2,6 +2,7 @@
 #include "imposter.wgsl"
 #include "properties.wgsl"
 #include "clipping.wgsl"
+#include "bits.wgsl"
 
 const COLOR_NAN:vec4<f32> = vec4<f32>(0,0,0,1);
 const COLOR_INF:vec4<f32> = vec4<f32>(1,0,0,1);

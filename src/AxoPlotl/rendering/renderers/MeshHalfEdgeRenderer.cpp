@@ -8,7 +8,7 @@ PipelineState MeshHalfEdgeRenderer::pipeline_state_;
 void MeshHalfEdgeRenderer::init(uint32_t _object_id, const GpuContext &_gpu_context,
                                const RenderContext &_render_context,
                                const BufferData<Position>& _vertices_positions,
-                               const BufferData<VolMeshData::HalfEdgeInstance>& _halfedges_instances)
+                               const BufferData<VolMeshBuffers::HalfEdgeInstance>& _halfedges_instances)
 {
     pipeline_state_.set_device(_gpu_context.device);
     cleanup();
@@ -167,21 +167,21 @@ void MeshHalfEdgeRenderer::create_pipeline(const GpuContext& _gpu_context, const
     // 0 -- Vertex Index 0
     wgpu::VertexAttribute attrs[3]{};
     attrs[0].shaderLocation = 0;
-    attrs[0].offset = offsetof(VolMeshData::HalfEdgeInstance, vh0);
+    attrs[0].offset = offsetof(VolMeshBuffers::HalfEdgeInstance, vh0);
     attrs[0].format = wgpu::VertexFormat::Uint32;
 
     // 1 -- Vertex Index 1
     attrs[1].shaderLocation = 1;
-    attrs[1].offset = offsetof(VolMeshData::HalfEdgeInstance, vh1);
+    attrs[1].offset = offsetof(VolMeshBuffers::HalfEdgeInstance, vh1);
     attrs[1].format = wgpu::VertexFormat::Uint32;
 
     // 2 -- Edge Index
     attrs[2].shaderLocation = 2;
-    attrs[2].offset = offsetof(VolMeshData::HalfEdgeInstance, heh);
+    attrs[2].offset = offsetof(VolMeshBuffers::HalfEdgeInstance, heh);
     attrs[2].format = wgpu::VertexFormat::Uint32;
 
     wgpu::VertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(VolMeshData::HalfEdgeInstance);
+    vertexBufferLayout.arrayStride = sizeof(VolMeshBuffers::HalfEdgeInstance);
     vertexBufferLayout.attributeCount = 3;
     vertexBufferLayout.attributes = attrs;
     vertexBufferLayout.stepMode = wgpu::VertexStepMode::Instance;
@@ -290,7 +290,7 @@ void MeshHalfEdgeRenderer::render(
 
     _render_pass.setPipeline(pipeline_state_.pipeline_);
     _render_pass.setBindGroup(0, bind_group_, 1, &offset);
-    _render_pass.setVertexBuffer(0, halfedge_index_buffer_, 0, n_halfedges_*sizeof(VolMeshData::HalfEdgeInstance));
+    _render_pass.setVertexBuffer(0, halfedge_index_buffer_, 0, n_halfedges_*sizeof(VolMeshBuffers::HalfEdgeInstance));
 
     // An Edge Instance is rendered as a quad
     _render_pass.draw(4, n_halfedges_, 0, 0);

@@ -1,7 +1,7 @@
 #pragma once
 #include <AxoPlotl/rendering/renderers/RendererBase.hpp>
 #include "AxoPlotl/rendering/MyGpuContext.hpp"
-#include "AxoPlotl/rendering/MeshData.hpp"
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 #include "AxoPlotl/rendering/renderers/PropertyRendererBase.hpp"
 
 namespace AxoPlotl::internal
@@ -61,9 +61,9 @@ public:
               const GpuContext& _gpu_context,
               const RenderContext& _render_context,
               const BufferData<Position>& _vertices_positions,
-              const BufferData<VolMeshData::CellIndex>& _cells_triangle_indices,
+              const BufferData<VolMeshBuffers::CellIndex>& _cells_triangle_indices,
               const BufferData<Position>& _cells_centers,
-              const BufferData<VolMeshData::Normal>& _halffaces_normals);
+              const BufferData<VolMeshBuffers::Normal>& _halffaces_normals);
 
     void update_property_data(const std::vector<PropContainer>& _data);
 
@@ -82,6 +82,10 @@ public:
         uniforms_ = Uniforms();
     };
 
+    BitBufferData& bits() {
+        return cells_bits_;
+    }
+
 private:
     uint32_t object_id_ = UINT32_MAX;
     size_t n_positions_ = 0;
@@ -90,7 +94,7 @@ private:
     size_t n_normals_ = 0;
     bool outlines_enabled_ = false;
 
-    void create_buffers();
+    void create_buffers(const wgpu::Device& _device);
 
     void create_bind_group_layout();
 
@@ -104,6 +108,7 @@ private:
     wgpu::Buffer uniform_buffer_;
     wgpu::Buffer cells_center_buffer_;
     wgpu::Buffer halfface_normal_buffer_;
+    BitBufferData cells_bits_;
 
     static PipelineState triangle_pipeline_state_;
     wgpu::BindGroup bind_group_;

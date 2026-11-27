@@ -1,12 +1,14 @@
-#include "MeshData.hpp"
+#include "VolMeshBuffers.hpp"
 
 namespace AxoPlotl::internal
 {
 
-void VolMeshData::create_buffers(
+void VolMeshBuffers::create_buffers(
     const wgpu::Device& _device,
     const Flags& _flags)
 {
+    this->flags_ = _flags;
+
     // Positions
     if (mesh.n_vertices()) {
         vertices_positions.data.resize(mesh.n_vertices());
@@ -149,6 +151,8 @@ void VolMeshData::create_buffers(
         }
         cells_indices.create_and_write(_device);
     }
+
+    this->initialized_ = true;
 }
 
 }

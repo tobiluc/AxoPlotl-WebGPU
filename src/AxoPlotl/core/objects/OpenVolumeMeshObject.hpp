@@ -3,9 +3,10 @@
 #include "AxoPlotl/gui/properties/property_settings.hpp"
 #include <AxoPlotl/rendering/renderers/renderers.hpp>
 #include "AxoPlotl/core/objects/ObjectBase.hpp"
-#include "AxoPlotl/rendering/MeshData.hpp"
+#include <AxoPlotl/core/mesh/VolMeshBuffers.hpp>
 #include "AxoPlotl/typedefs/ovm.hpp"
 #include <filesystem>
+#include <AxoPlotl/core/mesh/VolMeshPropertyVisualizer.hpp>
 
 namespace AxoPlotl
 {
@@ -13,55 +14,22 @@ namespace AxoPlotl
 class OpenVolumeMeshObject : public ObjectBase
 {
 protected:
-    VolMeshData mesh_data_;
+    enum class PickMode {
+        PROP_VIS,
+        MINECRAFT_ADD,
+        MINECRAFT_SUB
+    } pick_mode_ = PickMode::PROP_VIS;
+    struct MinecraftState
+    {
+        int k_ring = 1;
+    } minecraft_state_;
+    bool request_pick_popup_ = false;
+    Picker::Pixel picked_pixel_;
+
+    VolMeshBuffers mesh_data_;
+    VolMeshPropertyVisualizer prop_vis_;
+    VolMeshRendererCollection renderers_;
     std::optional<std::filesystem::path> filepath_ = std::nullopt;
-
-    //template<typename EntityTag> using filter_t = PropertyFilterForRenderer<colored_entity_renderer_t<EntityTag>>;
-
-    template<typename EntityTag>
-    struct Property {
-        std::optional<OVM::PropertyStorageBase*> prop_;
-        std::shared_ptr<internal::PropertySettingsBase> settings_;
-    };
-
-    Property<OVM::Entity::Vertex> v_prop_;
-    Property<OVM::Entity::Edge> e_prop_;
-    Property<OVM::Entity::HalfEdge> he_prop_;
-    Property<OVM::Entity::Face> f_prop_;
-    Property<OVM::Entity::HalfFace> hf_prop_;
-    Property<OVM::Entity::Cell> c_prop_;
-    struct SelectedPropInfo {
-        OVM::EntityType entity_type;
-        std::string name = "";
-        std::string entity_type_name = "";
-        std::string type_name = "";
-    };
-    std::optional<SelectedPropInfo> selected_prop_info_ = std::nullopt;
-
-    template<typename EntityTag> Property<EntityTag>& prop();
-    template<> Property<OVM::Entity::Vertex>& prop<OVM::Entity::Vertex>() {return v_prop_;}
-    template<> Property<OVM::Entity::Edge>& prop<OVM::Entity::Edge>() {return e_prop_;}
-    template<> Property<OVM::Entity::HalfEdge>& prop<OVM::Entity::HalfEdge>() {return he_prop_;}
-    template<> Property<OVM::Entity::Face>& prop<OVM::Entity::Face>() {return f_prop_;}
-    template<> Property<OVM::Entity::HalfFace>& prop<OVM::Entity::HalfFace>() {return hf_prop_;}
-    template<> Property<OVM::Entity::Cell>& prop<OVM::Entity::Cell>() {return c_prop_;}
-
-    std::vector<OVM::PropertyStorageBase*> visualized_props() const;
-
-    // void upload_default_vertex_property_data();
-    // void upload_default_edge_property_data();
-    // void upload_default_face_property_data();
-    // void upload_default_cell_property_data();
-
-    // template<typename EntityTag> void upload_default_property_data();
-    // template<> void upload_default_property_data<OVM::Entity::Vertex>() {
-    //     upload_default_vertex_property_data();}
-    // template<> void upload_default_property_data<OVM::Entity::Edge>() {
-    //     upload_default_edge_property_data();}
-    // template<> void upload_default_property_data<OVM::Entity::Face>() {
-    //     upload_default_face_property_data();}
-    // template<> void upload_default_property_data<OVM::Entity::Cell>() {
-    //     upload_default_cell_property_data();}
 
 public:
 
@@ -72,19 +40,23 @@ public:
         cleanup();
     }
 
+    bool on_mouse_just_pressed(const Picker::Pixel& _p, const Mouse::Button _button) override;
+
+    bool on_mouse_pressed(const Picker::Pixel& _p, const Mouse::Button _button) override;
+
     void render(
         wgpu::RenderPassEncoder _render_pass,
         const ViewSize& _view_size,
         const Mat4x4& _view,
         const Mat4x4& _proj) override;
 
+    void draw_viewport_ui() override;
+
     void draw_info_ui() override;
 
     void draw_settings_ui() override;
 
-    void draw_properties_ui() override;
-
-    void draw_picking_ui(const Picker& _p) override;
+    void draw_selected_ui() override;
 
     void init() override;
 
@@ -105,35 +77,6 @@ public:
     const std::optional<std::filesystem::path>& filepath() const {
         return filepath_;
     }
-
-    template<typename EntityTag>
-    auto& entity_renderer();
-    template<> auto& entity_renderer<OVM::Entity::Cell>() {return cell_renderer_;}
-    template<> auto& entity_renderer<OVM::Entity::Face>() {return face_renderer_;}
-    template<> auto& entity_renderer<OVM::Entity::HalfFace>() {return face_renderer_;}
-    template<> auto& entity_renderer<OVM::Entity::Edge>() {return edge_renderer_;}
-    template<> auto& entity_renderer<OVM::Entity::HalfEdge>() {return edge_renderer_;}
-    template<> auto& entity_renderer<OVM::Entity::Vertex>() {return vertex_renderer_;}
-
-protected:
-
-    template<typename EntityTag>
-    wgpu::Buffer& entity_center_buffer();
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Cell>() {return mesh_data_.cells_centers.buffer;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Face>() {return mesh_data_.faces_centers.buffer;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfFace>() {return mesh_data_.faces_centers.buffer;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Edge>() {return mesh_data_.edges_centers.buffer;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::HalfEdge>() {return mesh_data_.edges_centers.buffer;}
-    template<> wgpu::Buffer& entity_center_buffer<OVM::Entity::Vertex>() {return mesh_data_.vertices_positions.buffer;}
-
-protected:
-    MeshVertexRenderer vertex_renderer_;
-    MeshHalfEdgeRenderer edge_renderer_;
-    MeshHalfFaceRenderer face_renderer_;
-    MeshCellRenderer cell_renderer_;
-
-    Vector3Renderer vector3_renderer_;
-    Matrix3x3Renderer mat3x3_renderer_;
 };
 
 }

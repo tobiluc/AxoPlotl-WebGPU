@@ -11,7 +11,7 @@ class TetObject : public ObjectBase
 {
 private:
     MeshCellRenderer renderer_;
-    VolMeshData mesh_data_;
+    VolMeshBuffers mesh_data_;
 
     std::array<std::array<float,4>,4> input_;
 
@@ -50,9 +50,7 @@ public:
 
     void draw_settings_ui() override;
 
-    void draw_properties_ui() override;
-
-    void draw_picking_ui(const Picker& _p) override;
+    void draw_selected_ui() override;
 
     void init() override;
 

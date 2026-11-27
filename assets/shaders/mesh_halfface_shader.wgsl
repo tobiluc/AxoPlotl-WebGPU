@@ -21,7 +21,7 @@ struct Uniforms {
 
 struct V2F {
     @builtin(position) position : vec4<f32>,
-    @location(0) @interpolate(flat) value : vec4<f32>,
+    @location(0) @interpolate(flat) value : PropValue,
     @location(1) @interpolate(flat) halfFaceHandle: u32,
     @location(2) @interpolate(flat) normal: vec3<f32>,
     @location(3) @interpolate(flat) selected: u32
